@@ -4,18 +4,18 @@ import (
 	"context"
 	"io"
 
-	"github.com/aptd3v/go-contain/pkg/client/options/ibo"
-	"github.com/aptd3v/go-contain/pkg/client/options/ico"
-	"github.com/aptd3v/go-contain/pkg/client/options/iio"
-	"github.com/aptd3v/go-contain/pkg/client/options/ildo"
-	"github.com/aptd3v/go-contain/pkg/client/options/ilo"
-	"github.com/aptd3v/go-contain/pkg/client/options/ipno"
-	"github.com/aptd3v/go-contain/pkg/client/options/ipo"
-	"github.com/aptd3v/go-contain/pkg/client/options/iro"
-	"github.com/aptd3v/go-contain/pkg/client/options/iso"
-	"github.com/aptd3v/go-contain/pkg/client/options/isvo"
+	"github.com/aptd3v/go-contain/pkg/client/options/image/build"
+	"github.com/aptd3v/go-contain/pkg/client/options/image/create"
+	"github.com/aptd3v/go-contain/pkg/client/options/image/imports"
+	"github.com/aptd3v/go-contain/pkg/client/options/image/list"
+	"github.com/aptd3v/go-contain/pkg/client/options/image/load"
+	"github.com/aptd3v/go-contain/pkg/client/options/image/prune"
+	"github.com/aptd3v/go-contain/pkg/client/options/image/pull"
+	"github.com/aptd3v/go-contain/pkg/client/options/image/remove"
+	"github.com/aptd3v/go-contain/pkg/client/options/image/save"
+	"github.com/aptd3v/go-contain/pkg/client/options/image/search"
 	"github.com/aptd3v/go-contain/pkg/client/response"
-	"github.com/docker/docker/api/types/build"
+	dBuild "github.com/docker/docker/api/types/build"
 	"github.com/docker/docker/api/types/filters"
 	"github.com/docker/docker/api/types/image"
 	"github.com/docker/docker/api/types/registry"
@@ -27,7 +27,7 @@ ImagePull requests the docker host to pull an image from a remote registry.
 It executes the privileged function if the operation is unauthorized and it
 tries one more time. It's up to the caller to handle the io.ReadCloser and close it properly.
 */
-func (c *Client) ImagePull(ctx context.Context, ref string, setters ...ipo.SetImagePullOption) (io.ReadCloser, error) {
+func (c *Client) ImagePull(ctx context.Context, ref string, setters ...pull.SetImagePullOption) (io.ReadCloser, error) {
 	op := image.PullOptions{}
 	for _, setter := range setters {
 		if setter != nil {
@@ -40,7 +40,7 @@ func (c *Client) ImagePull(ctx context.Context, ref string, setters ...ipo.SetIm
 }
 
 // ImageCreate creates a new image based on the parent options. It returns the JSON content in the response body.
-func (c *Client) ImageCreate(ctx context.Context, ref string, setters ...ico.SetImageCreateOption) (io.ReadCloser, error) {
+func (c *Client) ImageCreate(ctx context.Context, ref string, setters ...create.SetImageCreateOption) (io.ReadCloser, error) {
 	op := image.CreateOptions{}
 	for _, setter := range setters {
 		if setter != nil {
@@ -59,7 +59,7 @@ Experimental: Setting the [options.Manifest] will
 populate image.Summary.Manifests with information about image manifests.
 This is experimental and might change in the future without any backward compatibility.
 */
-func (c *Client) ImageList(ctx context.Context, setters ...ilo.SetImageListOption) ([]response.ImageSummary, error) {
+func (c *Client) ImageList(ctx context.Context, setters ...list.SetImageListOption) ([]response.ImageSummary, error) {
 	op := image.ListOptions{
 		Filters: filters.NewArgs(),
 	}
@@ -111,8 +111,8 @@ func (c *Client) ImageHistory(ctx context.Context, ref string) ([]response.Image
 
 // ImageBuild sends a request to the daemon to build images. The Body in the response implements
 // an io.ReadCloser and it's up to the caller to close it.
-func (c *Client) ImageBuild(ctx context.Context, setters ...ibo.SetImageBuildOption) (*response.ImageBuild, error) {
-	op := build.ImageBuildOptions{}
+func (c *Client) ImageBuild(ctx context.Context, setters ...build.SetImageBuildOption) (*response.ImageBuild, error) {
+	op := dBuild.ImageBuildOptions{}
 	for _, setter := range setters {
 		if setter != nil {
 			if err := setter(&op); err != nil {
@@ -130,8 +130,8 @@ func (c *Client) ImageBuild(ctx context.Context, setters ...ibo.SetImageBuildOpt
 }
 
 // ImageSave retrieves one or more images from the docker host as an io.ReadCloser.
-func (c *Client) ImageSave(ctx context.Context, setters ...isvo.SetImageSaveOption) (io.ReadCloser, error) {
-	op := isvo.ImageSaveOptions{}
+func (c *Client) ImageSave(ctx context.Context, setters ...save.SetImageSaveOption) (io.ReadCloser, error) {
+	op := save.ImageSaveOptions{}
 	for _, setter := range setters {
 		if setter != nil {
 			if err := setter(&op); err != nil {
@@ -148,7 +148,7 @@ func (c *Client) ImageTag(ctx context.Context, source, target string) error {
 }
 
 // ImageRemove removes an image from the docker host.
-func (c *Client) ImageRemove(ctx context.Context, ref string, setters ...iro.SetImageRemoveOption) ([]response.ImageDelete, error) {
+func (c *Client) ImageRemove(ctx context.Context, ref string, setters ...remove.SetImageRemoveOption) ([]response.ImageDelete, error) {
 	op := image.RemoveOptions{}
 	for _, setter := range setters {
 		if setter != nil {
@@ -171,7 +171,7 @@ func (c *Client) ImageRemove(ctx context.Context, ref string, setters ...iro.Set
 }
 
 // ImageSearch makes the docker host search by a term in a remote registry. The list of results is not sorted in any fashion.
-func (c *Client) ImageSearch(ctx context.Context, term string, setters ...iso.SetImageSearchOption) ([]response.ImageSearchResult, error) {
+func (c *Client) ImageSearch(ctx context.Context, term string, setters ...search.SetImageSearchOption) ([]response.ImageSearchResult, error) {
 	op := registry.SearchOptions{}
 	for _, setter := range setters {
 		if setter != nil {
@@ -201,8 +201,8 @@ func (c *Client) ImagePush(ctx context.Context, ref string) (io.ReadCloser, erro
 }
 
 // ImageImport creates a new image based on the source options. It returns the JSON content in the response body.
-func (c *Client) ImageImport(ctx context.Context, ref string, setters ...iio.SetImageImportOption) (io.ReadCloser, error) {
-	op := iio.ImageImportOptions{}
+func (c *Client) ImageImport(ctx context.Context, ref string, setters ...imports.SetImageImportOption) (io.ReadCloser, error) {
+	op := imports.ImageImportOptions{}
 	for _, setter := range setters {
 		if setter != nil {
 			if err := setter(&op); err != nil {
@@ -228,8 +228,8 @@ It's up to the caller to close the io.ReadCloser in the ImageLoadResponse return
 WithPlatform is an optional parameter that specifies the platform to
 load from the provided multi-platform image. This is only has effect if the input image is a multi-platform image.
 */
-func (c *Client) ImageLoad(ctx context.Context, setters ...ildo.SetImageLoadOption) (*response.ImageLoad, error) {
-	op := ildo.ImageLoadOptions{}
+func (c *Client) ImageLoad(ctx context.Context, setters ...load.SetImageLoadOption) (*response.ImageLoad, error) {
+	op := load.ImageLoadOptions{}
 	for _, setter := range setters {
 		if setter != nil {
 			if err := setter(&op); err != nil {
@@ -247,7 +247,7 @@ func (c *Client) ImageLoad(ctx context.Context, setters ...ildo.SetImageLoadOpti
 }
 
 // ImagesPrune requests the daemon to delete unused data
-func (c *Client) ImagesPrune(ctx context.Context, setters ...ipno.SetImagePruneOption) (*response.PruneReport, error) {
+func (c *Client) ImagesPrune(ctx context.Context, setters ...prune.SetImagePruneOption) (*response.PruneReport, error) {
 	filters := filters.NewArgs()
 	for _, setter := range setters {
 		if setter != nil {

@@ -4,22 +4,23 @@ import (
 	"context"
 	"io"
 
-	"github.com/aptd3v/go-contain/pkg/client/options/cao"
-	"github.com/aptd3v/go-contain/pkg/client/options/ccco"
-	"github.com/aptd3v/go-contain/pkg/client/options/ccdo"
-	"github.com/aptd3v/go-contain/pkg/client/options/cco"
-	"github.com/aptd3v/go-contain/pkg/client/options/cctco"
-	"github.com/aptd3v/go-contain/pkg/client/options/ceao"
-	"github.com/aptd3v/go-contain/pkg/client/options/ceo"
-	"github.com/aptd3v/go-contain/pkg/client/options/cero"
-	"github.com/aptd3v/go-contain/pkg/client/options/ceso"
-	"github.com/aptd3v/go-contain/pkg/client/options/clgo"
-	"github.com/aptd3v/go-contain/pkg/client/options/clo"
-	"github.com/aptd3v/go-contain/pkg/client/options/cpo"
-	"github.com/aptd3v/go-contain/pkg/client/options/crmo"
-	"github.com/aptd3v/go-contain/pkg/client/options/cstpo"
-	"github.com/aptd3v/go-contain/pkg/client/options/cstrto"
-	"github.com/aptd3v/go-contain/pkg/client/options/cuo"
+	"github.com/aptd3v/go-contain/pkg/client/options/container/attach"
+	"github.com/aptd3v/go-contain/pkg/client/options/container/checkpointcreate"
+	"github.com/aptd3v/go-contain/pkg/client/options/container/checkpointdelete"
+	"github.com/aptd3v/go-contain/pkg/client/options/container/checkpointlist"
+	"github.com/aptd3v/go-contain/pkg/client/options/container/commit"
+	"github.com/aptd3v/go-contain/pkg/client/options/container/copyto"
+	"github.com/aptd3v/go-contain/pkg/client/options/container/exec"
+	"github.com/aptd3v/go-contain/pkg/client/options/container/execattach"
+	"github.com/aptd3v/go-contain/pkg/client/options/container/execresize"
+	"github.com/aptd3v/go-contain/pkg/client/options/container/execstart"
+	"github.com/aptd3v/go-contain/pkg/client/options/container/list"
+	"github.com/aptd3v/go-contain/pkg/client/options/container/logs"
+	"github.com/aptd3v/go-contain/pkg/client/options/container/prune"
+	"github.com/aptd3v/go-contain/pkg/client/options/container/remove"
+	"github.com/aptd3v/go-contain/pkg/client/options/container/start"
+	"github.com/aptd3v/go-contain/pkg/client/options/container/stop"
+	"github.com/aptd3v/go-contain/pkg/client/options/container/update"
 	"github.com/aptd3v/go-contain/pkg/client/response"
 	"github.com/aptd3v/go-contain/pkg/create"
 	"github.com/docker/docker/api/types/checkpoint"
@@ -47,7 +48,7 @@ func (c *Client) ContainerCreate(ctx context.Context, created *create.Container)
 }
 
 // ContainerList returns the list of containers in the docker host.
-func (c *Client) ContainerList(ctx context.Context, setters ...clo.SetContainerListOption) ([]response.ContainerSummary, error) {
+func (c *Client) ContainerList(ctx context.Context, setters ...list.SetContainerListOption) ([]response.ContainerSummary, error) {
 	op := container.ListOptions{}
 	for _, setter := range setters {
 		if setter != nil {
@@ -70,7 +71,7 @@ func (c *Client) ContainerList(ctx context.Context, setters ...clo.SetContainerL
 }
 
 // ContainerStart sends a request to the docker daemon to start a container.
-func (c *Client) ContainerStart(ctx context.Context, id string, setters ...cstrto.SetContainerStartOption) error {
+func (c *Client) ContainerStart(ctx context.Context, id string, setters ...start.SetContainerStartOption) error {
 	op := container.StartOptions{}
 	for _, setter := range setters {
 		if setter != nil {
@@ -84,7 +85,7 @@ func (c *Client) ContainerStart(ctx context.Context, id string, setters ...cstrt
 
 // ContainerStop stops a container. In case the container fails to stop
 // gracefully within a time frame specified by the timeout argument, it is forcefully terminated (killed).
-func (c *Client) ContainerStop(ctx context.Context, id string, setters ...cstpo.SetContainerStopOption) error {
+func (c *Client) ContainerStop(ctx context.Context, id string, setters ...stop.SetContainerStopOption) error {
 	op := container.StopOptions{}
 	for _, setter := range setters {
 		if setter != nil {
@@ -97,7 +98,7 @@ func (c *Client) ContainerStop(ctx context.Context, id string, setters ...cstpo.
 }
 
 // ContainerRemove kills and removes a container from the docker host.
-func (c *Client) ContainerRemove(ctx context.Context, id string, setters ...crmo.SetContainerRemoveOption) error {
+func (c *Client) ContainerRemove(ctx context.Context, id string, setters ...remove.SetContainerRemoveOption) error {
 	op := container.RemoveOptions{}
 	for _, setter := range setters {
 		if setter != nil {
@@ -131,7 +132,7 @@ SIZE1, SIZE2, SIZE3, and SIZE4 are four bytes of uint32 encoded as big endian. T
 
 You can use github.com/docker/docker/pkg/stdcopy.StdCopy to demultiplex this stream.
 */
-func (c *Client) ContainerLogs(ctx context.Context, id string, setters ...clgo.SetContainerLogsOption) (io.ReadCloser, error) {
+func (c *Client) ContainerLogs(ctx context.Context, id string, setters ...logs.SetContainerLogsOption) (io.ReadCloser, error) {
 	op := container.LogsOptions{}
 	for _, setter := range setters {
 		if setter != nil {
@@ -201,7 +202,7 @@ func (c *Client) ContainerStats(ctx context.Context, id string, stream bool) (*r
 }
 
 // ContainerExecCreate creates a new exec configuration to run an exec process.
-func (c *Client) ContainerExecCreate(ctx context.Context, id string, setters ...ceo.SetContainerExecOption) (*response.ContainerExecCreate, error) {
+func (c *Client) ContainerExecCreate(ctx context.Context, id string, setters ...exec.SetContainerExecOption) (*response.ContainerExecCreate, error) {
 	op := container.ExecOptions{}
 	for _, setter := range setters {
 		if setter != nil {
@@ -220,7 +221,7 @@ func (c *Client) ContainerExecCreate(ctx context.Context, id string, setters ...
 }
 
 // ContainerExecStart starts an exec process already created in the docker host.
-func (c *Client) ContainerExecStart(ctx context.Context, id string, setters ...ceso.SetContainerExecStartOption) error {
+func (c *Client) ContainerExecStart(ctx context.Context, id string, setters ...execstart.SetContainerExecStartOption) error {
 	op := container.ExecStartOptions{}
 	for _, setter := range setters {
 		if setter != nil {
@@ -233,7 +234,7 @@ func (c *Client) ContainerExecStart(ctx context.Context, id string, setters ...c
 }
 
 // ContainerExecResize changes the size of the tty for an exec process running inside a container.
-func (c *Client) ContainerExecResize(ctx context.Context, id string, setters ...cero.SetContainerExecResizeOption) error {
+func (c *Client) ContainerExecResize(ctx context.Context, id string, setters ...execresize.SetContainerExecResizeOption) error {
 	op := container.ResizeOptions{}
 	for _, setter := range setters {
 		if setter != nil {
@@ -248,7 +249,7 @@ func (c *Client) ContainerExecResize(ctx context.Context, id string, setters ...
 // ContainerExecAttach attaches a connection to an exec process in the server.
 // It returns a types.HijackedConnection with the hijacked connection and the a reader to get output.
 // It's up to the called to close the hijacked connection by calling types.HijackedResponse.Close.
-func (c *Client) ContainerExecAttach(ctx context.Context, id string, setters ...ceao.SetContainerExecAttachOption) (*response.ContainerHijackedResponse, error) {
+func (c *Client) ContainerExecAttach(ctx context.Context, id string, setters ...execattach.SetContainerExecAttachOption) (*response.ContainerHijackedResponse, error) {
 	op := container.ExecAttachOptions{}
 	for _, setter := range setters {
 		if setter != nil {
@@ -267,7 +268,7 @@ func (c *Client) ContainerExecAttach(ctx context.Context, id string, setters ...
 }
 
 // ContainerRestart stops and starts a container again. It makes the daemon wait for the container to be up again for a specific amount of time, given the timeout.
-func (c *Client) ContainerRestart(ctx context.Context, id string, setters ...cstpo.SetContainerStopOption) error {
+func (c *Client) ContainerRestart(ctx context.Context, id string, setters ...stop.SetContainerStopOption) error {
 	op := container.StopOptions{}
 	for _, setter := range setters {
 		if setter != nil {
@@ -290,7 +291,7 @@ func (c *Client) ContainerUnpause(ctx context.Context, id string) error {
 }
 
 // ContainersPrune requests the daemon to delete unused data
-func (c *Client) ContainerPrune(ctx context.Context, setters ...cpo.SetContainerPruneOption) (*response.ContainerPruneReport, error) {
+func (c *Client) ContainerPrune(ctx context.Context, setters ...prune.SetContainerPruneOption) (*response.ContainerPruneReport, error) {
 	filters := filters.NewArgs()
 	for _, setter := range setters {
 		if setter != nil {
@@ -309,7 +310,7 @@ func (c *Client) ContainerPrune(ctx context.Context, setters ...cpo.SetContainer
 }
 
 // ContainerCommit applies changes to a container and creates a new tagged image.
-func (c *Client) ContainerCommit(ctx context.Context, id string, setters ...cco.SetContainerCommitOption) (*response.ContainerCommitResponse, error) {
+func (c *Client) ContainerCommit(ctx context.Context, id string, setters ...commit.SetContainerCommitOption) (*response.ContainerCommitResponse, error) {
 	op := container.CommitOptions{}
 	for _, setter := range setters {
 		if setter != nil {
@@ -349,7 +350,7 @@ func (c *Client) ContainerDiff(ctx context.Context, id string) ([]response.Conta
 }
 
 // ContainerUpdate updates resources of a container.
-func (c *Client) ContainerUpdate(ctx context.Context, id string, setters ...cuo.SetContainerUpdateOption) (*response.ContainerUpdateResponse, error) {
+func (c *Client) ContainerUpdate(ctx context.Context, id string, setters ...update.SetContainerUpdateOption) (*response.ContainerUpdateResponse, error) {
 	op := container.UpdateConfig{}
 	for _, setter := range setters {
 		if setter != nil {
@@ -407,7 +408,7 @@ func (c *Client) ContainerStatsOneShot(ctx context.Context, id string) (*respons
 }
 
 // ContainerResize changes the size of the tty for a container.
-func (c *Client) ContainerResize(ctx context.Context, id string, setters ...cero.SetContainerExecResizeOption) error {
+func (c *Client) ContainerResize(ctx context.Context, id string, setters ...execresize.SetContainerExecResizeOption) error {
 	op := container.ResizeOptions{}
 	for _, setter := range setters {
 		if setter != nil {
@@ -420,7 +421,7 @@ func (c *Client) ContainerResize(ctx context.Context, id string, setters ...cero
 }
 
 // ContainerCheckpointCreate creates a checkpoint of a running container.
-func (c *Client) ContainerCheckpointCreate(ctx context.Context, id string, setters ...ccco.SetContainerCheckpointCreateOption) error {
+func (c *Client) ContainerCheckpointCreate(ctx context.Context, id string, setters ...checkpointcreate.SetContainerCheckpointCreateOption) error {
 	op := checkpoint.CreateOptions{}
 	for _, setter := range setters {
 		if setter != nil {
@@ -433,8 +434,16 @@ func (c *Client) ContainerCheckpointCreate(ctx context.Context, id string, sette
 }
 
 // CheckpointList returns the checkpoints of the given container in the docker host
-func (c *Client) ContainerCheckpointList(ctx context.Context, id string) ([]response.ContainerCheckpointSummary, error) {
-	sum, err := c.wrapped.CheckpointList(ctx, id, checkpoint.ListOptions{})
+func (c *Client) ContainerCheckpointList(ctx context.Context, id string, setters ...checkpointlist.SetContainerCheckpointListOption) ([]response.ContainerCheckpointSummary, error) {
+	op := checkpoint.ListOptions{}
+	for _, setter := range setters {
+		if setter != nil {
+			if err := setter(&op); err != nil {
+				return nil, err
+			}
+		}
+	}
+	sum, err := c.wrapped.CheckpointList(ctx, id, op)
 	if err != nil {
 		return nil, err
 	}
@@ -448,7 +457,7 @@ func (c *Client) ContainerCheckpointList(ctx context.Context, id string) ([]resp
 }
 
 // CheckpointDelete deletes the checkpoint with the given name from the given container
-func (c *Client) ContainerCheckpointDelete(ctx context.Context, id string, setters ...ccdo.SetContainerCheckpointDeleteOption) error {
+func (c *Client) ContainerCheckpointDelete(ctx context.Context, id string, setters ...checkpointdelete.SetContainerCheckpointDeleteOption) error {
 	op := checkpoint.DeleteOptions{}
 	for _, setter := range setters {
 		if setter != nil {
@@ -461,7 +470,7 @@ func (c *Client) ContainerCheckpointDelete(ctx context.Context, id string, sette
 }
 
 // CopyToContainer copies content into the container filesystem. Note that `content` must be a Reader for a TAR archive
-func (c *Client) ContainerCopyToContainer(ctx context.Context, id string, dstPath string, setters ...cctco.SetContainerCopyToContainerOption) error {
+func (c *Client) ContainerCopyToContainer(ctx context.Context, id string, dstPath string, setters ...copyto.SetContainerCopyToContainerOption) error {
 	op := container.CopyToContainerOptions{}
 	for _, setter := range setters {
 		if setter != nil {
@@ -502,7 +511,7 @@ SIZE1, SIZE2, SIZE3, and SIZE4 are four bytes of uint32 encoded as big endian. T
 
 You can use github.com/docker/docker/pkg/stdcopy.StdCopy to demultiplex this stream.
 */
-func (c *Client) ContainerAttach(ctx context.Context, id string, setters ...cao.SetContainerAttachOption) (*response.ContainerHijackedResponse, error) {
+func (c *Client) ContainerAttach(ctx context.Context, id string, setters ...attach.SetContainerAttachOption) (*response.ContainerHijackedResponse, error) {
 	op := container.AttachOptions{}
 	for _, setter := range setters {
 		if setter != nil {

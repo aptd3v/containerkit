@@ -3,18 +3,18 @@ package client
 import (
 	"context"
 
-	"github.com/aptd3v/go-contain/pkg/client/options/ncno"
-	"github.com/aptd3v/go-contain/pkg/client/options/nco"
-	"github.com/aptd3v/go-contain/pkg/client/options/nio"
-	"github.com/aptd3v/go-contain/pkg/client/options/nlo"
-	"github.com/aptd3v/go-contain/pkg/client/options/npo"
+	"github.com/aptd3v/go-contain/pkg/client/options/network/connect"
+	"github.com/aptd3v/go-contain/pkg/client/options/network/create"
+	"github.com/aptd3v/go-contain/pkg/client/options/network/inspect"
+	"github.com/aptd3v/go-contain/pkg/client/options/network/list"
+	"github.com/aptd3v/go-contain/pkg/client/options/network/prune"
 	"github.com/aptd3v/go-contain/pkg/client/response"
 	"github.com/docker/docker/api/types/filters"
 	"github.com/docker/docker/api/types/network"
 )
 
 // NetworkCreate creates a new network in the docker host.
-func (c *Client) NetworkCreate(ctx context.Context, name string, setters ...nco.SetNetworkCreateOption) (*response.NetworkCreate, error) {
+func (c *Client) NetworkCreate(ctx context.Context, name string, setters ...create.SetNetworkCreateOption) (*response.NetworkCreate, error) {
 	o := network.CreateOptions{}
 	for _, setter := range setters {
 		if setter == nil {
@@ -32,7 +32,7 @@ func (c *Client) NetworkCreate(ctx context.Context, name string, setters ...nco.
 }
 
 // NetworkConnect connects a container to an existent network in the docker host.
-func (c *Client) NetworkConnect(ctx context.Context, networkID string, setters ...ncno.SetNetworkConnectOption) error {
+func (c *Client) NetworkConnect(ctx context.Context, networkID string, setters ...connect.SetNetworkConnectOption) error {
 	o := network.ConnectOptions{}
 	for _, setter := range setters {
 		if setter == nil {
@@ -57,7 +57,7 @@ func (c *Client) NetworkRemove(ctx context.Context, networkID string) error {
 }
 
 // NetworkInspect returns the information for a specific network configured in the docker host.
-func (c *Client) NetworkInspect(ctx context.Context, networkID string, setters ...nio.SetNetworkInspectOption) (*response.NetworkInspect, error) {
+func (c *Client) NetworkInspect(ctx context.Context, networkID string, setters ...inspect.SetNetworkInspectOption) (*response.NetworkInspect, error) {
 	o := network.InspectOptions{}
 	for _, setter := range setters {
 		if setter == nil {
@@ -75,7 +75,7 @@ func (c *Client) NetworkInspect(ctx context.Context, networkID string, setters .
 }
 
 // NetworkList returns the list of networks configured in the docker host.
-func (c *Client) NetworkList(ctx context.Context, setters ...nlo.SetNetworkListOption) ([]*response.NetworkSummary, error) {
+func (c *Client) NetworkList(ctx context.Context, setters ...list.SetNetworkListOption) ([]*response.NetworkSummary, error) {
 	o := network.ListOptions{
 		Filters: filters.NewArgs(),
 	}
@@ -100,7 +100,7 @@ func (c *Client) NetworkList(ctx context.Context, setters ...nlo.SetNetworkListO
 }
 
 // NetworksPrune requests the daemon to delete unused networks
-func (c *Client) NetworksPrune(ctx context.Context, setters ...npo.SetNetworkPruneOption) (*response.NetworkPruneReport, error) {
+func (c *Client) NetworksPrune(ctx context.Context, setters ...prune.SetNetworkPruneOption) (*response.NetworkPruneReport, error) {
 	o := network.ListOptions{
 		Filters: filters.NewArgs(),
 	}

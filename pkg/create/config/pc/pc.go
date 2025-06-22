@@ -5,12 +5,12 @@ import (
 	"github.com/aptd3v/go-contain/pkg/create"
 )
 
-// WithMatchArchitecture sets the architecture for the platform
+// WithArchitecture sets the architecture for the platform
 // Parameter:
 //   - architecture: the architecture to be used for the platform
 //
 // Architecture field specifies the CPU architecture, for example `amd64` or `ppc64le`.
-func WithMatchedArchitecture(architecture string) create.SetPlatformConfig {
+func WithArchitecture(architecture string) create.SetPlatformConfig {
 	return func(options *create.PlatformConfig) error {
 		options.Architecture = architecture
 		return nil
