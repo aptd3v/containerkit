@@ -18,7 +18,7 @@ func WithAll() SetImageListOption {
 }
 
 // WithFilters sets the filters for the image list.
-func WithFilters(key, value string) SetImageListOption {
+func WithFilter(key, value string) SetImageListOption {
 	return func(o *image.ListOptions) error {
 		o.Filters.Add(key, value)
 		return nil
