@@ -8,6 +8,7 @@ import (
 	"github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/api/types/image"
 	"github.com/docker/docker/api/types/registry"
+	"github.com/docker/docker/api/types/volume"
 )
 
 // ContainerCreate is a wrapper around the container.CreateResponse type.
@@ -128,4 +129,17 @@ type ImageLoad struct {
 // PruneReport is a wrapper around the image.PruneReport type.
 type PruneReport struct {
 	image.PruneReport
+}
+
+// Volume is a wrapper around the volume.Volume type.
+type Volume struct {
+	volume.Volume
+}
+
+type VolumeList struct {
+	Volumes  []*Volume
+	Warnings []string
+}
+type VolumePruneReport struct {
+	volume.PruneReport
 }
