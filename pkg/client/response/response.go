@@ -7,6 +7,7 @@ import (
 	"github.com/docker/docker/api/types/checkpoint"
 	"github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/api/types/image"
+	"github.com/docker/docker/api/types/network"
 	"github.com/docker/docker/api/types/registry"
 	"github.com/docker/docker/api/types/volume"
 )
@@ -136,10 +137,33 @@ type Volume struct {
 	volume.Volume
 }
 
+// VolumeList is a wrapper around the volume.ListResponse type.
 type VolumeList struct {
 	Volumes  []*Volume
 	Warnings []string
 }
+
+// VolumePruneReport is a wrapper around the volume.PruneReport type.
 type VolumePruneReport struct {
 	volume.PruneReport
+}
+
+// NetworkCreate is a wrapper around the network.CreateResponse type.
+type NetworkCreate struct {
+	network.CreateResponse
+}
+
+// NetworkInspect is a wrapper around the network.InspectResponse type.
+type NetworkInspect struct {
+	network.Inspect
+}
+
+// NetworkSummary is a wrapper around the network.Summary type.
+type NetworkSummary struct {
+	network.Summary
+}
+
+// NetworkPruneReport is a wrapper around the network.PruneReport type.
+type NetworkPruneReport struct {
+	network.PruneReport
 }
