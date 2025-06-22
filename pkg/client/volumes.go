@@ -13,6 +13,7 @@ import (
 	"github.com/docker/docker/api/types/volume"
 )
 
+// VolumeCreate creates a volume in the docker host.
 func (c *Client) VolumeCreate(ctx context.Context, setters ...vco.SetVolumeCreateOption) (*response.Volume, error) {
 	o := volume.CreateOptions{}
 	for _, setter := range setters {
@@ -30,6 +31,7 @@ func (c *Client) VolumeCreate(ctx context.Context, setters ...vco.SetVolumeCreat
 	return &response.Volume{Volume: v}, nil
 }
 
+// VolumeInspect returns the information about a specific volume in the docker host.
 func (c *Client) VolumeInspect(ctx context.Context, name string) (*response.Volume, error) {
 	v, err := c.wrapped.VolumeInspect(ctx, name)
 	if err != nil {
@@ -38,6 +40,8 @@ func (c *Client) VolumeInspect(ctx context.Context, name string) (*response.Volu
 
 	return &response.Volume{Volume: v}, nil
 }
+
+// VolumeInspectWithRaw returns the information about a specific volume in the docker host and its raw representation
 func (c *Client) VolumeInspectWithRaw(ctx context.Context, name string) (*response.Volume, []byte, error) {
 	v, b, err := c.wrapped.VolumeInspectWithRaw(ctx, name)
 	if err != nil {
@@ -47,6 +51,7 @@ func (c *Client) VolumeInspectWithRaw(ctx context.Context, name string) (*respon
 	return &response.Volume{Volume: v}, b, nil
 }
 
+// VolumeList returns the volumes configured in the docker host.
 func (c *Client) VolumeList(ctx context.Context, setters ...vlo.SetVolumeListOption) (*response.VolumeList, error) {
 	o := volume.ListOptions{
 		Filters: filters.NewArgs(),
@@ -70,9 +75,13 @@ func (c *Client) VolumeList(ctx context.Context, setters ...vlo.SetVolumeListOpt
 	}
 	return &response.VolumeList{Volumes: volumes, Warnings: v.Warnings}, nil
 }
+
+// VolumeRemove removes a volume from the docker host.
 func (c *Client) VolumeRemove(ctx context.Context, name string, force bool) error {
 	return c.wrapped.VolumeRemove(ctx, name, force)
 }
+
+// VolumeUpdate updates a volume. This only works for Cluster Volumes, and only some fields can be updated.
 func (c *Client) VolumeUpdate(ctx context.Context, name string, swarmVersionIndex uint64, setters ...vuo.SetVolumeUpdateOption) error {
 	o := volume.UpdateOptions{}
 	for _, setter := range setters {
@@ -85,7 +94,9 @@ func (c *Client) VolumeUpdate(ctx context.Context, name string, swarmVersionInde
 	}
 	return c.wrapped.VolumeUpdate(ctx, name, swarm.Version{Index: swarmVersionIndex}, o)
 }
-func (c *Client) VolumePrune(ctx context.Context, setters ...vpo.SetVolumePruneOption) (*response.VolumePruneReport, error) {
+
+// VolumesPrune requests the daemon to delete unused data
+func (c *Client) VolumesPrune(ctx context.Context, setters ...vpo.SetVolumePruneOption) (*response.VolumePruneReport, error) {
 	filters := filters.NewArgs()
 	for _, setter := range setters {
 		if setter == nil {
