@@ -21,6 +21,7 @@ import (
 	"github.com/aptd3v/go-contain/pkg/client/options/container/start"
 	"github.com/aptd3v/go-contain/pkg/client/options/container/stop"
 	"github.com/aptd3v/go-contain/pkg/client/options/container/update"
+	"github.com/aptd3v/go-contain/pkg/client/options/container/wait"
 	"github.com/aptd3v/go-contain/pkg/client/response"
 	"github.com/aptd3v/go-contain/pkg/create"
 	"github.com/docker/docker/api/types/checkpoint"
@@ -167,8 +168,8 @@ status of the container or an error if there was a problem either beginning the 
 the response. This allows the caller to synchronize ContainerWait with other calls, such as specifying a
 "next-exit" condition before issuing a ContainerStart request.
 */
-func (c *Client) ContainerWait(ctx context.Context, id string) (<-chan response.ContainerWait, <-chan error) {
-	wait, err := c.wrapped.ContainerWait(ctx, id, container.WaitConditionNotRunning)
+func (c *Client) ContainerWait(ctx context.Context, id string, condition wait.WaitCondition) (<-chan response.ContainerWait, <-chan error) {
+	wait, err := c.wrapped.ContainerWait(ctx, id, container.WaitCondition(condition))
 	if err != nil {
 		return nil, nil
 	}
