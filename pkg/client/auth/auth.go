@@ -9,23 +9,19 @@ import (
 
 // Auth represents registry authentication credentials
 type Auth struct {
-	Username string
-	Password string
+	Username      string `json:"username"`
+	Password      string `json:"password"`
+	ServerAddress string `json:"serveraddress"`
 }
 
 // AuthToBase64 converts auth credentials to base64 encoded auth string
-func AuthToBase64(auth Auth) string {
-	authConfig := Auth{
-		Username: auth.Username,
-		Password: auth.Password,
-	}
-
-	jsonAuth, err := json.Marshal(authConfig)
+func AuthToBase64(auth Auth) (string, error) {
+	jsonAuth, err := json.Marshal(auth)
 	if err != nil {
-		return ""
+		return "", err
 	}
 
-	return base64.URLEncoding.EncodeToString(jsonAuth)
+	return base64.URLEncoding.EncodeToString(jsonAuth), nil
 }
 
 // SetAuthConfigOption is a function that sets a parameter for the registry auth config.
@@ -50,7 +46,11 @@ func WithPassword(password string) SetRegistryAuthConfigOption {
 // WithAuth is the base64 encoded auth string.
 func WithAuth(creds Auth) SetRegistryAuthConfigOption {
 	return func(o *registry.AuthConfig) error {
-		o.Auth = AuthToBase64(creds)
+		auth, err := AuthToBase64(creds)
+		if err != nil {
+			return err
+		}
+		o.Auth = auth
 		return nil
 	}
 }

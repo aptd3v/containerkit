@@ -15,7 +15,11 @@ type SetImagePullOption func(*image.PullOptions) error
 // WithRegistryAuth sets the registry auth for the image pull.
 func WithRegistryAuth(creds auth.Auth) SetImagePullOption {
 	return func(o *image.PullOptions) error {
-		o.RegistryAuth = auth.AuthToBase64(creds)
+		auth, err := auth.AuthToBase64(creds)
+		if err != nil {
+			return err
+		}
+		o.RegistryAuth = auth
 		return nil
 	}
 }

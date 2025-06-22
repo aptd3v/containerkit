@@ -12,7 +12,11 @@ type SetImageCreateOption func(*image.CreateOptions) error
 // WithRegistryAuth sets the registry auth for the image create.
 func WithRegistryAuth(creds auth.Auth) SetImageCreateOption {
 	return func(o *image.CreateOptions) error {
-		o.RegistryAuth = auth.AuthToBase64(creds)
+		auth, err := auth.AuthToBase64(creds)
+		if err != nil {
+			return err
+		}
+		o.RegistryAuth = auth
 		return nil
 	}
 }

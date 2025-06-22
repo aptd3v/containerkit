@@ -14,7 +14,11 @@ type SetImageSearchOption func(*registry.SearchOptions) error
 // WithRegistryAuth sets the registry auth for the image search.
 func WithRegistryAuth(creds auth.Auth) SetImageSearchOption {
 	return func(o *registry.SearchOptions) error {
-		o.RegistryAuth = auth.AuthToBase64(creds)
+		auth, err := auth.AuthToBase64(creds)
+		if err != nil {
+			return err
+		}
+		o.RegistryAuth = auth
 		return nil
 	}
 }
