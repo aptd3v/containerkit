@@ -26,7 +26,7 @@ type PlatformConfig struct {
 }
 
 type MergedConfig struct {
-	Name      string
+	Name      string // the name of the container
 	Container *ContainerConfig
 	Host      *HostConfig
 	Network   *NetworkConfig
