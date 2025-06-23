@@ -13,10 +13,10 @@ import (
 //   - target: the target of the mount
 func WithRWHostBindMount(source string, target string) create.SetHostConfig {
 	return WithMountPoint(
-		mount.WithMountType(mount.MountTypeBind),
-		mount.WithMountSource(source),
-		mount.WithMountTarget(target),
-		mount.WithMountReadWrite(),
+		mount.WithType(mount.MountTypeBind),
+		mount.WithSource(source),
+		mount.WithTarget(target),
+		mount.WithReadWrite(),
 	)
 }
 
@@ -26,10 +26,10 @@ func WithRWHostBindMount(source string, target string) create.SetHostConfig {
 //   - target: the target of the mount
 func WithROHostBindMount(source string, target string) create.SetHostConfig {
 	return WithMountPoint(
-		mount.WithMountType(mount.MountTypeBind),
-		mount.WithMountSource(source),
-		mount.WithMountTarget(target),
-		mount.WithMountReadOnly(),
+		mount.WithType(mount.MountTypeBind),
+		mount.WithSource(source),
+		mount.WithTarget(target),
+		mount.WithReadOnly(),
 	)
 }
 
@@ -40,10 +40,10 @@ func WithROHostBindMount(source string, target string) create.SetHostConfig {
 //   - mode: the mode of the tmpfs mount
 func WithTmpfsMount(target string, sizeBytes int, mode os.FileMode) create.SetHostConfig {
 	return WithMountPoint(
-		mount.WithMountType(mount.MountTypeTmpfs),
-		mount.WithMountTarget(target),
-		mount.WithMountTmpfsSizeBytes(sizeBytes),
-		mount.WithMountTmpfsMode(mode),
+		mount.WithType(mount.MountTypeTmpfs),
+		mount.WithTarget(target),
+		mount.WithTmpfsSizeBytes(sizeBytes),
+		mount.WithTmpfsMode(mode),
 	)
 }
 
@@ -53,10 +53,10 @@ func WithTmpfsMount(target string, sizeBytes int, mode os.FileMode) create.SetHo
 //   - target: the target of the mount
 func WithRONamedVolumeMount(name, target string) create.SetHostConfig {
 	return WithMountPoint(
-		mount.WithMountType(mount.MountTypeVolume),
-		mount.WithMountSource(name),
-		mount.WithMountTarget(target),
-		mount.WithMountReadOnly(),
+		mount.WithType(mount.MountTypeVolume),
+		mount.WithSource(name),
+		mount.WithTarget(target),
+		mount.WithReadOnly(),
 	)
 }
 
@@ -66,10 +66,10 @@ func WithRONamedVolumeMount(name, target string) create.SetHostConfig {
 //   - target: the target of the mount
 func WithRWNamedVolumeMount(name, target string) create.SetHostConfig {
 	return WithMountPoint(
-		mount.WithMountType(mount.MountTypeVolume),
-		mount.WithMountSource(name),
-		mount.WithMountTarget(target),
-		mount.WithMountReadWrite(),
+		mount.WithType(mount.MountTypeVolume),
+		mount.WithSource(name),
+		mount.WithTarget(target),
+		mount.WithReadWrite(),
 	)
 }
 
@@ -79,11 +79,11 @@ func WithRWNamedVolumeMount(name, target string) create.SetHostConfig {
 //   - target: the target of the mount
 func WithHostBindMountRecursiveReadOnly(source, target string) create.SetHostConfig {
 	return WithMountPoint(
-		mount.WithMountType(mount.MountTypeBind),
-		mount.WithMountSource(source),
-		mount.WithMountTarget(target),
-		mount.WithMountReadOnly(),
-		mount.WithMountBindReadOnlyForceRecursive(),
+		mount.WithType(mount.MountTypeBind),
+		mount.WithSource(source),
+		mount.WithTarget(target),
+		mount.WithReadOnly(),
+		mount.WithBindReadOnlyForceRecursive(),
 	)
 }
 
@@ -95,11 +95,11 @@ func WithHostBindMountRecursiveReadOnly(source, target string) create.SetHostCon
 //   - gid: the gid of the tmpfs mount
 func WithTmpfsMountUIDGID(target string, sizeBytes int, uid, gid string) create.SetHostConfig {
 	return WithMountPoint(
-		mount.WithMountType(mount.MountTypeTmpfs),
-		mount.WithMountTarget(target),
-		mount.WithMountTmpfsSizeBytes(sizeBytes),
-		mount.WithMountTmpfsKeyValue("uid", uid),
-		mount.WithMountTmpfsKeyValue("gid", gid),
+		mount.WithType(mount.MountTypeTmpfs),
+		mount.WithTarget(target),
+		mount.WithTmpfsSizeBytes(sizeBytes),
+		mount.WithTmpfsKeyValue("uid", uid),
+		mount.WithTmpfsKeyValue("gid", gid),
 	)
 }
 
@@ -111,11 +111,11 @@ func WithTmpfsMountUIDGID(target string, sizeBytes int, uid, gid string) create.
 //   - labelValue: the value of the label
 func WithRWNamedVolumeMountWithLabel(name, target, labelKey, labelValue string) create.SetHostConfig {
 	return WithMountPoint(
-		mount.WithMountType(mount.MountTypeVolume),
-		mount.WithMountSource(name),
-		mount.WithMountTarget(target),
-		mount.WithMountReadWrite(),
-		mount.WithMountVolumeLabel(labelKey, labelValue),
+		mount.WithType(mount.MountTypeVolume),
+		mount.WithSource(name),
+		mount.WithTarget(target),
+		mount.WithReadWrite(),
+		mount.WithVolumeLabel(labelKey, labelValue),
 	)
 }
 
@@ -126,11 +126,11 @@ func WithRWNamedVolumeMountWithLabel(name, target, labelKey, labelValue string) 
 //   - subPath: the subpath of the volume
 func WithRWNamedVolumeSubPath(name, target, subPath string) create.SetHostConfig {
 	return WithMountPoint(
-		mount.WithMountType(mount.MountTypeVolume),
-		mount.WithMountSource(name),
-		mount.WithMountTarget(target),
-		mount.WithMountReadWrite(),
-		mount.WithMountVolumeSubPath(subPath),
+		mount.WithType(mount.MountTypeVolume),
+		mount.WithSource(name),
+		mount.WithTarget(target),
+		mount.WithReadWrite(),
+		mount.WithVolumeSubPath(subPath),
 	)
 }
 
@@ -141,11 +141,11 @@ func WithRWNamedVolumeSubPath(name, target, subPath string) create.SetHostConfig
 //   - propagation: the propagation of the mount
 func WithBindMountWithPropagation(source, target string, propagation mount.Propagation) create.SetHostConfig {
 	return WithMountPoint(
-		mount.WithMountType(mount.MountTypeBind),
-		mount.WithMountSource(source),
-		mount.WithMountTarget(target),
-		mount.WithMountReadWrite(),
-		mount.WithMountBindPropagation(propagation),
+		mount.WithType(mount.MountTypeBind),
+		mount.WithSource(source),
+		mount.WithTarget(target),
+		mount.WithReadWrite(),
+		mount.WithBindPropagation(propagation),
 	)
 }
 
@@ -158,11 +158,11 @@ func WithBindMountWithPropagation(source, target string, propagation mount.Propa
 //   - device: the device of the volume
 func WithNamedVolumeWithDriver(name, target, driver, options, device string) create.SetHostConfig {
 	return WithMountPoint(
-		mount.WithMountType(mount.MountTypeVolume),
-		mount.WithMountSource(name),
-		mount.WithMountTarget(target),
-		mount.WithMountReadWrite(),
-		mount.WithMountVolumeDriver(driver, options, device),
+		mount.WithType(mount.MountTypeVolume),
+		mount.WithSource(name),
+		mount.WithTarget(target),
+		mount.WithReadWrite(),
+		mount.WithVolumeDriver(driver, options, device),
 	)
 }
 
@@ -172,10 +172,10 @@ func WithNamedVolumeWithDriver(name, target, driver, options, device string) cre
 //   - sizeBytes: the size of the tmpfs mount
 func WithTmpfsMountExec(target string, sizeBytes int) create.SetHostConfig {
 	return WithMountPoint(
-		mount.WithMountType(mount.MountTypeTmpfs),
-		mount.WithMountTarget(target),
-		mount.WithMountTmpfsSizeBytes(sizeBytes),
-		mount.WithMountTmpfsFlag("exec"),
+		mount.WithType(mount.MountTypeTmpfs),
+		mount.WithTarget(target),
+		mount.WithTmpfsSizeBytes(sizeBytes),
+		mount.WithTmpfsFlag("exec"),
 	)
 }
 
@@ -187,15 +187,15 @@ func WithTmpfsMountExec(target string, sizeBytes int) create.SetHostConfig {
 func WithTmpfsMountCustomOptions(target string, sizeBytes int, flags ...[]string) create.SetHostConfig {
 
 	opts := []mount.SetMountConfig{
-		mount.WithMountType(mount.MountTypeTmpfs),
-		mount.WithMountTarget(target),
-		mount.WithMountTmpfsSizeBytes(sizeBytes),
+		mount.WithType(mount.MountTypeTmpfs),
+		mount.WithTarget(target),
+		mount.WithTmpfsSizeBytes(sizeBytes),
 	}
 	for _, flag := range flags {
 		if len(flag) == 1 {
-			opts = append(opts, mount.WithMountTmpfsFlag(flag[0]))
+			opts = append(opts, mount.WithTmpfsFlag(flag[0]))
 		} else if len(flag) == 2 {
-			opts = append(opts, mount.WithMountTmpfsKeyValue(flag[0], flag[1]))
+			opts = append(opts, mount.WithTmpfsKeyValue(flag[0], flag[1]))
 		}
 	}
 	return WithMountPoint(opts...)
@@ -208,15 +208,15 @@ func WithTmpfsMountCustomOptions(target string, sizeBytes int, flags ...[]string
 //   - readonly: true if the mount should be read only, false otherwise
 func WithNonRecursiveBindMount(source, target string, readonly bool) create.SetHostConfig {
 	opts := []mount.SetMountConfig{
-		mount.WithMountType(mount.MountTypeBind),
-		mount.WithMountSource(source),
-		mount.WithMountTarget(target),
-		mount.WithMountBindNonRecursive(),
+		mount.WithType(mount.MountTypeBind),
+		mount.WithSource(source),
+		mount.WithTarget(target),
+		mount.WithBindNonRecursive(),
 	}
 	if readonly {
-		opts = append(opts, mount.WithMountReadOnly())
+		opts = append(opts, mount.WithReadOnly())
 	} else {
-		opts = append(opts, mount.WithMountReadWrite())
+		opts = append(opts, mount.WithReadWrite())
 	}
 	return WithMountPoint(opts...)
 }
