@@ -3,6 +3,7 @@ package health
 import (
 	"time"
 
+	"github.com/aptd3v/go-contain/pkg/create"
 	"github.com/docker/docker/api/types/container"
 )
 
@@ -11,8 +12,12 @@ type SetHealthcheckConfig func(opt *container.HealthConfig) error
 // WithHealthCheckStartPeriod sets the start period for the health check
 // parameters:
 //   - startPeriod: the start period for the health check in seconds
-func WithHealthCheckStartPeriod(startPeriod int) SetHealthcheckConfig {
+func WithStartPeriod(startPeriod int) SetHealthcheckConfig {
 	return func(opt *container.HealthConfig) error {
+		if startPeriod < 0 {
+			opt.StartPeriod = 0
+			return create.NewContainerConfigError("healthcheck", "start_period must be greater than 0")
+		}
 		opt.StartPeriod = time.Duration(startPeriod) * time.Second
 		return nil
 	}
@@ -21,10 +26,11 @@ func WithHealthCheckStartPeriod(startPeriod int) SetHealthcheckConfig {
 // WithHealthCheckTimeout sets the timeout for the health check
 // parameters:
 //   - timeout: the timeout for the health check in seconds
-func WithHealthCheckTimeout(timeout int) SetHealthcheckConfig {
+func WithTimeout(timeout int) SetHealthcheckConfig {
 	return func(opt *container.HealthConfig) error {
-		if opt == nil {
-			opt = &container.HealthConfig{}
+		if timeout < 0 {
+			opt.Timeout = 0
+			return create.NewContainerConfigError("healthcheck", "timeout must be greater than 0")
 		}
 		opt.Timeout = time.Duration(timeout) * time.Second
 		return nil
@@ -34,10 +40,11 @@ func WithHealthCheckTimeout(timeout int) SetHealthcheckConfig {
 // WithHealthCheckInterval sets the interval for the health check
 // parameters:
 //   - interval: the interval for the health check in seconds
-func WithHealthCheckInterval(interval int) SetHealthcheckConfig {
+func WithInterval(interval int) SetHealthcheckConfig {
 	return func(opt *container.HealthConfig) error {
-		if opt == nil {
-			opt = &container.HealthConfig{}
+		if interval <= 0 {
+			opt.Interval = 0
+			return create.NewContainerConfigError("healthcheck", "interval must be greater than or equal to 0")
 		}
 		opt.Interval = time.Duration(interval) * time.Second
 		return nil
@@ -47,10 +54,11 @@ func WithHealthCheckInterval(interval int) SetHealthcheckConfig {
 // WithHealthCheckRetries sets the number of retries for the health check
 // parameters:
 //   - retries: the number of retries for the health check
-func WithHealthCheckRetries(retries int) SetHealthcheckConfig {
+func WithRetries(retries int) SetHealthcheckConfig {
 	return func(opt *container.HealthConfig) error {
-		if opt == nil {
-			opt = &container.HealthConfig{}
+		if retries < 0 {
+			opt.Retries = 0
+			return create.NewContainerConfigError("healthcheck", "retries must be greater than or equal to 0")
 		}
 		opt.Retries = retries
 		return nil
@@ -60,11 +68,8 @@ func WithHealthCheckRetries(retries int) SetHealthcheckConfig {
 // WithHealthCheckTest appends the test for the health check
 // parameters:
 //   - test: the test for the health check
-func WithHealthCheckTest(test ...string) SetHealthcheckConfig {
+func WithTest(test ...string) SetHealthcheckConfig {
 	return func(opt *container.HealthConfig) error {
-		if opt == nil {
-			opt = &container.HealthConfig{}
-		}
 		if len(opt.Test) == 0 {
 			opt.Test = []string{}
 		}
