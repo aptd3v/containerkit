@@ -9,7 +9,7 @@ import (
 
 type SetHealthcheckConfig func(opt *container.HealthConfig) error
 
-// WithHealthCheckStartPeriod sets the start period for the health check
+// WithkStartPeriod sets the start period for the health check
 // parameters:
 //   - startPeriod: the start period for the health check in seconds
 func WithStartPeriod(startPeriod int) SetHealthcheckConfig {
@@ -23,7 +23,7 @@ func WithStartPeriod(startPeriod int) SetHealthcheckConfig {
 	}
 }
 
-// WithHealthCheckTimeout sets the timeout for the health check
+// WithTimeout sets the timeout for the health check
 // parameters:
 //   - timeout: the timeout for the health check in seconds
 func WithTimeout(timeout int) SetHealthcheckConfig {
@@ -37,7 +37,7 @@ func WithTimeout(timeout int) SetHealthcheckConfig {
 	}
 }
 
-// WithHealthCheckInterval sets the interval for the health check
+// WithInterval sets the interval for the health check
 // parameters:
 //   - interval: the interval for the health check in seconds
 func WithInterval(interval int) SetHealthcheckConfig {
@@ -51,7 +51,7 @@ func WithInterval(interval int) SetHealthcheckConfig {
 	}
 }
 
-// WithHealthCheckRetries sets the number of retries for the health check
+// WithRetries sets the number of retries for the health check
 // parameters:
 //   - retries: the number of retries for the health check
 func WithRetries(retries int) SetHealthcheckConfig {
@@ -65,7 +65,7 @@ func WithRetries(retries int) SetHealthcheckConfig {
 	}
 }
 
-// WithHealthCheckTest appends the test for the health check
+// WithTest appends the test for the health check
 // parameters:
 //   - test: the test for the health check
 func WithTest(test ...string) SetHealthcheckConfig {
