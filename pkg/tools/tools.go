@@ -28,9 +28,15 @@ func WhenTrue[T any, O ~func(T) error](predicate PredicateClosure, fns ...O) O {
 func WhenTrueElse[T any, O ~func(T) error](predicate PredicateClosure, fns O, elseFn O) O {
 	return func(t T) error {
 		if predicate() {
-			return fns(t)
+			if fns != nil {
+				return fns(t)
+			}
+			return nil
 		}
-		return elseFn(t)
+		if elseFn != nil {
+			return elseFn(t)
+		}
+		return nil
 	}
 }
 
@@ -39,6 +45,9 @@ func WhenTrueElse[T any, O ~func(T) error](predicate PredicateClosure, fns O, el
 func And(preds ...PredicateClosure) func() bool {
 	return func() bool {
 		for _, pred := range preds {
+			if pred == nil {
+				continue
+			}
 			if !pred() {
 				return false
 			}
@@ -53,6 +62,9 @@ func And(preds ...PredicateClosure) func() bool {
 func Or(preds ...PredicateClosure) func() bool {
 	return func() bool {
 		for _, pred := range preds {
+			if pred == nil {
+				continue
+			}
 			if pred() {
 				return true
 			}
