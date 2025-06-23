@@ -75,6 +75,16 @@ func WithImage(image string) create.SetContainerConfig {
 		return nil
 	}
 }
+func WithImagef(stringFormat string, args ...interface{}) create.SetContainerConfig {
+	return func(config *create.ContainerConfig) error {
+		image := fmt.Sprintf(stringFormat, args...)
+		if image == "" {
+			return create.NewContainerConfigError("image", fmt.Sprintf("invalid image: %s", image))
+		}
+		config.Image = image
+		return nil
+	}
+}
 
 // WithCommand sets the command to be run in the container
 // Parameters:
