@@ -78,63 +78,63 @@ const (
 // SetMountConfig is a function that sets the mount config
 type SetMountConfig func(opt *mount.Mount) error
 
-// WithMountType sets the mount type
+// WithType sets the mount type
 // parameters:
 //   - t: the type of the mount
-func WithMountType(t MountType) SetMountConfig {
+func WithType(t MountType) SetMountConfig {
 	return func(opt *mount.Mount) error {
 		opt.Type = mount.Type(t)
 		return nil
 	}
 }
 
-// WithMountSource sets the mount source
+// WithSource sets the mount source
 // parameters:
 //   - source: the source of the mount
-func WithMountSource(source string) SetMountConfig {
+func WithSource(source string) SetMountConfig {
 	return func(opt *mount.Mount) error {
 		opt.Source = source
 		return nil
 	}
 }
 
-// WithMountTarget sets the mount target
+// WithTarget sets the mount target
 // parameters:
 //   - target: the target of the mount
-func WithMountTarget(target string) SetMountConfig {
+func WithTarget(target string) SetMountConfig {
 	return func(opt *mount.Mount) error {
 		opt.Target = target
 		return nil
 	}
 }
 
-// WithMountReadOnly sets the mount read only, (attempts recursive read-only if possible)
-func WithMountReadOnly() SetMountConfig {
+// WithReadOnly sets the mount read only, (attempts recursive read-only if possible)
+func WithReadOnly() SetMountConfig {
 	return func(opt *mount.Mount) error {
 		opt.ReadOnly = true
 		return nil
 	}
 }
 
-// WithMountReadWrite sets the mount read write
-func WithMountReadWrite() SetMountConfig {
+// WithReadWrite sets the mount read write
+func WithReadWrite() SetMountConfig {
 	return func(opt *mount.Mount) error {
 		opt.ReadOnly = false
 		return nil
 	}
 }
 
-// WithMountConsistency sets the consistency of the mount
+// WithConsistency sets the consistency of the mount
 // parameters:
 //   - consistency: the consistency of the mount (Consistency represents the consistency requirements of a mount)
-func WithMountConsistency(consistency Consistency) SetMountConfig {
+func WithConsistency(consistency Consistency) SetMountConfig {
 	return func(opt *mount.Mount) error {
 		opt.Consistency = mount.Consistency(consistency)
 		return nil
 	}
 }
 
-// WithMountTmpfsSizeBytes sets the size of the tmpfs mount in bytes
+// WithTmpfsSizeBytes sets the size of the tmpfs mount in bytes
 // parameters:
 //   - size: the size of the tmpfs mount in bytes
 //
@@ -144,7 +144,7 @@ func WithMountConsistency(consistency Consistency) SetMountConfig {
 // docker, uses a straight byte value.
 //
 // Percentages are not supported.
-func WithMountTmpfsSizeBytes(size int) SetMountConfig {
+func WithTmpfsSizeBytes(size int) SetMountConfig {
 	return func(opt *mount.Mount) error {
 		if opt.TmpfsOptions == nil {
 			opt.TmpfsOptions = &mount.TmpfsOptions{}
@@ -154,10 +154,10 @@ func WithMountTmpfsSizeBytes(size int) SetMountConfig {
 	}
 }
 
-// WithMountTmpfsMode sets the mode of the tmpfs mount
+// WithTmpfsMode sets the mode of the tmpfs mount
 // parameters:
 //   - mode: the mode of the tmpfs mount upon creation
-func WithMountTmpfsMode(mode os.FileMode) SetMountConfig {
+func WithTmpfsMode(mode os.FileMode) SetMountConfig {
 	return func(opt *mount.Mount) error {
 		if opt.TmpfsOptions == nil {
 			opt.TmpfsOptions = &mount.TmpfsOptions{}
@@ -173,7 +173,7 @@ func WithMountTmpfsMode(mode os.FileMode) SetMountConfig {
 //
 // Example:
 //   - WithTmpfsFlag("exec")
-func WithMountTmpfsFlag(flag string) SetMountConfig {
+func WithTmpfsFlag(flag string) SetMountConfig {
 	return func(opt *mount.Mount) error {
 		if opt.TmpfsOptions == nil {
 			opt.TmpfsOptions = &mount.TmpfsOptions{}
@@ -194,7 +194,7 @@ func WithMountTmpfsFlag(flag string) SetMountConfig {
 // Example:
 //   - WithTmpfsKeyValue("uid", "1000")
 //   - WithTmpfsKeyValue("gid", "1000")
-func WithMountTmpfsKeyValue(key string, value string) SetMountConfig {
+func WithTmpfsKeyValue(key string, value string) SetMountConfig {
 	return func(opt *mount.Mount) error {
 		if opt.TmpfsOptions == nil {
 			opt.TmpfsOptions = &mount.TmpfsOptions{}
@@ -207,8 +207,8 @@ func WithMountTmpfsKeyValue(key string, value string) SetMountConfig {
 	}
 }
 
-// WithMountVolumeNoCopy sets the no copy flag of the volume mount to true
-func WithMountVolumeNoCopy() SetMountConfig {
+// WittVolumeNoCopy sets the no copy flag of the volume mount to true
+func WithVolumeNoCopy() SetMountConfig {
 	return func(opt *mount.Mount) error {
 		if opt.VolumeOptions == nil {
 			opt.VolumeOptions = &mount.VolumeOptions{}
@@ -218,11 +218,11 @@ func WithMountVolumeNoCopy() SetMountConfig {
 	}
 }
 
-// WithMountVolumeLabel sets the label of the volume mount
+// WithVolumeLabel sets the label of the volume mount
 // parameters:
 //   - key: the key of the label
 //   - value: the value of the label
-func WithMountVolumeLabel(key string, value string) SetMountConfig {
+func WithVolumeLabel(key string, value string) SetMountConfig {
 	return func(opt *mount.Mount) error {
 		if opt.VolumeOptions == nil {
 			opt.VolumeOptions = &mount.VolumeOptions{}
@@ -235,10 +235,10 @@ func WithMountVolumeLabel(key string, value string) SetMountConfig {
 	}
 }
 
-// WithMountVolumeSubPath sets the sub path of the volume mount
+// WithVolumeSubPath sets the sub path of the volume mount
 // parameters:
 //   - subPath: the sub path of the volume will mount the sub directory of the volume
-func WithMountVolumeSubPath(subPath string) SetMountConfig {
+func WithVolumeSubPath(subPath string) SetMountConfig {
 	return func(opt *mount.Mount) error {
 		if opt.VolumeOptions == nil {
 			opt.VolumeOptions = &mount.VolumeOptions{}
@@ -248,12 +248,12 @@ func WithMountVolumeSubPath(subPath string) SetMountConfig {
 	}
 }
 
-// WithMountVolumeDriver sets the driver of the volume mount
+// WithVolumeDriver sets the driver of the volume mount
 // parameters:
 //   - driver: the driver of the volume mount
 //   - options: the options of the volume mount passed directly to the linux kernel mount -o
 //   - device: the device of the volume mount
-func WithMountVolumeDriver(driver string, options string, device string) SetMountConfig {
+func WithVolumeDriver(driver string, options string, device string) SetMountConfig {
 	return func(opt *mount.Mount) error {
 		if opt.VolumeOptions == nil {
 			opt.VolumeOptions = &mount.VolumeOptions{}
@@ -270,10 +270,10 @@ func WithMountVolumeDriver(driver string, options string, device string) SetMoun
 	}
 }
 
-// WithMountBindPropagation sets the propagation of the bind mount
+// WithBindPropagation sets the propagation of the bind mount
 // parameters:
 //   - propagation: the propagation of the bind mount
-func WithMountBindPropagation(propagation Propagation) SetMountConfig {
+func WithBindPropagation(propagation Propagation) SetMountConfig {
 	return func(opt *mount.Mount) error {
 		if opt.BindOptions == nil {
 			opt.BindOptions = &mount.BindOptions{}
@@ -283,16 +283,16 @@ func WithMountBindPropagation(propagation Propagation) SetMountConfig {
 	}
 }
 
-// WithMountBindNonRecursive sets the non recursive flag of the bind mount to true
-func WithMountBindNonRecursive() SetMountConfig {
+// WithBindNonRecursive sets the non recursive flag of the bind mount to true
+func WithBindNonRecursive() SetMountConfig {
 	return func(opt *mount.Mount) error {
 		opt.BindOptions.NonRecursive = true
 		return nil
 	}
 }
 
-// WithMountBindReadOnlyNonRecursive sets the read only non recursive flag of the bind mount to true
-func WithMountBindReadOnlyNonRecursive() SetMountConfig {
+// WithBindReadOnlyNonRecursive sets the read only non recursive flag of the bind mount to true
+func WithBindReadOnlyNonRecursive() SetMountConfig {
 	return func(opt *mount.Mount) error {
 		if opt.BindOptions == nil {
 			opt.BindOptions = &mount.BindOptions{}
@@ -302,9 +302,9 @@ func WithMountBindReadOnlyNonRecursive() SetMountConfig {
 	}
 }
 
-// WithMountBindReadOnlyForceRecursive sets the read only force recursive flag of the bind mount to true
+// WithBindReadOnlyForceRecursive sets the read only force recursive flag of the bind mount to true
 // ReadOnlyForceRecursive raises an error if the mount cannot be made recursively read-only.
-func WithMountBindReadOnlyForceRecursive() SetMountConfig {
+func WithBindReadOnlyForceRecursive() SetMountConfig {
 	return func(opt *mount.Mount) error {
 		if opt.BindOptions == nil {
 			opt.BindOptions = &mount.BindOptions{}
@@ -314,8 +314,8 @@ func WithMountBindReadOnlyForceRecursive() SetMountConfig {
 	}
 }
 
-// WithMountBindCreateMountpoint creates a mountpoint for the bind mount
-func WithMountBindCreateMountpoint() SetMountConfig {
+// WithBindCreateMountpoint creates a mountpoint for the bind mount
+func WithBindCreateMountpoint() SetMountConfig {
 	return func(opt *mount.Mount) error {
 		if opt.BindOptions == nil {
 			opt.BindOptions = &mount.BindOptions{}
