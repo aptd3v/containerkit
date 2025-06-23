@@ -2,7 +2,9 @@
 package hc
 
 import (
+	"errors"
 	"fmt"
+	"strings"
 
 	"github.com/aptd3v/go-contain/pkg/create"
 	"github.com/aptd3v/go-contain/pkg/create/config/hc/mount"
@@ -164,9 +166,67 @@ func WithVolumeBinds(bind ...string) create.SetHostConfig {
 		if opt.Binds == nil {
 			opt.Binds = make([]string, 0)
 		}
+		if err := ValidateMounts(bind); err != nil {
+			return err
+		}
 		opt.Binds = append(opt.Binds, bind...)
 		return nil
 	}
+}
+
+// ValidateMounts validates mount specifications in the format "/source/path:/target/path:mode"
+// Whitespace is trimmed from all parts of the specification.
+func ValidateMounts(mounts []string) error {
+	var errMsgs []string
+	seenTargets := make(map[string]bool)
+
+	for i, mount := range mounts {
+		if mount = strings.TrimSpace(mount); mount == "" {
+			errMsgs = append(errMsgs, fmt.Sprintf("binds[%d]: empty mount specification", i))
+			continue
+		}
+
+		parts := strings.Split(mount, ":")
+		if len(parts) != 3 {
+			errMsgs = append(errMsgs, fmt.Sprintf("binds[%d]: invalid format '%s' (must be '/source/path:/target/path:mode')", i, mount))
+			continue
+		}
+
+		// Trim whitespace from all parts
+		sourcePath := strings.TrimSpace(parts[0])
+		targetPath := strings.TrimSpace(parts[1])
+		mode := strings.TrimSpace(parts[2])
+
+		// Validate source path
+		if sourcePath == "" {
+			errMsgs = append(errMsgs, fmt.Sprintf("binds[%d]: empty source path", i))
+			continue
+		}
+
+		// Validate target path
+		if targetPath == "" {
+			errMsgs = append(errMsgs, fmt.Sprintf("binds[%d]: empty target path", i))
+			continue
+		}
+
+		// Check for duplicate target paths
+		if seenTargets[targetPath] {
+			errMsgs = append(errMsgs, fmt.Sprintf("binds[%d]: duplicate target path '%s'", i, targetPath))
+			continue
+		}
+		seenTargets[targetPath] = true
+
+		// Validate mode
+		if mode = strings.TrimSpace(mode); mode != "ro" && mode != "rw" {
+			errMsgs = append(errMsgs, fmt.Sprintf("binds[%d]: invalid mode '%s' (must be 'ro' or 'rw')", i, mode))
+			continue
+		}
+	}
+
+	if len(errMsgs) > 0 {
+		return errors.New(strings.Join(errMsgs, "\n"))
+	}
+	return nil
 }
 
 // WithUTSMode sets the UTS (Unix Timesharing System) namespace mode to be used for the container in the host configuration.
@@ -232,6 +292,16 @@ func WithIsolation(isolation string) create.SetHostConfig {
 	}
 }
 
+// WithCPUCount sets the number of CPUs for the container in the host configuration.
+// parameters:
+//   - count: the number of CPUs to use
+func WithCPUCount(count int64) create.SetHostConfig {
+	return func(opt *create.HostConfig) error {
+		opt.CPUCount = count
+		return nil
+	}
+}
+
 // WithReadonlyPaths appends a list of paths to be marked as read-only in the host configuration.
 // parameters:
 //   - paths: the paths to mark as read-only
@@ -274,6 +344,8 @@ func WithNetworkMode(mode string) create.SetHostConfig {
 // WithVolumeDriver sets the volume driver for the container in the host configuration
 // parameters:
 //   - driver: the volume driver to use
+//
+// note: this is not used in compose
 func WithVolumeDriver(driver string) create.SetHostConfig {
 	return func(opt *create.HostConfig) error {
 		opt.VolumeDriver = driver
@@ -324,6 +396,17 @@ func WithOomScoreAdj(score int) create.SetHostConfig {
 	}
 }
 
+// WithOomKillDisable sets the OOM kill disable flag for the container in the host configuration.
+// parameters:
+//   - oomKillDisable: the OOM kill disable flag to use
+func WithOomKillDisable() create.SetHostConfig {
+	oomKillDisable := true
+	return func(opt *create.HostConfig) error {
+		opt.OomKillDisable = &oomKillDisable
+		return nil
+	}
+}
+
 // WithPidMode sets the PID mode for the container in the host configuration.
 // parameters:
 //   - mode: the PID mode to use
@@ -347,9 +430,9 @@ func WithPublishAllPorts(publishAllPorts bool) create.SetHostConfig {
 // WithReadOnlyRootfs sets the readonly rootfs flag for the container in the host configuration.
 // parameters:
 //   - readonlyRootfs: the readonly rootfs flag to use
-func WithReadOnlyRootfs(readonlyRootfs bool) create.SetHostConfig {
+func WithReadOnlyRootfs() create.SetHostConfig {
 	return func(opt *create.HostConfig) error {
-		opt.ReadonlyRootfs = readonlyRootfs
+		opt.ReadonlyRootfs = true
 		return nil
 	}
 }
@@ -398,9 +481,9 @@ func WithTmpfs(key, value string) create.SetHostConfig {
 // WithPrivileged sets the Privileged mode to the host configuration which allows the following:
 // parameters:
 //   - privileged: the privileged mode to use
-func WithPrivileged(privileged bool) create.SetHostConfig {
+func WithPrivileged() create.SetHostConfig {
 	return func(opt *create.HostConfig) error {
-		opt.Privileged = privileged
+		opt.Privileged = true
 		return nil
 	}
 }
@@ -449,6 +532,16 @@ func WithCPUShares(shares int64) create.SetHostConfig {
 func WithCPUPeriod(period int64) create.SetHostConfig {
 	return func(opt *create.HostConfig) error {
 		opt.CPUPeriod = period
+		return nil
+	}
+}
+
+// WithCPUPercent sets the CPU percentage for the container
+// parameters:
+//   - percent: the CPU percentage to use
+func WithCPUPercent(percent int64) create.SetHostConfig {
+	return func(opt *create.HostConfig) error {
+		opt.CPUPercent = percent
 		return nil
 	}
 }
@@ -515,7 +608,10 @@ func WithUlimits(name string, soft, hard int64) create.SetHostConfig {
 // WithInit sets the init flag for the container
 // parameters:
 //   - init: the init flag to use
-func WithInit(init bool) create.SetHostConfig {
+//
+// Run a custom init inside the container, if null, use the daemon's configured settings
+func WithInit() create.SetHostConfig {
+	init := true
 	return func(opt *create.HostConfig) error {
 		opt.Init = &init
 		return nil
