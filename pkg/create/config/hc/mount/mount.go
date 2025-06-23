@@ -275,6 +275,9 @@ func WithMountVolumeDriver(driver string, options string, device string) SetMoun
 //   - propagation: the propagation of the bind mount
 func WithMountBindPropagation(propagation Propagation) SetMountConfig {
 	return func(opt *mount.Mount) error {
+		if opt.BindOptions == nil {
+			opt.BindOptions = &mount.BindOptions{}
+		}
 		opt.BindOptions.Propagation = mount.Propagation(propagation)
 		return nil
 	}
@@ -291,6 +294,9 @@ func WithMountBindNonRecursive() SetMountConfig {
 // WithMountBindReadOnlyNonRecursive sets the read only non recursive flag of the bind mount to true
 func WithMountBindReadOnlyNonRecursive() SetMountConfig {
 	return func(opt *mount.Mount) error {
+		if opt.BindOptions == nil {
+			opt.BindOptions = &mount.BindOptions{}
+		}
 		opt.BindOptions.ReadOnlyNonRecursive = true
 		return nil
 	}
@@ -300,6 +306,9 @@ func WithMountBindReadOnlyNonRecursive() SetMountConfig {
 // ReadOnlyForceRecursive raises an error if the mount cannot be made recursively read-only.
 func WithMountBindReadOnlyForceRecursive() SetMountConfig {
 	return func(opt *mount.Mount) error {
+		if opt.BindOptions == nil {
+			opt.BindOptions = &mount.BindOptions{}
+		}
 		opt.BindOptions.ReadOnlyForceRecursive = true
 		return nil
 	}
@@ -308,6 +317,9 @@ func WithMountBindReadOnlyForceRecursive() SetMountConfig {
 // WithMountBindCreateMountpoint creates a mountpoint for the bind mount
 func WithMountBindCreateMountpoint() SetMountConfig {
 	return func(opt *mount.Mount) error {
+		if opt.BindOptions == nil {
+			opt.BindOptions = &mount.BindOptions{}
+		}
 		opt.BindOptions.CreateMountpoint = true
 		return nil
 	}
