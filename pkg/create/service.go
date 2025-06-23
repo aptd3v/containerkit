@@ -13,18 +13,21 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
-// Project is the top level object in the compose file
+// Project is a wrapper around types.Project
+// It provides methods to create and manage a docker Compose project.
 type Project struct {
-	*types.Project
+	wrapped *types.Project
 }
 
 // SetServiceConfig is a function that sets the service config
 type SetServiceConfig func(service *types.ServiceConfig) error
 
 // NewProject creates a new project
+// with the given name. It initializes the project with an empty service list.
+// The name is used as the project name in the compose file.
 func NewProject(name string) *Project {
 	return &Project{
-		Project: &types.Project{
+		wrapped: &types.Project{
 			Name:     name,
 			Services: []types.ServiceConfig{},
 		},
@@ -163,11 +166,11 @@ func (p *Project) NewService(name string, service *Container, setters ...SetServ
 			return err
 		}
 	}
-	p.Services = append(p.Services, serv)
+	p.wrapped.Services = append(p.wrapped.Services, serv)
 	return nil
 }
 func (p *Project) Marshal() ([]byte, error) {
-	return yaml.Marshal(p.Project)
+	return yaml.Marshal(p.wrapped)
 }
 func (p *Project) Export(file string, mode os.FileMode) error {
 	yaml, err := p.Marshal()
@@ -189,9 +192,7 @@ func convertDevices(devices []container.DeviceMapping) []string {
 // convertVolumesFrom converts the volumes from the container config to the compose config
 func convertVolumesFrom(volumes []string) []string {
 	volumeRules := make([]string, 0, len(volumes))
-	for _, volume := range volumes {
-		volumeRules = append(volumeRules, volume)
-	}
+	volumeRules = append(volumeRules, volumes...)
 	return volumeRules
 }
 
@@ -266,7 +267,13 @@ func convertBlkioConfig(hostConfig *container.HostConfig) *types.BlkioConfig {
 			Rate: types.UnitBytes(device.Rate),
 		})
 	}
-	if len(weightDevice) == 0 && len(deviceReadBps) == 0 && len(deviceWriteBps) == 0 && len(deviceReadIOps) == 0 && len(deviceWriteIOps) == 0 {
+	if len(weightDevice) == 0 &&
+		len(deviceReadBps) == 0 &&
+		len(deviceWriteBps) == 0 &&
+		len(deviceReadIOps) == 0 &&
+		len(deviceWriteIOps) == 0 &&
+		hostConfig.BlkioWeight == 0 {
+		//all values zeroed so return nil so compose yaml does not get a empty object {}
 		return nil
 	}
 	return &types.BlkioConfig{
@@ -281,6 +288,10 @@ func convertBlkioConfig(hostConfig *container.HostConfig) *types.BlkioConfig {
 
 // convertLogging converts the logging config from the container config to the compose config
 func convertLogging(logConfig *container.LogConfig) *types.LoggingConfig {
+	if logConfig == nil || logConfig.Type == "" {
+		// if no logging config is set, return nil so compose does not get a empty object {}
+		return nil
+	}
 	return &types.LoggingConfig{
 		Driver:  logConfig.Type,
 		Options: logConfig.Config,
