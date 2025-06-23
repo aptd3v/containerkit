@@ -3,12 +3,9 @@ package cc
 
 import (
 	"fmt"
-	"io"
-	"os"
 
 	"github.com/aptd3v/go-contain/pkg/create"
 	"github.com/docker/go-connections/nat"
-	"github.com/joho/godotenv"
 )
 
 // WithEnv appends an environment variable and its value to the container configuration
@@ -24,55 +21,6 @@ func WithEnv(key string, value string) create.SetContainerConfig {
 			return create.NewContainerConfigError("env", fmt.Sprintf("invalid environment variable: %s", key+"="+value))
 		}
 		config.Env = append(config.Env, key+"="+value)
-		return nil
-	}
-}
-
-// WithEnvFromFile appends environment variables from a file to the container configuration
-// Parameters:
-//   - filepath: path to the environment file
-func WithEnvFromFile(filepath string) create.SetContainerConfig {
-	return func(config *create.ContainerConfig) error {
-		if config.Env == nil {
-			config.Env = make([]string, 0)
-		}
-		file, err := os.Open(filepath)
-		if err != nil {
-			return create.NewContainerConfigError("env", fmt.Sprintf("failed to open environment file: %s, %s", filepath, err))
-		}
-		defer file.Close()
-		env, err := godotenv.Parse(file)
-		if err != nil {
-			return create.NewContainerConfigError("env", fmt.Sprintf("failed to parse environment file: %s, %s", filepath, err))
-		}
-		for k, v := range env {
-			if k == "" || v == "" {
-				return create.NewContainerConfigError("env", fmt.Sprintf("invalid environment variable: %s", k+"="+v))
-			}
-			config.Env = append(config.Env, k+"="+v)
-		}
-		return nil
-	}
-}
-
-// WithEnvFromReader appends environment variables from a reader to the container configuration
-// Parameters:
-//   - r: reader to read the environment variables from
-func WithEnvFromReader(r io.Reader) create.SetContainerConfig {
-	return func(config *create.ContainerConfig) error {
-		if config.Env == nil {
-			config.Env = make([]string, 0)
-		}
-		env, err := godotenv.Parse(r)
-		if err != nil {
-			return create.NewContainerConfigError("env", fmt.Sprintf("failed to parse environment file: %s", err))
-		}
-		for k, v := range env {
-			if k == "" || v == "" {
-				return create.NewContainerConfigError("env", fmt.Sprintf("invalid environment variable: %s", k+"="+v))
-			}
-			config.Env = append(config.Env, k+"="+v)
-		}
 		return nil
 	}
 }
@@ -211,9 +159,12 @@ func WithEscapedArgs() create.SetContainerConfig {
 	}
 }
 
-// WithVolume appends a volume mount point to the container
+// WithVolume appends a  short hand volume mount point to the container
 // Parameter:
 //   - volume: path where the volume should be mounted
+//
+// note: will not work within service config for compose file
+// use hc.WithRWHostBindMount or other mount setter functions instead
 func WithVolume(volume string) create.SetContainerConfig {
 	return func(config *create.ContainerConfig) error {
 		if volume == "" {
@@ -318,6 +269,8 @@ func WithShell(shell ...string) create.SetContainerConfig {
 }
 
 // WithStopTimeout sets the timeout (in seconds) to stop the container
+//
+// note: is also stop_grace_period in compose
 func WithStopTimeout(timeout int) create.SetContainerConfig {
 	return func(config *create.ContainerConfig) error {
 		if timeout <= 0 {
