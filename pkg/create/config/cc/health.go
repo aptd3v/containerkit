@@ -24,6 +24,11 @@ func WithHealthCheck(setters ...health.SetHealthcheckConfig) create.SetContainer
 				return create.NewContainerConfigError("healthcheck", fmt.Sprintf("failed to set health check: %s", err))
 			}
 		}
+		if len(opt.Healthcheck.Test) == 0 {
+			// docker ignores healthcheck if test is empty, so we set it to NONE as default
+			opt.Healthcheck.Test = []string{"NONE"}
+			return nil
+		}
 		return nil
 	}
 }
@@ -40,11 +45,11 @@ func WithHealthCheck(setters ...health.SetHealthcheckConfig) create.SetContainer
 func WithTCPHealthCheck(host string, port string, interval int) create.SetContainerConfig {
 	cmd := fmt.Sprintf("nc -z %s %s || exit 1", host, port)
 	return WithHealthCheck(
-		health.WithHealthCheckTest("CMD-SHELL", cmd),
-		health.WithHealthCheckStartPeriod(5),
-		health.WithHealthCheckInterval(interval),
-		health.WithHealthCheckTimeout(5),
-		health.WithHealthCheckRetries(3),
+		health.WithTest("CMD-SHELL", cmd),
+		health.WithStartPeriod(5),
+		health.WithInterval(interval),
+		health.WithTimeout(5),
+		health.WithRetries(3),
 	)
 }
 
@@ -58,11 +63,11 @@ func WithTCPHealthCheck(host string, port string, interval int) create.SetContai
 func WithHTTPHealthCheck(url, method string, interval int) create.SetContainerConfig {
 	cmd := fmt.Sprintf(`curl -X %s -f "%s" || exit 1`, method, url)
 	return WithHealthCheck(
-		health.WithHealthCheckTest("CMD-SHELL", cmd),
-		health.WithHealthCheckStartPeriod(5),
-		health.WithHealthCheckInterval(interval),
-		health.WithHealthCheckTimeout(10),
-		health.WithHealthCheckRetries(5),
+		health.WithTest("CMD-SHELL", cmd),
+		health.WithStartPeriod(5),
+		health.WithInterval(interval),
+		health.WithTimeout(10),
+		health.WithRetries(5),
 	)
 }
 
@@ -76,11 +81,11 @@ func WithHTTPHealthCheck(url, method string, interval int) create.SetContainerCo
 // "CMD-SHELL", "curl -f "+url+" || exit 1"
 func WithCurlHealthCheck(url string, interval int) create.SetContainerConfig {
 	return WithHealthCheck(
-		health.WithHealthCheckTest("CMD-SHELL", `curl -f "`+url+`" || exit 1`),
-		health.WithHealthCheckStartPeriod(5),
-		health.WithHealthCheckInterval(interval),
-		health.WithHealthCheckTimeout(10),
-		health.WithHealthCheckRetries(5),
+		health.WithTest("CMD-SHELL", `curl -f "`+url+`" || exit 1`),
+		health.WithStartPeriod(5),
+		health.WithInterval(interval),
+		health.WithTimeout(10),
+		health.WithRetries(5),
 	)
 }
 
@@ -94,11 +99,11 @@ func WithCurlHealthCheck(url string, interval int) create.SetContainerConfig {
 // "CMD-SHELL", cmds...
 func WithCommandHealthCheck(interval int, cmds ...string) create.SetContainerConfig {
 	return WithHealthCheck(
-		health.WithHealthCheckTest(append([]string{"CMD-SHELL"}, cmds...)...),
-		health.WithHealthCheckStartPeriod(5),
-		health.WithHealthCheckInterval(interval),
-		health.WithHealthCheckTimeout(5),
-		health.WithHealthCheckRetries(3),
+		health.WithTest(append([]string{"CMD-SHELL"}, cmds...)...),
+		health.WithStartPeriod(5),
+		health.WithInterval(interval),
+		health.WithTimeout(5),
+		health.WithRetries(3),
 	)
 }
 
@@ -112,11 +117,11 @@ func WithCommandHealthCheck(interval int, cmds ...string) create.SetContainerCon
 func WithDockerSocketHealthCheck(interval int) create.SetContainerConfig {
 	cmd := `[ -S /var/run/docker.sock ] || exit 1`
 	return WithHealthCheck(
-		health.WithHealthCheckTest("CMD-SHELL", cmd),
-		health.WithHealthCheckInterval(interval),
-		health.WithHealthCheckTimeout(5),
-		health.WithHealthCheckStartPeriod(5),
-		health.WithHealthCheckRetries(3),
+		health.WithTest("CMD-SHELL", cmd),
+		health.WithStartPeriod(5),
+		health.WithInterval(interval),
+		health.WithTimeout(5),
+		health.WithRetries(3),
 	)
 }
 
@@ -131,10 +136,10 @@ func WithDockerSocketHealthCheck(interval int) create.SetContainerConfig {
 func WithFileExistsHealthCheck(filePath string, interval int) create.SetContainerConfig {
 	cmd := fmt.Sprintf(`[ -f "%s" ] || exit 1`, filePath)
 	return WithHealthCheck(
-		health.WithHealthCheckTest("CMD-SHELL", cmd),
-		health.WithHealthCheckInterval(interval),
-		health.WithHealthCheckTimeout(5),
-		health.WithHealthCheckRetries(3),
+		health.WithTest("CMD-SHELL", cmd),
+		health.WithInterval(interval),
+		health.WithTimeout(5),
+		health.WithRetries(3),
 	)
 }
 
@@ -150,16 +155,16 @@ func WithFileExistsHealthCheck(filePath string, interval int) create.SetContaine
 func WithLogFileContainsHealthCheck(logFile, pattern string, interval int) create.SetContainerConfig {
 	cmd := fmt.Sprintf(`grep -q "%s" "%s" || exit 1`, pattern, logFile)
 	return WithHealthCheck(
-		health.WithHealthCheckTest("CMD-SHELL", cmd),
-		health.WithHealthCheckInterval(interval),
-		health.WithHealthCheckTimeout(5),
-		health.WithHealthCheckRetries(3),
+		health.WithTest("CMD-SHELL", cmd),
+		health.WithInterval(interval),
+		health.WithTimeout(5),
+		health.WithRetries(3),
 	)
 }
 
 // WithDisabledHealthCheck disables the health check by setting it to NONE.
 func WithDisabledHealthCheck() create.SetContainerConfig {
 	return WithHealthCheck(
-		health.WithHealthCheckTest("NONE"),
+		health.WithTest("NONE"),
 	)
 }
