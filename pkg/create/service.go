@@ -35,6 +35,10 @@ func NewProject(name string) *Project {
 }
 
 // NewService defines a new service in the project
+// parameters:
+//   - name: the name of the service
+//   - service: the container to create the service from
+//   - setters: the setters to apply to the service
 func (p *Project) NewService(name string, service *Container, setters ...SetServiceConfig) error {
 	if err := service.Validate(); err != nil {
 		//TODO: proper error type handling
@@ -93,8 +97,7 @@ func (p *Project) NewService(name string, service *Container, setters ...SetServ
 		DNSOpts:   config.Host.HostConfig.DNSOptions,
 
 		//oom
-		OomScoreAdj:   int64(config.Host.HostConfig.OomScoreAdj),
-		ContainerName: config.Name,
+		OomScoreAdj: int64(config.Host.HostConfig.OomScoreAdj),
 		//Devices
 		Devices: convertDevices(config.Host.HostConfig.Devices),
 
@@ -158,26 +161,40 @@ func (p *Project) NewService(name string, service *Container, setters ...SetServ
 		t := types.Duration(time.Second * time.Duration(*config.Container.StopTimeout))
 		serv.StopGracePeriod = &t
 	}
+
 	for _, setter := range setters {
 		if setter == nil {
 			continue
 		}
 		if err := setter(&serv); err != nil {
-			return err
+			return NewServiceConfigError(name, err.Error())
 		}
+	}
+	//swarm mode wants unique container names so we need to only set container name if deploy is not set
+	if serv.Deploy != nil {
+		serv.ContainerName = ""
+	} else {
+		serv.ContainerName = config.Name
 	}
 	p.wrapped.Services = append(p.wrapped.Services, serv)
 	return nil
 }
+
+// Marshal marshals the project to a yaml string
 func (p *Project) Marshal() ([]byte, error) {
 	return yaml.Marshal(p.wrapped)
 }
-func (p *Project) Export(file string, mode os.FileMode) error {
+
+// Export exports the project to a file
+// parameters:
+//   - file: the file path to export the project to
+//   - perm: the permission of the file
+func (p *Project) Export(file string, perm os.FileMode) error {
 	yaml, err := p.Marshal()
 	if err != nil {
 		return err
 	}
-	return os.WriteFile(file, yaml, mode)
+	return os.WriteFile(file, yaml, perm)
 }
 
 // convertDevices converts the devices from the container config to the compose config
