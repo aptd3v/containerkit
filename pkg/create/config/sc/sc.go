@@ -3,6 +3,8 @@ package sc
 
 import (
 	"github.com/aptd3v/go-contain/pkg/create"
+	"github.com/aptd3v/go-contain/pkg/create/config/sc/build"
+	"github.com/aptd3v/go-contain/pkg/create/config/sc/deploy"
 	"github.com/compose-spec/compose-go/types"
 )
 
@@ -64,6 +66,64 @@ func WithDependsOn(service string) create.SetServiceConfig {
 			Condition: "service_started",
 			Restart:   true,
 			Required:  true,
+		}
+		return nil
+	}
+}
+
+// WithEnvFile appends the env file paths for the service
+// parameters:
+//   - path: the path to the env file
+func WithEnvFile(path ...string) create.SetServiceConfig {
+	return func(config *types.ServiceConfig) error {
+		if config.EnvFile == nil {
+			config.EnvFile = make(types.StringList, 0)
+		}
+		for _, p := range path {
+			config.EnvFile = append(config.EnvFile, p)
+		}
+		return nil
+	}
+}
+
+// WithDeploy sets the deploy config for the service
+// parameters:
+//   - setters: the setters for the deploy config
+func WithDeploy(setters ...deploy.SetDeployConfig) create.SetServiceConfig {
+	return func(config *types.ServiceConfig) error {
+		if len(setters) == 0 {
+			return nil
+		}
+		if config.Deploy == nil {
+			config.Deploy = &types.DeployConfig{}
+		}
+		for _, setter := range setters {
+			if setter == nil {
+				continue
+			}
+			if err := setter(config.Deploy); err != nil {
+				return err
+			}
+		}
+		return nil
+	}
+}
+
+func WithBuild(setters ...build.SetBuildConfig) create.SetServiceConfig {
+	return func(config *types.ServiceConfig) error {
+		if len(setters) == 0 {
+			return nil
+		}
+		if config.Build == nil {
+			config.Build = &types.BuildConfig{}
+		}
+		for _, setter := range setters {
+			if setter == nil {
+				continue
+			}
+			if err := setter(config.Build); err != nil {
+				return err
+			}
 		}
 		return nil
 	}
