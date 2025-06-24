@@ -25,6 +25,13 @@ func WhenTrue[T any, O ~func(T) error](predicate PredicateClosure, fns ...O) O {
 		return nil
 	}
 }
+
+// WhenTrueElse is a function that takes a predicate closure, a function to call if the predicate is true,
+// and a function to call if the predicate is false.
+// It returns a single setter.
+// Only if it passes the provided predicate closure, the setters will be called.
+//
+// note: if any of the setters are nil, they will be skipped and not added to warnings
 func WhenTrueElse[T any, O ~func(T) error](predicate PredicateClosure, fns O, elseFn O) O {
 	return func(t T) error {
 		if predicate() {
@@ -93,5 +100,11 @@ func Group[T any, O ~func(T) error](fns ...O) O {
 func AlwaysTrue() PredicateClosure {
 	return func() bool {
 		return true
+	}
+}
+
+func AlwaysFalse() PredicateClosure {
+	return func() bool {
+		return false
 	}
 }
