@@ -5,6 +5,7 @@ import (
 	"github.com/aptd3v/go-contain/pkg/create"
 	"github.com/aptd3v/go-contain/pkg/create/config/sc/build"
 	"github.com/aptd3v/go-contain/pkg/create/config/sc/deploy"
+	"github.com/aptd3v/go-contain/pkg/create/config/sc/secrets"
 	"github.com/compose-spec/compose-go/types"
 )
 
@@ -125,6 +126,33 @@ func WithBuild(setters ...build.SetBuildConfig) create.SetServiceConfig {
 				return err
 			}
 		}
+		return nil
+	}
+}
+
+// WithSecret appends a secret to the service
+// parameters:
+//   - setters: the setters for the secret
+//
+// secrets specifies secrets to expose to the service.
+func WithSecret(setters ...secrets.SetSecretConfig) create.SetServiceConfig {
+	return func(config *types.ServiceConfig) error {
+		if len(setters) == 0 {
+			return nil
+		}
+		if config.Secrets == nil {
+			config.Secrets = make([]types.ServiceSecretConfig, 0)
+		}
+		secret := types.ServiceSecretConfig{}
+		for _, setter := range setters {
+			if setter == nil {
+				continue
+			}
+			if err := setter(&secret); err != nil {
+				return err
+			}
+		}
+		config.Secrets = append(config.Secrets, secret)
 		return nil
 	}
 }

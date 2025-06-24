@@ -4,8 +4,8 @@ package build
 import (
 	"fmt"
 
-	"github.com/aptd3v/go-contain/pkg/create/config/sc/build/secrets"
 	"github.com/aptd3v/go-contain/pkg/create/config/sc/build/ulimit"
+	"github.com/aptd3v/go-contain/pkg/create/config/sc/secrets"
 	"github.com/compose-spec/compose-go/types"
 )
 
