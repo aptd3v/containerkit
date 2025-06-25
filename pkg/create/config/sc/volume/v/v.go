@@ -1,7 +1,7 @@
 // Package v provides functions to set the volume configuration for a project
 package v
 
-import "github.com/compose-spec/compose-go/types"
+import "github.com/compose-spec/compose-go/v2/types"
 
 type SetVolumeProjectConfig func(*types.VolumeConfig) error
 

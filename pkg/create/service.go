@@ -10,7 +10,7 @@ import (
 	"github.com/aptd3v/go-contain/pkg/create/config/sc/network/n"
 	"github.com/aptd3v/go-contain/pkg/create/config/sc/secrets/sp"
 	"github.com/aptd3v/go-contain/pkg/create/config/sc/volume/v"
-	"github.com/compose-spec/compose-go/types"
+	"github.com/compose-spec/compose-go/v2/types"
 	"github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/api/types/network"
 	"github.com/docker/go-connections/nat"
@@ -34,7 +34,7 @@ func NewProject(name string) *Project {
 	return &Project{
 		wrapped: &types.Project{
 			Name:     name,
-			Services: []types.ServiceConfig{},
+			Services: types.Services{},
 			Volumes:  make(types.Volumes),
 		},
 	}
@@ -183,7 +183,10 @@ func (p *Project) WithService(name string, service *Container, setters ...SetSer
 	} else {
 		serv.ContainerName = config.Name
 	}
-	p.wrapped.Services = append(p.wrapped.Services, serv)
+	if p.wrapped.Services == nil {
+		p.wrapped.Services = make(types.Services, 0)
+	}
+	p.wrapped.Services[name] = serv
 	return p
 }
 
@@ -277,11 +280,20 @@ func (p *Project) Export(file string, perm os.FileMode) error {
 	return os.WriteFile(file, yaml, perm)
 }
 
+// Unwrap returns the underlying types.Project
+func (p *Project) Unwrap() *types.Project {
+	return p.wrapped
+}
+
 // convertDevices converts the devices from the container config to the compose config
-func convertDevices(devices []container.DeviceMapping) []string {
-	deviceRules := make([]string, 0, len(devices))
+func convertDevices(devices []container.DeviceMapping) []types.DeviceMapping {
+	deviceRules := make([]types.DeviceMapping, 0, len(devices))
 	for _, device := range devices {
-		deviceRules = append(deviceRules, fmt.Sprintf("%s:%s:%s", device.PathOnHost, device.PathInContainer, device.CgroupPermissions))
+		deviceRules = append(deviceRules, types.DeviceMapping{
+			Source:      device.PathOnHost,
+			Target:      device.PathInContainer,
+			Permissions: string(device.CgroupPermissions),
+		})
 	}
 	return deviceRules
 }

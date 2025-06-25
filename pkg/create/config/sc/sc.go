@@ -6,7 +6,7 @@ import (
 	"github.com/aptd3v/go-contain/pkg/create/config/sc/build"
 	"github.com/aptd3v/go-contain/pkg/create/config/sc/deploy"
 	"github.com/aptd3v/go-contain/pkg/create/config/sc/secrets/ss"
-	"github.com/compose-spec/compose-go/types"
+	"github.com/compose-spec/compose-go/v2/types"
 )
 
 type WatchAction string
@@ -77,11 +77,11 @@ func WithDependsOn(service string) create.SetServiceConfig {
 //   - path: the path to the env file
 func WithEnvFile(path ...string) create.SetServiceConfig {
 	return func(config *types.ServiceConfig) error {
-		if config.EnvFile == nil {
-			config.EnvFile = make(types.StringList, 0)
+		if config.Environment == nil {
+			config.Environment = make(types.MappingWithEquals, 0)
 		}
 		for _, p := range path {
-			config.EnvFile = append(config.EnvFile, p)
+			config.Environment[p] = &p
 		}
 		return nil
 	}

@@ -16,3 +16,8 @@ func NewClient() (*Client, error) {
 	}
 	return &Client{wrapped: wrapped}, nil
 }
+
+// Unwrap returns the underlying client.Client
+func (c *Client) Unwrap() *client.Client {
+	return c.wrapped
+}

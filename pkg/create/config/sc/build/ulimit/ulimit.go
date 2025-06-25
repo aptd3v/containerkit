@@ -1,7 +1,7 @@
 // Package ulimit provides a set of functions to configure the ulimits for the build
 package ulimit
 
-import "github.com/compose-spec/compose-go/types"
+import "github.com/compose-spec/compose-go/v2/types"
 
 type SetUlimitConfig func(*types.UlimitsConfig) error
 

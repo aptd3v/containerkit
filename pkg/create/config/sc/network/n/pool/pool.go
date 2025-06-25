@@ -1,7 +1,7 @@
 // Package pool provides functions to set the ipam pool configuration for a project
 package pool
 
-import "github.com/compose-spec/compose-go/types"
+import "github.com/compose-spec/compose-go/v2/types"
 
 // SetIpamPoolProjectConfig is a function that sets the ipam pool configuration for a project
 type SetIpamPoolProjectConfig func(*types.IPAMPool) error

@@ -4,7 +4,7 @@ package deploy
 import (
 	"github.com/aptd3v/go-contain/pkg/create/config/sc/deploy/resource"
 	"github.com/aptd3v/go-contain/pkg/create/config/sc/deploy/update"
-	"github.com/compose-spec/compose-go/types"
+	"github.com/compose-spec/compose-go/v2/types"
 )
 
 type SetDeployConfig func(opt *types.DeployConfig) error
@@ -22,7 +22,7 @@ func WithMode(mode string) SetDeployConfig {
 // WithReplicas sets the number of replicas for the service
 // parameters:
 //   - replicas: the number of replicas for the service
-func WithReplicas(replicas uint64) SetDeployConfig {
+func WithReplicas(replicas int) SetDeployConfig {
 	return func(opt *types.DeployConfig) error {
 		opt.Replicas = &replicas
 		return nil

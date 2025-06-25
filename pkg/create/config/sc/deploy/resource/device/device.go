@@ -1,7 +1,7 @@
 // Package device provides functions to set the device configuration for a service deploys resource
 package device
 
-import "github.com/compose-spec/compose-go/types"
+import "github.com/compose-spec/compose-go/v2/types"
 
 type SetDeviceConfig func(opt *types.DeviceRequest) error
 

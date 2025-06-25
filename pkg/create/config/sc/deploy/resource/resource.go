@@ -3,7 +3,7 @@ package resource
 
 import (
 	"github.com/aptd3v/go-contain/pkg/create/config/sc/deploy/resource/device"
-	"github.com/compose-spec/compose-go/types"
+	"github.com/compose-spec/compose-go/v2/types"
 )
 
 type SetResourceConfig func(opt *types.Resource) error
@@ -11,9 +11,9 @@ type SetResourceConfig func(opt *types.Resource) error
 // WithNanoCPUs sets the number of nano CPUs for the resource
 // parameters:
 //   - nanoCPUs: the number of nano CPUs for the resource
-func WithNanoCPUs(nanoCPUs string) SetResourceConfig {
+func WithNanoCPUs(nanoCPUs int64) SetResourceConfig {
 	return func(opt *types.Resource) error {
-		opt.NanoCPUs = nanoCPUs
+		opt.NanoCPUs = types.NanoCPUs(nanoCPUs)
 		return nil
 	}
 }

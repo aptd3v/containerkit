@@ -4,7 +4,7 @@ package update
 import (
 	"time"
 
-	"github.com/compose-spec/compose-go/types"
+	"github.com/compose-spec/compose-go/v2/types"
 )
 
 type SetUpdateConfig func(opt *types.UpdateConfig) error

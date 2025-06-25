@@ -1,7 +1,7 @@
 // Package ss provides a set of functions to configure the secrets for the service
 package ss
 
-import "github.com/compose-spec/compose-go/types"
+import "github.com/compose-spec/compose-go/v2/types"
 
 type SetSecretServiceConfig func(*types.ServiceSecretConfig) error
 
@@ -48,8 +48,9 @@ func WithGID(gid string) SetSecretServiceConfig {
 // WithMode sets the mode for the secret
 // parameters:
 //   - mode: the mode for the secret
-func WithMode(mode uint32) SetSecretServiceConfig {
+func WithMode(mode int64) SetSecretServiceConfig {
 	return func(opt *types.ServiceSecretConfig) error {
+		mode := types.FileMode(mode)
 		opt.Mode = &mode
 		return nil
 	}

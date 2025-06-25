@@ -25,7 +25,7 @@ type PlatformConfig struct {
 	*p.Platform
 }
 
-type MergedConfig struct {
+type mergedConfig struct {
 	Name      string // the name of the container
 	Container *ContainerConfig
 	Host      *HostConfig
@@ -35,12 +35,12 @@ type MergedConfig struct {
 type Container struct {
 	Warnings []string
 	Errors   []error
-	Config   *MergedConfig
+	Config   *mergedConfig
 }
 
 func NewContainer(name string) *Container {
 	return &Container{
-		Config: &MergedConfig{
+		Config: &mergedConfig{
 			Name: name,
 			Container: &ContainerConfig{
 				Config: &c.Config{},

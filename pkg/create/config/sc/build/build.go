@@ -6,7 +6,7 @@ import (
 
 	"github.com/aptd3v/go-contain/pkg/create/config/sc/build/ulimit"
 	"github.com/aptd3v/go-contain/pkg/create/config/sc/secrets/ss"
-	"github.com/compose-spec/compose-go/types"
+	"github.com/compose-spec/compose-go/v2/types"
 )
 
 // SetBuildConfig is a function that sets the build config for a service
@@ -147,7 +147,7 @@ func WithPull() SetBuildConfig {
 // WithExtraHosts appends the extra hosts for the build
 // parameters:
 //   - key: the key for the extra host
-//   - value: the value for the extra host
+//   - value: the values for the extra host
 //
 // extra_hosts adds hostname mappings at build-time. Use the same syntax as extra_hosts.
 //
@@ -155,7 +155,7 @@ func WithPull() SetBuildConfig {
 //	 - "somehost=162.242.195.82"
 //	 - "otherhost=50.31.209.229"
 //	 - "myhostv6=::1"
-func WithExtraHosts(key string, value string) SetBuildConfig {
+func WithExtraHosts(key string, value ...string) SetBuildConfig {
 	return func(opt *types.BuildConfig) error {
 		if opt.ExtraHosts == nil {
 			opt.ExtraHosts = make(types.HostsList, 0)

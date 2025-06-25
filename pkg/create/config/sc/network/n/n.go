@@ -3,7 +3,7 @@ package n
 
 import (
 	"github.com/aptd3v/go-contain/pkg/create/config/sc/network/n/pool"
-	"github.com/compose-spec/compose-go/types"
+	"github.com/compose-spec/compose-go/v2/types"
 )
 
 // SetNetworkProjectConfig is a function that sets the network configuration for a project
@@ -90,7 +90,8 @@ func WithAttachable() SetNetworkProjectConfig {
 //   - enableIPv6: the enable ipv6 flag for the network
 func WithEnableIPv6() SetNetworkProjectConfig {
 	return func(opt *types.NetworkConfig) error {
-		opt.EnableIPv6 = true
+		enableIPv6 := true
+		opt.EnableIPv6 = &enableIPv6
 		return nil
 	}
 }
