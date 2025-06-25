@@ -11,6 +11,7 @@ var (
 	ErrNetworkConfig   = errors.New("network config has errors")
 	ErrPlatformConfig  = errors.New("platform config has errors")
 	ErrServiceConfig   = errors.New("service config has errors")
+	ErrProjectConfig   = errors.New("project config has errors")
 	ErrValidation      = errors.New("container has errors")
 )
 
@@ -128,6 +129,30 @@ func IsPlatformConfigError(err error) bool {
 
 func NewPlatformConfigError(field, message string) *PlatformConfigError {
 	return &PlatformConfigError{
+		Field:   field,
+		Message: message,
+	}
+}
+
+type ProjectConfigError struct {
+	Field   string
+	Message string
+}
+
+func (e *ProjectConfigError) Error() string {
+	return fmt.Sprintf("%s: %s", e.Field, e.Message)
+}
+
+func (e *ProjectConfigError) Unwrap() error {
+	return ErrProjectConfig
+}
+
+func IsProjectConfigError(err error) bool {
+	return errors.Is(err, ErrProjectConfig)
+}
+
+func NewProjectConfigError(field, message string) *ProjectConfigError {
+	return &ProjectConfigError{
 		Field:   field,
 		Message: message,
 	}
