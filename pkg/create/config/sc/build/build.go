@@ -5,7 +5,7 @@ import (
 	"fmt"
 
 	"github.com/aptd3v/go-contain/pkg/create/config/sc/build/ulimit"
-	"github.com/aptd3v/go-contain/pkg/create/config/sc/secrets"
+	"github.com/aptd3v/go-contain/pkg/create/config/sc/secrets/ss"
 	"github.com/compose-spec/compose-go/types"
 )
 
@@ -206,7 +206,7 @@ func WithTarget(target string) SetBuildConfig {
 //   - setters: the setters for the secret
 //
 // secrets specifies secrets to expose to the build.
-func WithSecret(setters ...secrets.SetSecretConfig) SetBuildConfig {
+func WithSecret(setters ...ss.SetSecretServiceConfig) SetBuildConfig {
 	return func(opt *types.BuildConfig) error {
 		if opt.Secrets == nil {
 			opt.Secrets = make([]types.ServiceSecretConfig, 0)
