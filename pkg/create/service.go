@@ -1,11 +1,15 @@
 package create
 
 import (
+	"errors"
 	"fmt"
 	"os"
 	"strings"
 	"time"
 
+	"github.com/aptd3v/go-contain/pkg/create/config/sc/network/n"
+	"github.com/aptd3v/go-contain/pkg/create/config/sc/secrets/sp"
+	"github.com/aptd3v/go-contain/pkg/create/config/sc/volume/v"
 	"github.com/compose-spec/compose-go/types"
 	"github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/api/types/network"
@@ -17,6 +21,7 @@ import (
 // It provides methods to create and manage a docker Compose project.
 type Project struct {
 	wrapped *types.Project
+	errs    []error
 }
 
 // SetServiceConfig is a function that sets the service config
@@ -30,19 +35,20 @@ func NewProject(name string) *Project {
 		wrapped: &types.Project{
 			Name:     name,
 			Services: []types.ServiceConfig{},
+			Volumes:  make(types.Volumes),
 		},
 	}
 }
 
-// NewService defines a new service in the project
+// WithService defines a new service in the project
 // parameters:
 //   - name: the name of the service
 //   - service: the container to create the service from
 //   - setters: the setters to apply to the service
-func (p *Project) NewService(name string, service *Container, setters ...SetServiceConfig) error {
+func (p *Project) WithService(name string, service *Container, setters ...SetServiceConfig) *Project {
 	if err := service.Validate(); err != nil {
-		//TODO: proper error type handling
-		return err
+		p.errs = append(p.errs, NewServiceConfigError(name, err.Error()))
+		return p
 	}
 	config := service.Config
 
@@ -167,7 +173,8 @@ func (p *Project) NewService(name string, service *Container, setters ...SetServ
 			continue
 		}
 		if err := setter(&serv); err != nil {
-			return NewServiceConfigError(name, err.Error())
+			p.errs = append(p.errs, NewServiceConfigError(name, err.Error()))
+			continue
 		}
 	}
 	//swarm mode wants unique container names so we need to only set container name if deploy is not set
@@ -177,11 +184,84 @@ func (p *Project) NewService(name string, service *Container, setters ...SetServ
 		serv.ContainerName = config.Name
 	}
 	p.wrapped.Services = append(p.wrapped.Services, serv)
+	return p
+}
+
+// WithVolume defines a new volume in the project
+// parameters:
+//   - name: the name of the volume
+//   - volume: the volume to create the volume from
+func (p *Project) WithVolume(name string, setters ...v.SetVolumeProjectConfig) *Project {
+	if p.wrapped.Volumes == nil {
+		p.wrapped.Volumes = make(types.Volumes, 0)
+	}
+	volume := types.VolumeConfig{
+		Name: name,
+	}
+	for _, setter := range setters {
+		if setter == nil {
+			continue
+		}
+		if err := setter(&volume); err != nil {
+			p.errs = append(p.errs, NewProjectConfigError("volume", err.Error()))
+		}
+	}
+	p.wrapped.Volumes[name] = volume
+	return p
+}
+
+// WithSecret defines a new secret in the project
+func (p *Project) WithSecret(key string, setters ...sp.SetSecretProjectConfig) *Project {
+	if p.wrapped.Secrets == nil {
+		p.wrapped.Secrets = make(types.Secrets, 0)
+	}
+	secret := types.SecretConfig{}
+	for _, setter := range setters {
+		if setter == nil {
+			continue
+		}
+		if err := setter(&secret); err != nil {
+			p.errs = append(p.errs, NewProjectConfigError("secret", err.Error()))
+		}
+	}
+	p.wrapped.Secrets[key] = secret
+	return p
+}
+
+// WithNetwork defines a new network in the project
+func (p *Project) WithNetwork(name string, setters ...n.SetNetworkProjectConfig) *Project {
+	if p.wrapped.Networks == nil {
+		p.wrapped.Networks = make(types.Networks, 0)
+	}
+	network := types.NetworkConfig{
+		Name: name,
+	}
+	for _, setter := range setters {
+		if setter == nil {
+			continue
+		}
+		if err := setter(&network); err != nil {
+			p.errs = append(p.errs, NewProjectConfigError("network", err.Error()))
+		}
+	}
+	p.wrapped.Networks[name] = network
+	return p
+}
+
+// Validate validates the project
+// returns an error if the project has errors
+func (p *Project) Validate() error {
+	if len(p.errs) > 0 {
+		return NewProjectConfigError("project", errors.Join(p.errs...).Error())
+	}
 	return nil
 }
 
 // Marshal marshals the project to a yaml string
 func (p *Project) Marshal() ([]byte, error) {
+	if err := p.Validate(); err != nil {
+		return nil, err
+	}
 	return yaml.Marshal(p.wrapped)
 }
 
