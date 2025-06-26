@@ -2,8 +2,10 @@
 package mount
 
 import (
+	"fmt"
 	"os"
 
+	"github.com/aptd3v/go-contain/pkg/create"
 	"github.com/docker/docker/api/types/mount"
 )
 
@@ -322,5 +324,25 @@ func WithBindCreateMountpoint() SetMountConfig {
 		}
 		opt.BindOptions.CreateMountpoint = true
 		return nil
+	}
+}
+
+// Fail is a function that returns an error
+//
+// note: this is useful for when you want to fail the mount
+// and append the error to the host config error collection
+func Fail(err error) SetMountConfig {
+	return func(opt *mount.Mount) error {
+		return create.NewContainerConfigError("mount", err.Error())
+	}
+}
+
+// Failf is a function that returns an error
+//
+// note: this is useful for when you want to fail the mount
+// and append the error to the host config error collection
+func Failf(stringFormat string, args ...interface{}) SetMountConfig {
+	return func(opt *mount.Mount) error {
+		return create.NewContainerConfigError("mount", fmt.Sprintf(stringFormat, args...))
 	}
 }

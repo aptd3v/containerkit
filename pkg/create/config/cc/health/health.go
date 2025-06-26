@@ -1,6 +1,7 @@
 package health
 
 import (
+	"fmt"
 	"time"
 
 	"github.com/aptd3v/go-contain/pkg/create"
@@ -75,5 +76,21 @@ func WithTest(test ...string) SetHealthcheckConfig {
 		}
 		opt.Test = append(opt.Test, test...)
 		return nil
+	}
+}
+
+// Fail is a function that returns an error
+//
+// note: this is useful for when you want to fail the health check
+// and append the error to the container config error collection
+func Fail(err error) SetHealthcheckConfig {
+	return func(opt *container.HealthConfig) error {
+		return create.NewContainerConfigError("healthcheck", err.Error())
+	}
+}
+
+func Failf(stringFormat string, args ...interface{}) SetHealthcheckConfig {
+	return func(opt *container.HealthConfig) error {
+		return create.NewContainerConfigError("healthcheck", fmt.Sprintf(stringFormat, args...))
 	}
 }

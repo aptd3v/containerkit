@@ -27,3 +27,23 @@ func WithEndpoint(name string, setEOFns ...endpoint.SetEndpointConfig) create.Se
 		return nil
 	}
 }
+
+// Fail is a function that returns an error
+//
+// note: this is useful for when you want to fail the network config
+// and append the error to the network config error collection
+func Fail(err error) create.SetNetworkConfig {
+	return func(options *create.NetworkConfig) error {
+		return create.NewNetworkConfigError("network_config", err.Error())
+	}
+}
+
+// Failf is a function that returns an error
+//
+// note: this is useful for when you want to fail the network config
+// and append the error to the network config error collection
+func Failf(stringFormat string, args ...interface{}) create.SetNetworkConfig {
+	return func(options *create.NetworkConfig) error {
+		return create.NewNetworkConfigError("network_config", fmt.Sprintf(stringFormat, args...))
+	}
+}

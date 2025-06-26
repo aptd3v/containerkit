@@ -836,3 +836,23 @@ func WithDeviceRequest(driver string, count int, deviceIDs []string, capabilitie
 		return nil
 	}
 }
+
+// Fail is a function that returns an error
+//
+// note: this is useful for when you want to fail the host config
+// and append the error to the host config error collection
+func Fail(err error) create.SetHostConfig {
+	return func(opt *create.HostConfig) error {
+		return create.NewContainerConfigError("host_config", err.Error())
+	}
+}
+
+// Failf is a function that returns an error
+//
+// note: this is useful for when you want to fail the host config
+// and append the error to the host config error collection
+func Failf(stringFormat string, args ...interface{}) create.SetHostConfig {
+	return func(opt *create.HostConfig) error {
+		return create.NewContainerConfigError("host_config", fmt.Sprintf(stringFormat, args...))
+	}
+}

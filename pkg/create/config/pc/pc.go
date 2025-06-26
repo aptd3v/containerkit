@@ -2,6 +2,8 @@
 package pc
 
 import (
+	"fmt"
+
 	"github.com/aptd3v/go-contain/pkg/create"
 )
 
@@ -65,5 +67,25 @@ func WithVariant(variant string) create.SetPlatformConfig {
 	return func(options *create.PlatformConfig) error {
 		options.Variant = variant
 		return nil
+	}
+}
+
+// Fail is a function that returns an error
+//
+// note: this is useful for when you want to fail the platform config
+// and append the error to the platform config error collection
+func Fail(err error) create.SetPlatformConfig {
+	return func(options *create.PlatformConfig) error {
+		return create.NewContainerConfigError("platform_config", err.Error())
+	}
+}
+
+// Failf is a function that returns an error
+//
+// note: this is useful for when you want to fail the platform config
+// and append the error to the platform config error collection
+func Failf(stringFormat string, args ...interface{}) create.SetPlatformConfig {
+	return func(options *create.PlatformConfig) error {
+		return create.NewContainerConfigError("platform_config", fmt.Sprintf(stringFormat, args...))
 	}
 }

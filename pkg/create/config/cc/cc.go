@@ -305,3 +305,23 @@ func WithMacAddress(macAddress string) create.SetContainerConfig {
 		return nil
 	}
 }
+
+// Fail is a function that returns an error
+//
+// note: this is useful for when you want to fail the container config
+// and append the error to the container config error collection
+func Fail(err error) create.SetContainerConfig {
+	return func(config *create.ContainerConfig) error {
+		return create.NewContainerConfigError("container_config", err.Error())
+	}
+}
+
+// Failf is a function that returns an error
+//
+// note: this is useful for when you want to fail the container config
+// and append the error to the container config error collection
+func Failf(stringFormat string, args ...interface{}) create.SetContainerConfig {
+	return func(config *create.ContainerConfig) error {
+		return create.NewContainerConfigError("container_config", fmt.Sprintf(stringFormat, args...))
+	}
+}

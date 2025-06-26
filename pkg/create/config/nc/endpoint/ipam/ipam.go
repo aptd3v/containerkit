@@ -2,6 +2,9 @@
 package ipam
 
 import (
+	"fmt"
+
+	"github.com/aptd3v/go-contain/pkg/create"
 	"github.com/docker/docker/api/types/network"
 )
 
@@ -40,5 +43,25 @@ func WithLinkLocalIPs(ips ...string) SetIPAMConfig {
 		}
 		opt.LinkLocalIPs = append(opt.LinkLocalIPs, ips...)
 		return nil
+	}
+}
+
+// Fail is a function that returns an error
+//
+// note: this is useful for when you want to fail the IPAM config
+// and append the error to the network config error collection
+func Fail(err error) SetIPAMConfig {
+	return func(opt *network.EndpointIPAMConfig) error {
+		return create.NewNetworkConfigError("ipam", err.Error())
+	}
+}
+
+// Failf is a function that returns an error
+//
+// note: this is useful for when you want to fail the IPAM config
+// and append the error to the network config error collection
+func Failf(stringFormat string, args ...interface{}) SetIPAMConfig {
+	return func(opt *network.EndpointIPAMConfig) error {
+		return create.NewNetworkConfigError("ipam", fmt.Sprintf(stringFormat, args...))
 	}
 }
