@@ -14,7 +14,6 @@ import (
 	"github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/api/types/network"
 	"github.com/docker/go-connections/nat"
-	"gopkg.in/yaml.v3"
 )
 
 // Project is a wrapper around types.Project
@@ -36,6 +35,9 @@ func NewProject(name string) *Project {
 			Name:     name,
 			Services: types.Services{},
 			Volumes:  make(types.Volumes),
+			Networks: make(types.Networks),
+			Secrets:  make(types.Secrets),
+			Configs:  make(types.Configs),
 		},
 	}
 }
@@ -260,12 +262,12 @@ func (p *Project) Validate() error {
 	return nil
 }
 
-// Marshal marshals the project to a yaml string
+// Marshal marshals the project to a yaml bytes slice
 func (p *Project) Marshal() ([]byte, error) {
 	if err := p.Validate(); err != nil {
 		return nil, err
 	}
-	return yaml.Marshal(p.wrapped)
+	return p.wrapped.MarshalYAML()
 }
 
 // Export exports the project to a file
