@@ -55,7 +55,8 @@ func (p *Project) WithService(name string, service *Container, setters ...SetSer
 	config := service.Config
 
 	serv := types.ServiceConfig{
-		Name:        name,
+		Name: name,
+		//container
 		Image:       config.Container.Image,
 		Command:     types.ShellCommand(config.Container.Cmd),
 		Environment: types.NewMappingWithEquals(config.Container.Env),
@@ -69,6 +70,7 @@ func (p *Project) WithService(name string, service *Container, setters ...SetSer
 		Labels:      config.Container.Labels,
 		DomainName:  config.Container.Domainname,
 		Hostname:    config.Container.Hostname,
+		User:        config.Container.User,
 
 		//blkio
 		BlkioConfig: convertBlkioConfig(config.Host.HostConfig),
@@ -99,6 +101,8 @@ func (p *Project) WithService(name string, service *Container, setters ...SetSer
 		MemReservation: types.UnitBytes(config.Host.HostConfig.MemoryReservation),
 		MemSwapLimit:   types.UnitBytes(config.Host.HostConfig.MemorySwap),
 		MemLimit:       types.UnitBytes(config.Host.HostConfig.MemoryReservation),
+		ShmSize:        types.UnitBytes(config.Host.HostConfig.ShmSize),
+
 		//dns
 		DNS:       config.Host.HostConfig.DNS,
 		DNSSearch: config.Host.HostConfig.DNSSearch,
@@ -133,9 +137,8 @@ func (p *Project) WithService(name string, service *Container, setters ...SetSer
 
 		//volumes
 		VolumesFrom: convertVolumesFrom(config.Host.HostConfig.VolumesFrom),
-
-		//volumes
 		Volumes:     convertVolumes(config.Host.HostConfig),
+
 		Ports:       convertPortsBindings(config.Host.HostConfig.PortBindings),
 		Platform:    config.Platform.Architecture,
 		Privileged:  config.Host.HostConfig.Privileged,
@@ -143,11 +146,9 @@ func (p *Project) WithService(name string, service *Container, setters ...SetSer
 		Restart:     string(config.Host.HostConfig.RestartPolicy.Name),
 		Runtime:     string(config.Host.HostConfig.Runtime),
 		SecurityOpt: config.Host.HostConfig.SecurityOpt,
-		ShmSize:     types.UnitBytes(config.Host.HostConfig.ShmSize),
 		Sysctls:     config.Host.HostConfig.Sysctls,
 		Tmpfs:       convertTmpfs(config.Host.HostConfig.Tmpfs),
 		Ulimits:     convertUlimits(config.Host.HostConfig.Ulimits),
-		User:        config.Container.User,
 		UserNSMode:  string(config.Host.HostConfig.UsernsMode),
 		Uts:         string(config.Host.HostConfig.UTSMode),
 	}
