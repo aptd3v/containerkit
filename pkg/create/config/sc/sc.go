@@ -9,6 +9,7 @@ import (
 	"github.com/compose-spec/compose-go/v2/types"
 )
 
+// WatchAction is the action to take when the watch path changes
 type WatchAction string
 
 const (
