@@ -27,7 +27,7 @@ func WhenTrueFn[T any, O ~func(T) error](predicate PredicateClosure, fns ...O) O
 }
 
 // WhenTrue is a function that takes a boolean and a variadic number of setters and returns a single setter.
-// Only if it passes the provided predicate closures, the setters will be called.
+// Only if the boolean is true, the setters will be called.
 //
 // note: if any of the setters are nil, they will be skipped and not added to warnings
 func WhenTrue[T any, O ~func(T) error](check bool, fns ...O) O {
