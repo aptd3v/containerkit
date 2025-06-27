@@ -56,9 +56,6 @@ func WithDevelop(action WatchAction, watchPath string, target string, ignorePath
 // WithDependsOn appends the depends on config for the service
 // parameters:
 //   - service: the service to depend on
-//   - condition: the condition to depend on
-//   - restart: whether to restart the service if the dependency is not met
-//   - required: whether the service is required to start
 func WithDependsOn(service string) create.SetServiceConfig {
 	return func(config *types.ServiceConfig) error {
 		if config.DependsOn == nil {
@@ -66,6 +63,23 @@ func WithDependsOn(service string) create.SetServiceConfig {
 		}
 		config.DependsOn[service] = types.ServiceDependency{
 			Condition: "service_started",
+			Restart:   true,
+			Required:  true,
+		}
+		return nil
+	}
+}
+
+// WithDependsOn appends the depends on config for the service
+// parameters:
+//   - service: the service to depend on
+func WithDependsOnHealthy(service string) create.SetServiceConfig {
+	return func(config *types.ServiceConfig) error {
+		if config.DependsOn == nil {
+			config.DependsOn = make(types.DependsOnConfig, 0)
+		}
+		config.DependsOn[service] = types.ServiceDependency{
+			Condition: "service_healthy",
 			Restart:   true,
 			Required:  true,
 		}
@@ -111,6 +125,22 @@ func WithDeploy(setters ...deploy.SetDeployConfig) create.SetServiceConfig {
 	}
 }
 
+// WithProfiles appends the profiles for the service
+// parameters:
+//   - profiles: the profiles to append
+func WithProfiles(profiles ...string) create.SetServiceConfig {
+	return func(config *types.ServiceConfig) error {
+		if config.Profiles == nil {
+			config.Profiles = make([]string, 0)
+		}
+		config.Profiles = append(config.Profiles, profiles...)
+		return nil
+	}
+}
+
+// WithBuild sets the build config for the service
+// parameters:
+//   - setters: the setters for the build config
 func WithBuild(setters ...build.SetBuildConfig) create.SetServiceConfig {
 	return func(config *types.ServiceConfig) error {
 		if len(setters) == 0 {
