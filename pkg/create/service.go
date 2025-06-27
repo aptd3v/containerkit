@@ -41,6 +41,14 @@ func NewProject(name string) *Project {
 		},
 	}
 }
+func (p *Project) ForEachService(fn func(name string, service *types.ServiceConfig) error) error {
+	for name, service := range p.wrapped.Services {
+		if err := fn(name, &service); err != nil {
+			return err
+		}
+	}
+	return nil
+}
 
 // WithService defines a new service in the project
 // parameters:
@@ -181,11 +189,11 @@ func (p *Project) WithService(name string, service *Container, setters ...SetSer
 		}
 	}
 	//swarm mode wants unique container names so we need to only set container name if deploy is not set
-	if serv.Deploy != nil {
-		serv.ContainerName = ""
-	} else {
-		serv.ContainerName = config.Name
-	}
+	// if serv.Deploy != nil {
+	// 	serv.ContainerName = ""
+	// } else {
+	// 	serv.ContainerName = config.Name
+	// }
 	if p.wrapped.Services == nil {
 		p.wrapped.Services = make(types.Services, 0)
 	}
