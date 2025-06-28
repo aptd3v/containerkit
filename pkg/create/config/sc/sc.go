@@ -5,7 +5,7 @@ import (
 	"github.com/aptd3v/go-contain/pkg/create"
 	"github.com/aptd3v/go-contain/pkg/create/config/sc/build"
 	"github.com/aptd3v/go-contain/pkg/create/config/sc/deploy"
-	"github.com/aptd3v/go-contain/pkg/create/config/sc/secrets/ss"
+	"github.com/aptd3v/go-contain/pkg/create/config/sc/secrets/secretservice"
 	"github.com/compose-spec/compose-go/v2/types"
 )
 
@@ -166,7 +166,7 @@ func WithBuild(setters ...build.SetBuildConfig) create.SetServiceConfig {
 //   - setters: the setters for the secret
 //
 // secrets specifies secrets to expose to the service.
-func WithSecret(setters ...ss.SetSecretServiceConfig) create.SetServiceConfig {
+func WithSecret(setters ...secretservice.SetSecretServiceConfig) create.SetServiceConfig {
 	return func(config *types.ServiceConfig) error {
 		if len(setters) == 0 {
 			return nil

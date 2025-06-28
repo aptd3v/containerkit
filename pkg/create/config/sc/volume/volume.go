@@ -1,5 +1,5 @@
-// Package v provides functions to set the volume configuration for a project
-package v
+// Package volume provides functions to set the volume configuration for a project
+package volume
 
 import "github.com/compose-spec/compose-go/v2/types"
 

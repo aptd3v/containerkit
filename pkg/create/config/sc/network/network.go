@@ -1,8 +1,8 @@
-// Package n provides functions to set the network configuration for a project
-package n
+// Package network provides functions to set the network configuration for a project
+package network
 
 import (
-	"github.com/aptd3v/go-contain/pkg/create/config/sc/network/n/pool"
+	"github.com/aptd3v/go-contain/pkg/create/config/sc/network/pool"
 	"github.com/compose-spec/compose-go/v2/types"
 )
 

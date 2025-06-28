@@ -1,5 +1,5 @@
-// Package ss provides a set of functions to configure the secrets for the service
-package ss
+// Package secretservice provides a set of functions to configure the secrets for the service
+package secretservice
 
 import "github.com/compose-spec/compose-go/v2/types"
 

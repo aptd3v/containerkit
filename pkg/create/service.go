@@ -7,12 +7,12 @@ import (
 	"strings"
 	"time"
 
-	"github.com/aptd3v/go-contain/pkg/create/config/sc/network/n"
-	"github.com/aptd3v/go-contain/pkg/create/config/sc/secrets/sp"
-	"github.com/aptd3v/go-contain/pkg/create/config/sc/volume/v"
+	"github.com/aptd3v/go-contain/pkg/create/config/sc/network"
+	"github.com/aptd3v/go-contain/pkg/create/config/sc/secrets/projectsecret"
+	"github.com/aptd3v/go-contain/pkg/create/config/sc/volume"
 	"github.com/compose-spec/compose-go/v2/types"
 	"github.com/docker/docker/api/types/container"
-	"github.com/docker/docker/api/types/network"
+	dockerNet "github.com/docker/docker/api/types/network"
 	"github.com/docker/go-connections/nat"
 )
 
@@ -205,7 +205,7 @@ func (p *Project) WithService(name string, service *Container, setters ...SetSer
 // parameters:
 //   - name: the name of the volume
 //   - volume: the volume to create the volume from
-func (p *Project) WithVolume(name string, setters ...v.SetVolumeProjectConfig) *Project {
+func (p *Project) WithVolume(name string, setters ...volume.SetVolumeProjectConfig) *Project {
 	if p.wrapped.Volumes == nil {
 		p.wrapped.Volumes = make(types.Volumes, 0)
 	}
@@ -225,7 +225,7 @@ func (p *Project) WithVolume(name string, setters ...v.SetVolumeProjectConfig) *
 }
 
 // WithSecret defines a new secret in the project
-func (p *Project) WithSecret(key string, setters ...sp.SetSecretProjectConfig) *Project {
+func (p *Project) WithSecret(key string, setters ...projectsecret.SetProjectSecretConfig) *Project {
 	if p.wrapped.Secrets == nil {
 		p.wrapped.Secrets = make(types.Secrets, 0)
 	}
@@ -243,7 +243,7 @@ func (p *Project) WithSecret(key string, setters ...sp.SetSecretProjectConfig) *
 }
 
 // WithNetwork defines a new network in the project
-func (p *Project) WithNetwork(name string, setters ...n.SetNetworkProjectConfig) *Project {
+func (p *Project) WithNetwork(name string, setters ...network.SetNetworkProjectConfig) *Project {
 	if p.wrapped.Networks == nil {
 		p.wrapped.Networks = make(types.Networks, 0)
 	}
@@ -501,7 +501,7 @@ func convertPortsBindings(portBindings map[nat.Port][]nat.PortBinding) []types.S
 }
 
 // convertNetworks converts the networks from the container config to the compose config
-func convertNetworks(networks *network.NetworkingConfig) map[string]*types.ServiceNetworkConfig {
+func convertNetworks(networks *dockerNet.NetworkingConfig) map[string]*types.ServiceNetworkConfig {
 	networkRules := make(map[string]*types.ServiceNetworkConfig, len(networks.EndpointsConfig))
 	for name, endpointConfig := range networks.EndpointsConfig {
 		config := &types.ServiceNetworkConfig{
