@@ -55,12 +55,17 @@ func NewContainer(name string) *Container {
 				Platform: &p.Platform{},
 			},
 		},
+		Warnings: []string{},
+		Errors:   []error{},
 	}
 }
 
 // Validate validates the container config.
 // It will return an error if the container has errors.
 func (c *Container) Validate() error {
+	if c == nil {
+		return fmt.Errorf("container is nil")
+	}
 	if len(c.Errors) > 0 {
 		return fmt.Errorf("container has the following errors:\n%s", errors.Join(c.Errors...))
 	}
