@@ -149,23 +149,6 @@ func WithBindMountWithPropagation(source, target string, propagation mount.Propa
 	)
 }
 
-// WithNamedVolumeWithDriver creates a named volume with a specified driver and options
-// parameters:
-//   - name: the name of the volume
-//   - target: the target of the mount
-//   - driver: the driver of the volume
-//   - options: the options of the volume
-//   - device: the device of the volume
-func WithNamedVolumeWithDriver(name, target, driver, options, device string) create.SetHostConfig {
-	return WithMountPoint(
-		mount.WithType(mount.MountTypeVolume),
-		mount.WithSource(name),
-		mount.WithTarget(target),
-		mount.WithReadWrite(),
-		mount.WithVolumeDriver(driver, options, device),
-	)
-}
-
 // WithTmpfsMountExec creates a tmpfs mount with exec flag
 // parameters:
 //   - target: the target of the mount
