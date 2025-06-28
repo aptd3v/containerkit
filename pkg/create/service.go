@@ -265,6 +265,16 @@ func (p *Project) WithNetwork(name string, setters ...n.SetNetworkProjectConfig)
 // Validate validates the project
 // returns an error if the project has errors
 func (p *Project) Validate() error {
+	// a basic project must have either a image or a build context
+	if len(p.wrapped.Services) == 0 {
+		return NewProjectConfigError("project", "project must have at least one service")
+	}
+	for _, service := range p.wrapped.Services {
+		if service.Image == "" && service.Build == nil {
+			p.errs = append(p.errs, NewProjectConfigError("project", fmt.Sprintf("service %s must have either a image or a build context", service.Name)))
+			continue
+		}
+	}
 	if len(p.errs) > 0 {
 		return NewProjectConfigError("project", errors.Join(p.errs...).Error())
 	}
@@ -284,6 +294,9 @@ func (p *Project) Marshal() ([]byte, error) {
 //   - file: the file path to export the project to
 //   - perm: the permission of the file
 func (p *Project) Export(file string, perm os.FileMode) error {
+	if err := p.Validate(); err != nil {
+		return err
+	}
 	yaml, err := p.Marshal()
 	if err != nil {
 		return err
