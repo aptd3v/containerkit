@@ -53,27 +53,9 @@ func WithTCPHealthCheck(host string, port string, interval int) create.SetContai
 	)
 }
 
-// WithHTTPHealthCheck allows setting method and advanced HTTP health checking.
-// it has a default start period of 5 seconds, a timeout of 10 seconds, a retries of 5,
-// and an interval of the parameter interval
-// parameters:
-//   - url: the URL to check
-//   - method: the HTTP method to use
-//   - interval: the interval in seconds between health checks
-func WithHTTPHealthCheck(url, method string, interval int) create.SetContainerConfig {
-	cmd := fmt.Sprintf(`curl -X %s -f "%s" || exit 1`, method, url)
-	return WithHealthCheck(
-		health.WithTest("CMD-SHELL", cmd),
-		health.WithStartPeriod(5),
-		health.WithInterval(interval),
-		health.WithTimeout(10),
-		health.WithRetries(5),
-	)
-}
-
 // WithCurlHealthCheck sets a health check that uses curl to check if the container is healthy
 // it has a default start period of 5 seconds, a timeout of 10 seconds, a retries of 5,
-// and an interval of the parameter interval
+// and an interval of the specified interval in seconds
 // parameters:
 //   - url: the URL to check
 //   - interval: the interval in seconds between health checks
