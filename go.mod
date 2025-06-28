@@ -1,6 +1,8 @@
 module github.com/aptd3v/go-contain
 
-go 1.24.4
+go 1.23.0
+
+toolchain go1.23.4
 
 require (
 	github.com/compose-spec/compose-go/v2 v2.6.5
