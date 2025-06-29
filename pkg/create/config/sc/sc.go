@@ -18,6 +18,15 @@ const (
 	WatchActionSyncRestart WatchAction = "sync+restart"
 )
 
+// WithNoAttach sets the attach option to false for the service
+func WithNoAttach() create.SetServiceConfig {
+	attach := false
+	return func(config *types.ServiceConfig) error {
+		config.Attach = &attach
+		return nil
+	}
+}
+
 // WithAnnotation sets an annotation for the service
 func WithAnnotation(key, value string) create.SetServiceConfig {
 	return func(config *types.ServiceConfig) error {
@@ -90,14 +99,15 @@ func WithDependsOnHealthy(service string) create.SetServiceConfig {
 // WithEnvFile appends the env file paths for the service
 // parameters:
 //   - path: the path to the env file
-func WithEnvFile(path ...string) create.SetServiceConfig {
+func WithEnvFile(path string) create.SetServiceConfig {
 	return func(config *types.ServiceConfig) error {
 		if config.Environment == nil {
-			config.Environment = make(types.MappingWithEquals, 0)
+			config.EnvFiles = make([]types.EnvFile, 0)
 		}
-		for _, p := range path {
-			config.Environment[p] = &p
-		}
+		config.EnvFiles = append(config.EnvFiles, types.EnvFile{
+			Path:     path,
+			Required: true,
+		})
 		return nil
 	}
 }
