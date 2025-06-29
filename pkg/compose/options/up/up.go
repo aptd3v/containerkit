@@ -1,7 +1,12 @@
 // Package up provides options for the compose up command
 package up
 
-import "github.com/aptd3v/go-contain/pkg/compose"
+import (
+	"io"
+	"os"
+
+	"github.com/aptd3v/go-contain/pkg/compose"
+)
 
 type PullPolicy string
 
@@ -290,6 +295,19 @@ func WithWatch() compose.SetComposeUpOption {
 func WithYes() compose.SetComposeUpOption {
 	return func(opt *compose.ComposeUpOptions) error {
 		opt.Yes = true
+		return nil
+	}
+}
+
+// WithWriter sets the writer for the compose up command stdout and stderr
+//
+// if writer is nil, it will use os.Stdout as a fallback
+func WithWriter(writer io.Writer) compose.SetComposeUpOption {
+	return func(opt *compose.ComposeUpOptions) error {
+		if writer != nil {
+			opt.Writer = os.Stdout
+		}
+		opt.Writer = writer
 		return nil
 	}
 }
