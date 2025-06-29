@@ -40,6 +40,7 @@ type ComposeUpOptions struct {
 
 	Flags  []string
 	Writer io.Writer
+	Errs   []error
 }
 
 // ComposeUpScale is the scale for the compose up command
@@ -49,9 +50,9 @@ type ComposeUpScale struct {
 }
 
 // addErrorWhen adds an error to the error slice if the condition is true
-func addErrorWhen(cond bool, errs []error, flag string, msg string) {
+func (opt *ComposeUpOptions) addErrorWhen(cond bool, flag string, msg string) {
 	if cond {
-		errs = append(errs, NewComposeFlagError(flag, msg))
+		opt.Errs = append(opt.Errs, NewComposeFlagError(flag, msg))
 	}
 }
 
@@ -61,12 +62,12 @@ func addErrorWhen(cond bool, errs []error, flag string, msg string) {
 //
 //	[]string{"up", "--detach", ...}
 func (opt *ComposeUpOptions) GenerateFlags() ([]string, error) {
-	errs := []error{}
 	flags := []string{"up"}
+	opt.Errs = []error{}
 	if opt.Detach {
 		fail := opt.Attach != nil || opt.AttachDependencies || opt.Watch || opt.AbortOnContainerExit || opt.AbortOnContainerFailure
 		msg := "WithAttach, WithAttachDependencies, WithWatch, WithAbortOnContainerExit and WithAbortOnContainerFailure cannot be used together"
-		addErrorWhen(fail, errs, "--detach", msg)
+		opt.addErrorWhen(fail, "--detach", msg)
 		flags = append(flags, "--detach")
 
 	}
@@ -83,11 +84,11 @@ func (opt *ComposeUpOptions) GenerateFlags() ([]string, error) {
 		flags = append(flags, "--always-recreate-deps")
 	}
 	if opt.Attach != nil {
-		addErrorWhen(opt.AttachDependencies, errs, "--attach", "WithAttach and WithAttachDependencies cannot be used together")
+		opt.addErrorWhen(opt.AttachDependencies, "--attach", "WithAttach and WithAttachDependencies cannot be used together")
 		flags = append(flags, "--attach", *opt.Attach)
 	}
 	if opt.AttachDependencies {
-		addErrorWhen(opt.Attach != nil, errs, "--attach-dependencies", "WithAttach and WithAttachDependencies cannot be used together")
+		opt.addErrorWhen(opt.Attach != nil, "--attach-dependencies", "WithAttach and WithAttachDependencies cannot be used together")
 		flags = append(flags, "--attach-dependencies")
 	}
 	if opt.Build {
@@ -135,7 +136,7 @@ func (opt *ComposeUpOptions) GenerateFlags() ([]string, error) {
 	}
 	if len(opt.Scale) > 0 {
 		for _, scale := range opt.Scale {
-			addErrorWhen(scale.Service == "" || scale.Num < 0, errs, "--scale", "Service name required and scale must be non-negative")
+			opt.addErrorWhen(scale.Service == "" || scale.Num < 0, "--scale", "Service name required and scale must be non-negative")
 			flags = append(flags, "--scale", fmt.Sprintf("%s=%d", scale.Service, scale.Num))
 		}
 	}
@@ -148,7 +149,7 @@ func (opt *ComposeUpOptions) GenerateFlags() ([]string, error) {
 	if opt.Wait {
 		fail := opt.Watch || opt.Attach != nil || opt.AttachDependencies || opt.Detach || opt.AbortOnContainerFailure || opt.AbortOnContainerExit
 		msg := "WithWatch, WithAttach, WithAttachDependencies, WithDetach, WithAbortOnContainerFailure, WithAbortOnContainerExit and WithWait cannot be used together"
-		addErrorWhen(fail, errs, "--wait", msg)
+		opt.addErrorWhen(fail, "--wait", msg)
 		flags = append(flags, "--wait")
 	}
 	if opt.WaitTimeout != nil {
@@ -160,8 +161,8 @@ func (opt *ComposeUpOptions) GenerateFlags() ([]string, error) {
 	if opt.Yes {
 		flags = append(flags, "--yes")
 	}
-	if len(errs) > 0 {
-		return nil, errors.Join(errs...)
+	if len(opt.Errs) > 0 {
+		return nil, errors.Join(opt.Errs...)
 	}
 
 	return flags, nil

@@ -19,7 +19,9 @@ func WithClusterVolumeSpec(setters ...clusterspec.SetClusterVolumeSpecOption) Se
 			if setter == nil {
 				continue
 			}
-			setter(o.Spec)
+			if err := setter(o.Spec); err != nil {
+				return err
+			}
 		}
 		return nil
 	}
