@@ -3,6 +3,7 @@ package compose
 import (
 	"errors"
 	"fmt"
+	"io"
 	"strconv"
 )
 
@@ -37,17 +38,20 @@ type ComposeUpOptions struct {
 	Watch                   bool
 	Yes                     bool
 
-	Flags []string
+	Flags  []string
+	Writer io.Writer
 }
 
+// ComposeUpScale is the scale for the compose up command
 type ComposeUpScale struct {
 	Service string
 	Num     int
 }
 
-func (opt *ComposeUpOptions) addErrorWhen(cond bool, errs *[]error, flag string, msg string) {
+// addErrorWhen adds an error to the error slice if the condition is true
+func addErrorWhen(cond bool, errs []error, flag string, msg string) {
 	if cond {
-		*errs = append(*errs, NewComposeFlagError(flag, msg))
+		errs = append(errs, NewComposeFlagError(flag, msg))
 	}
 }
 
@@ -62,7 +66,7 @@ func (opt *ComposeUpOptions) GenerateFlags() ([]string, error) {
 	if opt.Detach {
 		fail := opt.Attach != nil || opt.AttachDependencies || opt.Watch || opt.AbortOnContainerExit || opt.AbortOnContainerFailure
 		msg := "WithAttach, WithAttachDependencies, WithWatch, WithAbortOnContainerExit and WithAbortOnContainerFailure cannot be used together"
-		opt.addErrorWhen(fail, &errs, "--detach", msg)
+		addErrorWhen(fail, errs, "--detach", msg)
 		flags = append(flags, "--detach")
 
 	}
@@ -79,11 +83,11 @@ func (opt *ComposeUpOptions) GenerateFlags() ([]string, error) {
 		flags = append(flags, "--always-recreate-deps")
 	}
 	if opt.Attach != nil {
-		opt.addErrorWhen(opt.AttachDependencies, &errs, "--attach", "WithAttach and WithAttachDependencies cannot be used together")
+		addErrorWhen(opt.AttachDependencies, errs, "--attach", "WithAttach and WithAttachDependencies cannot be used together")
 		flags = append(flags, "--attach", *opt.Attach)
 	}
 	if opt.AttachDependencies {
-		opt.addErrorWhen(opt.Attach != nil, &errs, "--attach-dependencies", "WithAttach and WithAttachDependencies cannot be used together")
+		addErrorWhen(opt.Attach != nil, errs, "--attach-dependencies", "WithAttach and WithAttachDependencies cannot be used together")
 		flags = append(flags, "--attach-dependencies")
 	}
 	if opt.Build {
@@ -131,7 +135,7 @@ func (opt *ComposeUpOptions) GenerateFlags() ([]string, error) {
 	}
 	if len(opt.Scale) > 0 {
 		for _, scale := range opt.Scale {
-			opt.addErrorWhen(scale.Service == "" || scale.Num < 0, &errs, "--scale", "Service name required and scale must be non-negative")
+			addErrorWhen(scale.Service == "" || scale.Num < 0, errs, "--scale", "Service name required and scale must be non-negative")
 			flags = append(flags, "--scale", fmt.Sprintf("%s=%d", scale.Service, scale.Num))
 		}
 	}
@@ -144,7 +148,7 @@ func (opt *ComposeUpOptions) GenerateFlags() ([]string, error) {
 	if opt.Wait {
 		fail := opt.Watch || opt.Attach != nil || opt.AttachDependencies || opt.Detach || opt.AbortOnContainerFailure || opt.AbortOnContainerExit
 		msg := "WithWatch, WithAttach, WithAttachDependencies, WithDetach, WithAbortOnContainerFailure, WithAbortOnContainerExit and WithWait cannot be used together"
-		opt.addErrorWhen(fail, &errs, "--wait", msg)
+		addErrorWhen(fail, errs, "--wait", msg)
 		flags = append(flags, "--wait")
 	}
 	if opt.WaitTimeout != nil {
@@ -160,5 +164,57 @@ func (opt *ComposeUpOptions) GenerateFlags() ([]string, error) {
 		return nil, errors.Join(errs...)
 	}
 
+	return flags, nil
+}
+
+// ComposeDownOptions is the options for the compose down command
+type ComposeDownOptions struct {
+	RemoveOrphans bool
+	Timeout       *int
+	RemoveImage   *string
+	RemoveVolumes bool
+
+	Flags  []string
+	Writer io.Writer
+}
+
+func (opt *ComposeDownOptions) GenerateFlags() ([]string, error) {
+	flags := []string{"down"}
+	if opt.RemoveOrphans {
+		flags = append(flags, "--remove-orphans")
+	}
+	if opt.Timeout != nil {
+		flags = append(flags, "--timeout", strconv.Itoa(*opt.Timeout))
+	}
+	if opt.RemoveImage != nil {
+		flags = append(flags, "--rmi", *opt.RemoveImage)
+	}
+	if opt.RemoveVolumes {
+		flags = append(flags, "--volumes")
+	}
+	return flags, nil
+}
+
+// ComposeLogsOptions is the options for the compose logs command
+type ComposeLogsOptions struct {
+	Tail        *int
+	Follow      bool
+	NoLogPrefix bool
+
+	Writer io.Writer
+	Flags  []string
+}
+
+func (opt *ComposeLogsOptions) GenerateFlags() ([]string, error) {
+	flags := []string{"logs"}
+	if opt.Tail != nil {
+		flags = append(flags, "--tail", strconv.Itoa(*opt.Tail))
+	}
+	if opt.Follow {
+		flags = append(flags, "--follow")
+	}
+	if opt.NoLogPrefix {
+		flags = append(flags, "--no-log-prefix")
+	}
 	return flags, nil
 }
