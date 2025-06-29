@@ -5,7 +5,6 @@
 package compose
 
 import (
-	"fmt"
 	"os"
 	"os/exec"
 	"strings"
@@ -23,27 +22,42 @@ func NewCompose(project *create.Project) *compose {
 	}
 }
 
-func (c *compose) Up() error {
-	cmd, err := c.command("up")
+type SetComposeUpOption func(*ComposeUpOptions) error
+
+func (c *compose) Up(setters ...SetComposeUpOption) error {
+	opt := &ComposeUpOptions{
+		//default flags
+		Flags: []string{"up"},
+	}
+	for _, setter := range setters {
+		if err := setter(opt); err != nil {
+			return NewComposeUpError(err)
+		}
+	}
+	flags, err := opt.GenerateFlags()
 	if err != nil {
-		return NewComposeExecError(err)
+		return NewComposeUpError(err)
 	}
 
-	fmt.Println(cmd.Args)
+	cmd, err := c.command(flags)
+	if err != nil {
+		return NewComposeUpError(err)
+	}
+
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
 	err = cmd.Run()
 	if err != nil {
-		return NewComposeExecError(err)
+		return NewComposeUpError(err)
 	}
 
 	return nil
 }
 
-func (c *compose) command(args ...string) (*exec.Cmd, error) {
+func (c *compose) command(args []string) (*exec.Cmd, error) {
 	file, err := c.project.Marshal()
 	if err != nil {
-		return nil, NewComposeExecError(err)
+		return nil, NewComposeError(err)
 	}
 	cmd := exec.Command("docker", "compose", "-f", "-")
 	cmd.Args = append(cmd.Args, args...)
