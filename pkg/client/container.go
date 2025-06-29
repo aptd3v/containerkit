@@ -31,6 +31,9 @@ import (
 
 // ContainerCreate creates a new container based on the given configuration. It can be associated with a name, but it's not mandatory.
 func (c *Client) ContainerCreate(ctx context.Context, created *create.Container) (*response.ContainerCreate, error) {
+	if err := created.Validate(); err != nil {
+		return nil, err
+	}
 	config := created.Config
 	res, err := c.wrapped.ContainerCreate(
 		ctx,
@@ -50,7 +53,9 @@ func (c *Client) ContainerCreate(ctx context.Context, created *create.Container)
 
 // ContainerList returns the list of containers in the docker host.
 func (c *Client) ContainerList(ctx context.Context, setters ...list.SetContainerListOption) ([]response.ContainerSummary, error) {
-	op := container.ListOptions{}
+	op := container.ListOptions{
+		Filters: filters.NewArgs(),
+	}
 	for _, setter := range setters {
 		if setter != nil {
 			if err := setter(&op); err != nil {
