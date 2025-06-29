@@ -2,7 +2,8 @@
 
 >**go-contain** brings declarative, dynamic Docker Compose to Go — programmatically define, extend, and orchestrate multi-container environments with the flexibility of code, all while staying fully compatible with existing YAML workflows.
 
-
+![Go Version](https://img.shields.io/badge/go-1.23.0-blue)
+[![Go Reference](https://pkg.go.dev/badge/github.com/aptd3v/go-contain.svg)](https://pkg.go.dev/github.com/aptd3v/go-contain)
 
 ## 🚀 Features
 
