@@ -378,8 +378,6 @@ func EnvFileExists(name string) tools.CheckClosure {
 83 directories, 92 files
 ```
 
-Absolutely! Here's a concise section you can add to your README to clarify that exported YAML is fully compatible with the standard Docker Compose CLI:
-
 ---
 
 ## 📝 YAML Export & Compatibility
