@@ -6,8 +6,9 @@ import (
 )
 
 var (
+	ErrComposeError     = fmt.Errorf("compose error")
 	ErrComposeFlagError = fmt.Errorf("compose flag error")
-	ErrComposeExecError = fmt.Errorf("compose exec error")
+	ErrComposeUpError   = fmt.Errorf("compose up error")
 )
 
 type ComposeFlagError struct {
@@ -33,23 +34,45 @@ func IsComposeFlagError(err error) bool {
 	return errors.Is(err, ErrComposeFlagError)
 }
 
-type ComposeExecError struct {
+type ComposeError struct {
 	Message string
 }
 
-func (e *ComposeExecError) Unwrap() error {
-	return ErrComposeExecError
+func (e *ComposeError) Unwrap() error {
+	return ErrComposeError
 }
-func (e *ComposeExecError) Error() string {
+func (e *ComposeError) Error() string {
 	return fmt.Sprintf("compose exec error: %s", e.Message)
 }
 
-func NewComposeExecError(err error) *ComposeExecError {
-	return &ComposeExecError{
+func NewComposeError(err error) *ComposeError {
+	return &ComposeError{
 		Message: err.Error(),
 	}
 }
 
-func IsComposeExecError(err error) bool {
-	return errors.Is(err, ErrComposeExecError)
+func IsComposeError(err error) bool {
+	return errors.Is(err, ErrComposeError)
+}
+
+type ComposeUpError struct {
+	Message string
+}
+
+func (e *ComposeUpError) Unwrap() error {
+	return ErrComposeUpError
+}
+
+func (e *ComposeUpError) Error() string {
+	return fmt.Sprintf("compose up error: %s", e.Message)
+}
+
+func NewComposeUpError(err error) *ComposeUpError {
+	return &ComposeUpError{
+		Message: err.Error(),
+	}
+}
+
+func IsComposeUpError(err error) bool {
+	return errors.Is(err, ErrComposeUpError)
 }
