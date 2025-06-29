@@ -54,8 +54,8 @@ func WithLimit(limit int) SetContainerListOption {
 	}
 }
 
-// WithFilters sets the container list options to include the filters.
-func WithFilters(key, value string) SetContainerListOption {
+// WithFilter sets the container list options to include the filters.
+func WithFilter(key, value string) SetContainerListOption {
 	return func(op *container.ListOptions) error {
 		op.Filters.Add(key, value)
 		return nil
