@@ -172,7 +172,9 @@ func (c *Client) ImageRemove(ctx context.Context, ref string, setters ...remove.
 
 // ImageSearch makes the docker host search by a term in a remote registry. The list of results is not sorted in any fashion.
 func (c *Client) ImageSearch(ctx context.Context, term string, setters ...search.SetImageSearchOption) ([]response.ImageSearchResult, error) {
-	op := registry.SearchOptions{}
+	op := registry.SearchOptions{
+		Filters: filters.NewArgs(),
+	}
 	for _, setter := range setters {
 		if setter != nil {
 			if err := setter(&op); err != nil {
