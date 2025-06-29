@@ -39,8 +39,8 @@ func WhenTrue[T any, O ~func(T) error](check bool, fns ...O) O {
 	return WhenTrueFn(func() bool { return check }, fns...)
 }
 
-// WhenTrueElseFn is a function that takes a predicate closure, a function to call if the predicate is true,
-// and a function to call if the predicate is false.
+// WhenTrueElseFn is a function that takes a predicate closure, a setter to call if the predicate is true,
+// and a setter to call if the predicate is false.
 // It returns a single setter.
 // Only if it passes the provided predicate closure, the setters will be called.
 //
@@ -60,8 +60,8 @@ func WhenTrueElseFn[T any, O ~func(T) error](predicate PredicateClosure, fns O, 
 	}
 }
 
-// WhenTrueElse is a function that takes a boolean, a function to call if the boolean is true,
-// and a function to call if the boolean is false.
+// WhenTrueElse is a function that takes a boolean, a setter to call if the boolean is true,
+// and a setter to call if the boolean is false.
 // It returns a single setter.
 // Only if it passes the provided predicate closure, the setters will be called.
 //
