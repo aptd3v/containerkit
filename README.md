@@ -203,177 +203,56 @@ func EnvFileExists(name string) tools.CheckClosure {
 
 ```bash
 ├── examples
-│   └── wordpress
-│       ├── main.go
-│       └── README.md #example
+│   └── ... #examples
 ├── go.mod
 ├── go.sum
 ├── LICENSE
 ├── main.go
 ├── pkg
-│   ├── client
+│   ├── client # docker sdk client wrapper
 │   │   ├── auth
-│   │   │   └── auth.go # image registry auth 
-│   │   ├── client.go # docker sdk client
-│   │   ├── container.go
-│   │   ├── image.go
-│   │   ├── network.go
+│   │   │   └── auth.go # image registry auth helpers (untested for now)
+│   │   │
+│   │   │
 │   │   ├── options # docker sdk client [action] option setters
 │   │   │   ├── container
-│   │   │   │   ├── attach
-│   │   │   │   │   └── attach.go
-│   │   │   │   ├── checkpointcreate
-│   │   │   │   │   └── checkpointcreate.go
-│   │   │   │   ├── checkpointdelete
-│   │   │   │   │   └── checkpointdelete.go
-│   │   │   │   ├── checkpointlist
-│   │   │   │   │   └── checkpointlist.go
-│   │   │   │   ├── commit
-│   │   │   │   │   └── commit.go
-│   │   │   │   ├── copyto
-│   │   │   │   │   └── copyto.go
-│   │   │   │   ├── exec
-│   │   │   │   │   └── exec.go
-│   │   │   │   ├── execattach
-│   │   │   │   │   └── execattach.go
-│   │   │   │   ├── execresize
-│   │   │   │   │   └── execresize.go
-│   │   │   │   ├── execstart
-│   │   │   │   │   └── execstart.go
-│   │   │   │   ├── list
-│   │   │   │   │   └── list.go
-│   │   │   │   ├── logs
-│   │   │   │   │   └── logs.go
-│   │   │   │   ├── prune
-│   │   │   │   │   └── prune.go
-│   │   │   │   ├── remove
-│   │   │   │   │   └── remove.go
-│   │   │   │   ├── start
-│   │   │   │   │   └── start.go
-│   │   │   │   ├── stop
-│   │   │   │   │   └── stop.go
-│   │   │   │   ├── update
-│   │   │   │   │   └── update.go
-│   │   │   │   └── wait
-│   │   │   │       └── wait.go
+│   │   │   │   └── ... #container option setters
 │   │   │   ├── image
-│   │   │   │   ├── build
-│   │   │   │   │   └── build.go
-│   │   │   │   ├── create
-│   │   │   │   │   └── create.go
-│   │   │   │   ├── imports
-│   │   │   │   │   └── imports.go
-│   │   │   │   ├── list
-│   │   │   │   │   └── list.go
-│   │   │   │   ├── load
-│   │   │   │   │   └── load.go
-│   │   │   │   ├── prune
-│   │   │   │   │   └── prune.go
-│   │   │   │   ├── pull
-│   │   │   │   │   └── pull.go
-│   │   │   │   ├── remove
-│   │   │   │   │   └── remove.go
-│   │   │   │   ├── save
-│   │   │   │   │   └── save.go
-│   │   │   │   └── search
-│   │   │   │       └── search.go
+│   │   │   │   └── ... #image option setters
 │   │   │   ├── network
-│   │   │   │   ├── connect
-│   │   │   │   │   └── connect.go
-│   │   │   │   ├── create
-│   │   │   │   │   ├── create.go
-│   │   │   │   │   └── ipam
-│   │   │   │   │       ├── ipamconfig
-│   │   │   │   │       │   └── ipamconfig.go
-│   │   │   │   │       └── ipam.go
-│   │   │   │   ├── inspect
-│   │   │   │   │   └── inspect.go
-│   │   │   │   ├── list
-│   │   │   │   │   └── list.go
-│   │   │   │   └── prune
-│   │   │   │       └── prune.go
+│   │   │   │   └── ... #network option setters
 │   │   │   └── volume
-│   │   │       ├── create
-│   │   │       │   ├── clusterspec
-│   │   │       │   │   ├── accessibility
-│   │   │       │   │   │   └── accessibility.go
-│   │   │       │   │   ├── accessmode
-│   │   │       │   │   │   └── accessmode.go
-│   │   │       │   │   └── clusterspec.go
-│   │   │       │   └── create.go
-│   │   │       ├── list
-│   │   │       │   └── list.go
-│   │   │       ├── prune
-│   │   │       │   └── prune.go
-│   │   │       └── update
-│   │   │           └── update.go
-│   │   ├── response
-│   │   │   └── response.go # wrapped client response types
-│   │   └── volumes.go
-│   ├── compose
-│   │   ├── api.go
-│   │   ├── compose.go
-│   │   ├── errors.go
-│   │   └── options # compose cli option setters
-│   │       ├── down
-│   │       │   └── down.go
-│   │       ├── logs
-│   │       │   └── logs.go
-│   │       └── up
-│   │           └── up.go
-│   ├── create
-│   │   ├── config
-│   │   │   ├── cc # container config setters
-│   │   │   │   ├── cc.go
-│   │   │   │   ├── health
-│   │   │   │   │   └── health.go
-│   │   │   │   └── health.go
-│   │   │   ├── hc # container host config setters
-│   │   │   │   ├── capabilities.go
-│   │   │   │   ├── hc.go
-│   │   │   │   ├── log.go
-│   │   │   │   ├── mount
-│   │   │   │   │   └── mount.go
-│   │   │   │   ├── mount.go
-│   │   │   │   └── restart_policy.go
-│   │   │   ├── nc # container network config setters
-│   │   │   │   ├── endpoint
-│   │   │   │   │   ├── endpoint.go
-│   │   │   │   │   └── ipam
-│   │   │   │   │       └── ipam.go
-│   │   │   │   └── nc.go
-│   │   │   ├── pc # container platform config setters
-│   │   │   │   └── pc.go
-│   │   │   └── sc # compose service setters
-│   │   │       ├── build
-│   │   │       │   ├── build.go
-│   │   │       │   └── ulimit
-│   │   │       │       └── ulimit.go
-│   │   │       ├── deploy
-│   │   │       │   ├── deploy.go
-│   │   │       │   ├── resource
-│   │   │       │   │   ├── device
-│   │   │       │   │   │   └── device.go
-│   │   │       │   │   └── resource.go
-│   │   │       │   └── update
-│   │   │       │       └── update.go
-│   │   │       ├── network
-│   │   │       │   ├── network.go
-│   │   │       │   └── pool
-│   │   │       │       └── pool.go
-│   │   │       ├── sc.go
-│   │   │       ├── secrets
-│   │   │       │   ├── projectsecret
-│   │   │       │   │   └── projectsecret.go
-│   │   │       │   └── secretservice
-│   │   │       │       └── secretservice.go
-│   │   │       └── volume
-│   │   │           └── volume.go
-│   │   ├── container.go # create container compatible with sdk wrapper & compose wrapper
-│   │   ├── errors.go
-│   │   └── service.go
-│   └── tools
-│       └── tools.go # various helpers
+│   │   │       └── ... #volume option setters
+│   │   │
+│   │   │
+│   │   └── response # wrapped client response types
+│   │       
+│   │   
+│   │   
+│   ├── compose # compose cli wrapper
+│   │   │ 
+│   │   └── options 
+│   │       └── ... # compose cli option setters
+│   │ 
+│   │ 
+│   ├── create # create container and compose projects/services
+│   │   └── config
+│   │       ├── cc 
+│   │       │   └── ... # container config setters
+│   │       │
+│   │       ├── hc # container host config setters
+│   │       │   └── ...
+│   │       │
+│   │       ├── nc # container network config setters
+│   │       │   └── ...
+│   │       │
+│   │       ├── pc # container platform config setters
+│   │       │   └── ...
+│   │       │
+│   │       └── sc 
+│   │           └── ... # compose service setters
+│   │       
+│   └── tools # various helpers
 └── README.md # this file
 
 83 directories, 92 files
