@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"github.com/aptd3v/go-contain/pkg/compose"
+	"github.com/aptd3v/go-contain/pkg/compose/options/up"
 	"github.com/aptd3v/go-contain/pkg/create"
 	"github.com/aptd3v/go-contain/pkg/create/config/cc"
 	"github.com/aptd3v/go-contain/pkg/create/config/cc/health"
@@ -34,7 +35,7 @@ func main() {
 	fmt.Println("docker-compose.yaml exported successfully")
 
 	wordpress := compose.NewCompose(project)
-	err = wordpress.Up()
+	err = wordpress.Up(up.WithRemoveOrphans())
 	if err != nil {
 		log.Fatalf("failed to up: %v", err)
 	}
@@ -44,8 +45,9 @@ func main() {
 func SetupProject() *create.Project {
 	project := create.NewProject(fmt.Sprintf("gocontain-wp-scale-%d", NumWordPress))
 	project.WithService("database-example", DatabaseContainer())
+
+	// portainer involes extra steps on windows so we skip it
 	if IsNotWindows {
-		// portainer involes extra steps on windows so we skip it
 		project.WithService("portainer-container", PortainerContainer())
 	}
 	deps := []create.SetServiceConfig{}
