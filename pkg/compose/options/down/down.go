@@ -55,8 +55,9 @@ func WithRemoveVolumes() compose.SetComposeDownOption {
 // if writer is nil, it will use os.Stdout as a fallback
 func WithWriter(writer io.Writer) compose.SetComposeDownOption {
 	return func(opt *compose.ComposeDownOptions) error {
-		if writer != nil {
+		if writer == nil {
 			opt.Writer = os.Stdout
+			return nil
 		}
 		opt.Writer = writer
 		return nil
