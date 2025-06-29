@@ -78,7 +78,7 @@ Each setter type is defined in its own package
 
 ```go
 project.WithService("api",
-	create.NewContainer("my-api:latest").
+	create.NewContainer("my-api-container").
         WithContainerConfig(
             cc.WithImagef("ubuntu:%s", tag)
         ).
