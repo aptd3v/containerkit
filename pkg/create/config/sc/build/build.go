@@ -15,10 +15,18 @@ type SetBuildConfig func(opt *types.BuildConfig) error
 // WithDockerfile sets the Dockerfile for the service
 // parameters:
 //   - path: the path to the Dockerfile
-//   - context: the context for the build
-func WithDockerfile(path string, context string) SetBuildConfig {
+func WithDockerfile(path string) SetBuildConfig {
 	return func(opt *types.BuildConfig) error {
 		opt.Dockerfile = path
+		return nil
+	}
+}
+
+// WithContext sets the context for the build
+// parameters:
+//   - context: the context for the build (can be a path or a url)
+func WithContext(context string) SetBuildConfig {
+	return func(opt *types.BuildConfig) error {
 		opt.Context = context
 		return nil
 	}
@@ -26,12 +34,10 @@ func WithDockerfile(path string, context string) SetBuildConfig {
 
 // WithDockerfileInline sets the Dockerfile inline for the service
 // parameters:
-//   - context: the context for the build
 //   - inline: the inline Dockerfile
-func WithDockerfileInline(context string, inline string) SetBuildConfig {
+func WithDockerfileInline(inline string) SetBuildConfig {
 	return func(opt *types.BuildConfig) error {
 		opt.DockerfileInline = inline
-		opt.Context = context
 		return nil
 	}
 }
