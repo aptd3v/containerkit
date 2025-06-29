@@ -2,6 +2,8 @@
 package list
 
 import (
+	"fmt"
+
 	"github.com/docker/docker/api/types/image"
 )
 
@@ -18,9 +20,23 @@ func WithAll() SetImageListOption {
 }
 
 // WithFilters sets the filters for the image list.
+// parameters:
+//   - key: the key of the filter
+//   - value: the value of the filter
 func WithFilter(key, value string) SetImageListOption {
 	return func(o *image.ListOptions) error {
 		o.Filters.Add(key, value)
+		return nil
+	}
+}
+
+// WithLabel sets the label for the image list.
+// parameters:
+//   - key: the key of the label
+//   - value: the value of the label
+func WithLabel(key, value string) SetImageListOption {
+	return func(o *image.ListOptions) error {
+		o.Filters.Add("label", fmt.Sprintf("%s=%s", key, value))
 		return nil
 	}
 }
