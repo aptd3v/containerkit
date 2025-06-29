@@ -254,8 +254,6 @@ func EnvFileExists(name string) tools.CheckClosure {
 │   │       
 │   └── tools # various helpers
 └── README.md # this file
-
-83 directories, 92 files
 ```
 
 ---
