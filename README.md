@@ -6,7 +6,7 @@
 
 ## 🚀 Features
 
-* Support for Docker Compose commands `up`, `down`, `build`, `logs`, (more coming soon!)
+* Support for Docker Compose commands `up`, `down`, `logs`, (more coming soon!)
 * Declarative container/service creation with chainable options
 * Native Go option setters for containers, networks, volumes, and health checks etc.
 * IDE-friendly
