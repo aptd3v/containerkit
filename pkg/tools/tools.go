@@ -1,6 +1,11 @@
 // Package tools provides various helpers for writing declarative option setters.
 package tools
 
+import (
+	"errors"
+	"fmt"
+)
+
 // PredicateClosure is a condition based on external or ambient context,
 // not the internal config. This allows behavior to be toggled based on
 // CLI flags, environment variables, testing hooks, etc.
@@ -122,18 +127,47 @@ func Or(preds ...bool) func() bool {
 	})
 }
 
-// Group combines multiple setters into a single setter
+// Group combines multiple setters into a single setter, If any of the setters return an error, the error will be grouped and returned.
 //
 // note: if any of the setters are nil, they will be skipped and not added to warnings
 func Group[T any, O ~func(T) error](fns ...O) O {
+	errs := []error{}
 	return func(t T) error {
 
 		for _, fn := range fns {
 			if fn != nil {
 				if err := fn(t); err != nil {
-					return err
+					errs = append(errs, err)
 				}
 			}
+		}
+		if len(errs) > 0 {
+			return errors.Join(errs...)
+		}
+		return nil
+	}
+}
+
+type CheckClosure func() (bool, error)
+
+// OnlyIf is a function that takes a check closure (which is a function that returns a boolean and an error) and a setter function.
+// It applies the setter function to the input if the check closure returns true AND the error is nil.
+//
+// note: if the check closure is nil, an error will be returned
+//
+// note: If your intent is "apply the setter only if the condition is met, otherwise silently skip without error", then use tools.WhenTrue
+func OnlyIf[T any, O ~func(T) error](check CheckClosure, f O) O {
+	return func(t T) error {
+		if check == nil {
+			return errors.New("check closure is nil")
+		}
+		ok, err := check()
+		if err != nil {
+			fmt.Println("error", err)
+			return err
+		}
+		if f != nil && ok {
+			return f(t)
 		}
 		return nil
 	}
