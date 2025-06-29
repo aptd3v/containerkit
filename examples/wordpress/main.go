@@ -1,13 +1,19 @@
 package main
 
 import (
+	"bytes"
+	"context"
 	"fmt"
+	"io"
 	"log"
 	"os"
+	"os/signal"
 	"runtime"
 	"strings"
 
 	"github.com/aptd3v/go-contain/pkg/compose"
+	"github.com/aptd3v/go-contain/pkg/compose/options/down"
+	"github.com/aptd3v/go-contain/pkg/compose/options/logs"
 	"github.com/aptd3v/go-contain/pkg/compose/options/up"
 	"github.com/aptd3v/go-contain/pkg/create"
 	"github.com/aptd3v/go-contain/pkg/create/config/cc"
@@ -28,18 +34,59 @@ var (
 func main() {
 
 	project := SetupProject()
+	//export the project to a docker-compose.yaml file
 	err := project.Export("./examples/wordpress/docker-compose.yaml", 0644)
 	if err != nil {
 		log.Fatalf("failed to export to docker-compose.yaml: %v", err)
 	}
-	fmt.Println("docker-compose.yaml exported successfully")
 
+	//create a new compose instance
 	wordpress := compose.NewCompose(project)
-	err = wordpress.Up(up.WithRemoveOrphans())
+
+	//execute the up command
+	err = wordpress.Up(context.Background(),
+		up.WithWriter(NewLogger("up")),
+		up.WithRemoveOrphans(),
+		up.WithNoLogPrefix(),
+		up.WithDetach(),
+		up.WithTimeout(3),
+	)
 	if err != nil {
-		log.Fatalf("failed to up: %v", err)
+		log.Fatalf("failed to execute up: %v", err)
 	}
-	fmt.Println("up successfully")
+
+	//create a new context with a cancel function
+	ctx, cancel := context.WithCancel(context.Background())
+	// wait for ctrl+c to cancel the context
+	ctrlc := make(chan os.Signal, 1)
+	signal.Notify(ctrlc, os.Interrupt)
+	go func() {
+		<-ctrlc
+		cancel()
+	}()
+
+	//execute the logs command
+	err = wordpress.Logs(ctx,
+		logs.WithWriter(NewLogger("logs")),
+		logs.WithNoLogPrefix(),
+		logs.WithFollow(),
+	)
+	if err != nil {
+		log.Fatalf("failed to execute logs: %v", err)
+	}
+
+	//cleanup
+	err = wordpress.Down(
+		//we use background context because we want the down command to run even if the context is canceled,
+		context.Background(),
+		down.WithWriter(NewLogger("down")),
+		down.WithRemoveOrphans(),
+		down.WithRemoveImage(down.RemoveAll),
+		down.WithRemoveVolumes(),
+	)
+	if err != nil {
+		log.Fatalf("failed to execute down: %v", err)
+	}
 }
 
 func SetupProject() *create.Project {
@@ -204,4 +251,40 @@ backend wordpress_back
 `, strings.Join(backends, "\n"))
 
 	return os.WriteFile("./examples/wordpress/haproxy.cfg", []byte(cfg), 0644)
+}
+
+type Logger struct {
+	Target io.Writer
+	action string
+	buffer bytes.Buffer
+}
+
+func (l *Logger) Write(p []byte) (n int, err error) {
+	l.buffer.Write(p)
+
+	for {
+		line, err := l.buffer.ReadString('\n')
+		if err != nil {
+			if err == io.EOF {
+				break
+			}
+			return 0, err
+		}
+
+		_, werr := l.Target.Write([]byte(fmt.Sprintf("[\x1b[32m%s\x1b[0m] %s", l.action, line)))
+		if werr != nil {
+			return 0, werr
+		}
+
+	}
+
+	return len(p), nil
+}
+
+func NewLogger(action string) *Logger {
+
+	return &Logger{
+		Target: os.Stdout,
+		action: action,
+	}
 }
