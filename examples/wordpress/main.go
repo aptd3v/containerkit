@@ -271,7 +271,7 @@ func (l *Logger) Write(p []byte) (n int, err error) {
 			return 0, err
 		}
 
-		_, werr := l.Target.Write([]byte(fmt.Sprintf("[\x1b[32m%s\x1b[0m] %s", l.action, line)))
+		_, werr := fmt.Fprintf(l.Target, "[\x1b[32m%s\x1b[0m] %s", l.action, line)
 		if werr != nil {
 			return 0, werr
 		}

@@ -16,18 +16,6 @@ func WithTail(tail int) compose.SetComposeLogsOption {
 	}
 }
 
-// WithWriter sets the writer for the compose logs command stdout and stderr
-//
-// if writer is nil, it will use os.Stdout as a fallback
-func WithWriter(writer io.Writer) compose.SetComposeLogsOption {
-	return func(opt *compose.ComposeLogsOptions) error {
-		if writer != nil {
-			opt.Writer = os.Stdout
-		}
-		opt.Writer = writer
-		return nil
-	}
-}
 func WithFollow() compose.SetComposeLogsOption {
 	return func(opt *compose.ComposeLogsOptions) error {
 		opt.Follow = true
@@ -38,6 +26,20 @@ func WithFollow() compose.SetComposeLogsOption {
 func WithNoLogPrefix() compose.SetComposeLogsOption {
 	return func(opt *compose.ComposeLogsOptions) error {
 		opt.NoLogPrefix = true
+		return nil
+	}
+}
+
+// WithWriter sets the writer for the compose logs command stdout and stderr
+//
+// if writer is nil, it will use os.Stdout as a fallback
+func WithWriter(writer io.Writer) compose.SetComposeLogsOption {
+	return func(opt *compose.ComposeLogsOptions) error {
+		if writer == nil {
+			opt.Writer = os.Stdout
+			return nil
+		}
+		opt.Writer = writer
 		return nil
 	}
 }
