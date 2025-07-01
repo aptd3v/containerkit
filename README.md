@@ -340,7 +340,7 @@ func main() {
 	)
 
 	project.WithService("express",
-		create.NewContainer("node:latest").
+		create.NewContainer("node-container").
 			WithContainerConfig(
 				cc.WithImage("node:latest"),
 				cc.WithCommand("npm", "start"),
@@ -366,7 +366,7 @@ func main() {
 	compose := compose.NewCompose(project)
 
 	if err := compose.Up(context.Background()); err != nil {
-		// will output ThisFileDoesNotExist.env: no such file or directory
+		// will output .ThisFileDoesNotExist.env: no such file or directory
 		log.Fatal(err)
 
 	}
