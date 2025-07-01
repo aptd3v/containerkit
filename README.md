@@ -4,6 +4,7 @@
 
 ![Go Version](https://img.shields.io/badge/go-1.23.0-blue)
 [![Go Reference](https://pkg.go.dev/badge/github.com/aptd3v/go-contain.svg)](https://pkg.go.dev/github.com/aptd3v/go-contain)
+[![Go Report Card](https://goreportcard.com/badge/github.com/aptd3v/go-contain)](https://goreportcard.com/report/github.com/aptd3v/go-contain)
 
 ## 🚀 Features
 
@@ -15,6 +16,161 @@
 
 ---
 
+## 🤔 Why go-contain?
+
+While Docker Compose YAML files work great for simple, static configurations, **go-contain** unlocks the full power of programmatic infrastructure definition. Here's why you might choose go-contain over traditional approaches:
+
+### 🎯 **Programmatic Infrastructure Control**
+```go
+// ✅ Generate infrastructure from data, APIs, configs - A real pain with static YAML
+
+//// Generate a unique environment for each microservice from a config object.
+func setupEnvironment(envConfig EnvironmentConfig) *create.Project {
+    project := create.NewProject(envConfig.Name)
+    
+    // Generate services from database records, API responses, etc.
+    for _, service := range envConfig.Services {
+        replicas := envConfig.GetReplicas(service.Name)
+        
+        for i := 0; i < replicas; i++ {
+            project.WithService(fmt.Sprintf("%s-%d", service.Name, i),
+                create.NewContainer(service.Name).
+                    WithContainerConfig(
+                        cc.WithImagef("%s:%s", service.Image, envConfig.Version),
+                        cc.WithEnv("INSTANCE_ID", strconv.Itoa(i)),
+                        cc.WithEnv("ENVIRONMENT", envConfig.Environment),
+                    ).
+                    WithHostConfig(
+                        hc.WithPortBindings("tcp", "0.0.0.0", 
+                            strconv.Itoa(8080+i), "8080"),
+                    ),
+            )
+        }
+    }
+    return project
+}
+
+// Call with live data from your application
+envConfig := fetchEnvironmentFromAPI()
+project := setupEnvironment(envConfig)
+compose.NewCompose(project).Up(context.Background())
+```
+```yaml
+# ❌ Docker Compose scaling creates IDENTICAL containers - no per-instance customization
+version: '3.8'
+services:
+  api:
+    image: myapp:v1.2.3
+    environment:
+      - ENVIRONMENT=production
+      # All scaled instances get the SAME environment variables
+      # No way to give each replica different INSTANCE_ID or ports
+    ports:
+      - "8080:8080"  # Port conflicts when scaling!
+
+# docker compose up --scale api=3
+# ↑ Creates 3 identical containers, but:
+# - All have the same environment variables
+# - Port binding conflicts (all try to bind to 8080)
+# - No way to customize individual instances
+```
+
+### 🔄 **Dynamic & Conditional Configuration**
+```go
+// ✅ Environment-based logic, loops, and conditionals
+for _, env := range []string{"dev", "staging", "prod"} {
+    project.WithService(fmt.Sprintf("api-%s", env),
+        create.NewContainer("api").
+            WithContainerConfig(
+                cc.WithImage(fmt.Sprintf("myapp:%s", env)),
+                tools.WhenTrue(env == "prod", 
+                    cc.WithEnv("CACHE_ENABLED", "true"),
+                ),
+            ),
+    )
+}
+```
+```yaml
+# ❌ Static configuration requires multiple files or templating
+# No native support for conditionals or loops
+```
+
+### 🧩 **Code Reusability & Composition**
+```go
+// ✅ Create reusable components and patterns
+func DatabaseService(name, version string) *create.Container {
+    return create.NewContainer(name).
+        WithContainerConfig(
+            cc.WithImagef("postgres:%s", version),
+            cc.WithEnv("POSTGRES_DB", name),
+        ).
+        WithHostConfig(
+            hc.WithPortBindings("tcp", "0.0.0.0", "5432", "5432"),
+        )
+}
+
+func RedisService(name string) *create.Container {
+    return create.NewContainer(name).
+        WithContainerConfig(
+            cc.WithImage("redis:7-alpine"),
+        ).
+        WithHostConfig(
+            hc.WithPortBindings("tcp", "0.0.0.0", "6379", "6379"),
+        )
+}
+
+// Microservices architecture - each service gets its own database
+project.WithService("user-service-db", DatabaseService("users", "latest"))
+project.WithService("user-service-cache", RedisService("user-cache"))
+project.WithService("order-service-db", DatabaseService("orders", "latest"))
+project.WithService("order-service-cache", RedisService("order-cache"))
+```
+
+### 🚀 **Perfect for Automation & CI/CD**
+```go
+// ✅ Integrate with existing Go tools and workflows
+func DeployEnvironment(ctx context.Context, env string, replicas int) error {
+    project := create.NewProject(fmt.Sprintf("app-%s", env))
+    
+    // Build services programmatically based on parameters
+    for i := 0; i < replicas; i++ {
+        project.WithService(fmt.Sprintf("worker-%d", i), 
+            // ... configure based on env and replica count
+        )
+    }
+    
+    compose := compose.NewCompose(project)
+    return compose.Up(ctx, up.WithDetach())
+}
+```
+
+### 🧪 **Leverage Go's Ecosystem**
+- **Testing**: Write unit tests for your infrastructure code
+- **Debugging**: Use Go's debugging tools and error handling
+- **Libraries**: Integrate with any Go package (HTTP clients, databases, etc.)
+- **Tooling**: Build CLIs, APIs, and automation around your containers
+
+### 🔄 **Still Docker Compose Compatible**
+```go
+// Export to standard YAML when needed
+if err := project.Export("./docker-compose.yaml", 0644); err != nil {
+    log.Fatal(err)
+}
+// Now use with: docker compose up -d
+```
+
+**go-contain** gives you the best of both worlds: the flexibility and power of Go programming with full compatibility with the Docker Compose ecosystem.
+
+---
+
+## 📋 Prerequisites
+
+- **Go**: 1.23+
+- **Docker**: 28.2.0+ with Docker Compose v2.37.0
+- **Operating System**: Linux, macOS, or Windows
+
+---
+
 ## 📦 Installation
 
 ```bash
@@ -22,6 +178,45 @@ go get github.com/aptd3v/go-contain@latest
 ```
 
 ---
+
+## 🚀 Quick Start
+
+Get up and running in 30 seconds:
+
+```bash
+# Create a new Go module
+mkdir my-containers && cd my-containers
+go mod init my-containers
+go get github.com/aptd3v/go-contain@latest
+```
+## Create main.go
+```go
+package main
+
+import (
+	"context"
+	"github.com/aptd3v/go-contain/pkg/compose"
+	"github.com/aptd3v/go-contain/pkg/create"
+	"github.com/aptd3v/go-contain/pkg/create/config/cc"
+)
+
+func main() {
+	project := create.NewProject("hello-world")
+	project.WithService("hello", 
+		create.NewContainer("hello-container").
+			WithContainerConfig(
+				cc.WithImage("alpine:latest"),
+				cc.WithCommand("echo", "Hello from go-contain!"),
+			),
+	)
+	
+	compose.NewCompose(project).Up(context.Background())
+}
+```
+## Run it
+```bash
+go run main.go
+```
 
 ## 🛠️ Basic Usage
 
@@ -186,7 +381,6 @@ func EnvFileExists(name string) tools.CheckClosure {
 		return true, nil
 	}
 }
-
 ```
 
 ---
@@ -196,6 +390,44 @@ func EnvFileExists(name string) tools.CheckClosure {
 * Programmatically build services, networks, and volumes using loops
 * Reuse options via functional composition
 * Create declarative DSLs for internal infrastructure automation
+
+---
+
+## 📚 Examples
+
+Explore examples in the [`examples/`](./examples) directory:
+
+### 🔰 [`examples/simple/`](./examples/simple)
+Basic "Hello World" example - perfect for getting started.
+```bash
+go run ./examples/simple/main.go
+```
+
+### 🌐 [`examples/wordpress/`](./examples/wordpress) 
+**WordPress stack** with:
+- Multiple WordPress instances (configurable scaling)
+- MySQL database with health checks  
+- HAProxy load balancer with auto-generated config
+- Portainer for container management (Non Windows only)
+- Graceful shutdown and cleanup
+```bash
+go run ./examples/wordpress/main.go
+```
+
+### 🔨 [`examples/image_inline/`](./examples/image_inline)
+**Dynamic image building** - build Docker images inline and tag them conditionally.
+```bash
+go run ./examples/image_inline/main.go
+```
+
+---
+
+
+### Getting Help
+
+- 📖 **API Docs**: [pkg.go.dev/github.com/aptd3v/go-contain](https://pkg.go.dev/github.com/aptd3v/go-contain)
+- 🐛 **Issues**: [GitHub Issues](https://github.com/aptd3v/go-contain/issues)
+- 💬 **Discussions**: [GitHub Discussions](https://github.com/aptd3v/go-contain/discussions)
 
 ---
 
@@ -211,7 +443,7 @@ func EnvFileExists(name string) tools.CheckClosure {
 ├── pkg
 │   ├── client # docker sdk client wrapper
 │   │   ├── auth
-│   │   │   └── auth.go # image registry auth helpers (untested for now)
+│   │   │   └── auth.go # image registry auth helpers
 │   │   │
 │   │   │
 │   │   ├── options # docker sdk client [action] option setters
@@ -258,35 +490,26 @@ func EnvFileExists(name string) tools.CheckClosure {
 
 ---
 
-## 📝 YAML Export & Compatibility
+## 🗺️ Roadmap
 
-**go-contain** lets you export your programmatically defined Compose projects as standard Docker Compose YAML files. These exported YAML files are fully compatible with the traditional Docker Compose CLI and ecosystem.
+### ✅ Current Features 
+- ✅ Core Compose commands: `up`, `down`, `logs`
+- ✅ Container, network, and volume configuration  
+- ✅ Health checks and dependencies
+- ✅ Conditional logic with `tools` package
+- ✅ YAML export for compatibility
+- ✅ Cross-platform support (Linux, macOS, Windows)
 
-This means you can:
+### 🚧 In Development  
+- 🔄 Additional Compose commands: `restart`, `stop`, `start`, `ps`
+- 🔄 Enhanced Docker SDK client features
+- 🔄 Image registry authentication helpers
+- 🔄 More comprehensive test coverage
 
-* Use `docker compose up`, `docker compose down`, and other Docker Compose commands directly on the exported YAML.
-* Share the exported YAML with teams or CI pipelines that rely on standard Docker Compose workflows.
+### 💡 Ideas & Suggestions
+Have ideas for go-contain? We'd love to hear them! Open an [issue](https://github.com/aptd3v/go-contain/issues) or start a [discussion](https://github.com/aptd3v/go-contain/discussions).
 
-
-Example:
-
-```go
-if err := project.Export("./docker-compose.yaml", 0644); err != nil {
-	log.Fatal(err)
-}
-```
-
-You can then run:
-
-```bash
-docker compose up -d
-```
-
-to start your services exactly as defined by your Go code.
-
-This design ensures maximum flexibility and compatibility, letting you leverage the power of Go while staying aligned with Docker Compose standards.
-
-
+---
 
 ## 📄 License
 
