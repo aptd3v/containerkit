@@ -5,64 +5,43 @@ package create
 import (
 	"errors"
 	"fmt"
-	"strings"
 
-	c "github.com/docker/docker/api/types/container"
-	n "github.com/docker/docker/api/types/network"
-	p "github.com/opencontainers/image-spec/specs-go/v1"
+	"github.com/docker/docker/api/types/container"
+	"github.com/docker/docker/api/types/network"
+	ocispec "github.com/opencontainers/image-spec/specs-go/v1"
 )
 
-type ContainerConfig struct {
-	*c.Config
-}
-type HostConfig struct {
-	*c.HostConfig
-}
-type NetworkConfig struct {
-	*n.NetworkingConfig
-}
-type PlatformConfig struct {
-	*p.Platform
-}
-
-type mergedConfig struct {
-	Name      string // the name of the container
-	Container *ContainerConfig
-	Host      *HostConfig
-	Network   *NetworkConfig
-	Platform  *PlatformConfig
+type MergedConfig struct {
+	Container *container.Config         // the container configuration
+	Host      *container.HostConfig     // the host configuration
+	Network   *network.NetworkingConfig // the network configuration
+	Platform  *ocispec.Platform         // the platform configuration
 }
 type Container struct {
-	Warnings []string
-	Errors   []error
-	Config   *mergedConfig
+	Name   string        // the name of the container
+	Config *MergedConfig // merged docker sdk configuration for container creation
+	Errors []error
 }
 
 func NewContainer(name string) *Container {
 	return &Container{
-		Config: &mergedConfig{
-			Name: name,
-			Container: &ContainerConfig{
-				Config: &c.Config{},
-			},
-			Host: &HostConfig{
-				HostConfig: &c.HostConfig{},
-			},
-			Network: &NetworkConfig{
-				NetworkingConfig: &n.NetworkingConfig{},
-			},
-			Platform: &PlatformConfig{
-				Platform: &p.Platform{},
-			},
+		Name: name,
+		Config: &MergedConfig{
+			Container: &container.Config{},
+			Host:      &container.HostConfig{},
+			Network:   &network.NetworkingConfig{},
+			Platform:  &ocispec.Platform{},
 		},
-		Warnings: []string{},
-		Errors:   []error{},
+		Errors: []error{},
 	}
 }
 
 // Validate validates the container config.
 // It will return an error if the container has errors.
 func (c *Container) Validate() error {
+	if c.Errors == nil {
+		c.Errors = []error{}
+	}
 	if c == nil {
 		return fmt.Errorf("container is nil")
 	}
@@ -71,21 +50,18 @@ func (c *Container) Validate() error {
 	}
 	return nil
 }
-func (c *Container) GetWarnings() string {
-	return strings.Join(c.Warnings, "\n")
-}
 
 // SetContainerConfig is a function that sets the container config
-type SetContainerConfig func(config *ContainerConfig) error
+type SetContainerConfig func(config *container.Config) error
 
 // SetHostConfig is a function that sets the host config
-type SetHostConfig func(config *HostConfig) error
+type SetHostConfig func(config *container.HostConfig) error
 
 // SetNetworkConfig is a function that sets the network config
-type SetNetworkConfig func(config *NetworkConfig) error
+type SetNetworkConfig func(config *network.NetworkingConfig) error
 
 // SetPlatformConfig is a function that sets the platform config
-type SetPlatformConfig func(config *PlatformConfig) error
+type SetPlatformConfig func(config *ocispec.Platform) error
 
 // WithContainerConfig sets the container config via the setter functions.
 // It will return a container with the container config set.
@@ -95,12 +71,10 @@ type SetPlatformConfig func(config *PlatformConfig) error
 //   - setters: the setters to set the container config
 func (c *Container) WithContainerConfig(setters ...SetContainerConfig) *Container {
 	if len(setters) == 0 {
-		c.Warnings = append(c.Warnings, "WithContainerConfig: function called without any setters")
 		return c
 	}
 	for _, setter := range setters {
 		if setter == nil {
-			c.Warnings = append(c.Warnings, "WithContainerConfig: setter is nil")
 			continue
 		}
 		if err := setter(c.Config.Container); err != nil {
@@ -120,12 +94,10 @@ func (c *Container) WithContainerConfig(setters ...SetContainerConfig) *Containe
 //   - setters: the setters to set the host config
 func (c *Container) WithHostConfig(setters ...SetHostConfig) *Container {
 	if len(setters) == 0 {
-		c.Warnings = append(c.Warnings, "WithHostConfig: function called without any setters")
 		return c
 	}
 	for _, setter := range setters {
 		if setter == nil {
-			c.Warnings = append(c.Warnings, "WithHostConfig: setter is nil")
 			continue
 		}
 		if err := setter(c.Config.Host); err != nil {
@@ -144,12 +116,10 @@ func (c *Container) WithHostConfig(setters ...SetHostConfig) *Container {
 //   - setters: the setters to set the network config
 func (c *Container) WithNetworkConfig(setters ...SetNetworkConfig) *Container {
 	if len(setters) == 0 {
-		c.Warnings = append(c.Warnings, "WithNetworkConfig: function called without any setters")
 		return c
 	}
 	for _, setter := range setters {
 		if setter == nil {
-			c.Warnings = append(c.Warnings, "WithNetworkConfig: setter is nil")
 			continue
 		}
 		if err := setter(c.Config.Network); err != nil {
@@ -168,12 +138,10 @@ func (c *Container) WithNetworkConfig(setters ...SetNetworkConfig) *Container {
 //   - setters: the setters to set the platform config
 func (c *Container) WithPlatformConfig(setters ...SetPlatformConfig) *Container {
 	if len(setters) == 0 {
-		c.Warnings = append(c.Warnings, "WithPlatformConfig: function called without any setters")
 		return c
 	}
 	for _, setter := range setters {
 		if setter == nil {
-			c.Warnings = append(c.Warnings, "WithPlatformConfig: setter is nil")
 			continue
 		}
 		if err := setter(c.Config.Platform); err != nil {

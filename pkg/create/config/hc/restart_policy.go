@@ -32,7 +32,7 @@ func WithRestartPolicy(mode RestartPolicy, maxRetryCount int) create.SetHostConf
 	default:
 		policyMode = container.RestartPolicyDisabled
 	}
-	return func(opt *create.HostConfig) error {
+	return func(opt *container.HostConfig) error {
 		opt.RestartPolicy = container.RestartPolicy{
 			Name:              policyMode,
 			MaximumRetryCount: maxRetryCount,

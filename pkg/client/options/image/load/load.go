@@ -5,14 +5,14 @@ import (
 	"io"
 
 	"github.com/aptd3v/go-contain/pkg/create"
-	v1 "github.com/opencontainers/image-spec/specs-go/v1"
+	p "github.com/opencontainers/image-spec/specs-go/v1"
 )
 
 // ImageLoadOptions is the image load options.
 type ImageLoadOptions struct {
 	Input     io.Reader
 	Quiet     bool
-	Platforms []v1.Platform
+	Platforms []p.Platform
 }
 
 // SetImageLoadOption is a function that sets the image load options.
@@ -37,18 +37,18 @@ func WithQuiet(quiet bool) SetImageLoadOption {
 // WithPlatforms sets the platforms for the image load.
 func WithPlatforms(setters ...create.SetPlatformConfig) SetImageLoadOption {
 	return func(o *ImageLoadOptions) error {
-		pc := create.PlatformConfig{}
-		platforms := make([]v1.Platform, 0)
+		pc := p.Platform{}
+		platforms := make([]p.Platform, 0)
 		for _, setter := range setters {
 			if setter != nil {
 				if err := setter(&pc); err != nil {
 					return err
 				}
-				platforms = append(platforms, *pc.Platform)
+				platforms = append(platforms, pc)
 			}
 		}
 		if o.Platforms == nil {
-			o.Platforms = make([]v1.Platform, 0)
+			o.Platforms = make([]p.Platform, 0)
 		}
 		o.Platforms = append(o.Platforms, platforms...)
 		return nil

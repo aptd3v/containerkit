@@ -10,7 +10,7 @@ import (
 )
 
 func WithEndpoint(name string, setEOFns ...endpoint.SetEndpointConfig) create.SetNetworkConfig {
-	return func(options *create.NetworkConfig) error {
+	return func(options *network.NetworkingConfig) error {
 		if options.EndpointsConfig == nil {
 			options.EndpointsConfig = make(map[string]*network.EndpointSettings)
 		}
@@ -33,7 +33,7 @@ func WithEndpoint(name string, setEOFns ...endpoint.SetEndpointConfig) create.Se
 // note: this is useful for when you want to fail the network config
 // and append the error to the network config error collection
 func Fail(err error) create.SetNetworkConfig {
-	return func(options *create.NetworkConfig) error {
+	return func(options *network.NetworkingConfig) error {
 		return create.NewNetworkConfigError("network_config", err.Error())
 	}
 }
@@ -43,7 +43,7 @@ func Fail(err error) create.SetNetworkConfig {
 // note: this is useful for when you want to fail the network config
 // and append the error to the network config error collection
 func Failf(stringFormat string, args ...interface{}) create.SetNetworkConfig {
-	return func(options *create.NetworkConfig) error {
+	return func(options *network.NetworkingConfig) error {
 		return create.NewNetworkConfigError("network_config", fmt.Sprintf(stringFormat, args...))
 	}
 }

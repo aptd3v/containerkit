@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/aptd3v/go-contain/pkg/create"
+	ocispec "github.com/opencontainers/image-spec/specs-go/v1"
 )
 
 // WithArchitecture sets the architecture for the platform
@@ -13,7 +14,7 @@ import (
 //
 // Architecture field specifies the CPU architecture, for example `amd64` or `ppc64le`.
 func WithArchitecture(architecture string) create.SetPlatformConfig {
-	return func(options *create.PlatformConfig) error {
+	return func(options *ocispec.Platform) error {
 		options.Architecture = architecture
 		return nil
 	}
@@ -25,7 +26,7 @@ func WithArchitecture(architecture string) create.SetPlatformConfig {
 //
 // OS specifies the operating system, for example `linux` or `windows`.
 func WithOS(OS string) create.SetPlatformConfig {
-	return func(options *create.PlatformConfig) error {
+	return func(options *ocispec.Platform) error {
 		options.OS = OS
 		return nil
 	}
@@ -37,7 +38,7 @@ func WithOS(OS string) create.SetPlatformConfig {
 //
 // OSVersion is an optional field specifying the operating system version, for example on Windows `10.0.14393.1066`.
 func WithOSVersion(OSVersion string) create.SetPlatformConfig {
-	return func(options *create.PlatformConfig) error {
+	return func(options *ocispec.Platform) error {
 		options.OSVersion = OSVersion
 		return nil
 	}
@@ -49,7 +50,7 @@ func WithOSVersion(OSVersion string) create.SetPlatformConfig {
 //
 // OSFeatures is an optional field specifying an array of strings, each listing a required OS feature (for example on Windows `win32k`).
 func WithOSFeatures(OSFeatures ...string) create.SetPlatformConfig {
-	return func(options *create.PlatformConfig) error {
+	return func(options *ocispec.Platform) error {
 		if options.OSFeatures == nil {
 			options.OSFeatures = make([]string, 0)
 		}
@@ -64,7 +65,7 @@ func WithOSFeatures(OSFeatures ...string) create.SetPlatformConfig {
 //
 // Variant is an optional field specifying a variant of the CPU, for example `v7` to specify ARMv7 when architecture is `arm`.
 func WithVariant(variant string) create.SetPlatformConfig {
-	return func(options *create.PlatformConfig) error {
+	return func(options *ocispec.Platform) error {
 		options.Variant = variant
 		return nil
 	}
@@ -75,7 +76,7 @@ func WithVariant(variant string) create.SetPlatformConfig {
 // note: this is useful for when you want to fail the platform config
 // and append the error to the platform config error collection
 func Fail(err error) create.SetPlatformConfig {
-	return func(options *create.PlatformConfig) error {
+	return func(options *ocispec.Platform) error {
 		return create.NewContainerConfigError("platform_config", err.Error())
 	}
 }
@@ -85,7 +86,7 @@ func Fail(err error) create.SetPlatformConfig {
 // note: this is useful for when you want to fail the platform config
 // and append the error to the platform config error collection
 func Failf(stringFormat string, args ...interface{}) create.SetPlatformConfig {
-	return func(options *create.PlatformConfig) error {
+	return func(options *ocispec.Platform) error {
 		return create.NewContainerConfigError("platform_config", fmt.Sprintf(stringFormat, args...))
 	}
 }

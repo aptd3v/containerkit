@@ -37,11 +37,11 @@ func (c *Client) ContainerCreate(ctx context.Context, created *create.Container)
 	config := created.Config
 	res, err := c.wrapped.ContainerCreate(
 		ctx,
-		config.Container.Config,
-		config.Host.HostConfig,
-		config.Network.NetworkingConfig,
-		config.Platform.Platform,
-		config.Name,
+		config.Container,
+		config.Host,
+		config.Network,
+		config.Platform,
+		created.Name,
 	)
 	if err != nil {
 		return nil, err

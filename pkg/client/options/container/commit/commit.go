@@ -54,16 +54,14 @@ func WithPause(pause bool) SetContainerCommitOption {
 
 // WithConfig sets the config for the container commit options.
 func WithConfig(setters ...create.SetContainerConfig) SetContainerCommitOption {
-	config := create.ContainerConfig{
-		Config: &container.Config{},
-	}
+	config := &container.Config{}
 	return func(o *container.CommitOptions) error {
 		if o.Config == nil {
-			o.Config = config.Config
+			o.Config = config
 		}
 		for _, setter := range setters {
 			if setter != nil {
-				if err := setter(&config); err != nil {
+				if err := setter(config); err != nil {
 					return err
 				}
 			}

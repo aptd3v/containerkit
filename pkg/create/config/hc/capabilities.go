@@ -2,6 +2,7 @@ package hc
 
 import (
 	"github.com/aptd3v/go-contain/pkg/create"
+	"github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/api/types/strslice"
 )
 
@@ -121,7 +122,7 @@ const ALL Capability = "ALL"
 // parameters:
 //   - caps: the capabilities to add
 func WithAddedCapabilities(caps ...Capability) create.SetHostConfig {
-	return func(opt *create.HostConfig) error {
+	return func(opt *container.HostConfig) error {
 		if opt.CapAdd == nil {
 			opt.CapAdd = make(strslice.StrSlice, 0)
 		}
@@ -136,7 +137,7 @@ func WithAddedCapabilities(caps ...Capability) create.SetHostConfig {
 // parameters:
 //   - caps: the capabilities to drop
 func WithDroppedCapabilities(caps ...Capability) create.SetHostConfig {
-	return func(opt *create.HostConfig) error {
+	return func(opt *container.HostConfig) error {
 		if opt.CapDrop == nil {
 			opt.CapDrop = make(strslice.StrSlice, 0)
 		}
