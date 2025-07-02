@@ -3,27 +3,27 @@ package save
 
 import (
 	"github.com/aptd3v/go-contain/pkg/create"
-	p "github.com/opencontainers/image-spec/specs-go/v1"
+	ocispec "github.com/opencontainers/image-spec/specs-go/v1"
 )
 
 type SetImageSaveOption func(*ImageSaveOptions) error
 
 type ImageSaveOptions struct {
-	Platforms []p.Platform
+	Platforms []ocispec.Platform
 	ImageIDs  []string
 }
 
 // WithPlatform appends the platform for the image save.
 func WithPlatform(setters ...create.SetPlatformConfig) SetImageSaveOption {
 	return func(o *ImageSaveOptions) error {
-		pc := p.Platform{}
+		pc := ocispec.Platform{}
 		for _, setter := range setters {
 			if err := setter(&pc); err != nil {
 				return err
 			}
 		}
 		if o.Platforms == nil {
-			o.Platforms = make([]p.Platform, 0)
+			o.Platforms = make([]ocispec.Platform, 0)
 		}
 		o.Platforms = append(o.Platforms, pc)
 		return nil

@@ -5,14 +5,14 @@ import (
 	"io"
 
 	"github.com/aptd3v/go-contain/pkg/create"
-	p "github.com/opencontainers/image-spec/specs-go/v1"
+	ocispec "github.com/opencontainers/image-spec/specs-go/v1"
 )
 
 // ImageLoadOptions is the image load options.
 type ImageLoadOptions struct {
 	Input     io.Reader
 	Quiet     bool
-	Platforms []p.Platform
+	Platforms []ocispec.Platform
 }
 
 // SetImageLoadOption is a function that sets the image load options.
@@ -37,8 +37,8 @@ func WithQuiet(quiet bool) SetImageLoadOption {
 // WithPlatforms sets the platforms for the image load.
 func WithPlatforms(setters ...create.SetPlatformConfig) SetImageLoadOption {
 	return func(o *ImageLoadOptions) error {
-		pc := p.Platform{}
-		platforms := make([]p.Platform, 0)
+		pc := ocispec.Platform{}
+		platforms := make([]ocispec.Platform, 0)
 		for _, setter := range setters {
 			if setter != nil {
 				if err := setter(&pc); err != nil {
@@ -48,7 +48,7 @@ func WithPlatforms(setters ...create.SetPlatformConfig) SetImageLoadOption {
 			}
 		}
 		if o.Platforms == nil {
-			o.Platforms = make([]p.Platform, 0)
+			o.Platforms = make([]ocispec.Platform, 0)
 		}
 		o.Platforms = append(o.Platforms, platforms...)
 		return nil
