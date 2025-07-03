@@ -38,9 +38,10 @@ type ComposeUpOptions struct {
 	Watch                   bool
 	Yes                     bool
 
-	Flags  []string
-	Writer io.Writer
-	Errs   []error
+	Profiles []string
+	Flags    []string
+	Writer   io.Writer
+	Errs     []error
 }
 
 // ComposeUpScale is the scale for the compose up command
@@ -61,9 +62,9 @@ func (opt *ComposeUpOptions) addErrorWhen(cond bool, flag string, msg string) {
 // It will return a slice of flags to append to the command Eg.
 //
 //	[]string{"up", "--detach", ...}
-func (opt *ComposeUpOptions) GenerateFlags() ([]string, error) {
-	flags := []string{"up"}
+func (opt *ComposeUpOptions) GenerateFlags() (flags []string, err error) {
 	opt.Errs = []error{}
+	flags = []string{"up"}
 	if opt.Detach {
 		fail := opt.Attach != nil || opt.AttachDependencies || opt.Watch || opt.AbortOnContainerExit || opt.AbortOnContainerFailure
 		msg := "WithAttach, WithAttachDependencies, WithWatch, WithAbortOnContainerExit and WithAbortOnContainerFailure cannot be used together"
