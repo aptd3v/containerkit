@@ -14,6 +14,7 @@ import (
 	"github.com/docker/docker/api/types/container"
 	dockerNet "github.com/docker/docker/api/types/network"
 	"github.com/docker/go-connections/nat"
+	ocispec "github.com/opencontainers/image-spec/specs-go/v1"
 )
 
 // Project is a wrapper around types.Project
@@ -41,13 +42,41 @@ func NewProject(name string) *Project {
 		},
 	}
 }
+
+// ForEachService iterates over each service in the project and calls the provided function to provide the ability to mutate a service
+// parameters:
+//   - fn: the function to call for each service
+//
+// returns an error if the function returns an error
 func (p *Project) ForEachService(fn func(name string, service *types.ServiceConfig) error) error {
+	if fn == nil {
+		return NewProjectConfigError(p.wrapped.Name, "ForEachService function is nil")
+	}
+	if p.wrapped.Services == nil {
+		return NewProjectConfigError(p.wrapped.Name, "project has no services")
+	}
 	for name, service := range p.wrapped.Services {
 		if err := fn(name, &service); err != nil {
 			return err
 		}
 	}
 	return nil
+}
+
+// GetService returns a service from the project
+// parameters:
+//   - name: the name of the service
+//
+// returns the service and an error if the service is not found or the project has no services
+func (p *Project) GetService(name string) (*types.ServiceConfig, error) {
+	if p.wrapped.Services == nil {
+		return nil, NewProjectConfigError("project", "project has no services")
+	}
+	service, ok := p.wrapped.Services[name]
+	if !ok {
+		return nil, NewProjectConfigError("project", fmt.Sprintf("service %s not found", name))
+	}
+	return &service, nil
 }
 
 // WithService defines a new service in the project
@@ -60,7 +89,26 @@ func (p *Project) WithService(name string, service *Container, setters ...SetSer
 		p.errs = append(p.errs, NewServiceConfigError(name, err.Error()))
 		return p
 	}
+
+	if _, ok := p.wrapped.Services[name]; ok {
+		p.errs = append(p.errs, NewServiceConfigError(name, "service already exists"))
+		return p
+	}
+
 	config := service.Config
+	//if the container, host, or network config is nil, we need to set it to an empty object to avoid nil pointer dereference
+	if config.Container == nil {
+		config.Container = &container.Config{}
+	}
+	if config.Host == nil {
+		config.Host = &container.HostConfig{}
+	}
+	if config.Network == nil {
+		config.Network = &dockerNet.NetworkingConfig{}
+	}
+	if config.Platform == nil {
+		config.Platform = &ocispec.Platform{}
+	}
 
 	serv := types.ServiceConfig{
 		Name: name,
