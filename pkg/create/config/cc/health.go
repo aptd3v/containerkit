@@ -8,16 +8,6 @@ import (
 	"github.com/docker/docker/api/types/container"
 )
 
-// WithContainerHealthConfig sets the health check for the container
-// parameters:
-//   - config: the health check configuration
-func WithHealthConfig(config *container.HealthConfig) create.SetContainerConfig {
-	return func(opt *container.Config) error {
-		opt.Healthcheck = config
-		return nil
-	}
-}
-
 // WithHealthCheck sets the health check for the container
 // parameters:
 //   - healthCheckFns: the health check functions to set
