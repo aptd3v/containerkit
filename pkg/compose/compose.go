@@ -7,12 +7,14 @@ package compose
 import (
 	"context"
 	"errors"
+	"fmt"
 	"io"
 	"os"
 	"os/exec"
 	"strings"
 
 	"github.com/aptd3v/go-contain/pkg/create"
+	"github.com/compose-spec/compose-go/v2/types"
 )
 
 type compose struct {
@@ -37,8 +39,9 @@ type SetComposeLogsOption func(*ComposeLogsOptions) error
 func (c *compose) Up(ctx context.Context, setters ...SetComposeUpOption) error {
 	opt := &ComposeUpOptions{
 		//default flags
-		Flags:  []string{"up"},
-		Writer: os.Stdout,
+		Flags:    []string{"up"},
+		Writer:   os.Stdout,
+		Profiles: []string{},
 	}
 	for _, setter := range setters {
 		if err := setter(opt); err != nil {
@@ -49,8 +52,7 @@ func (c *compose) Up(ctx context.Context, setters ...SetComposeUpOption) error {
 	if err != nil {
 		return NewComposeUpError(err)
 	}
-
-	cmd, err := c.command(ctx, opt.Writer, flags)
+	cmd, err := c.command(ctx, opt.Writer, flags, opt.Profiles...)
 	if err != nil {
 		return NewComposeUpError(err)
 	}
@@ -104,12 +106,60 @@ func (c *compose) Logs(ctx context.Context, setters ...SetComposeLogsOption) err
 
 	return handleContextCancellation(ctx, cmd.Run())
 }
-func (c *compose) command(ctx context.Context, writer io.Writer, args []string) (*exec.Cmd, error) {
+func (c *compose) command(ctx context.Context, writer io.Writer, args []string, profiles ...string) (*exec.Cmd, error) {
 	file, err := c.project.Marshal()
 	if err != nil {
 		return nil, NewComposeError(err)
 	}
-	cmd := exec.CommandContext(ctx, "docker", "compose", "-f", "-")
+	base := []string{"compose"}
+
+	// if profiles args are passed, we need to check if any services have profiles
+	// if they do not, we need to return an error
+	if profiles != nil {
+		pmap := map[string]struct{}{}
+		c.project.ForEachService(func(name string, service *types.ServiceConfig) error {
+			if len(service.Profiles) > 0 {
+				for _, profile := range service.Profiles {
+					pmap[profile] = struct{}{}
+				}
+			}
+			return nil
+		})
+		if len(pmap) == 0 {
+			return nil, NewComposeError(fmt.Errorf("when using %s.WithProfiles, you must create a service with a profile via sc.WithProfiles", args[0]))
+		}
+	}
+	// if no profiles args are passed, we need to check if any services have profiles
+	// if they do, we need to return an error
+	if len(profiles) == 0 {
+		pmap := map[string]struct{}{}
+
+		c.project.ForEachService(func(name string, service *types.ServiceConfig) error {
+			if len(service.Profiles) > 0 {
+				for _, profile := range service.Profiles {
+					pmap[profile] = struct{}{}
+				}
+			}
+			return nil
+		})
+		if len(pmap) > 0 {
+			names := []string{}
+			for profile := range pmap {
+				names = append(names, profile)
+			}
+			return nil, NewComposeError(fmt.Errorf("when you have profiles, you must specify them via %s.WithProfiles\nprofiles found: %s", args[0], strings.Join(names, ", ")))
+		}
+	}
+	// if profiles are set, add them to the base command
+	if len(profiles) > 0 {
+		for _, profile := range profiles {
+			base = append(base, "--profile", profile)
+		}
+	}
+
+	// for file passed via stdin, we need to add the -f flag
+	base = append(base, "-f", "-")
+	cmd := exec.CommandContext(ctx, "docker", base...)
 	cmd.Args = append(cmd.Args, args...)
 	cmd.Stdin = strings.NewReader(string(file))
 	cmd.Stdout = writer
