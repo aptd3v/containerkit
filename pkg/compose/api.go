@@ -176,8 +176,9 @@ type ComposeDownOptions struct {
 	RemoveImage   *string
 	RemoveVolumes bool
 
-	Flags  []string
-	Writer io.Writer
+	Flags    []string
+	Writer   io.Writer
+	Profiles []string
 }
 
 func (opt *ComposeDownOptions) GenerateFlags() ([]string, error) {
@@ -203,8 +204,9 @@ type ComposeLogsOptions struct {
 	Follow      bool
 	NoLogPrefix bool
 
-	Writer io.Writer
-	Flags  []string
+	Writer   io.Writer
+	Flags    []string
+	Profiles []string
 }
 
 func (opt *ComposeLogsOptions) GenerateFlags() ([]string, error) {

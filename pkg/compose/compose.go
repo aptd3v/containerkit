@@ -39,9 +39,8 @@ type SetComposeLogsOption func(*ComposeLogsOptions) error
 func (c *compose) Up(ctx context.Context, setters ...SetComposeUpOption) error {
 	opt := &ComposeUpOptions{
 		//default flags
-		Flags:    []string{"up"},
-		Writer:   os.Stdout,
-		Profiles: []string{},
+		Flags:  []string{"up"},
+		Writer: os.Stdout,
 	}
 	for _, setter := range setters {
 		if err := setter(opt); err != nil {
@@ -99,7 +98,7 @@ func (c *compose) Logs(ctx context.Context, setters ...SetComposeLogsOption) err
 		return NewComposeLogsError(err)
 	}
 
-	cmd, err := c.command(ctx, opt.Writer, flags)
+	cmd, err := c.command(ctx, opt.Writer, flags, opt.Profiles...)
 	if err != nil {
 		return NewComposeLogsError(err)
 	}
