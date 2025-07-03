@@ -26,6 +26,19 @@ func WithDetach() compose.SetComposeUpOption {
 	}
 }
 
+// WithProfile sets the profile option
+//
+// --profile		Activate profiles
+func WithProfiles(profiles ...string) compose.SetComposeUpOption {
+	return func(opt *compose.ComposeUpOptions) error {
+		if opt.Profiles == nil {
+			opt.Profiles = make([]string, 0, len(profiles))
+		}
+		opt.Profiles = append(opt.Profiles, profiles...)
+		return nil
+	}
+}
+
 // WithAbortOnContainerExit sets the abort on container exit option to true
 //
 // --abort-on-container-exit Stops all containers if any container was stopped. Incompatible with --detach
