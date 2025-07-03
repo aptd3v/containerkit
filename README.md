@@ -144,6 +144,58 @@ func DeployEnvironment(ctx context.Context, env string, replicas int) error {
 }
 ```
 
+### ♻️ Portable Container Configuration
+In `go-contain` the underlying docker sdk is also wrapped as well, allowing you to use the same
+configuration for docker client control and compose
+
+```go
+package main
+
+import (
+	"context"
+	"fmt"
+	"log"
+
+	"github.com/aptd3v/go-contain/pkg/client"
+	"github.com/aptd3v/go-contain/pkg/create"
+	"github.com/aptd3v/go-contain/pkg/create/config/cc"
+)
+
+func main() {
+	cli, err := client.NewClient()
+	if err != nil {
+		log.Fatalf("Error creating client: %v", err)
+	}
+	// ♻️ Reuse the same config to create a container using the Docker SDK
+	resp, err := cli.ContainerCreate(context.Background(), MySimpleContainer("latest"))
+	if err != nil {
+		log.Fatalf("Error creating container: %v", err)
+	}
+	fmt.Println(resp.ID) //container id
+
+	//create a compose project with the same container configuration
+	project := create.NewProject("my-project")
+
+	project.WithService("simple", MySimpleContainer("latest"))
+
+	err = project.Export("./docker-compose.yml", 0644)
+	if err != nil {
+		log.Fatalf("Error exporting project: %v", err)
+	}
+
+}
+
+func MySimpleContainer(tag string) *create.Container {
+	return create.NewContainer("simple").
+		WithContainerConfig(
+			cc.WithImagef("ubuntu:%s", tag),
+			cc.WithCommand("echo", "hello world"),
+		)
+}
+
+```
+
+
 ### 🧪 **Leverage Go's Ecosystem**
 - **Testing**: Write unit tests for your infrastructure code
 - **Debugging**: Use Go's debugging tools and error handling
@@ -288,7 +340,37 @@ project.WithService("api",
         ),
 )
 ```
+## 🔧 Or use underlying docker SDK structs if desired
 
+check out [`examples/structs`](./examples/structs) to see how using both can be useful.
+```go
+project.WithService("api", &create.Container{
+		Config: &create.MergedConfig{
+			Container: &container.Config{
+				Image: fmt.Sprintf("ubuntu:%s", tag),
+			},
+			Host: &container.HostConfig{
+				PortBindings: nat.PortMap{
+					"8080/tcp": []nat.PortBinding{
+						{
+							HostIP:   "0.0.0.0",
+							HostPort: "8080",
+						},
+					},
+				},
+			},
+			Network: &network.NetworkingConfig{
+				EndpointsConfig: map[string]*network.EndpointSettings{
+					"my-network": {
+						Aliases: []string{"my-api-container"},
+					}},
+			},
+			Platform: &ocispec.Platform{
+				Architecture: "amd64",
+			},
+		},
+	})
+```
 ---
 
 ## 🧰 tools Package: Declarative Logic for Setters
