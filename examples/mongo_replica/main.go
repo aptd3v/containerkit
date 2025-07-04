@@ -27,6 +27,11 @@ import (
 
 const NumReplicas = 3 // Number of MongoDB replicas in the replica set
 
+type RSet struct {
+	ID      string     `json:"_id"`
+	Members []RSMember `json:"members"`
+}
+
 type RSMember struct {
 	ID   int    `json:"_id"`
 	Host string `json:"host"`
@@ -106,7 +111,7 @@ func WithMongoReplica(index int) *create.Container {
 			cc.WithImage("mongo:latest"),
 			cc.WithCommand("mongod", "--replSet", "rs0", "--bind_ip_all"),
 			cc.WithHealthCheck(
-				health.WithTest("CMD", "mongosh", "--eval", "\"db.adminCommand(\"ping\")\""),
+				health.WithTest("CMD", "mongosh", "--eval", `db.adminCommand("ping")`),
 				health.WithInterval(1),
 				health.WithRetries(5),
 				health.WithTimeout(10),
@@ -136,12 +141,17 @@ func Initialize(ctx context.Context, initContainer string, members []RSMember) e
 	if len(members) == 0 {
 		return fmt.Errorf("no members provided for replica set initialization")
 	}
+	// Prepare the members for the rs.initiate command
+	initiate := RSet{
+		ID:      "rs0",
+		Members: members,
+	}
 
-	m, err := json.Marshal(members)
+	init, err := json.Marshal(initiate)
 	if err != nil {
 		return fmt.Errorf("failed to marshal members: %w", err)
 	}
-	command := []string{"mongosh", "--eval", fmt.Sprintf("'rs.initiate({_id: \"rs0\", members: %s})'", string(m))}
+	command := []string{"mongosh", "--eval", fmt.Sprintf("rs.initiate(%s)", string(init))}
 
 	fmt.Println(strings.Join(command, " "))
 	res, err := cli.ContainerExecCreate(
