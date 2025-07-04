@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/aptd3v/go-contain/pkg/create"
+	"github.com/docker/docker/api/types/container"
 	"github.com/docker/go-connections/nat"
 )
 
@@ -13,7 +14,7 @@ import (
 //   - key: environment variable name
 //   - value: environment variable value
 func WithEnv(key string, value string) create.SetContainerConfig {
-	return func(config *create.ContainerConfig) error {
+	return func(config *container.Config) error {
 		if config.Env == nil {
 			config.Env = make([]string, 0)
 		}
@@ -30,7 +31,7 @@ func WithEnv(key string, value string) create.SetContainerConfig {
 //   - port: port number or port range to be exposed in the container (e.g., "80-1000" or "80")
 //   - protocol: protocol to be exposed from the container
 func WithExposedPort(protocol string, port string) create.SetContainerConfig {
-	return func(config *create.ContainerConfig) error {
+	return func(config *container.Config) error {
 		if config.ExposedPorts == nil {
 			config.ExposedPorts = make(nat.PortSet)
 		}
@@ -45,7 +46,7 @@ func WithExposedPort(protocol string, port string) create.SetContainerConfig {
 
 // WithHostName sets the hostname of the container
 func WithHostName(hostname string) create.SetContainerConfig {
-	return func(config *create.ContainerConfig) error {
+	return func(config *container.Config) error {
 		if hostname == "" {
 			return create.NewContainerConfigError("hostname", fmt.Sprintf("invalid hostname: %s", hostname))
 		}
@@ -56,7 +57,7 @@ func WithHostName(hostname string) create.SetContainerConfig {
 
 // WithDomainName sets the domain name of the container
 func WithDomainName(domainname string) create.SetContainerConfig {
-	return func(config *create.ContainerConfig) error {
+	return func(config *container.Config) error {
 		if domainname == "" {
 			return create.NewContainerConfigError("domainname", fmt.Sprintf("invalid domain name: %s", domainname))
 		}
@@ -67,7 +68,7 @@ func WithDomainName(domainname string) create.SetContainerConfig {
 
 // WithImage sets the image to use for the container
 func WithImage(image string) create.SetContainerConfig {
-	return func(config *create.ContainerConfig) error {
+	return func(config *container.Config) error {
 		if image == "" {
 			return create.NewContainerConfigError("image", fmt.Sprintf("invalid image: %s", image))
 		}
@@ -76,7 +77,7 @@ func WithImage(image string) create.SetContainerConfig {
 	}
 }
 func WithImagef(stringFormat string, args ...interface{}) create.SetContainerConfig {
-	return func(config *create.ContainerConfig) error {
+	return func(config *container.Config) error {
 		image := fmt.Sprintf(stringFormat, args...)
 		if image == "" {
 			return create.NewContainerConfigError("image", fmt.Sprintf("invalid image: %s", image))
@@ -90,7 +91,7 @@ func WithImagef(stringFormat string, args ...interface{}) create.SetContainerCon
 // Parameters:
 //   - cmd: command and its arguments
 func WithCommand(cmd ...string) create.SetContainerConfig {
-	return func(config *create.ContainerConfig) error {
+	return func(config *container.Config) error {
 		if len(cmd) == 0 {
 			return create.NewContainerConfigError("command", "command is empty")
 		}
@@ -104,7 +105,7 @@ func WithCommand(cmd ...string) create.SetContainerConfig {
 
 // WithUser sets the user that commands are run as inside the container
 func WithUser(user string) create.SetContainerConfig {
-	return func(config *create.ContainerConfig) error {
+	return func(config *container.Config) error {
 		if user == "" {
 			return create.NewContainerConfigError("user", fmt.Sprintf("invalid user: %s", user))
 		}
@@ -115,7 +116,7 @@ func WithUser(user string) create.SetContainerConfig {
 
 // WithAttachedStdin enables attaching to container's standard input
 func WithAttachedStdin() create.SetContainerConfig {
-	return func(config *create.ContainerConfig) error {
+	return func(config *container.Config) error {
 		config.AttachStdin = true
 		return nil
 	}
@@ -123,7 +124,7 @@ func WithAttachedStdin() create.SetContainerConfig {
 
 // WithAttachedStdout enables attaching to container's standard output
 func WithAttachedStdout() create.SetContainerConfig {
-	return func(config *create.ContainerConfig) error {
+	return func(config *container.Config) error {
 		config.AttachStdout = true
 		return nil
 	}
@@ -131,7 +132,7 @@ func WithAttachedStdout() create.SetContainerConfig {
 
 // WithAttachedStderr enables attaching to container's standard error
 func WithAttachedStderr() create.SetContainerConfig {
-	return func(config *create.ContainerConfig) error {
+	return func(config *container.Config) error {
 		config.AttachStderr = true
 		return nil
 	}
@@ -139,7 +140,7 @@ func WithAttachedStderr() create.SetContainerConfig {
 
 // WithTty allocates a pseudo-TTY for the container
 func WithTty() create.SetContainerConfig {
-	return func(config *create.ContainerConfig) error {
+	return func(config *container.Config) error {
 		config.Tty = true
 		return nil
 	}
@@ -147,7 +148,7 @@ func WithTty() create.SetContainerConfig {
 
 // WithStdinOpen keeps STDIN open even if not attached
 func WithStdinOpen() create.SetContainerConfig {
-	return func(config *create.ContainerConfig) error {
+	return func(config *container.Config) error {
 		config.OpenStdin = true
 		return nil
 	}
@@ -155,7 +156,7 @@ func WithStdinOpen() create.SetContainerConfig {
 
 // WithStdinOnce closes STDIN after the first attach
 func WithStdinOnce() create.SetContainerConfig {
-	return func(config *create.ContainerConfig) error {
+	return func(config *container.Config) error {
 		config.StdinOnce = true
 		return nil
 	}
@@ -163,7 +164,7 @@ func WithStdinOnce() create.SetContainerConfig {
 
 // WithEscapedArgs indicates that command arguments are already escaped
 func WithEscapedArgs() create.SetContainerConfig {
-	return func(config *create.ContainerConfig) error {
+	return func(config *container.Config) error {
 		config.ArgsEscaped = true
 		return nil
 	}
@@ -176,7 +177,7 @@ func WithEscapedArgs() create.SetContainerConfig {
 // note: will not work within service config for compose file
 // use hc.WithRWHostBindMount or other mount setter functions instead
 func WithVolume(volume string) create.SetContainerConfig {
-	return func(config *create.ContainerConfig) error {
+	return func(config *container.Config) error {
 		if volume == "" {
 			return create.NewContainerConfigError("volume", fmt.Sprintf("invalid volume: '%s'", volume))
 		}
@@ -190,7 +191,7 @@ func WithVolume(volume string) create.SetContainerConfig {
 
 // WithWorkingDir sets the working directory for commands to run in
 func WithWorkingDir(dir string) create.SetContainerConfig {
-	return func(config *create.ContainerConfig) error {
+	return func(config *container.Config) error {
 		if dir == "" {
 			return create.NewContainerConfigError("working_dir", fmt.Sprintf("invalid working directory: '%s'", dir))
 		}
@@ -201,7 +202,7 @@ func WithWorkingDir(dir string) create.SetContainerConfig {
 
 // WithDisabledNetwork disables networking for the container
 func WithDisabledNetwork() create.SetContainerConfig {
-	return func(config *create.ContainerConfig) error {
+	return func(config *container.Config) error {
 		config.NetworkDisabled = true
 		return nil
 	}
@@ -209,7 +210,7 @@ func WithDisabledNetwork() create.SetContainerConfig {
 
 // WithOnBuild appends ONBUILD metadata that will trigger when the image is used as a base image
 func WithOnBuild(args ...string) create.SetContainerConfig {
-	return func(config *create.ContainerConfig) error {
+	return func(config *container.Config) error {
 		if len(args) == 0 {
 			return create.NewContainerConfigError("onbuild", "onbuild args are empty")
 		}
@@ -227,7 +228,7 @@ func WithOnBuild(args ...string) create.SetContainerConfig {
 //   - value: label value
 func WithLabel(label, value string) create.SetContainerConfig {
 
-	return func(config *create.ContainerConfig) error {
+	return func(config *container.Config) error {
 		if label == "" || value == "" {
 			return create.NewContainerConfigError("label", fmt.Sprintf("empty label: %s", label+"="+value))
 		}
@@ -241,7 +242,7 @@ func WithLabel(label, value string) create.SetContainerConfig {
 
 // WithStopSignal sets the signal that will be used to stop the container
 func WithStopSignal(signal string) create.SetContainerConfig {
-	return func(config *create.ContainerConfig) error {
+	return func(config *container.Config) error {
 		if signal == "" {
 			return create.NewContainerConfigError("stop_signal", "empty stop signal")
 		}
@@ -252,7 +253,7 @@ func WithStopSignal(signal string) create.SetContainerConfig {
 
 // WithEntrypoint sets the entrypoint to be run within the container
 func WithEntrypoint(entrypoint ...string) create.SetContainerConfig {
-	return func(config *create.ContainerConfig) error {
+	return func(config *container.Config) error {
 		if len(entrypoint) == 0 {
 			return create.NewContainerConfigError("entrypoint", "entrypoint is empty")
 		}
@@ -266,7 +267,7 @@ func WithEntrypoint(entrypoint ...string) create.SetContainerConfig {
 
 // WithShell sets the shell for shell-form of RUN, CMD, ENTRYPOINT
 func WithShell(shell ...string) create.SetContainerConfig {
-	return func(config *create.ContainerConfig) error {
+	return func(config *container.Config) error {
 		if len(shell) == 0 {
 			return create.NewContainerConfigError("shell", "shell is empty")
 		}
@@ -282,7 +283,7 @@ func WithShell(shell ...string) create.SetContainerConfig {
 //
 // note: is also stop_grace_period in compose
 func WithStopTimeout(timeout int) create.SetContainerConfig {
-	return func(config *create.ContainerConfig) error {
+	return func(config *container.Config) error {
 		if timeout <= 0 {
 			return create.NewContainerConfigError("stop_timeout", "invalid stop timeout")
 		}
@@ -297,7 +298,7 @@ func WithStopTimeout(timeout int) create.SetContainerConfig {
 //
 // Deprecated: this function is deprecated since docker API v1.44. Use nc.WithMacAddress(string) instead.
 func WithMacAddress(macAddress string) create.SetContainerConfig {
-	return func(config *create.ContainerConfig) error {
+	return func(config *container.Config) error {
 		if macAddress == "" {
 			return create.NewContainerConfigError("mac_address", "empty mac address")
 		}
@@ -311,7 +312,7 @@ func WithMacAddress(macAddress string) create.SetContainerConfig {
 // note: this is useful for when you want to fail the container config
 // and append the error to the container config error collection
 func Fail(err error) create.SetContainerConfig {
-	return func(config *create.ContainerConfig) error {
+	return func(config *container.Config) error {
 		return create.NewContainerConfigError("container_config", err.Error())
 	}
 }
@@ -321,7 +322,7 @@ func Fail(err error) create.SetContainerConfig {
 // note: this is useful for when you want to fail the container config
 // and append the error to the container config error collection
 func Failf(stringFormat string, args ...interface{}) create.SetContainerConfig {
-	return func(config *create.ContainerConfig) error {
+	return func(config *container.Config) error {
 		return create.NewContainerConfigError("container_config", fmt.Sprintf(stringFormat, args...))
 	}
 }

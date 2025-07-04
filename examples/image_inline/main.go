@@ -1,8 +1,5 @@
-// This example shows how to build an image if it does not exist and tag it with a label
-// This is useful for building images locally and then tagged and used in a container
-// but also not rebuilt evertime the program runs
-// tldr; this program runs and builds the image if it does not exist and then tags it with a label
-// and then uses the image in a container the second time it runs
+// this program runs and builds the image if it does not exist and then tags it with a label
+// and then uses the image for a container the second time it runs
 package main
 
 import (

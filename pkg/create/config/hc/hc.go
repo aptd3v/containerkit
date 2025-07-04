@@ -21,7 +21,7 @@ import (
 //   - setMountOptionFn: the function to set the mount option one of the union type of MountSetter interface
 func WithMountPoint(set ...mount.SetMountConfig) create.SetHostConfig {
 
-	return func(opt *create.HostConfig) error {
+	return func(opt *container.HostConfig) error {
 		if opt.Mounts == nil {
 			opt.Mounts = make([]mountType.Mount, 0)
 		}
@@ -42,7 +42,7 @@ func WithMountPoint(set ...mount.SetMountConfig) create.SetHostConfig {
 // parameters:
 //   - memory: the memory limit in bytes
 func WithMemoryLimit(memory int64) create.SetHostConfig {
-	return func(opt *create.HostConfig) error {
+	return func(opt *container.HostConfig) error {
 		opt.Memory = memory
 		return nil
 	}
@@ -57,7 +57,7 @@ func WithRestartAlways(maxRetryCount int) create.SetHostConfig {
 
 // WithAutoRemove sets the container to be automatically removed when it exits.
 func WithAutoRemove() create.SetHostConfig {
-	return func(opt *create.HostConfig) error {
+	return func(opt *container.HostConfig) error {
 		opt.AutoRemove = true
 		return nil
 	}
@@ -70,7 +70,7 @@ func WithAutoRemove() create.SetHostConfig {
 //   - hostPort: the port on the host
 //   - containerPort: the port on the container
 func WithPortBindings(protocol, hostIP, hostPort, containerPort string) create.SetHostConfig {
-	return func(opt *create.HostConfig) error {
+	return func(opt *container.HostConfig) error {
 		if opt.PortBindings == nil {
 			opt.PortBindings = make(nat.PortMap)
 		}
@@ -97,7 +97,7 @@ func WithPortBindings(protocol, hostIP, hostPort, containerPort string) create.S
 // parameters:
 //   - dns: the DNS server to add
 func WithDNSLookups(dns ...string) create.SetHostConfig {
-	return func(opt *create.HostConfig) error {
+	return func(opt *container.HostConfig) error {
 		if opt.DNS == nil {
 			opt.DNS = make([]string, 0)
 		}
@@ -110,7 +110,7 @@ func WithDNSLookups(dns ...string) create.SetHostConfig {
 // parameters:
 //   - dnsOption: the DNS option to add
 func WithDNSOptions(dnsOption ...string) create.SetHostConfig {
-	return func(opt *create.HostConfig) error {
+	return func(opt *container.HostConfig) error {
 		if opt.DNSOptions == nil {
 			opt.DNSOptions = make(strslice.StrSlice, 0)
 		}
@@ -123,7 +123,7 @@ func WithDNSOptions(dnsOption ...string) create.SetHostConfig {
 // parameters:
 //   - search: the DNS search domain to add
 func WithDNSSearches(search ...string) create.SetHostConfig {
-	return func(opt *create.HostConfig) error {
+	return func(opt *container.HostConfig) error {
 		if opt.DNSSearch == nil {
 			opt.DNSSearch = make(strslice.StrSlice, 0)
 		}
@@ -136,7 +136,7 @@ func WithDNSSearches(search ...string) create.SetHostConfig {
 // parameters:
 //   - extraHosts: the extra hosts to add
 func WithExtraHost(extraHosts ...string) create.SetHostConfig {
-	return func(opt *create.HostConfig) error {
+	return func(opt *container.HostConfig) error {
 		if opt.ExtraHosts == nil {
 			opt.ExtraHosts = make([]string, 0)
 		}
@@ -149,7 +149,7 @@ func WithExtraHost(extraHosts ...string) create.SetHostConfig {
 // parameters:
 //   - group: the group to add
 func WithAddedGroups(group ...string) create.SetHostConfig {
-	return func(opt *create.HostConfig) error {
+	return func(opt *container.HostConfig) error {
 		if opt.GroupAdd == nil {
 			opt.GroupAdd = make(strslice.StrSlice, 0)
 		}
@@ -162,7 +162,7 @@ func WithAddedGroups(group ...string) create.SetHostConfig {
 // parameters:
 //   - bind: the volume binding to add e.g. "/host/path:/container/path:ro"
 func WithVolumeBinds(bind ...string) create.SetHostConfig {
-	return func(opt *create.HostConfig) error {
+	return func(opt *container.HostConfig) error {
 		if opt.Binds == nil {
 			opt.Binds = make([]string, 0)
 		}
@@ -233,7 +233,7 @@ func ValidateMounts(mounts []string) error {
 // parameters:
 //   - mode: the UTS namespace mode to use
 func WithUTSMode(mode string) create.SetHostConfig {
-	return func(opt *create.HostConfig) error {
+	return func(opt *container.HostConfig) error {
 		opt.UTSMode = container.UTSMode(mode)
 		return nil
 	}
@@ -243,7 +243,7 @@ func WithUTSMode(mode string) create.SetHostConfig {
 // parameters:
 //   - mode: the user namespace mode to use
 func WithUserNSMode(mode string) create.SetHostConfig {
-	return func(opt *create.HostConfig) error {
+	return func(opt *container.HostConfig) error {
 		opt.UsernsMode = container.UsernsMode(mode)
 		return nil
 	}
@@ -253,7 +253,7 @@ func WithUserNSMode(mode string) create.SetHostConfig {
 // parameters:
 //   - size: the size of the shared memory file system in bytes
 func WithShmSize(size int64) create.SetHostConfig {
-	return func(opt *create.HostConfig) error {
+	return func(opt *container.HostConfig) error {
 		opt.ShmSize = size
 		return nil
 	}
@@ -263,7 +263,7 @@ func WithShmSize(size int64) create.SetHostConfig {
 // parameters:
 //   - runtime: the runtime to use
 func WithRuntime(runtime string) create.SetHostConfig {
-	return func(opt *create.HostConfig) error {
+	return func(opt *container.HostConfig) error {
 		opt.Runtime = runtime
 		return nil
 	}
@@ -274,7 +274,7 @@ func WithRuntime(runtime string) create.SetHostConfig {
 //   - height: the height of the console
 //   - width: the width of the console
 func WithConsoleSize(height uint, width uint) create.SetHostConfig {
-	return func(opt *create.HostConfig) error {
+	return func(opt *container.HostConfig) error {
 		opt.ConsoleSize = [2]uint{height, width}
 		return nil
 	}
@@ -286,7 +286,7 @@ func WithConsoleSize(height uint, width uint) create.SetHostConfig {
 //
 // Note: This function applies isolation settings only in Windows environments.
 func WithIsolation(isolation string) create.SetHostConfig {
-	return func(opt *create.HostConfig) error {
+	return func(opt *container.HostConfig) error {
 		opt.Isolation = container.Isolation(isolation)
 		return nil
 	}
@@ -296,7 +296,7 @@ func WithIsolation(isolation string) create.SetHostConfig {
 // parameters:
 //   - count: the number of CPUs to use
 func WithCPUCount(count int64) create.SetHostConfig {
-	return func(opt *create.HostConfig) error {
+	return func(opt *container.HostConfig) error {
 		opt.CPUCount = count
 		return nil
 	}
@@ -306,7 +306,7 @@ func WithCPUCount(count int64) create.SetHostConfig {
 // parameters:
 //   - paths: the paths to mark as read-only
 func WithReadonlyPaths(paths ...string) create.SetHostConfig {
-	return func(opt *create.HostConfig) error {
+	return func(opt *container.HostConfig) error {
 		if opt.ReadonlyPaths == nil {
 			opt.ReadonlyPaths = make([]string, 0)
 		}
@@ -319,7 +319,7 @@ func WithReadonlyPaths(paths ...string) create.SetHostConfig {
 // parameters:
 //   - paths: the paths to mask
 func WithMaskedPaths(paths ...string) create.SetHostConfig {
-	return func(opt *create.HostConfig) error {
+	return func(opt *container.HostConfig) error {
 		if opt.MaskedPaths == nil {
 			opt.MaskedPaths = make([]string, 0)
 		}
@@ -334,7 +334,7 @@ func WithMaskedPaths(paths ...string) create.SetHostConfig {
 //
 // Note: This function applies network settings only in Linux environments.
 func WithNetworkMode(mode string) create.SetHostConfig {
-	return func(opt *create.HostConfig) error {
+	return func(opt *container.HostConfig) error {
 		// Handle container network namespace sharing
 		opt.NetworkMode = container.NetworkMode(mode)
 		return nil
@@ -347,7 +347,7 @@ func WithNetworkMode(mode string) create.SetHostConfig {
 //
 // note: this is not used in compose
 func WithVolumeDriver(driver string) create.SetHostConfig {
-	return func(opt *create.HostConfig) error {
+	return func(opt *container.HostConfig) error {
 		opt.VolumeDriver = driver
 		return nil
 	}
@@ -357,7 +357,7 @@ func WithVolumeDriver(driver string) create.SetHostConfig {
 // parameters:
 //   - from: the container to inherit from
 func WithVolumesFrom(from string) create.SetHostConfig {
-	return func(opt *create.HostConfig) error {
+	return func(opt *container.HostConfig) error {
 		if opt.VolumesFrom == nil {
 			opt.VolumesFrom = make([]string, 0)
 		}
@@ -370,7 +370,7 @@ func WithVolumesFrom(from string) create.SetHostConfig {
 // parameters:
 //   - mode: the IPC mode to use
 func WithIpcMode(mode string) create.SetHostConfig {
-	return func(opt *create.HostConfig) error {
+	return func(opt *container.HostConfig) error {
 		opt.IpcMode = container.IpcMode(mode)
 		return nil
 	}
@@ -380,7 +380,7 @@ func WithIpcMode(mode string) create.SetHostConfig {
 // parameters:
 //   - cgroup: the cgroup to use
 func WithCgroup(cgroup string) create.SetHostConfig {
-	return func(opt *create.HostConfig) error {
+	return func(opt *container.HostConfig) error {
 		opt.Cgroup = container.CgroupSpec(cgroup)
 		return nil
 	}
@@ -390,7 +390,7 @@ func WithCgroup(cgroup string) create.SetHostConfig {
 // parameters:
 //   - score: the OOM score adjustment
 func WithOomScoreAdj(score int) create.SetHostConfig {
-	return func(opt *create.HostConfig) error {
+	return func(opt *container.HostConfig) error {
 		opt.OomScoreAdj = score
 		return nil
 	}
@@ -401,7 +401,7 @@ func WithOomScoreAdj(score int) create.SetHostConfig {
 //   - oomKillDisable: the OOM kill disable flag to use
 func WithOomKillDisable() create.SetHostConfig {
 	oomKillDisable := true
-	return func(opt *create.HostConfig) error {
+	return func(opt *container.HostConfig) error {
 		opt.OomKillDisable = &oomKillDisable
 		return nil
 	}
@@ -411,7 +411,7 @@ func WithOomKillDisable() create.SetHostConfig {
 // parameters:
 //   - mode: the PID mode to use
 func WithPidMode(mode string) create.SetHostConfig {
-	return func(opt *create.HostConfig) error {
+	return func(opt *container.HostConfig) error {
 		opt.PidMode = container.PidMode(mode)
 		return nil
 	}
@@ -421,7 +421,7 @@ func WithPidMode(mode string) create.SetHostConfig {
 // parameters:
 //   - publishAllPorts: the publish all ports flag to use
 func WithPublishAllPorts(publishAllPorts bool) create.SetHostConfig {
-	return func(opt *create.HostConfig) error {
+	return func(opt *container.HostConfig) error {
 		opt.PublishAllPorts = publishAllPorts
 		return nil
 	}
@@ -431,7 +431,7 @@ func WithPublishAllPorts(publishAllPorts bool) create.SetHostConfig {
 // parameters:
 //   - readonlyRootfs: the readonly rootfs flag to use
 func WithReadOnlyRootfs() create.SetHostConfig {
-	return func(opt *create.HostConfig) error {
+	return func(opt *container.HostConfig) error {
 		opt.ReadonlyRootfs = true
 		return nil
 	}
@@ -441,7 +441,7 @@ func WithReadOnlyRootfs() create.SetHostConfig {
 // parameters:
 //   - opts: the security options to add
 func WithSecurityOpts(opts ...string) create.SetHostConfig {
-	return func(opt *create.HostConfig) error {
+	return func(opt *container.HostConfig) error {
 		if opt.SecurityOpt == nil {
 			opt.SecurityOpt = make([]string, 0)
 		}
@@ -455,7 +455,7 @@ func WithSecurityOpts(opts ...string) create.SetHostConfig {
 //   - key: the key of the storage option
 //   - value: the value of the storage option
 func WithStorageOpt(key, value string) create.SetHostConfig {
-	return func(opt *create.HostConfig) error {
+	return func(opt *container.HostConfig) error {
 		if opt.StorageOpt == nil {
 			opt.StorageOpt = make(map[string]string)
 		}
@@ -469,7 +469,7 @@ func WithStorageOpt(key, value string) create.SetHostConfig {
 //   - key: the key of the tmpfs option
 //   - value: the value of the tmpfs option
 func WithTmpfs(key, value string) create.SetHostConfig {
-	return func(opt *create.HostConfig) error {
+	return func(opt *container.HostConfig) error {
 		if opt.Tmpfs == nil {
 			opt.Tmpfs = make(map[string]string)
 		}
@@ -482,7 +482,7 @@ func WithTmpfs(key, value string) create.SetHostConfig {
 // parameters:
 //   - privileged: the privileged mode to use
 func WithPrivileged() create.SetHostConfig {
-	return func(opt *create.HostConfig) error {
+	return func(opt *container.HostConfig) error {
 		opt.Privileged = true
 		return nil
 	}
@@ -492,7 +492,7 @@ func WithPrivileged() create.SetHostConfig {
 // parameters:
 //   - device: the device to add
 func WithAddedDevice(device string, pathInContainer string, permissions string) create.SetHostConfig {
-	return func(opt *create.HostConfig) error {
+	return func(opt *container.HostConfig) error {
 		if opt.Devices == nil {
 			opt.Devices = make([]container.DeviceMapping, 0)
 		}
@@ -510,7 +510,7 @@ func WithAddedDevice(device string, pathInContainer string, permissions string) 
 // parameters:
 //   - containerIDFile: the containerIDFile to add
 func WithContainerIDFile(containerIDFile string) create.SetHostConfig {
-	return func(opt *create.HostConfig) error {
+	return func(opt *container.HostConfig) error {
 		opt.ContainerIDFile = containerIDFile
 		return nil
 	}
@@ -520,7 +520,7 @@ func WithContainerIDFile(containerIDFile string) create.SetHostConfig {
 // parameters:
 //   - shares: the CPU shares to use
 func WithCPUShares(shares int64) create.SetHostConfig {
-	return func(opt *create.HostConfig) error {
+	return func(opt *container.HostConfig) error {
 		opt.CPUShares = shares
 		return nil
 	}
@@ -530,7 +530,7 @@ func WithCPUShares(shares int64) create.SetHostConfig {
 // parameters:
 //   - period: the CPU CFS (Completely Fair Scheduler) period
 func WithCPUPeriod(period int64) create.SetHostConfig {
-	return func(opt *create.HostConfig) error {
+	return func(opt *container.HostConfig) error {
 		opt.CPUPeriod = period
 		return nil
 	}
@@ -540,7 +540,7 @@ func WithCPUPeriod(period int64) create.SetHostConfig {
 // parameters:
 //   - percent: the CPU percentage to use
 func WithCPUPercent(percent int64) create.SetHostConfig {
-	return func(opt *create.HostConfig) error {
+	return func(opt *container.HostConfig) error {
 		opt.CPUPercent = percent
 		return nil
 	}
@@ -550,7 +550,7 @@ func WithCPUPercent(percent int64) create.SetHostConfig {
 // parameters:
 //   - quota: the CPU CFS (Completely Fair Scheduler) quota
 func WithCPUQuota(quota int64) create.SetHostConfig {
-	return func(opt *create.HostConfig) error {
+	return func(opt *container.HostConfig) error {
 		opt.CPUQuota = quota
 		return nil
 	}
@@ -560,7 +560,7 @@ func WithCPUQuota(quota int64) create.SetHostConfig {
 // parameters:
 //   - cpus: the CPUs in which execution is allowed
 func WithCpusetCpus(cpus string) create.SetHostConfig {
-	return func(opt *create.HostConfig) error {
+	return func(opt *container.HostConfig) error {
 		opt.CpusetCpus = cpus
 		return nil
 	}
@@ -570,7 +570,7 @@ func WithCpusetCpus(cpus string) create.SetHostConfig {
 // parameters:
 //   - memory: the memory soft limit
 func WithMemoryReservation(memory int64) create.SetHostConfig {
-	return func(opt *create.HostConfig) error {
+	return func(opt *container.HostConfig) error {
 		opt.MemoryReservation = memory
 		return nil
 	}
@@ -580,7 +580,7 @@ func WithMemoryReservation(memory int64) create.SetHostConfig {
 // parameters:
 //   - memorySwap: the total memory limit (memory + swap)
 func WithMemorySwap(memorySwap int64) create.SetHostConfig {
-	return func(opt *create.HostConfig) error {
+	return func(opt *container.HostConfig) error {
 		opt.MemorySwap = memorySwap
 		return nil
 	}
@@ -592,7 +592,7 @@ func WithMemorySwap(memorySwap int64) create.SetHostConfig {
 //   - soft: the soft limit
 //   - hard: the hard limit
 func WithUlimits(name string, soft, hard int64) create.SetHostConfig {
-	return func(opt *create.HostConfig) error {
+	return func(opt *container.HostConfig) error {
 		if opt.Ulimits == nil {
 			opt.Ulimits = make([]*container.Ulimit, 0)
 		}
@@ -612,7 +612,7 @@ func WithUlimits(name string, soft, hard int64) create.SetHostConfig {
 // Run a custom init inside the container, if null, use the daemon's configured settings
 func WithInit() create.SetHostConfig {
 	init := true
-	return func(opt *create.HostConfig) error {
+	return func(opt *container.HostConfig) error {
 		opt.Init = &init
 		return nil
 	}
@@ -624,7 +624,7 @@ func WithInit() create.SetHostConfig {
 // parameters:
 //   - period: the CPU real-time period in microseconds
 func WithCPURealtimePeriod(period int64) create.SetHostConfig {
-	return func(opt *create.HostConfig) error {
+	return func(opt *container.HostConfig) error {
 		opt.CPURealtimePeriod = period
 		return nil
 	}
@@ -636,7 +636,7 @@ func WithCPURealtimePeriod(period int64) create.SetHostConfig {
 // parameters:
 //   - runtime: the CPU real-time runtime in microseconds
 func WithCPURealtimeRuntime(runtime int64) create.SetHostConfig {
-	return func(opt *create.HostConfig) error {
+	return func(opt *container.HostConfig) error {
 		opt.CPURealtimeRuntime = runtime
 		return nil
 	}
@@ -647,7 +647,7 @@ func WithCPURealtimeRuntime(runtime int64) create.SetHostConfig {
 // parameters:
 //   - mems: the memory nodes in which execution is allowed
 func WithCpusetMems(mems string) create.SetHostConfig {
-	return func(opt *create.HostConfig) error {
+	return func(opt *container.HostConfig) error {
 		opt.CpusetMems = mems
 		return nil
 	}
@@ -660,7 +660,7 @@ func WithCpusetMems(mems string) create.SetHostConfig {
 // parameters:
 //   - swappiness: the swappiness level
 func WithMemorySwappiness(swappiness int64) create.SetHostConfig {
-	return func(opt *create.HostConfig) error {
+	return func(opt *container.HostConfig) error {
 		opt.MemorySwappiness = &swappiness
 		return nil
 	}
@@ -671,7 +671,7 @@ func WithMemorySwappiness(swappiness int64) create.SetHostConfig {
 // parameters:
 //   - memory: the kernel memory limit in bytes
 func WithKernelMemory(memory int64) create.SetHostConfig {
-	return func(opt *create.HostConfig) error {
+	return func(opt *container.HostConfig) error {
 		opt.KernelMemory = memory
 		return nil
 	}
@@ -681,7 +681,7 @@ func WithKernelMemory(memory int64) create.SetHostConfig {
 // parameters:
 //   - limit: the PIDs limit
 func WithPidsLimit(limit int64) create.SetHostConfig {
-	return func(opt *create.HostConfig) error {
+	return func(opt *container.HostConfig) error {
 		opt.PidsLimit = &limit
 		return nil
 	}
@@ -692,7 +692,7 @@ func WithPidsLimit(limit int64) create.SetHostConfig {
 // parameters:
 //   - weight: the block IO weight
 func WithBlkioWeight(weight uint16) create.SetHostConfig {
-	return func(opt *create.HostConfig) error {
+	return func(opt *container.HostConfig) error {
 		opt.BlkioWeight = weight
 		return nil
 	}
@@ -703,7 +703,7 @@ func WithBlkioWeight(weight uint16) create.SetHostConfig {
 //   - devicePath: the path to the device
 //   - rate: the read rate limit
 func WithBlkioDeviceReadBps(devicePath string, rate uint64) create.SetHostConfig {
-	return func(opt *create.HostConfig) error {
+	return func(opt *container.HostConfig) error {
 		if opt.BlkioDeviceReadBps == nil {
 			opt.BlkioDeviceReadBps = make([]*blkiodev.ThrottleDevice, 0)
 		}
@@ -720,7 +720,7 @@ func WithBlkioDeviceReadBps(devicePath string, rate uint64) create.SetHostConfig
 //   - devicePath: the path to the device
 //   - rate: the write rate limit
 func WithBlkioDeviceWriteBps(devicePath string, rate uint64) create.SetHostConfig {
-	return func(opt *create.HostConfig) error {
+	return func(opt *container.HostConfig) error {
 		if opt.BlkioDeviceWriteBps == nil {
 			opt.BlkioDeviceWriteBps = make([]*blkiodev.ThrottleDevice, 0)
 		}
@@ -737,7 +737,7 @@ func WithBlkioDeviceWriteBps(devicePath string, rate uint64) create.SetHostConfi
 //   - devicePath: the path to the device
 //   - rate: the read rate limit
 func WithBlkioDeviceReadIOps(devicePath string, rate uint64) create.SetHostConfig {
-	return func(opt *create.HostConfig) error {
+	return func(opt *container.HostConfig) error {
 		if opt.BlkioDeviceReadIOps == nil {
 			opt.BlkioDeviceReadIOps = make([]*blkiodev.ThrottleDevice, 0)
 		}
@@ -754,7 +754,7 @@ func WithBlkioDeviceReadIOps(devicePath string, rate uint64) create.SetHostConfi
 //   - devicePath: the path to the device
 //   - rate: the write rate limit
 func WithBlkioDeviceWriteIOps(devicePath string, rate uint64) create.SetHostConfig {
-	return func(opt *create.HostConfig) error {
+	return func(opt *container.HostConfig) error {
 		if opt.BlkioDeviceWriteIOps == nil {
 			opt.BlkioDeviceWriteIOps = make([]*blkiodev.ThrottleDevice, 0)
 		}
@@ -770,7 +770,7 @@ func WithBlkioDeviceWriteIOps(devicePath string, rate uint64) create.SetHostConf
 // parameters:
 //   - sysctls: the sysctls to use
 func WithSysctls(key, value string) create.SetHostConfig {
-	return func(opt *create.HostConfig) error {
+	return func(opt *container.HostConfig) error {
 		if opt.Sysctls == nil {
 			opt.Sysctls = make(map[string]string)
 		}
@@ -782,7 +782,7 @@ func WithSysctls(key, value string) create.SetHostConfig {
 // WithNetworkingSysctls sets the networking sysctls for the container
 // applies net.ipv4.ip_forward 1 and net.ipv4.conf.all.rp_filter 1
 func WithNetworkingSysctls() create.SetHostConfig {
-	return func(opt *create.HostConfig) error {
+	return func(opt *container.HostConfig) error {
 		if opt.Sysctls == nil {
 			opt.Sysctls = make(map[string]string)
 		}
@@ -796,7 +796,7 @@ func WithNetworkingSysctls() create.SetHostConfig {
 // parameters:
 //   - rules: the device cgroup rules to use
 func WithDeviceCgroupRules(rules ...string) create.SetHostConfig {
-	return func(opt *create.HostConfig) error {
+	return func(opt *container.HostConfig) error {
 		if opt.DeviceCgroupRules == nil {
 			opt.DeviceCgroupRules = make([]string, 0)
 		}
@@ -809,7 +809,7 @@ func WithDeviceCgroupRules(rules ...string) create.SetHostConfig {
 // parameters:
 //   - parent: the cgroup parent to use
 func WithCgroupParent(parent string) create.SetHostConfig {
-	return func(opt *create.HostConfig) error {
+	return func(opt *container.HostConfig) error {
 		opt.CgroupParent = parent
 		return nil
 	}
@@ -822,7 +822,7 @@ func WithCgroupParent(parent string) create.SetHostConfig {
 //   - deviceIDs: the device IDs
 //   - capabilities: the capabilities of the device
 func WithDeviceRequest(driver string, count int, deviceIDs []string, capabilities [][]string) create.SetHostConfig {
-	return func(opt *create.HostConfig) error {
+	return func(opt *container.HostConfig) error {
 		if opt.DeviceRequests == nil {
 			opt.DeviceRequests = make([]container.DeviceRequest, 0)
 		}
@@ -842,7 +842,7 @@ func WithDeviceRequest(driver string, count int, deviceIDs []string, capabilitie
 // note: this is useful for when you want to fail the host config
 // and append the error to the host config error collection
 func Fail(err error) create.SetHostConfig {
-	return func(opt *create.HostConfig) error {
+	return func(opt *container.HostConfig) error {
 		return create.NewContainerConfigError("host_config", err.Error())
 	}
 }
@@ -852,7 +852,7 @@ func Fail(err error) create.SetHostConfig {
 // note: this is useful for when you want to fail the host config
 // and append the error to the host config error collection
 func Failf(stringFormat string, args ...interface{}) create.SetHostConfig {
-	return func(opt *create.HostConfig) error {
+	return func(opt *container.HostConfig) error {
 		return create.NewContainerConfigError("host_config", fmt.Sprintf(stringFormat, args...))
 	}
 }

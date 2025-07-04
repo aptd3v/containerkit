@@ -7,7 +7,7 @@ import (
 
 // WithLogDriver sets a custom logging driver and options
 func WithLogDriver(driver string, options map[string]string) create.SetHostConfig {
-	return func(opt *create.HostConfig) error {
+	return func(opt *container.HostConfig) error {
 		opt.LogConfig = container.LogConfig{
 			Type:   driver,
 			Config: options,

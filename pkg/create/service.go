@@ -14,6 +14,7 @@ import (
 	"github.com/docker/docker/api/types/container"
 	dockerNet "github.com/docker/docker/api/types/network"
 	"github.com/docker/go-connections/nat"
+	ocispec "github.com/opencontainers/image-spec/specs-go/v1"
 )
 
 // Project is a wrapper around types.Project
@@ -41,13 +42,41 @@ func NewProject(name string) *Project {
 		},
 	}
 }
+
+// ForEachService iterates over each service in the project and calls the provided function to provide the ability to mutate a service
+// parameters:
+//   - fn: the function to call for each service
+//
+// returns an error if the function returns an error
 func (p *Project) ForEachService(fn func(name string, service *types.ServiceConfig) error) error {
+	if fn == nil {
+		return NewProjectConfigError(p.wrapped.Name, "ForEachService function is nil")
+	}
+	if p.wrapped.Services == nil {
+		return NewProjectConfigError(p.wrapped.Name, "project has no services")
+	}
 	for name, service := range p.wrapped.Services {
 		if err := fn(name, &service); err != nil {
 			return err
 		}
 	}
 	return nil
+}
+
+// GetService returns a service from the project
+// parameters:
+//   - name: the name of the service
+//
+// returns the service and an error if the service is not found or the project has no services
+func (p *Project) GetService(name string) (*types.ServiceConfig, error) {
+	if p.wrapped.Services == nil {
+		return nil, NewProjectConfigError("project", "project has no services")
+	}
+	service, ok := p.wrapped.Services[name]
+	if !ok {
+		return nil, NewProjectConfigError("project", fmt.Sprintf("service %s not found", name))
+	}
+	return &service, nil
 }
 
 // WithService defines a new service in the project
@@ -60,7 +89,26 @@ func (p *Project) WithService(name string, service *Container, setters ...SetSer
 		p.errs = append(p.errs, NewServiceConfigError(name, err.Error()))
 		return p
 	}
+
+	if _, ok := p.wrapped.Services[name]; ok {
+		p.errs = append(p.errs, NewServiceConfigError(name, "service already exists"))
+		return p
+	}
+
 	config := service.Config
+	//if the container, host, or network config is nil, we need to set it to an empty object to avoid nil pointer dereference
+	if config.Container == nil {
+		config.Container = &container.Config{}
+	}
+	if config.Host == nil {
+		config.Host = &container.HostConfig{}
+	}
+	if config.Network == nil {
+		config.Network = &dockerNet.NetworkingConfig{}
+	}
+	if config.Platform == nil {
+		config.Platform = &ocispec.Platform{}
+	}
 
 	serv := types.ServiceConfig{
 		Name: name,
@@ -81,90 +129,90 @@ func (p *Project) WithService(name string, service *Container, setters ...SetSer
 		User:        config.Container.User,
 
 		//blkio
-		BlkioConfig: convertBlkioConfig(config.Host.HostConfig),
+		BlkioConfig: convertBlkioConfig(config.Host),
 
 		//cap
-		CapAdd:  config.Host.HostConfig.CapAdd,
-		CapDrop: config.Host.HostConfig.CapDrop,
+		CapAdd:  config.Host.CapAdd,
+		CapDrop: config.Host.CapDrop,
 
 		//cgroup
-		Cgroup:            string(config.Host.HostConfig.Cgroup),
-		CgroupParent:      string(config.Host.HostConfig.CgroupParent),
-		DeviceCgroupRules: config.Host.HostConfig.DeviceCgroupRules,
+		Cgroup:            string(config.Host.Cgroup),
+		CgroupParent:      string(config.Host.CgroupParent),
+		DeviceCgroupRules: config.Host.DeviceCgroupRules,
 
 		//cpu
-		CPUCount:     int64(config.Host.HostConfig.CPUCount),
-		CPUPercent:   float32(config.Host.HostConfig.CPUPercent),
-		CPUPeriod:    int64(config.Host.HostConfig.CPUPeriod),
-		CPUQuota:     int64(config.Host.HostConfig.CPUQuota),
-		CPUShares:    int64(config.Host.HostConfig.CPUShares),
-		CPUSet:       string(config.Host.HostConfig.CpusetCpus),
-		CPURTRuntime: int64(config.Host.HostConfig.CPURealtimeRuntime),
-		CPURTPeriod:  int64(config.Host.HostConfig.CPURealtimePeriod),
+		CPUCount:     int64(config.Host.CPUCount),
+		CPUPercent:   float32(config.Host.CPUPercent),
+		CPUPeriod:    int64(config.Host.CPUPeriod),
+		CPUQuota:     int64(config.Host.CPUQuota),
+		CPUShares:    int64(config.Host.CPUShares),
+		CPUSet:       string(config.Host.CpusetCpus),
+		CPURTRuntime: int64(config.Host.CPURealtimeRuntime),
+		CPURTPeriod:  int64(config.Host.CPURealtimePeriod),
 
 		//pids
-		Pid: string(config.Host.HostConfig.PidMode),
+		Pid: string(config.Host.PidMode),
 
 		//memory
-		MemReservation: types.UnitBytes(config.Host.HostConfig.MemoryReservation),
-		MemSwapLimit:   types.UnitBytes(config.Host.HostConfig.MemorySwap),
-		MemLimit:       types.UnitBytes(config.Host.HostConfig.MemoryReservation),
-		ShmSize:        types.UnitBytes(config.Host.HostConfig.ShmSize),
+		MemReservation: types.UnitBytes(config.Host.MemoryReservation),
+		MemSwapLimit:   types.UnitBytes(config.Host.MemorySwap),
+		MemLimit:       types.UnitBytes(config.Host.MemoryReservation),
+		ShmSize:        types.UnitBytes(config.Host.ShmSize),
 
 		//dns
-		DNS:       config.Host.HostConfig.DNS,
-		DNSSearch: config.Host.HostConfig.DNSSearch,
-		DNSOpts:   config.Host.HostConfig.DNSOptions,
+		DNS:       config.Host.DNS,
+		DNSSearch: config.Host.DNSSearch,
+		DNSOpts:   config.Host.DNSOptions,
 
 		//oom
-		OomScoreAdj: int64(config.Host.HostConfig.OomScoreAdj),
+		OomScoreAdj: int64(config.Host.OomScoreAdj),
 		//Devices
-		Devices: convertDevices(config.Host.HostConfig.Devices),
+		Devices: convertDevices(config.Host.Devices),
 
 		//groups
-		GroupAdd: config.Host.HostConfig.GroupAdd,
+		GroupAdd: config.Host.GroupAdd,
 
 		//init
-		Init: config.Host.HostConfig.Init,
+		Init: config.Host.Init,
 
 		//ipc
-		Ipc: string(config.Host.HostConfig.IpcMode),
+		Ipc: string(config.Host.IpcMode),
 
 		//isolation
-		Isolation: string(config.Host.HostConfig.Isolation),
+		Isolation: string(config.Host.Isolation),
 
 		//mac address
 		MacAddress: config.Container.MacAddress,
 
 		//network
-		NetworkMode: string(config.Host.HostConfig.NetworkMode),
-		Networks:    convertNetworks(config.Network.NetworkingConfig),
+		NetworkMode: string(config.Host.NetworkMode),
+		Networks:    convertNetworks(config.Network),
 
 		//logging
-		Logging: convertLogging(&config.Host.HostConfig.LogConfig),
+		Logging: convertLogging(&config.Host.LogConfig),
 
 		//volumes
-		VolumesFrom: convertVolumesFrom(config.Host.HostConfig.VolumesFrom),
-		Volumes:     convertVolumes(config.Host.HostConfig),
+		VolumesFrom: convertVolumesFrom(config.Host.VolumesFrom),
+		Volumes:     convertVolumes(config.Host),
 
-		Ports:       convertPortsBindings(config.Host.HostConfig.PortBindings),
+		Ports:       convertPortsBindings(config.Host.PortBindings),
 		Platform:    config.Platform.Architecture,
-		Privileged:  config.Host.HostConfig.Privileged,
-		ReadOnly:    config.Host.HostConfig.ReadonlyRootfs,
-		Restart:     string(config.Host.HostConfig.RestartPolicy.Name),
-		Runtime:     string(config.Host.HostConfig.Runtime),
-		SecurityOpt: config.Host.HostConfig.SecurityOpt,
-		Sysctls:     config.Host.HostConfig.Sysctls,
-		Tmpfs:       convertTmpfs(config.Host.HostConfig.Tmpfs),
-		Ulimits:     convertUlimits(config.Host.HostConfig.Ulimits),
-		UserNSMode:  string(config.Host.HostConfig.UsernsMode),
-		Uts:         string(config.Host.HostConfig.UTSMode),
+		Privileged:  config.Host.Privileged,
+		ReadOnly:    config.Host.ReadonlyRootfs,
+		Restart:     string(config.Host.RestartPolicy.Name),
+		Runtime:     string(config.Host.Runtime),
+		SecurityOpt: config.Host.SecurityOpt,
+		Sysctls:     config.Host.Sysctls,
+		Tmpfs:       convertTmpfs(config.Host.Tmpfs),
+		Ulimits:     convertUlimits(config.Host.Ulimits),
+		UserNSMode:  string(config.Host.UsernsMode),
+		Uts:         string(config.Host.UTSMode),
 	}
 
 	// the following is nil if not set and needs to stay that way so docker cant determine if it is set or not
-	memSwappines := config.Host.HostConfig.MemorySwappiness
-	pidsLimit := config.Host.HostConfig.PidsLimit
-	oomKillDisable := config.Host.HostConfig.OomKillDisable
+	memSwappines := config.Host.MemorySwappiness
+	pidsLimit := config.Host.PidsLimit
+	oomKillDisable := config.Host.OomKillDisable
 	if memSwappines != nil {
 		serv.MemSwappiness = types.UnitBytes(*memSwappines)
 	}
@@ -189,11 +237,11 @@ func (p *Project) WithService(name string, service *Container, setters ...SetSer
 		}
 	}
 	//swarm mode wants unique container names so we need to only set container name if deploy is not set
-	// if serv.Deploy != nil {
-	// 	serv.ContainerName = ""
-	// } else {
-	// 	serv.ContainerName = config.Name
-	// }
+	if serv.Deploy != nil {
+		serv.ContainerName = ""
+	} else {
+		serv.ContainerName = service.Name
+	}
 	if p.wrapped.Services == nil {
 		p.wrapped.Services = make(types.Services, 0)
 	}

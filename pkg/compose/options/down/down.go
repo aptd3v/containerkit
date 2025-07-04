@@ -63,3 +63,11 @@ func WithWriter(writer io.Writer) compose.SetComposeDownOption {
 		return nil
 	}
 }
+
+// WithProfiles is a function that sets the profiles for the compose down command
+func WithProfiles(profiles ...string) compose.SetComposeDownOption {
+	return func(opt *compose.ComposeDownOptions) error {
+		opt.Profiles = profiles
+		return nil
+	}
+}

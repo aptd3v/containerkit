@@ -10,6 +10,7 @@ import (
 	"os/signal"
 	"runtime"
 	"strings"
+	"syscall"
 
 	"github.com/aptd3v/go-contain/pkg/compose"
 	"github.com/aptd3v/go-contain/pkg/compose/options/down"
@@ -28,7 +29,7 @@ import (
 var (
 	IsLinux      = runtime.GOOS == "linux"
 	IsNotWindows = runtime.GOOS != "windows"
-	NumWordPress = 3 //change me
+	NumWordPress = 25 //change me
 )
 
 func main() {
@@ -81,7 +82,6 @@ func main() {
 		context.Background(),
 		down.WithWriter(NewLogger("down")),
 		down.WithRemoveOrphans(),
-		down.WithRemoveImage(down.RemoveAll),
 		down.WithRemoveVolumes(),
 	)
 	if err != nil {
@@ -114,7 +114,7 @@ func SetupProject() *create.Project {
 		serviceName := fmt.Sprintf("wordpress-example-%d", i)
 		services = append(services, serviceName)
 		project.WithService(serviceName,
-			WordPressContainer(),
+			WordPressContainer(fmt.Sprintf("wordpress-%d", i)),
 			sc.WithDependsOnHealthy("database-example"),
 			//dependancy chain so each service depends on the previous one 1<-2<-3
 			tools.WhenTrueElse(i > 1,
@@ -143,8 +143,8 @@ func SetupProject() *create.Project {
 	return project
 }
 
-func WordPressContainer() *create.Container {
-	return create.NewContainer("wordpress-container").
+func WordPressContainer(name string) *create.Container {
+	return create.NewContainer(name).
 		WithContainerConfig(
 			cc.WithImage("wordpress:latest"),
 			cc.WithEnv("WORDPRESS_DB_HOST", "database-example"),
@@ -190,6 +190,12 @@ func DatabaseContainer() *create.Container {
 }
 
 func PortainerContainer() *create.Container {
+	// Portainer requires access to the Docker socket, which is typically at /var/run/docker.sock
+	// For rootless Docker, the socket is at /var/run/user/<UID>/docker.sock
+	rootless := fmt.Sprintf("/var/run/user/%d/docker.sock", syscall.Geteuid())
+	_, err := os.Stat(rootless)
+	isRootless := err == nil
+
 	return create.NewContainer("portainer-container").
 		WithContainerConfig(
 			cc.WithImage("portainer/portainer-ce:latest"),
@@ -198,7 +204,10 @@ func PortainerContainer() *create.Container {
 			hc.WithPortBindings("tcp", "0.0.0.0", "9000", "9000"),
 			hc.WithRWNamedVolumeMount("portainer-data", "/data"),
 			hc.WithMountPoint(
-				mount.WithSource("/var/run/docker.sock"),
+				tools.WhenTrueElse(isRootless,
+					mount.WithSource(rootless),
+					mount.WithSource("/var/run/docker.sock"),
+				),
 				mount.WithTarget("/var/run/docker.sock"),
 				mount.WithType("bind"),
 				mount.WithReadWrite(),

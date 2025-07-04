@@ -12,7 +12,7 @@ import (
 // parameters:
 //   - healthCheckFns: the health check functions to set
 func WithHealthCheck(setters ...health.SetHealthcheckConfig) create.SetContainerConfig {
-	return func(opt *create.ContainerConfig) error {
+	return func(opt *container.Config) error {
 		if opt.Healthcheck == nil {
 			opt.Healthcheck = &container.HealthConfig{}
 		}
