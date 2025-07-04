@@ -42,7 +42,8 @@ func main() {
 		serviceName := fmt.Sprintf("db-%d", i)
 
 		project.WithService(serviceName,
-			WithMongoReplica(i, serviceName),
+			WithMongoReplica(i),
+			// depends on the previous  db-0 <- db-1 <- db-2
 			tools.WhenTrue(i > 0,
 				sc.WithDependsOn(fmt.Sprintf("db-%d", i-1)),
 			),
@@ -54,10 +55,10 @@ func main() {
 		urlParts = append(urlParts, fmt.Sprintf("%s:27017", serviceName))
 	}
 	url := fmt.Sprintf("mongodb://%s/?replicaSet=rs0", strings.Join(urlParts, ","))
+
 	project.WithService("mongo-express", WithMongoExpress(url))
 
-	project.WithNetwork("mongo-cluster").
-		WithVolume("mongo-data")
+	project.WithNetwork("mongo-cluster").WithVolume("mongo-data")
 
 	database := compose.NewCompose(project)
 
@@ -87,14 +88,18 @@ func main() {
 		}
 		os.Exit(0)
 	}()
-	project.Export("./examples/mongo_replica/docker-compose.yaml", os.ModeAppend|os.ModePerm)
+	err = project.Export("./examples/mongo_replica/docker-compose.yaml", 0644)
+	if err != nil {
+		log.Fatal(err)
+	}
 	fmt.Println("MongoDB replica set", "rs0", "url", url)
 	fmt.Println("MongoDB replica set initialized and running.")
 	fmt.Println("You can access Mongo Express at http://localhost:3000")
+	fmt.Println("Press Ctrl+C to stop the containers.")
 	<-ctx.Done()
 }
 
-func WithMongoReplica(index int, serviceName string) *create.Container {
+func WithMongoReplica(index int) *create.Container {
 	containerName := fmt.Sprintf("mongodb-%d", index)
 	return create.NewContainer(containerName).
 		WithContainerConfig(
@@ -108,7 +113,6 @@ func WithMongoReplica(index int, serviceName string) *create.Container {
 				health.WithStartPeriod(1),
 			),
 			cc.WithExposedPort("tcp", "27017"),
-			cc.WithHostName(fmt.Sprintf("db-%d", index)),
 		).
 		WithHostConfig(
 			hc.WithRestartPolicyAlways(),
