@@ -1,3 +1,5 @@
+// This example demonstrates how to create a MongoDB replica set with x members
+// and a Mongo Express instance to manage the replica set.
 package main
 
 import (
@@ -109,7 +111,6 @@ func WithMongoReplica(index int, serviceName string) *create.Container {
 			cc.WithHostName(fmt.Sprintf("db-%d", index)),
 		).
 		WithHostConfig(
-			// hc.WithPortBindings("tcp", "0.0.0.0", strconv.Itoa(27017+index), "27017"),
 			hc.WithRestartPolicyAlways(),
 		).
 		WithNetworkConfig(
