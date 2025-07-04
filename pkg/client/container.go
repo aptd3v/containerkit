@@ -208,7 +208,7 @@ func (c *Client) ContainerStats(ctx context.Context, id string, stream bool) (*r
 }
 
 // ContainerExecCreate creates a new exec configuration to run an exec process.
-func (c *Client) ContainerExecCreate(ctx context.Context, id string, setters ...exec.SetContainerExecOption) (*response.ContainerExecCreate, error) {
+func (c *Client) ContainerExecCreate(ctx context.Context, containerID string, setters ...exec.SetContainerExecOption) (*response.ContainerExecCreate, error) {
 	op := container.ExecOptions{}
 	for _, setter := range setters {
 		if setter != nil {
@@ -217,7 +217,7 @@ func (c *Client) ContainerExecCreate(ctx context.Context, id string, setters ...
 			}
 		}
 	}
-	exec, err := c.wrapped.ContainerExecCreate(ctx, id, op)
+	exec, err := c.wrapped.ContainerExecCreate(ctx, containerID, op)
 	if err != nil {
 		return nil, err
 	}
@@ -227,7 +227,7 @@ func (c *Client) ContainerExecCreate(ctx context.Context, id string, setters ...
 }
 
 // ContainerExecStart starts an exec process already created in the docker host.
-func (c *Client) ContainerExecStart(ctx context.Context, id string, setters ...execstart.SetContainerExecStartOption) error {
+func (c *Client) ContainerExecStart(ctx context.Context, execID string, setters ...execstart.SetContainerExecStartOption) error {
 	op := container.ExecStartOptions{}
 	for _, setter := range setters {
 		if setter != nil {
@@ -236,11 +236,11 @@ func (c *Client) ContainerExecStart(ctx context.Context, id string, setters ...e
 			}
 		}
 	}
-	return c.wrapped.ContainerExecStart(ctx, id, op)
+	return c.wrapped.ContainerExecStart(ctx, execID, op)
 }
 
 // ContainerExecResize changes the size of the tty for an exec process running inside a container.
-func (c *Client) ContainerExecResize(ctx context.Context, id string, setters ...execresize.SetContainerExecResizeOption) error {
+func (c *Client) ContainerExecResize(ctx context.Context, execID string, setters ...execresize.SetContainerExecResizeOption) error {
 	op := container.ResizeOptions{}
 	for _, setter := range setters {
 		if setter != nil {
@@ -249,13 +249,13 @@ func (c *Client) ContainerExecResize(ctx context.Context, id string, setters ...
 			}
 		}
 	}
-	return c.wrapped.ContainerExecResize(ctx, id, op)
+	return c.wrapped.ContainerExecResize(ctx, execID, op)
 }
 
 // ContainerExecAttach attaches a connection to an exec process in the server.
 // It returns a types.HijackedConnection with the hijacked connection and the a reader to get output.
 // It's up to the called to close the hijacked connection by calling types.HijackedResponse.Close.
-func (c *Client) ContainerExecAttach(ctx context.Context, id string, setters ...execattach.SetContainerExecAttachOption) (*response.ContainerHijackedResponse, error) {
+func (c *Client) ContainerExecAttach(ctx context.Context, execID string, setters ...execattach.SetContainerExecAttachOption) (*response.ContainerHijackedResponse, error) {
 	op := container.ExecAttachOptions{}
 	for _, setter := range setters {
 		if setter != nil {
@@ -264,7 +264,7 @@ func (c *Client) ContainerExecAttach(ctx context.Context, id string, setters ...
 			}
 		}
 	}
-	hijacked, err := c.wrapped.ContainerExecAttach(ctx, id, op)
+	hijacked, err := c.wrapped.ContainerExecAttach(ctx, execID, op)
 	if err != nil {
 		return nil, err
 	}
