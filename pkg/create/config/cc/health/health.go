@@ -16,7 +16,6 @@ type SetHealthcheckConfig func(opt *container.HealthConfig) error
 func WithStartPeriod(startPeriod int) SetHealthcheckConfig {
 	return func(opt *container.HealthConfig) error {
 		if startPeriod < 0 {
-			opt.StartPeriod = 0
 			return create.NewContainerConfigError("healthcheck", "start_period must be greater than 0")
 		}
 		opt.StartPeriod = time.Duration(startPeriod) * time.Second
@@ -30,7 +29,6 @@ func WithStartPeriod(startPeriod int) SetHealthcheckConfig {
 func WithTimeout(timeout int) SetHealthcheckConfig {
 	return func(opt *container.HealthConfig) error {
 		if timeout < 0 {
-			opt.Timeout = 0
 			return create.NewContainerConfigError("healthcheck", "timeout must be greater than 0")
 		}
 		opt.Timeout = time.Duration(timeout) * time.Second
@@ -43,8 +41,7 @@ func WithTimeout(timeout int) SetHealthcheckConfig {
 //   - interval: the interval for the health check in seconds
 func WithInterval(interval int) SetHealthcheckConfig {
 	return func(opt *container.HealthConfig) error {
-		if interval <= 0 {
-			opt.Interval = 0
+		if interval < 0 {
 			return create.NewContainerConfigError("healthcheck", "interval must be greater than or equal to 0")
 		}
 		opt.Interval = time.Duration(interval) * time.Second
@@ -58,7 +55,6 @@ func WithInterval(interval int) SetHealthcheckConfig {
 func WithRetries(retries int) SetHealthcheckConfig {
 	return func(opt *container.HealthConfig) error {
 		if retries < 0 {
-			opt.Retries = 0
 			return create.NewContainerConfigError("healthcheck", "retries must be greater than or equal to 0")
 		}
 		opt.Retries = retries
@@ -89,6 +85,10 @@ func Fail(err error) SetHealthcheckConfig {
 	}
 }
 
+// Failf is a function that returns an error with a formatted string
+//
+// note: this is useful for when you want to fail the health check
+// and append the error to the container config error collection
 func Failf(stringFormat string, args ...interface{}) SetHealthcheckConfig {
 	return func(opt *container.HealthConfig) error {
 		return create.NewContainerConfigError("healthcheck", fmt.Sprintf(stringFormat, args...))
