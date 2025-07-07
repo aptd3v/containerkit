@@ -26,6 +26,24 @@ func WithEnv(key string, value string) create.SetContainerConfig {
 	}
 }
 
+// WithEnvMap appends a map of environment variables to the container configuration
+// Parameters:
+//   - env: map of environment variables
+func WithEnvMap(env map[string]string) create.SetContainerConfig {
+	return func(config *container.Config) error {
+		if config.Env == nil {
+			config.Env = make([]string, 0)
+		}
+		for key, value := range env {
+			if key == "" || value == "" {
+				return create.NewContainerConfigError("env", fmt.Sprintf("invalid environment variable: %s", key+"="+value))
+			}
+			config.Env = append(config.Env, key+"="+value)
+		}
+		return nil
+	}
+}
+
 // WithExposedPort appends a port to be exposed from the container
 // Parameter:
 //   - port: port number or port range to be exposed in the container (e.g., "80-1000" or "80")
@@ -87,7 +105,7 @@ func WithImagef(stringFormat string, args ...interface{}) create.SetContainerCon
 	}
 }
 
-// WithCommand sets the command to be run in the container
+// WithCommand appends the command to be run in the container
 // Parameters:
 //   - cmd: command and its arguments
 func WithCommand(cmd ...string) create.SetContainerConfig {
