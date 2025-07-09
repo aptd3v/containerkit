@@ -29,7 +29,7 @@ import (
 var (
 	IsLinux      = runtime.GOOS == "linux"
 	IsNotWindows = runtime.GOOS != "windows"
-	NumWordPress = 25 //change me
+	NumWordPress = 3 //change me
 )
 
 func main() {
