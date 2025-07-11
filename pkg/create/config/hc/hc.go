@@ -2,7 +2,6 @@
 package hc
 
 import (
-	"errors"
 	"fmt"
 	"strings"
 
@@ -74,13 +73,26 @@ func WithPortBindings(protocol, hostIP, hostPort, containerPort string) create.S
 		if opt.PortBindings == nil {
 			opt.PortBindings = make(nat.PortMap)
 		}
+		if containerPort == "" {
+			return create.NewHostConfigError("port", "empty container port")
+		}
+		if hostPort == "" {
+			return create.NewHostConfigError("port", "empty host port")
+		}
+		if hostIP == "" {
+			return create.NewHostConfigError("port", "empty host IP")
+		}
+		if protocol == "" {
+			return create.NewHostConfigError("port", "empty protocol")
+		}
+
 		cPort, err := nat.NewPort(protocol, containerPort)
 		if err != nil {
-			return fmt.Errorf("invalid container port: %s, %w", containerPort, err)
+			return create.NewHostConfigError("port", err.Error())
 		}
 		hostPort, err := nat.NewPort(protocol, hostPort)
 		if err != nil {
-			return fmt.Errorf("invalid host port: %s, %w", hostPort, err)
+			return create.NewHostConfigError("port", err.Error())
 		}
 
 		opt.PortBindings[cPort] = []nat.PortBinding{
@@ -224,7 +236,7 @@ func ValidateMounts(mounts []string) error {
 	}
 
 	if len(errMsgs) > 0 {
-		return errors.New(strings.Join(errMsgs, "\n"))
+		return create.NewHostConfigError("mounts", strings.Join(errMsgs, "\n"))
 	}
 	return nil
 }
@@ -843,7 +855,7 @@ func WithDeviceRequest(driver string, count int, deviceIDs []string, capabilitie
 // and append the error to the host config error collection
 func Fail(err error) create.SetHostConfig {
 	return func(opt *container.HostConfig) error {
-		return create.NewContainerConfigError("host_config", err.Error())
+		return create.NewHostConfigError("host_config", err.Error())
 	}
 }
 
@@ -853,6 +865,6 @@ func Fail(err error) create.SetHostConfig {
 // and append the error to the host config error collection
 func Failf(stringFormat string, args ...interface{}) create.SetHostConfig {
 	return func(opt *container.HostConfig) error {
-		return create.NewContainerConfigError("host_config", fmt.Sprintf(stringFormat, args...))
+		return create.NewHostConfigError("host_config", fmt.Sprintf(stringFormat, args...))
 	}
 }
