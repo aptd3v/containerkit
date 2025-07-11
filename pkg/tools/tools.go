@@ -3,7 +3,6 @@ package tools
 
 import (
 	"errors"
-	"fmt"
 )
 
 // PredicateClosure is a condition based on external or ambient context,
@@ -163,7 +162,6 @@ func OnlyIf[T any, O ~func(T) error](check CheckClosure, f O) O {
 		}
 		ok, err := check()
 		if err != nil {
-			fmt.Println("error", err)
 			return err
 		}
 		if f != nil && ok {
