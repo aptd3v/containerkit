@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 
+	"github.com/aptd3v/go-contain/pkg/create/errdefs"
 	"github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/api/types/network"
 	ocispec "github.com/opencontainers/image-spec/specs-go/v1"
@@ -78,7 +79,7 @@ func (c *Container) WithContainerConfig(setters ...SetContainerConfig) *Containe
 			continue
 		}
 		if err := setter(c.Config.Container); err != nil {
-			c.Errors = append(c.Errors, NewContainerConfigError("container", err.Error()))
+			c.Errors = append(c.Errors, errdefs.NewContainerConfigError("container", err.Error()))
 			continue
 		}
 	}
@@ -101,7 +102,7 @@ func (c *Container) WithHostConfig(setters ...SetHostConfig) *Container {
 			continue
 		}
 		if err := setter(c.Config.Host); err != nil {
-			c.Errors = append(c.Errors, NewHostConfigError("host", err.Error()))
+			c.Errors = append(c.Errors, errdefs.NewHostConfigError("host", err.Error()))
 			continue
 		}
 	}
@@ -123,7 +124,7 @@ func (c *Container) WithNetworkConfig(setters ...SetNetworkConfig) *Container {
 			continue
 		}
 		if err := setter(c.Config.Network); err != nil {
-			c.Errors = append(c.Errors, NewNetworkConfigError("network", err.Error()))
+			c.Errors = append(c.Errors, errdefs.NewNetworkConfigError("network", err.Error()))
 			continue
 		}
 	}
@@ -145,7 +146,7 @@ func (c *Container) WithPlatformConfig(setters ...SetPlatformConfig) *Container 
 			continue
 		}
 		if err := setter(c.Config.Platform); err != nil {
-			c.Errors = append(c.Errors, NewPlatformConfigError("platform", err.Error()))
+			c.Errors = append(c.Errors, errdefs.NewPlatformConfigError("platform", err.Error()))
 			continue
 		}
 	}
