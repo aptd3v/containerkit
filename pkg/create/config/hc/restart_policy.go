@@ -19,22 +19,22 @@ const (
 //   - mode: the restart policy to use
 //   - maxRetryCount: the maximum number of retries before giving up
 func WithRestartPolicy(mode RestartPolicy, maxRetryCount int) create.SetHostConfig {
-	policyMode := container.RestartPolicyDisabled
+	var pm container.RestartPolicyMode
 	switch mode {
 	case RestartPolicyNo:
-		policyMode = container.RestartPolicyDisabled
+		pm = container.RestartPolicyDisabled
 	case RestartPolicyOnFailure:
-		policyMode = container.RestartPolicyOnFailure
+		pm = container.RestartPolicyOnFailure
 	case RestartPolicyAlways:
-		policyMode = container.RestartPolicyAlways
+		pm = container.RestartPolicyAlways
 	case RestartPolicyUnlessStopped:
-		policyMode = container.RestartPolicyUnlessStopped
+		pm = container.RestartPolicyUnlessStopped
 	default:
-		policyMode = container.RestartPolicyDisabled
+		pm = container.RestartPolicyDisabled
 	}
 	return func(opt *container.HostConfig) error {
 		opt.RestartPolicy = container.RestartPolicy{
-			Name:              policyMode,
+			Name:              pm,
 			MaximumRetryCount: maxRetryCount,
 		}
 		return nil
