@@ -6,6 +6,7 @@ import (
 
 	"github.com/aptd3v/go-contain/pkg/create/config/sc/build/ulimit"
 	"github.com/aptd3v/go-contain/pkg/create/config/sc/secrets/secretservice"
+	"github.com/aptd3v/go-contain/pkg/create/errdefs"
 	"github.com/compose-spec/compose-go/v2/types"
 )
 
@@ -214,6 +215,9 @@ func WithTarget(target string) SetBuildConfig {
 // secrets specifies secrets to expose to the build.
 func WithSecret(setters ...secretservice.SetSecretServiceConfig) SetBuildConfig {
 	return func(opt *types.BuildConfig) error {
+		if len(setters) == 0 {
+			return nil
+		}
 		if opt.Secrets == nil {
 			opt.Secrets = make([]types.ServiceSecretConfig, 0)
 		}
@@ -253,6 +257,12 @@ func WithTags(tags ...string) SetBuildConfig {
 // It's specified either as WithSingle for a single limit or WithSoft and WithHard for soft/hard limits.
 func WithUlimit(name string, setters ...ulimit.SetUlimitConfig) SetBuildConfig {
 	return func(opt *types.BuildConfig) error {
+		if name == "" {
+			return errdefs.NewServiceConfigError("build", "ulimit name is required")
+		}
+		if len(setters) == 0 {
+			return nil
+		}
 		if opt.Ulimits == nil {
 			opt.Ulimits = make(map[string]*types.UlimitsConfig)
 		}
@@ -293,5 +303,25 @@ func WithPrivileged() SetBuildConfig {
 	return func(opt *types.BuildConfig) error {
 		opt.Privileged = true
 		return nil
+	}
+}
+
+// Fail is a function that returns setter function that returns an error
+//
+// note: this is useful for when you want to fail the build config
+// and append the error to the service config error collection
+func Fail(err error) SetBuildConfig {
+	return func(opt *types.BuildConfig) error {
+		return errdefs.NewServiceConfigError("build", err.Error())
+	}
+}
+
+// Failf is a function that returns setter function that returns an error
+//
+// note: this is useful for when you want to fail the build config
+// and append the error to the service config error collection
+func Failf(stringFormat string, args ...any) SetBuildConfig {
+	return func(opt *types.BuildConfig) error {
+		return errdefs.NewServiceConfigError("build", fmt.Sprintf(stringFormat, args...))
 	}
 }

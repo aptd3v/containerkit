@@ -2,10 +2,13 @@
 package sc
 
 import (
+	"fmt"
+
 	"github.com/aptd3v/go-contain/pkg/create"
 	"github.com/aptd3v/go-contain/pkg/create/config/sc/build"
 	"github.com/aptd3v/go-contain/pkg/create/config/sc/deploy"
 	"github.com/aptd3v/go-contain/pkg/create/config/sc/secrets/secretservice"
+	"github.com/aptd3v/go-contain/pkg/create/errdefs"
 	"github.com/compose-spec/compose-go/v2/types"
 )
 
@@ -195,5 +198,25 @@ func WithSecret(setters ...secretservice.SetSecretServiceConfig) create.SetServi
 		}
 		config.Secrets = append(config.Secrets, secret)
 		return nil
+	}
+}
+
+// Fail is a function that returns an error
+//
+// note: this is useful for when you want to fail the service config
+// and append the error to the service config error collection
+func Fail(err error) create.SetServiceConfig {
+	return func(config *types.ServiceConfig) error {
+		return errdefs.NewServiceConfigError("service", err.Error())
+	}
+}
+
+// Failf is a function that returns an error
+//
+// note: this is useful for when you want to fail the service config
+// and append the error to the service config error collection
+func Failf(stringFormat string, args ...any) create.SetServiceConfig {
+	return func(config *types.ServiceConfig) error {
+		return errdefs.NewServiceConfigError("service", fmt.Sprintf(stringFormat, args...))
 	}
 }

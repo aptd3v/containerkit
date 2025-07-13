@@ -6,6 +6,7 @@ import (
 
 	"github.com/aptd3v/go-contain/pkg/create"
 	"github.com/aptd3v/go-contain/pkg/create/config/nc/endpoint"
+	"github.com/aptd3v/go-contain/pkg/create/errdefs"
 	"github.com/docker/docker/api/types/network"
 )
 
@@ -20,7 +21,7 @@ func WithEndpoint(name string, setters ...endpoint.SetEndpointConfig) create.Set
 		for _, set := range setters {
 			if set != nil {
 				if err := set(options.EndpointsConfig[name]); err != nil {
-					return create.NewNetworkConfigError("endpoint", fmt.Sprintf("failed to set endpoint: %s", err))
+					return errdefs.NewNetworkConfigError("endpoint", fmt.Sprintf("failed to set endpoint: %s", err))
 				}
 			}
 		}
@@ -34,7 +35,7 @@ func WithEndpoint(name string, setters ...endpoint.SetEndpointConfig) create.Set
 // and append the error to the network config error collection
 func Fail(err error) create.SetNetworkConfig {
 	return func(options *network.NetworkingConfig) error {
-		return create.NewNetworkConfigError("network_config", err.Error())
+		return errdefs.NewNetworkConfigError("network_config", err.Error())
 	}
 }
 
@@ -42,8 +43,8 @@ func Fail(err error) create.SetNetworkConfig {
 //
 // note: this is useful for when you want to fail the network config
 // and append the error to the network config error collection
-func Failf(stringFormat string, args ...interface{}) create.SetNetworkConfig {
+func Failf(stringFormat string, args ...any) create.SetNetworkConfig {
 	return func(options *network.NetworkingConfig) error {
-		return create.NewNetworkConfigError("network_config", fmt.Sprintf(stringFormat, args...))
+		return errdefs.NewNetworkConfigError("network_config", fmt.Sprintf(stringFormat, args...))
 	}
 }

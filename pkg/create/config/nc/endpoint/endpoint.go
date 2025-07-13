@@ -4,8 +4,8 @@ package endpoint
 import (
 	"fmt"
 
-	"github.com/aptd3v/go-contain/pkg/create"
 	"github.com/aptd3v/go-contain/pkg/create/config/nc/endpoint/ipam"
+	"github.com/aptd3v/go-contain/pkg/create/errdefs"
 	"github.com/docker/docker/api/types/network"
 )
 
@@ -91,7 +91,7 @@ func WithDriverOptions(key, value string) SetEndpointConfig {
 // and append the error to the network config error collection
 func Fail(err error) SetEndpointConfig {
 	return func(options *network.EndpointSettings) error {
-		return create.NewNetworkConfigError("endpoint", err.Error())
+		return errdefs.NewNetworkConfigError("endpoint", err.Error())
 	}
 }
 
@@ -99,8 +99,8 @@ func Fail(err error) SetEndpointConfig {
 //
 // note: this is useful for when you want to fail the endpoint
 // and append the error to the network config error collection
-func Failf(stringFormat string, args ...interface{}) SetEndpointConfig {
+func Failf(stringFormat string, args ...any) SetEndpointConfig {
 	return func(options *network.EndpointSettings) error {
-		return create.NewNetworkConfigError("endpoint", fmt.Sprintf(stringFormat, args...))
+		return errdefs.NewNetworkConfigError("endpoint", fmt.Sprintf(stringFormat, args...))
 	}
 }
