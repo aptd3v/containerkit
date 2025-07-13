@@ -232,32 +232,27 @@ func ProxyContainer() *create.Container {
 // Generate HAProxy configuration for round-robin load balancing
 func GenerateHAProxyConfig(services []string) error {
 
-	var backends []string
-	for i, service := range services {
-		backends = append(backends, fmt.Sprintf("    server wp%d %s:80 check", i+1, service))
+	var sb strings.Builder
+	sb.WriteString("global\n")
+	sb.WriteString("	log stdout format raw local0\n")
+	sb.WriteString("defaults\n")
+	sb.WriteString("	log		global\n")
+	sb.WriteString("	mode	http\n")
+	sb.WriteString("	option	httplog\n")
+	sb.WriteString("	option	dontlognull\n")
+	sb.WriteString("	timeout connect 5000\n")
+	sb.WriteString("	timeout client  50000\n")
+	sb.WriteString("	timeout server  50000\n")
+	sb.WriteString("frontend http_front\n")
+	sb.WriteString("	bind *:80\n")
+	sb.WriteString("	default_backend wordpress_back\n")
+	sb.WriteString("backend wordpress_back\n")
+	sb.WriteString("	balance roundrobin\n")
+	for i, backend := range services {
+		sb.WriteString(fmt.Sprintf("	server wp%d %s:80 check\n", i+1, backend))
 	}
-
-	cfg := fmt.Sprintf(`
-global
-    log stdout format raw local0
-
-defaults
-    log     global
-    mode    http
-    option  httplog
-    option  dontlognull
-    timeout connect 5000
-    timeout client  50000
-    timeout server  50000
-
-frontend http_front
-    bind *:80
-    default_backend wordpress_back
-
-backend wordpress_back
-    balance roundrobin
-%s
-`, strings.Join(backends, "\n"))
+	sb.WriteString("\n")
+	cfg := sb.String()
 
 	return os.WriteFile("./examples/wordpress/haproxy.cfg", []byte(cfg), 0644)
 }
