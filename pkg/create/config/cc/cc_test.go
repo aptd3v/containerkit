@@ -9,17 +9,20 @@ import (
 	"github.com/aptd3v/go-contain/pkg/create"
 	"github.com/aptd3v/go-contain/pkg/create/config/cc"
 	"github.com/aptd3v/go-contain/pkg/create/config/cc/health"
+	"github.com/aptd3v/go-contain/pkg/create/errdefs"
 	"github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/api/types/strslice"
 	"github.com/docker/go-connections/nat"
 	"github.com/stretchr/testify/assert"
 )
 
-var nilMapString map[string]string
-var nilMapStruct map[string]struct{}
-var nilStringSlice []string
-var nilDockerStrSlice strslice.StrSlice
-var nilStopTimeout *int
+var (
+	nilMapString      map[string]string
+	nilMapStruct      map[string]struct{}
+	nilStringSlice    []string
+	nilDockerStrSlice strslice.StrSlice
+	nilStopTimeout    *int
+)
 
 func TestAssignments(t *testing.T) {
 	stopTimeout := 10
@@ -456,7 +459,7 @@ func TestAssignments(t *testing.T) {
 		err := test.setFn(test.config)
 		if test.wantErr {
 			assert.Error(t, err)
-			assert.True(t, create.IsContainerConfigError(err), "expected container config error")
+			assert.True(t, errdefs.IsContainerConfigError(err), "expected container config error")
 		} else {
 			assert.NoError(t, err)
 		}

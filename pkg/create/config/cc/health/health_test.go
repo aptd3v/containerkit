@@ -6,8 +6,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/aptd3v/go-contain/pkg/create"
 	"github.com/aptd3v/go-contain/pkg/create/config/cc/health"
+	"github.com/aptd3v/go-contain/pkg/create/errdefs"
 	"github.com/docker/docker/api/types/container"
 	"github.com/stretchr/testify/assert"
 )
@@ -132,7 +132,7 @@ func TestAssignments(t *testing.T) {
 			err := test.setFn(test.config)
 			if test.wantErr {
 				assert.Error(t, err)
-				assert.True(t, create.IsContainerConfigError(err), "expected container config error")
+				assert.True(t, errdefs.IsContainerConfigError(err), "expected container config error")
 			} else {
 				assert.NoError(t, err)
 			}
