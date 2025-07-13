@@ -5,6 +5,7 @@ import (
 
 	"github.com/aptd3v/go-contain/pkg/create"
 	"github.com/aptd3v/go-contain/pkg/create/config/cc/health"
+	"github.com/aptd3v/go-contain/pkg/create/errdefs"
 	"github.com/docker/docker/api/types/container"
 )
 
@@ -21,7 +22,7 @@ func WithHealthCheck(setters ...health.SetHealthcheckConfig) create.SetContainer
 				continue
 			}
 			if err := setter(opt.Healthcheck); err != nil {
-				return create.NewContainerConfigError("healthcheck", fmt.Sprintf("failed to set health check: %s", err))
+				return errdefs.NewContainerConfigError("healthcheck", fmt.Sprintf("failed to set health check: %s", err))
 			}
 		}
 		if len(opt.Healthcheck.Test) == 0 {

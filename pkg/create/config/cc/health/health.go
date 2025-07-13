@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/aptd3v/go-contain/pkg/create"
+	"github.com/aptd3v/go-contain/pkg/create/errdefs"
 	"github.com/docker/docker/api/types/container"
 )
 
@@ -16,7 +16,7 @@ type SetHealthcheckConfig func(opt *container.HealthConfig) error
 func WithStartPeriod(startPeriod int) SetHealthcheckConfig {
 	return func(opt *container.HealthConfig) error {
 		if startPeriod < 0 {
-			return create.NewContainerConfigError("healthcheck", "start_period must be greater than 0")
+			return errdefs.NewContainerConfigError("healthcheck", "start_period must be greater than 0")
 		}
 		opt.StartPeriod = time.Duration(startPeriod) * time.Second
 		return nil
@@ -29,7 +29,7 @@ func WithStartPeriod(startPeriod int) SetHealthcheckConfig {
 func WithTimeout(timeout int) SetHealthcheckConfig {
 	return func(opt *container.HealthConfig) error {
 		if timeout < 0 {
-			return create.NewContainerConfigError("healthcheck", "timeout must be greater than 0")
+			return errdefs.NewContainerConfigError("healthcheck", "timeout must be greater than 0")
 		}
 		opt.Timeout = time.Duration(timeout) * time.Second
 		return nil
@@ -42,7 +42,7 @@ func WithTimeout(timeout int) SetHealthcheckConfig {
 func WithInterval(interval int) SetHealthcheckConfig {
 	return func(opt *container.HealthConfig) error {
 		if interval < 0 {
-			return create.NewContainerConfigError("healthcheck", "interval must be greater than or equal to 0")
+			return errdefs.NewContainerConfigError("healthcheck", "interval must be greater than or equal to 0")
 		}
 		opt.Interval = time.Duration(interval) * time.Second
 		return nil
@@ -55,7 +55,7 @@ func WithInterval(interval int) SetHealthcheckConfig {
 func WithRetries(retries int) SetHealthcheckConfig {
 	return func(opt *container.HealthConfig) error {
 		if retries < 0 {
-			return create.NewContainerConfigError("healthcheck", "retries must be greater than or equal to 0")
+			return errdefs.NewContainerConfigError("healthcheck", "retries must be greater than or equal to 0")
 		}
 		opt.Retries = retries
 		return nil
@@ -81,7 +81,7 @@ func WithTest(test ...string) SetHealthcheckConfig {
 // and append the error to the container config error collection
 func Fail(err error) SetHealthcheckConfig {
 	return func(opt *container.HealthConfig) error {
-		return create.NewContainerConfigError("healthcheck", err.Error())
+		return errdefs.NewContainerConfigError("healthcheck", err.Error())
 	}
 }
 
@@ -89,8 +89,8 @@ func Fail(err error) SetHealthcheckConfig {
 //
 // note: this is useful for when you want to fail the health check
 // and append the error to the container config error collection
-func Failf(stringFormat string, args ...interface{}) SetHealthcheckConfig {
+func Failf(stringFormat string, args ...any) SetHealthcheckConfig {
 	return func(opt *container.HealthConfig) error {
-		return create.NewContainerConfigError("healthcheck", fmt.Sprintf(stringFormat, args...))
+		return errdefs.NewContainerConfigError("healthcheck", fmt.Sprintf(stringFormat, args...))
 	}
 }
