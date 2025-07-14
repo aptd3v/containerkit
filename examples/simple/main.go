@@ -27,9 +27,8 @@ import (
 )
 
 const (
-	ProjectName   = "simple-project"
-	ContainerName = "simple-container"
-	ServiceName   = "simple"
+	ProjectName = "simple-project"
+	ServiceName = "simple"
 )
 
 func main() {
@@ -44,7 +43,7 @@ func main() {
 }
 
 func AlpineContainer(tag string) *create.Container {
-	simple := create.NewContainer(ContainerName)
+	simple := create.NewContainer()
 	simple.WithContainerConfig(
 		cc.WithImagef("alpine:%s", tag),
 		cc.WithCommand("echo", "hello, world"),
