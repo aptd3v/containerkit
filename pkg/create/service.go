@@ -157,7 +157,7 @@ func (p *Project) WithService(name string, service *Container, setters ...SetSer
 		//memory
 		MemReservation: types.UnitBytes(config.Host.MemoryReservation),
 		MemSwapLimit:   types.UnitBytes(config.Host.MemorySwap),
-		MemLimit:       types.UnitBytes(config.Host.MemoryReservation),
+		MemLimit:       types.UnitBytes(config.Host.Memory),
 		ShmSize:        types.UnitBytes(config.Host.ShmSize),
 
 		//dns
