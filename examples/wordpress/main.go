@@ -114,7 +114,7 @@ func SetupProject() *create.Project {
 		serviceName := fmt.Sprintf("wordpress-example-%d", i)
 		services = append(services, serviceName)
 		project.WithService(serviceName,
-			WordPressContainer(fmt.Sprintf("wordpress-%d", i)),
+			WordPressContainer(),
 			sc.WithDependsOnHealthy("database-example"),
 			//dependancy chain so each service depends on the previous one 1<-2<-3
 			tools.WhenTrueElse(i > 1,
@@ -143,8 +143,8 @@ func SetupProject() *create.Project {
 	return project
 }
 
-func WordPressContainer(name string) *create.Container {
-	return create.NewContainer(name).
+func WordPressContainer() *create.Container {
+	return create.NewContainer().
 		WithContainerConfig(
 			cc.WithImage("wordpress:latest"),
 			cc.WithEnv("WORDPRESS_DB_HOST", "database-example"),
@@ -196,7 +196,7 @@ func PortainerContainer() *create.Container {
 	_, err := os.Stat(rootless)
 	isRootless := err == nil
 
-	return create.NewContainer("portainer-container").
+	return create.NewContainer().
 		WithContainerConfig(
 			cc.WithImage("portainer/portainer-ce:latest"),
 		).
