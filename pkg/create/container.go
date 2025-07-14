@@ -5,6 +5,7 @@ package create
 import (
 	"errors"
 	"fmt"
+	"strings"
 
 	"github.com/aptd3v/go-contain/pkg/create/errdefs"
 	"github.com/docker/docker/api/types/container"
@@ -24,9 +25,24 @@ type Container struct {
 	Errors []error
 }
 
-func NewContainer(name string) *Container {
+// NewContainer creates a new container with the given name.
+// It will return a container with empty configurations ready to be set.
+// a container is a wrapper around the docker sdk container configuration.
+// but it can be used as a service config in a compose project
+//
+// parameters:
+//   - name: the name of the container
+//
+// Note: 'name' is optional when using this container as a Compose service config.
+// It is required when using the Docker SDK directly.
+// If multiple strings are passed as the name, they will be joined with hyphens (e.g., "foo", "bar" → "foo-bar").
+func NewContainer(name ...string) *Container {
+	cName := ""
+	if len(name) > 0 {
+		cName = strings.Join(name, "-")
+	}
 	return &Container{
-		Name: name,
+		Name: cName,
 		Config: &MergedConfig{
 			Container: &container.Config{},
 			Host:      &container.HostConfig{},
