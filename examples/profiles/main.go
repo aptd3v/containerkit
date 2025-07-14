@@ -47,7 +47,7 @@ func main() {
 	for i, word := range strings.Split(paragraph, "\n") {
 		serviceName := fmt.Sprintf("service%d", i)
 		project.WithService(serviceName,
-			create.NewContainer(serviceName).
+			create.NewContainer().
 				WithContainerConfig(
 					cc.WithImage("alpine:latest"),
 					cc.WithCommand("echo", word),
