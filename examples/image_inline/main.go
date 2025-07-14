@@ -107,7 +107,7 @@ func WithInlineDockerfile(image, tag string) create.SetServiceConfig {
 
 // MyContainer returns a container with the image name and tag
 func MyContainer(imageName, tag string) *create.Container {
-	return create.NewContainer("").
+	return create.NewContainer().
 		WithContainerConfig(
 			cc.WithImagef("%s:%s", imageName, tag),
 		)
