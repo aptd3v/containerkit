@@ -6,7 +6,7 @@
 [![Go Reference](https://pkg.go.dev/badge/github.com/aptd3v/go-contain.svg)](https://pkg.go.dev/github.com/aptd3v/go-contain)
 [![Go Report Card](https://goreportcard.com/badge/github.com/aptd3v/go-contain)](https://goreportcard.com/report/github.com/aptd3v/go-contain)
 
-## 🚀 Features
+## Features
 
 * Support for Docker Compose commands `up`, `down`, `logs`, (more coming soon!)
 * Declarative container/service creation with chainable options
@@ -16,13 +16,13 @@
 
 ---
 
-## 🤔 Why go-contain?
+## Why go-contain?
 
 While Docker Compose YAML files work great for simple, static configurations, **go-contain** unlocks the full power of programmatic infrastructure definition. Here's why you might choose go-contain over traditional approaches:
 
-### 🎯 **Programmatic Infrastructure Control**
+### **Programmatic Infrastructure Control**
 ```go
-// ✅ Generate infrastructure from data, APIs, configs - A real pain with static YAML
+// Generate infrastructure from data, APIs, configs - A real pain with static YAML
 
 //// Generate a unique environment for each microservice from a config object.
 func setupEnvironment(envConfig EnvironmentConfig) *create.Project {
@@ -56,7 +56,7 @@ project := setupEnvironment(envConfig)
 compose.NewCompose(project).Up(context.Background())
 ```
 ```yaml
-# ❌ Docker Compose scaling creates IDENTICAL containers - no per-instance customization
+# Docker Compose scaling creates IDENTICAL containers - no per-instance customization
 version: '3.8'
 services:
   api:
@@ -75,31 +75,30 @@ services:
 # - No way to customize individual instances
 ```
 
-### 🔄 **Dynamic & Conditional Configuration**
+### **Dynamic & Conditional Configuration**
 ```go
-// ✅ Environment-based logic, loops, and conditionals
+// Environment-based logic, loops, and conditionals
 for _, env := range []string{"dev", "staging", "prod"} {
     project.WithService(fmt.Sprintf("api-%s", env),
-        create.NewContainer("api").
+    	create.NewContainer().
             WithContainerConfig(
-                cc.WithImage(fmt.Sprintf("myapp:%s", env)),
+                cc.WithImagef("myapp:%s", env),
                 tools.WhenTrue(env == "prod", 
                     cc.WithEnv("CACHE_ENABLED", "true"),
                 ),
             ),
     )
 }
-```
-```yaml
-# ❌ Static configuration requires multiple files or templating
-# No native support for conditionals or loops
+
+// Static configuration requires multiple files or templating
+// No native support for conditionals or loops
 ```
 
-### 🧩 **Code Reusability & Composition**
+###  **Code Reusability & Composition**
 ```go
-// ✅ Create reusable components and patterns
-func DatabaseService(name, version string) *create.Container {
-    return create.NewContainer(name).
+// Create reusable components and patterns
+func DatabaseContainer(name, version string)  *create.Container {
+    return create.NewContainer().
         WithContainerConfig(
             cc.WithImagef("postgres:%s", version),
             cc.WithEnv("POSTGRES_DB", name),
@@ -109,8 +108,8 @@ func DatabaseService(name, version string) *create.Container {
         )
 }
 
-func RedisService(name string) *create.Container {
-    return create.NewContainer(name).
+func RedisContainer() *create.Container {
+    return create.NewContainer().
         WithContainerConfig(
             cc.WithImage("redis:7-alpine"),
         ).
@@ -120,15 +119,15 @@ func RedisService(name string) *create.Container {
 }
 
 // Microservices architecture - each service gets its own database
-project.WithService("user-service-db", DatabaseService("users", "latest"))
-project.WithService("user-service-cache", RedisService("user-cache"))
-project.WithService("order-service-db", DatabaseService("orders", "latest"))
-project.WithService("order-service-cache", RedisService("order-cache"))
+project.WithService("user-service-db", DatabaseContainer("users", "latest"))
+project.WithService("user-service-cache", RedisContainer())
+project.WithService("order-service-db", DatabaseContainer("orders", "latest"))
+project.WithService("order-service-cache", RedisContainer())
 ```
 
-### 🚀 **Perfect for Automation & CI/CD**
+### **Perfect for Automation & CI/CD**
 ```go
-// ✅ Integrate with existing Go tools and workflows
+// Integrate with existing Go tools and workflows
 func DeployEnvironment(ctx context.Context, env string, replicas int) error {
     project := create.NewProject(fmt.Sprintf("app-%s", env))
     
@@ -144,9 +143,8 @@ func DeployEnvironment(ctx context.Context, env string, replicas int) error {
 }
 ```
 
-### ♻️ Portable Container Configuration
-In `go-contain` the underlying docker sdk is also wrapped as well, allowing you to use the same
-configuration for docker client control and compose
+### Portable Container Configuration
+In `go-contain` the underlying docker sdk is also wrapped as well, allowing you to use the same configuration for docker client control, and compose.
 
 ```go
 package main
@@ -166,8 +164,11 @@ func main() {
 	if err != nil {
 		log.Fatalf("Error creating client: %v", err)
 	}
-	// ♻️ Reuse the same config to create a container using the Docker SDK
-	resp, err := cli.ContainerCreate(context.Background(), MySimpleContainer("latest"))
+	// Reuse the same config to create a container using the Docker SDK
+	resp, err := cli.ContainerCreate(
+		context.Background(),
+		MySimpleContainer("latest"),
+	)
 	if err != nil {
 		log.Fatalf("Error creating container: %v", err)
 	}
@@ -176,7 +177,7 @@ func main() {
 	//create a compose project with the same container configuration
 	project := create.NewProject("my-project")
 
-	project.WithService("simple", MySimpleContainer("latest"))
+	project.WithService("simple-service", MySimpleContainer("latest"))
 
 	err = project.Export("./docker-compose.yml", 0644)
 	if err != nil {
@@ -186,9 +187,9 @@ func main() {
 }
 
 func MySimpleContainer(tag string) *create.Container {
-	return create.NewContainer("simple").
+	return create.NewContainer().
 		WithContainerConfig(
-			cc.WithImagef("ubuntu:%s", tag),
+			cc.WithImagef("alpine:%s", tag),
 			cc.WithCommand("echo", "hello world"),
 		)
 }
@@ -196,13 +197,13 @@ func MySimpleContainer(tag string) *create.Container {
 ```
 
 
-### 🧪 **Leverage Go's Ecosystem**
+### **Leverage Go's Ecosystem**
 - **Testing**: Write unit tests for your infrastructure code
 - **Debugging**: Use Go's debugging tools and error handling
 - **Libraries**: Integrate with any Go package (HTTP clients, databases, etc.)
 - **Tooling**: Build CLIs, APIs, and automation around your containers
 
-### 🔄 **Still Docker Compose Compatible**
+### **Still Docker Compose Compatible**
 ```go
 // Export to standard YAML when needed
 if err := project.Export("./docker-compose.yaml", 0644); err != nil {
@@ -215,7 +216,7 @@ if err := project.Export("./docker-compose.yaml", 0644); err != nil {
 
 ---
 
-## 📋 Prerequisites
+## Prerequisites
 
 - **Go**: 1.23+
 - **Docker**: 28.2.0+ with Docker Compose v2.37.0
@@ -223,7 +224,7 @@ if err := project.Export("./docker-compose.yaml", 0644); err != nil {
 
 ---
 
-## 📦 Installation
+## Installation
 
 ```bash
 go get github.com/aptd3v/go-contain@latest
@@ -231,7 +232,7 @@ go get github.com/aptd3v/go-contain@latest
 
 ---
 
-## 🚀 Quick Start
+## Quick Start
 
 Get up and running in 30 seconds:
 
@@ -254,8 +255,8 @@ import (
 
 func main() {
 	project := create.NewProject("hello-world")
-	project.WithService("hello", 
-		create.NewContainer("hello-container").
+	project.WithService("hello-service", 
+		create.NewContainer().
 			WithContainerConfig(
 				cc.WithImage("alpine:latest"),
 				cc.WithCommand("echo", "Hello from go-contain!"),
@@ -270,7 +271,7 @@ func main() {
 go run main.go
 ```
 
-## 🛠️ Basic Usage
+## Basic Usage
 
 ```go
 package main
@@ -319,7 +320,7 @@ func main() {
 
 ---
 
-## 🔧 Declarative Container Configuration
+## Declarative Container Configuration
 
 Each setter type is defined in its own package
 
@@ -327,22 +328,26 @@ Each setter type is defined in its own package
 project.WithService("api",
 	create.NewContainer("my-api-container").
         WithContainerConfig(
+			//cc == container config
             cc.WithImagef("ubuntu:%s", tag)
         ).
         WithHostConfig(
+			// hc == host config
             hc.WithPortBindings("tcp", "0.0.0.0", "8080", "80"),
         ).
         WithNetworkConfig(
+			// nc == network config
             nc.WithEndpoint("my-network"),
         ).
         WithPlatformConfig(
+			//pc == platform config
             pc.WithArchitecture("amd64"),
         ),
 )
 ```
-## 🔧 Or use underlying docker SDK structs if desired
+## Or use underlying docker SDK structs if desired
 
-check out [`examples/structs`](./examples/structs) to see how using both can be useful.
+Check out [`examples/structs`](./examples/structs) to see how using both can be useful.
 ```go
 project.WithService("api", &create.Container{
 		Config: &create.MergedConfig{
@@ -373,11 +378,11 @@ project.WithService("api", &create.Container{
 ```
 ---
 
-## 🧰 tools Package: Declarative Logic for Setters
+## tools Package: Declarative Logic for Setters
 
 The `tools` package provides composable helpers for conditional configuration. These are useful when flags, environment variables, or dynamic inputs control what options get applied.
 
-### ✅ Highlights
+### Highlights
 
 * `tools.WhenTrue(...)` – Apply setters only if a boolean is true
 * `tools.WhenTrueFn(...)` – Like above, but accepts  predicate closure `func() bool`
@@ -385,7 +390,7 @@ The `tools` package provides composable helpers for conditional configuration. T
 * `tools.Group(...)` – Combine multiple setters into one `func[T any, O ~func(T) error](fns ...O) O`
 * `tools.And(...)`, `tools.Or(...)` – Compose multiple predicate closures
 
-### 📦 Example
+### Example
 
 ```go
 package main
@@ -422,7 +427,7 @@ func main() {
 	)
 
 	project.WithService("express",
-		create.NewContainer("node-container").
+		create.NewContainer().
 			WithContainerConfig(
 				cc.WithImage("node:latest"),
 				cc.WithCommand("npm", "start"),
@@ -465,140 +470,44 @@ func EnvFileExists(name string) tools.CheckClosure {
 }
 ```
 
----
 
-## 🧪 Advanced Patterns
 
-* Programmatically build services, networks, and volumes using loops
-* Reuse options via functional composition
-* Create declarative DSLs for internal infrastructure automation
-
----
-
-## 📚 Examples
+### Examples
 
 Explore examples in the [`examples/`](./examples) directory:
 
-### 🔰 [`examples/simple/`](./examples/simple)
-Basic "Hello World" example - perfect for getting started.
-```bash
-go run ./examples/simple/main.go
-```
-
-### 🌐 [`examples/wordpress/`](./examples/wordpress) 
-**WordPress stack** with:
-- Multiple WordPress instances (configurable scaling)
-- MySQL database with health checks  
-- HAProxy load balancer with auto-generated config
-- Portainer for container management (Non Windows only)
-- Graceful shutdown and cleanup
-```bash
-go run ./examples/wordpress/main.go
-```
-
-### 🔨 [`examples/image_inline/`](./examples/image_inline)
-**Dynamic image building** - build Docker images inline and tag them conditionally.
-```bash
-go run ./examples/image_inline/main.go
-```
-
----
 
 
 ### Getting Help
 
-- 📖 **API Docs**: [pkg.go.dev/github.com/aptd3v/go-contain](https://pkg.go.dev/github.com/aptd3v/go-contain)
-- 🐛 **Issues**: [GitHub Issues](https://github.com/aptd3v/go-contain/issues)
-- 💬 **Discussions**: [GitHub Discussions](https://github.com/aptd3v/go-contain/discussions)
+- **API Docs**: [pkg.go.dev/github.com/aptd3v/go-contain](https://pkg.go.dev/github.com/aptd3v/go-contain)
+- **Issues**: [GitHub Issues](https://github.com/aptd3v/go-contain/issues)
+- **Discussions**: [GitHub Discussions](https://github.com/aptd3v/go-contain/discussions)
 
----
 
-## 📁 Project Structure (Current)
+## Roadmap
 
-```bash
-├── examples
-│   └── ... #examples
-├── go.mod
-├── go.sum
-├── LICENSE
-├── main.go
-├── pkg
-│   ├── client # docker sdk client wrapper
-│   │   ├── auth
-│   │   │   └── auth.go # image registry auth helpers
-│   │   │
-│   │   │
-│   │   ├── options # docker sdk client [action] option setters
-│   │   │   ├── container
-│   │   │   │   └── ... #container option setters
-│   │   │   ├── image
-│   │   │   │   └── ... #image option setters
-│   │   │   ├── network
-│   │   │   │   └── ... #network option setters
-│   │   │   └── volume
-│   │   │       └── ... #volume option setters
-│   │   │
-│   │   │
-│   │   └── response # wrapped client response types
-│   │       
-│   │   
-│   │   
-│   ├── compose # compose cli wrapper
-│   │   │ 
-│   │   └── options 
-│   │       └── ... # compose cli option setters
-│   │ 
-│   │ 
-│   ├── create # create container and compose projects/services
-│   │   └── config
-│   │       ├── cc 
-│   │       │   └── ... # container config setters
-│   │       │
-│   │       ├── hc # container host config setters
-│   │       │   └── ...
-│   │       │
-│   │       ├── nc # container network config setters
-│   │       │   └── ...
-│   │       │
-│   │       ├── pc # container platform config setters
-│   │       │   └── ...
-│   │       │
-│   │       └── sc 
-│   │           └── ... # compose service setters
-│   │       
-│   └── tools # various helpers
-└── README.md # this file
-```
-
----
-
-## 🗺️ Roadmap
-
-### ✅ Current Features 
+### Current Features 
 - ✅ Core Compose commands: `up`, `down`, `logs`
-- ✅ Container, network, and volume configuration  
-- ✅ Health checks and dependencies
+- ✅ Container, network, and volume service configuration 
 - ✅ Conditional logic with `tools` package
 - ✅ YAML export for compatibility
-- ✅ Cross-platform support (Linux, macOS, Windows)
 
-### 🚧 In Development  
-- 🔄 Additional Compose commands: `restart`, `stop`, `start`, `ps`
-- 🔄 Enhanced Docker SDK client features
-- 🔄 Image registry authentication helpers
-- 🔄 More comprehensive test coverage
+### In Development  
+- Additional Compose commands: `restart`, `stop`, `start`, `ps`
+- Enhanced Docker SDK client features
+- Image registry authentication helpers
+- More comprehensive test coverage
 
-### 💡 Ideas & Suggestions
+### Ideas & Suggestions
 Have ideas for go-contain? We'd love to hear them! Open an [issue](https://github.com/aptd3v/go-contain/issues) or start a [discussion](https://github.com/aptd3v/go-contain/discussions).
 
----
 
-## 📄 License
+### License
 
 MIT License. See [LICENSE](./LICENSE) for details.
 
----
 
-## 🤝 Contributions
+### Contributions
 
 Contributions, feedback, and issues are welcome! Fork the repo and submit a PR or open an issue with your idea.
