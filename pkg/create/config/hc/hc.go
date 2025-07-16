@@ -2,12 +2,12 @@
 package hc
 
 import (
-	"errors"
 	"fmt"
 	"strings"
 
 	"github.com/aptd3v/go-contain/pkg/create"
 	"github.com/aptd3v/go-contain/pkg/create/config/hc/mount"
+	"github.com/aptd3v/go-contain/pkg/create/errdefs"
 	"github.com/docker/docker/api/types/blkiodev"
 	"github.com/docker/docker/api/types/container"
 	mountType "github.com/docker/docker/api/types/mount"
@@ -18,18 +18,18 @@ import (
 // WithMountPoint allows to create a custom mount point for the container in the host mount configuration.
 // see mount.go for more details
 // parameters:
-//   - setMountOptionFn: the function to set the mount option one of the union type of MountSetter interface
-func WithMountPoint(set ...mount.SetMountConfig) create.SetHostConfig {
+//   - setters: the setter functions to set config for the mount point
+func WithMountPoint(setters ...mount.SetMountConfig) create.SetHostConfig {
 
 	return func(opt *container.HostConfig) error {
 		if opt.Mounts == nil {
 			opt.Mounts = make([]mountType.Mount, 0)
 		}
 		mount := &mountType.Mount{}
-		for _, set := range set {
+		for _, set := range setters {
 			if set != nil {
 				if err := set(mount); err != nil {
-					return create.NewHostConfigError("mount", fmt.Sprintf("failed to set mount: %s", err))
+					return errdefs.NewHostConfigError("mount", fmt.Sprintf("failed to set mount: %s", err))
 				}
 			}
 		}
@@ -71,16 +71,31 @@ func WithAutoRemove() create.SetHostConfig {
 //   - containerPort: the port on the container
 func WithPortBindings(protocol, hostIP, hostPort, containerPort string) create.SetHostConfig {
 	return func(opt *container.HostConfig) error {
-		if opt.PortBindings == nil {
-			opt.PortBindings = make(nat.PortMap)
+
+		if containerPort == "" {
+			return errdefs.NewHostConfigError("port", "empty container port")
 		}
+		if hostPort == "" {
+			return errdefs.NewHostConfigError("port", "empty host port")
+		}
+		if hostIP == "" {
+			return errdefs.NewHostConfigError("port", "empty host IP")
+		}
+		if protocol == "" {
+			return errdefs.NewHostConfigError("port", "empty protocol")
+		}
+
 		cPort, err := nat.NewPort(protocol, containerPort)
 		if err != nil {
-			return fmt.Errorf("invalid container port: %s, %w", containerPort, err)
+			return errdefs.NewHostConfigError("port", err.Error())
 		}
 		hostPort, err := nat.NewPort(protocol, hostPort)
 		if err != nil {
-			return fmt.Errorf("invalid host port: %s, %w", hostPort, err)
+			return errdefs.NewHostConfigError("port", err.Error())
+		}
+
+		if opt.PortBindings == nil {
+			opt.PortBindings = make(nat.PortMap)
 		}
 
 		opt.PortBindings[cPort] = []nat.PortBinding{
@@ -99,7 +114,7 @@ func WithPortBindings(protocol, hostIP, hostPort, containerPort string) create.S
 func WithDNSLookups(dns ...string) create.SetHostConfig {
 	return func(opt *container.HostConfig) error {
 		if opt.DNS == nil {
-			opt.DNS = make([]string, 0)
+			opt.DNS = make([]string, 0, len(dns))
 		}
 		opt.DNS = append(opt.DNS, dns...)
 		return nil
@@ -112,7 +127,7 @@ func WithDNSLookups(dns ...string) create.SetHostConfig {
 func WithDNSOptions(dnsOption ...string) create.SetHostConfig {
 	return func(opt *container.HostConfig) error {
 		if opt.DNSOptions == nil {
-			opt.DNSOptions = make(strslice.StrSlice, 0)
+			opt.DNSOptions = make(strslice.StrSlice, 0, len(dnsOption))
 		}
 		opt.DNSOptions = append(opt.DNSOptions, dnsOption...)
 		return nil
@@ -125,7 +140,7 @@ func WithDNSOptions(dnsOption ...string) create.SetHostConfig {
 func WithDNSSearches(search ...string) create.SetHostConfig {
 	return func(opt *container.HostConfig) error {
 		if opt.DNSSearch == nil {
-			opt.DNSSearch = make(strslice.StrSlice, 0)
+			opt.DNSSearch = make(strslice.StrSlice, 0, len(search))
 		}
 		opt.DNSSearch = append(opt.DNSSearch, search...)
 		return nil
@@ -138,7 +153,7 @@ func WithDNSSearches(search ...string) create.SetHostConfig {
 func WithExtraHost(extraHosts ...string) create.SetHostConfig {
 	return func(opt *container.HostConfig) error {
 		if opt.ExtraHosts == nil {
-			opt.ExtraHosts = make([]string, 0)
+			opt.ExtraHosts = make([]string, 0, len(extraHosts))
 		}
 		opt.ExtraHosts = append(opt.ExtraHosts, extraHosts...)
 		return nil
@@ -151,7 +166,7 @@ func WithExtraHost(extraHosts ...string) create.SetHostConfig {
 func WithAddedGroups(group ...string) create.SetHostConfig {
 	return func(opt *container.HostConfig) error {
 		if opt.GroupAdd == nil {
-			opt.GroupAdd = make(strslice.StrSlice, 0)
+			opt.GroupAdd = make(strslice.StrSlice, 0, len(group))
 		}
 		opt.GroupAdd = append(opt.GroupAdd, group...)
 		return nil
@@ -160,23 +175,23 @@ func WithAddedGroups(group ...string) create.SetHostConfig {
 
 // WithBind appends a volume binding to the host configuration for the container.
 // parameters:
-//   - bind: the volume binding to add e.g. "/host/path:/container/path:ro"
-func WithVolumeBinds(bind ...string) create.SetHostConfig {
+//   - binds: the volume binding to add e.g. "/host/path:/container/path:ro"
+func WithVolumeBinds(binds ...string) create.SetHostConfig {
 	return func(opt *container.HostConfig) error {
 		if opt.Binds == nil {
-			opt.Binds = make([]string, 0)
+			opt.Binds = make([]string, 0, len(binds))
 		}
-		if err := ValidateMounts(bind); err != nil {
+		if err := validateMounts(binds); err != nil {
 			return err
 		}
-		opt.Binds = append(opt.Binds, bind...)
+		opt.Binds = append(opt.Binds, binds...)
 		return nil
 	}
 }
 
 // ValidateMounts validates mount specifications in the format "/source/path:/target/path:mode"
 // Whitespace is trimmed from all parts of the specification.
-func ValidateMounts(mounts []string) error {
+func validateMounts(mounts []string) error {
 	var errMsgs []string
 	seenTargets := make(map[string]bool)
 
@@ -224,7 +239,7 @@ func ValidateMounts(mounts []string) error {
 	}
 
 	if len(errMsgs) > 0 {
-		return errors.New(strings.Join(errMsgs, "\n"))
+		return errdefs.NewHostConfigError("mounts", strings.Join(errMsgs, "\n"))
 	}
 	return nil
 }
@@ -308,7 +323,7 @@ func WithCPUCount(count int64) create.SetHostConfig {
 func WithReadonlyPaths(paths ...string) create.SetHostConfig {
 	return func(opt *container.HostConfig) error {
 		if opt.ReadonlyPaths == nil {
-			opt.ReadonlyPaths = make([]string, 0)
+			opt.ReadonlyPaths = make([]string, 0, len(paths))
 		}
 		opt.ReadonlyPaths = append(opt.ReadonlyPaths, paths...)
 		return nil
@@ -321,7 +336,7 @@ func WithReadonlyPaths(paths ...string) create.SetHostConfig {
 func WithMaskedPaths(paths ...string) create.SetHostConfig {
 	return func(opt *container.HostConfig) error {
 		if opt.MaskedPaths == nil {
-			opt.MaskedPaths = make([]string, 0)
+			opt.MaskedPaths = make([]string, 0, len(paths))
 		}
 		opt.MaskedPaths = append(opt.MaskedPaths, paths...)
 		return nil
@@ -359,7 +374,7 @@ func WithVolumeDriver(driver string) create.SetHostConfig {
 func WithVolumesFrom(from string) create.SetHostConfig {
 	return func(opt *container.HostConfig) error {
 		if opt.VolumesFrom == nil {
-			opt.VolumesFrom = make([]string, 0)
+			opt.VolumesFrom = make([]string, 0, len(from))
 		}
 		opt.VolumesFrom = append(opt.VolumesFrom, from)
 		return nil
@@ -417,12 +432,10 @@ func WithPidMode(mode string) create.SetHostConfig {
 	}
 }
 
-// WithPublishAllPorts sets the publish all ports flag for the container in the host configuration.
-// parameters:
-//   - publishAllPorts: the publish all ports flag to use
-func WithPublishAllPorts(publishAllPorts bool) create.SetHostConfig {
+// WithPublishAllPorts sets the publish all ports flag to true for the container
+func WithPublishAllPorts() create.SetHostConfig {
 	return func(opt *container.HostConfig) error {
-		opt.PublishAllPorts = publishAllPorts
+		opt.PublishAllPorts = true
 		return nil
 	}
 }
@@ -443,7 +456,7 @@ func WithReadOnlyRootfs() create.SetHostConfig {
 func WithSecurityOpts(opts ...string) create.SetHostConfig {
 	return func(opt *container.HostConfig) error {
 		if opt.SecurityOpt == nil {
-			opt.SecurityOpt = make([]string, 0)
+			opt.SecurityOpt = make([]string, 0, len(opts))
 		}
 		opt.SecurityOpt = append(opt.SecurityOpt, opts...)
 		return nil
@@ -488,7 +501,7 @@ func WithPrivileged() create.SetHostConfig {
 	}
 }
 
-// WithDevice adds a device to the host configuration.
+// WithDevice appends a device to the host configuration.
 // parameters:
 //   - device: the device to add
 func WithAddedDevice(device string, pathInContainer string, permissions string) create.SetHostConfig {
@@ -506,12 +519,12 @@ func WithAddedDevice(device string, pathInContainer string, permissions string) 
 }
 
 // WithContainerIDFile adds a containerIDFile to the host configuration.
-// After running this command, the /path/to/container-id.txt file will contain the ID of the started container.
+// After running client.ContainerCreate command, the /path/to/container-id.txt file will contain the ID of the started container.
 // parameters:
-//   - containerIDFile: the containerIDFile to add
-func WithContainerIDFile(containerIDFile string) create.SetHostConfig {
+//   - path: the path to the containerIDFile
+func WithContainerIDFile(path string) create.SetHostConfig {
 	return func(opt *container.HostConfig) error {
-		opt.ContainerIDFile = containerIDFile
+		opt.ContainerIDFile = path
 		return nil
 	}
 }
@@ -586,7 +599,7 @@ func WithMemorySwap(memorySwap int64) create.SetHostConfig {
 	}
 }
 
-// WithUlimits sets ulimit options
+// WithUlimits appends a ulimit option to the host configuration.
 // parameters:
 //   - name: the name of the ulimit
 //   - soft: the soft limit
@@ -609,7 +622,7 @@ func WithUlimits(name string, soft, hard int64) create.SetHostConfig {
 // parameters:
 //   - init: the init flag to use
 //
-// Run a custom init inside the container, if null, use the daemon's configured settings
+// Note: use to run a custom init inside the container, if null, use the daemon's configured settings
 func WithInit() create.SetHostConfig {
 	init := true
 	return func(opt *container.HostConfig) error {
@@ -698,7 +711,7 @@ func WithBlkioWeight(weight uint16) create.SetHostConfig {
 	}
 }
 
-// WithBlkioDeviceReadBps sets the block IO read rate limit for a device.
+// WithBlkioDeviceReadBps appends the block IO read rate limit for a device.
 // parameters:
 //   - devicePath: the path to the device
 //   - rate: the read rate limit
@@ -715,7 +728,7 @@ func WithBlkioDeviceReadBps(devicePath string, rate uint64) create.SetHostConfig
 	}
 }
 
-// WithBlkioDeviceWriteBps sets the block IO write rate limit for a device.
+// WithBlkioDeviceWriteBps appends the block IO write rate limit for a device.
 // parameters:
 //   - devicePath: the path to the device
 //   - rate: the write rate limit
@@ -732,7 +745,7 @@ func WithBlkioDeviceWriteBps(devicePath string, rate uint64) create.SetHostConfi
 	}
 }
 
-// WithBlkioDeviceReadIOps sets the block IO read rate limit for a device.
+// WithBlkioDeviceReadIOps appends the block IO read rate limit for a device.
 // parameters:
 //   - devicePath: the path to the device
 //   - rate: the read rate limit
@@ -749,7 +762,7 @@ func WithBlkioDeviceReadIOps(devicePath string, rate uint64) create.SetHostConfi
 	}
 }
 
-// WithBlkioDeviceWriteIOps sets the block IO write rate limit for a device.
+// WithBlkioDeviceWriteIOps appends the block IO write rate limit for a device.
 // parameters:
 //   - devicePath: the path to the device
 //   - rate: the write rate limit
@@ -766,7 +779,7 @@ func WithBlkioDeviceWriteIOps(devicePath string, rate uint64) create.SetHostConf
 	}
 }
 
-// WithSysctls sets the sysctls for the container
+// WithSysctls appends a sysctl configuration for the container
 // parameters:
 //   - sysctls: the sysctls to use
 func WithSysctls(key, value string) create.SetHostConfig {
@@ -779,26 +792,13 @@ func WithSysctls(key, value string) create.SetHostConfig {
 	}
 }
 
-// WithNetworkingSysctls sets the networking sysctls for the container
-// applies net.ipv4.ip_forward 1 and net.ipv4.conf.all.rp_filter 1
-func WithNetworkingSysctls() create.SetHostConfig {
-	return func(opt *container.HostConfig) error {
-		if opt.Sysctls == nil {
-			opt.Sysctls = make(map[string]string)
-		}
-		opt.Sysctls["net.ipv4.ip_forward"] = "1"
-		opt.Sysctls["net.ipv4.conf.all.rp_filter"] = "1"
-		return nil
-	}
-}
-
 // WithDeviceCgroupRules sets the device cgroup rules for the container
 // parameters:
 //   - rules: the device cgroup rules to use
 func WithDeviceCgroupRules(rules ...string) create.SetHostConfig {
 	return func(opt *container.HostConfig) error {
 		if opt.DeviceCgroupRules == nil {
-			opt.DeviceCgroupRules = make([]string, 0)
+			opt.DeviceCgroupRules = make([]string, 0, len(rules))
 		}
 		opt.DeviceCgroupRules = append(opt.DeviceCgroupRules, rules...)
 		return nil
@@ -837,13 +837,27 @@ func WithDeviceRequest(driver string, count int, deviceIDs []string, capabilitie
 	}
 }
 
+// WithLogDriver sets the log driver for the container
+// parameters:
+//   - driver: the log driver to use
+//   - options: the options for the log driver
+func WithLogDriver(driver string, options map[string]string) create.SetHostConfig {
+	return func(opt *container.HostConfig) error {
+		opt.LogConfig = container.LogConfig{
+			Type:   driver,
+			Config: options,
+		}
+		return nil
+	}
+}
+
 // Fail is a function that returns an error
 //
 // note: this is useful for when you want to fail the host config
 // and append the error to the host config error collection
 func Fail(err error) create.SetHostConfig {
 	return func(opt *container.HostConfig) error {
-		return create.NewContainerConfigError("host_config", err.Error())
+		return errdefs.NewHostConfigError("host_config", err.Error())
 	}
 }
 
@@ -851,8 +865,8 @@ func Fail(err error) create.SetHostConfig {
 //
 // note: this is useful for when you want to fail the host config
 // and append the error to the host config error collection
-func Failf(stringFormat string, args ...interface{}) create.SetHostConfig {
+func Failf(stringFormat string, args ...any) create.SetHostConfig {
 	return func(opt *container.HostConfig) error {
-		return create.NewContainerConfigError("host_config", fmt.Sprintf(stringFormat, args...))
+		return errdefs.NewHostConfigError("host_config", fmt.Sprintf(stringFormat, args...))
 	}
 }

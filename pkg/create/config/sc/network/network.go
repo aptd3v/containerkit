@@ -2,7 +2,10 @@
 package network
 
 import (
+	"fmt"
+
 	"github.com/aptd3v/go-contain/pkg/create/config/sc/network/pool"
+	"github.com/aptd3v/go-contain/pkg/create/errdefs"
 	"github.com/compose-spec/compose-go/v2/types"
 )
 
@@ -36,7 +39,7 @@ func WithDriverOptions(key, value string) SetNetworkProjectConfig {
 // WithIpam sets the ipam driver for the network
 // parameters:
 //   - driver: the driver for the ipam
-func WithIpam(driver string) SetNetworkProjectConfig {
+func WithIpamDriver(driver string) SetNetworkProjectConfig {
 	return func(opt *types.NetworkConfig) error {
 		opt.Ipam.Driver = driver
 		return nil
@@ -48,6 +51,9 @@ func WithIpam(driver string) SetNetworkProjectConfig {
 //   - setters: the setters for the ipam pool
 func WithIpamPool(setters ...pool.SetIpamPoolProjectConfig) SetNetworkProjectConfig {
 	return func(opt *types.NetworkConfig) error {
+		if len(setters) == 0 {
+			return nil
+		}
 		if opt.Ipam.Config == nil {
 			opt.Ipam.Config = make([]*types.IPAMPool, 0)
 		}
@@ -107,5 +113,25 @@ func WithLabel(key, value string) SetNetworkProjectConfig {
 		}
 		opt.Labels[key] = value
 		return nil
+	}
+}
+
+// Fail is a function that returns a setter that always returns the given error
+//
+// note: this is useful for when you want to fail the network config
+// and append the error to the service config error collection
+func Fail(err error) SetNetworkProjectConfig {
+	return func(opt *types.NetworkConfig) error {
+		return errdefs.NewServiceConfigError("network", err.Error())
+	}
+}
+
+// Failf is a function that returns a setter that always returns the given error
+//
+// note: this is useful for when you want to fail the network config
+// and append the error to the service config error collection
+func Failf(stringFormat string, args ...any) SetNetworkProjectConfig {
+	return func(opt *types.NetworkConfig) error {
+		return errdefs.NewServiceConfigError("network", fmt.Sprintf(stringFormat, args...))
 	}
 }

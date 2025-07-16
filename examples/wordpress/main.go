@@ -29,7 +29,7 @@ import (
 var (
 	IsLinux      = runtime.GOOS == "linux"
 	IsNotWindows = runtime.GOOS != "windows"
-	NumWordPress = 25 //change me
+	NumWordPress = 3
 )
 
 func main() {
@@ -114,7 +114,7 @@ func SetupProject() *create.Project {
 		serviceName := fmt.Sprintf("wordpress-example-%d", i)
 		services = append(services, serviceName)
 		project.WithService(serviceName,
-			WordPressContainer(fmt.Sprintf("wordpress-%d", i)),
+			WordPressContainer(),
 			sc.WithDependsOnHealthy("database-example"),
 			//dependancy chain so each service depends on the previous one 1<-2<-3
 			tools.WhenTrueElse(i > 1,
@@ -143,8 +143,8 @@ func SetupProject() *create.Project {
 	return project
 }
 
-func WordPressContainer(name string) *create.Container {
-	return create.NewContainer(name).
+func WordPressContainer() *create.Container {
+	return create.NewContainer().
 		WithContainerConfig(
 			cc.WithImage("wordpress:latest"),
 			cc.WithEnv("WORDPRESS_DB_HOST", "database-example"),
@@ -152,7 +152,13 @@ func WordPressContainer(name string) *create.Container {
 			cc.WithEnv("WORDPRESS_DB_PASSWORD", "examplepass"),
 			cc.WithEnv("WORDPRESS_DB_NAME", "exampledb"),
 			cc.WithExposedPort("tcp", "80"),
-			cc.WithCurlHealthCheck("http://localhost/wp-login.php", 10),
+			cc.WithHealthCheck(
+				health.WithTest("CMD", "curl", "-f", "http://localhost/wp-login.php"),
+				health.WithStartPeriod(5),
+				health.WithInterval(10),
+				health.WithTimeout(20),
+				health.WithRetries(3),
+			),
 		).
 		WithHostConfig(
 			hc.WithRestartPolicyUnlessStopped(),
@@ -196,7 +202,7 @@ func PortainerContainer() *create.Container {
 	_, err := os.Stat(rootless)
 	isRootless := err == nil
 
-	return create.NewContainer("portainer-container").
+	return create.NewContainer().
 		WithContainerConfig(
 			cc.WithImage("portainer/portainer-ce:latest"),
 		).
@@ -232,32 +238,27 @@ func ProxyContainer() *create.Container {
 // Generate HAProxy configuration for round-robin load balancing
 func GenerateHAProxyConfig(services []string) error {
 
-	var backends []string
-	for i, service := range services {
-		backends = append(backends, fmt.Sprintf("    server wp%d %s:80 check", i+1, service))
+	var sb strings.Builder
+	sb.WriteString("global\n")
+	sb.WriteString("	log stdout format raw local0\n")
+	sb.WriteString("defaults\n")
+	sb.WriteString("	log		global\n")
+	sb.WriteString("	mode	http\n")
+	sb.WriteString("	option	httplog\n")
+	sb.WriteString("	option	dontlognull\n")
+	sb.WriteString("	timeout connect 5000\n")
+	sb.WriteString("	timeout client  50000\n")
+	sb.WriteString("	timeout server  50000\n")
+	sb.WriteString("frontend http_front\n")
+	sb.WriteString("	bind *:80\n")
+	sb.WriteString("	default_backend wordpress_back\n")
+	sb.WriteString("backend wordpress_back\n")
+	sb.WriteString("	balance roundrobin\n")
+	for i, backend := range services {
+		sb.WriteString(fmt.Sprintf("	server wp%d %s:80 check\n", i+1, backend))
 	}
-
-	cfg := fmt.Sprintf(`
-global
-    log stdout format raw local0
-
-defaults
-    log     global
-    mode    http
-    option  httplog
-    option  dontlognull
-    timeout connect 5000
-    timeout client  50000
-    timeout server  50000
-
-frontend http_front
-    bind *:80
-    default_backend wordpress_back
-
-backend wordpress_back
-    balance roundrobin
-%s
-`, strings.Join(backends, "\n"))
+	sb.WriteString("\n")
+	cfg := sb.String()
 
 	return os.WriteFile("./examples/wordpress/haproxy.cfg", []byte(cfg), 0644)
 }

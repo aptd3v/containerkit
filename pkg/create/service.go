@@ -10,6 +10,7 @@ import (
 	"github.com/aptd3v/go-contain/pkg/create/config/sc/network"
 	"github.com/aptd3v/go-contain/pkg/create/config/sc/secrets/projectsecret"
 	"github.com/aptd3v/go-contain/pkg/create/config/sc/volume"
+	"github.com/aptd3v/go-contain/pkg/create/errdefs"
 	"github.com/compose-spec/compose-go/v2/types"
 	"github.com/docker/docker/api/types/container"
 	dockerNet "github.com/docker/docker/api/types/network"
@@ -50,10 +51,10 @@ func NewProject(name string) *Project {
 // returns an error if the function returns an error
 func (p *Project) ForEachService(fn func(name string, service *types.ServiceConfig) error) error {
 	if fn == nil {
-		return NewProjectConfigError(p.wrapped.Name, "ForEachService function is nil")
+		return errdefs.NewProjectConfigError(p.wrapped.Name, "ForEachService function is nil")
 	}
 	if p.wrapped.Services == nil {
-		return NewProjectConfigError(p.wrapped.Name, "project has no services")
+		return errdefs.NewProjectConfigError(p.wrapped.Name, "project has no services")
 	}
 	for name, service := range p.wrapped.Services {
 		if err := fn(name, &service); err != nil {
@@ -70,11 +71,11 @@ func (p *Project) ForEachService(fn func(name string, service *types.ServiceConf
 // returns the service and an error if the service is not found or the project has no services
 func (p *Project) GetService(name string) (*types.ServiceConfig, error) {
 	if p.wrapped.Services == nil {
-		return nil, NewProjectConfigError("project", "project has no services")
+		return nil, errdefs.NewProjectConfigError("project", "project has no services")
 	}
 	service, ok := p.wrapped.Services[name]
 	if !ok {
-		return nil, NewProjectConfigError("project", fmt.Sprintf("service %s not found", name))
+		return nil, errdefs.NewProjectConfigError("project", fmt.Sprintf("service %s not found", name))
 	}
 	return &service, nil
 }
@@ -86,12 +87,12 @@ func (p *Project) GetService(name string) (*types.ServiceConfig, error) {
 //   - setters: the setters to apply to the service
 func (p *Project) WithService(name string, service *Container, setters ...SetServiceConfig) *Project {
 	if err := service.Validate(); err != nil {
-		p.errs = append(p.errs, NewServiceConfigError(name, err.Error()))
+		p.errs = append(p.errs, errdefs.NewServiceConfigError(name, err.Error()))
 		return p
 	}
 
 	if _, ok := p.wrapped.Services[name]; ok {
-		p.errs = append(p.errs, NewServiceConfigError(name, "service already exists"))
+		p.errs = append(p.errs, errdefs.NewServiceConfigError(name, "service already exists"))
 		return p
 	}
 
@@ -156,7 +157,7 @@ func (p *Project) WithService(name string, service *Container, setters ...SetSer
 		//memory
 		MemReservation: types.UnitBytes(config.Host.MemoryReservation),
 		MemSwapLimit:   types.UnitBytes(config.Host.MemorySwap),
-		MemLimit:       types.UnitBytes(config.Host.MemoryReservation),
+		MemLimit:       types.UnitBytes(config.Host.Memory),
 		ShmSize:        types.UnitBytes(config.Host.ShmSize),
 
 		//dns
@@ -232,7 +233,7 @@ func (p *Project) WithService(name string, service *Container, setters ...SetSer
 			continue
 		}
 		if err := setter(&serv); err != nil {
-			p.errs = append(p.errs, NewServiceConfigError(name, err.Error()))
+			p.errs = append(p.errs, errdefs.NewServiceConfigError(name, err.Error()))
 			continue
 		}
 	}
@@ -265,7 +266,7 @@ func (p *Project) WithVolume(name string, setters ...volume.SetVolumeProjectConf
 			continue
 		}
 		if err := setter(&volume); err != nil {
-			p.errs = append(p.errs, NewProjectConfigError("volume", err.Error()))
+			p.errs = append(p.errs, errdefs.NewProjectConfigError("volume", err.Error()))
 		}
 	}
 	p.wrapped.Volumes[name] = volume
@@ -283,7 +284,7 @@ func (p *Project) WithSecret(key string, setters ...projectsecret.SetProjectSecr
 			continue
 		}
 		if err := setter(&secret); err != nil {
-			p.errs = append(p.errs, NewProjectConfigError("secret", err.Error()))
+			p.errs = append(p.errs, errdefs.NewProjectConfigError("secret", err.Error()))
 		}
 	}
 	p.wrapped.Secrets[key] = secret
@@ -303,7 +304,7 @@ func (p *Project) WithNetwork(name string, setters ...network.SetNetworkProjectC
 			continue
 		}
 		if err := setter(&network); err != nil {
-			p.errs = append(p.errs, NewProjectConfigError("network", err.Error()))
+			p.errs = append(p.errs, errdefs.NewProjectConfigError("network", err.Error()))
 		}
 	}
 	p.wrapped.Networks[name] = network
@@ -315,16 +316,16 @@ func (p *Project) WithNetwork(name string, setters ...network.SetNetworkProjectC
 func (p *Project) Validate() error {
 	// a basic project must have either a image or a build context
 	if len(p.wrapped.Services) == 0 {
-		return NewProjectConfigError("project", "project must have at least one service")
+		return errdefs.NewProjectConfigError("project", "project must have at least one service")
 	}
 	for _, service := range p.wrapped.Services {
 		if service.Image == "" && service.Build == nil {
-			p.errs = append(p.errs, NewProjectConfigError("project", fmt.Sprintf("service %s must have either a image or a build context", service.Name)))
+			p.errs = append(p.errs, errdefs.NewProjectConfigError("project", fmt.Sprintf("service %s must have either a image or a build context", service.Name)))
 			continue
 		}
 	}
 	if len(p.errs) > 0 {
-		return NewProjectConfigError("project", errors.Join(p.errs...).Error())
+		return errdefs.NewProjectConfigError("project", errors.Join(p.errs...).Error())
 	}
 	return nil
 }

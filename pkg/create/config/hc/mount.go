@@ -73,11 +73,11 @@ func WithRWNamedVolumeMount(name, target string) create.SetHostConfig {
 	)
 }
 
-// WithHostBindMountRecursiveReadOnly creates a readonly host bound mount with recursive read only
+// WithHostBindMountRecursiveRO creates a readonly host bound mount with recursive read only
 // parameters:
 //   - source: the source of the mount
 //   - target: the target of the mount
-func WithHostBindMountRecursiveReadOnly(source, target string) create.SetHostConfig {
+func WithHostBindMountRecursiveRO(source, target string) create.SetHostConfig {
 	return WithMountPoint(
 		mount.WithType(mount.MountTypeBind),
 		mount.WithSource(source),

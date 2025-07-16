@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/aptd3v/go-contain/pkg/create"
+	"github.com/aptd3v/go-contain/pkg/create/errdefs"
 	"github.com/docker/docker/api/types/mount"
 )
 
@@ -288,6 +288,9 @@ func WithBindPropagation(propagation Propagation) SetMountConfig {
 // WithBindNonRecursive sets the non recursive flag of the bind mount to true
 func WithBindNonRecursive() SetMountConfig {
 	return func(opt *mount.Mount) error {
+		if opt.BindOptions == nil {
+			opt.BindOptions = &mount.BindOptions{}
+		}
 		opt.BindOptions.NonRecursive = true
 		return nil
 	}
@@ -333,7 +336,7 @@ func WithBindCreateMountpoint() SetMountConfig {
 // and append the error to the host config error collection
 func Fail(err error) SetMountConfig {
 	return func(opt *mount.Mount) error {
-		return create.NewContainerConfigError("mount", err.Error())
+		return errdefs.NewHostConfigError("mount", err.Error())
 	}
 }
 
@@ -341,8 +344,8 @@ func Fail(err error) SetMountConfig {
 //
 // note: this is useful for when you want to fail the mount
 // and append the error to the host config error collection
-func Failf(stringFormat string, args ...interface{}) SetMountConfig {
+func Failf(stringFormat string, args ...any) SetMountConfig {
 	return func(opt *mount.Mount) error {
-		return create.NewContainerConfigError("mount", fmt.Sprintf(stringFormat, args...))
+		return errdefs.NewHostConfigError("mount", fmt.Sprintf(stringFormat, args...))
 	}
 }

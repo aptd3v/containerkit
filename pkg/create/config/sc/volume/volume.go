@@ -1,7 +1,12 @@
 // Package volume provides functions to set the volume configuration for a project
 package volume
 
-import "github.com/compose-spec/compose-go/v2/types"
+import (
+	"fmt"
+
+	"github.com/aptd3v/go-contain/pkg/create/errdefs"
+	"github.com/compose-spec/compose-go/v2/types"
+)
 
 type SetVolumeProjectConfig func(*types.VolumeConfig) error
 
@@ -40,5 +45,25 @@ func WithLabel(key, value string) SetVolumeProjectConfig {
 		}
 		opt.Labels[key] = value
 		return nil
+	}
+}
+
+// Fail is a function that returns an error
+//
+// note: this is useful for when you want to fail the volume config
+// and append the error to the service config error collection
+func Fail(err error) SetVolumeProjectConfig {
+	return func(opt *types.VolumeConfig) error {
+		return errdefs.NewServiceConfigError("secrets", err.Error())
+	}
+}
+
+// Failf is a function that returns an error
+//
+// note: this is useful for when you want to fail the volume config
+// and append the error to the service config error collection
+func Failf(stringFormat string, args ...any) SetVolumeProjectConfig {
+	return func(opt *types.VolumeConfig) error {
+		return errdefs.NewServiceConfigError("secrets", fmt.Sprintf(stringFormat, args...))
 	}
 }

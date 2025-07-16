@@ -6,6 +6,7 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"os"
 	"strings"
 
 	"github.com/aptd3v/go-contain/pkg/client"
@@ -73,35 +74,40 @@ func WithTagImageIfNotExists(exists bool) create.SetServiceConfig {
 
 // ImageExists checks if the image exists in the local docker daemon
 func ImageExists(ctx context.Context, imageName, tag string) (bool, error) {
-	cli, err := client.NewClient()
+	host := os.Getenv("DOCKER_HOST")
+	cli, err := client.NewClient(
+		tools.WhenTrue(host != "",
+			client.WithHost(host),
+		),
+	)
 	if err != nil {
 		return false, err
 	}
+
 	// image inspect returns an error if the image does not exist
-	_, err = cli.ImageInspect(ctx, fmt.Sprintf("%s:%s", imageName, tag))
+	res, err := cli.ImageInspect(ctx, fmt.Sprintf("%s:%s", imageName, tag))
 	if err != nil {
 		return false, nil
 	}
+	fmt.Println("Found image", strings.Join(res.RepoTags, ","))
 	return true, nil
 }
 
 // WithInlineDockerfile returns a string that can be used as an inline dockerfile
 // within compose yaml
-func WithInlineDockerfile(imageName, tag string) create.SetServiceConfig {
-	var sb strings.Builder
-	sb.WriteString(fmt.Sprintf("FROM  %s:%s\n", imageName, tag))
-	sb.WriteString("WORKDIR /app\n")
-	sb.WriteString("RUN  echo \"Saving Hello, World!\" && \\\n")
-	sb.WriteString("echo \"saved: Hello, World!\" > /app/hello.txt\n")
-	sb.WriteString("CMD  [\"cat\", \"/app/hello.txt\"]\n")
-	return sc.WithBuild(
-		build.WithDockerfileInline(sb.String()),
-	)
+func WithInlineDockerfile(image, tag string) create.SetServiceConfig {
+	df := create.NewDockerFile()
+	df.From(image, tag)
+	df.Workdir("/app")
+	df.Run("echo \"Saving Hello, World!\"")
+	df.Run("echo \"saved: Hello, World!\" > /app/hello.txt")
+	df.CommandExec("cat", "/app/hello.txt")
+	return sc.WithBuild(df.WithInline())
 }
 
 // MyContainer returns a container with the image name and tag
 func MyContainer(imageName, tag string) *create.Container {
-	return create.NewContainer("my-image-service-container").
+	return create.NewContainer().
 		WithContainerConfig(
 			cc.WithImagef("%s:%s", imageName, tag),
 		)

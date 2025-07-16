@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/aptd3v/go-contain/pkg/create"
+	"github.com/aptd3v/go-contain/pkg/create/errdefs"
 	ocispec "github.com/opencontainers/image-spec/specs-go/v1"
 )
 
@@ -77,7 +78,7 @@ func WithVariant(variant string) create.SetPlatformConfig {
 // and append the error to the platform config error collection
 func Fail(err error) create.SetPlatformConfig {
 	return func(options *ocispec.Platform) error {
-		return create.NewContainerConfigError("platform_config", err.Error())
+		return errdefs.NewPlatformConfigError("platform_config", err.Error())
 	}
 }
 
@@ -85,8 +86,8 @@ func Fail(err error) create.SetPlatformConfig {
 //
 // note: this is useful for when you want to fail the platform config
 // and append the error to the platform config error collection
-func Failf(stringFormat string, args ...interface{}) create.SetPlatformConfig {
+func Failf(stringFormat string, args ...any) create.SetPlatformConfig {
 	return func(options *ocispec.Platform) error {
-		return create.NewContainerConfigError("platform_config", fmt.Sprintf(stringFormat, args...))
+		return errdefs.NewPlatformConfigError("platform_config", fmt.Sprintf(stringFormat, args...))
 	}
 }

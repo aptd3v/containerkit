@@ -2,7 +2,10 @@
 package resource
 
 import (
+	"fmt"
+
 	"github.com/aptd3v/go-contain/pkg/create/config/sc/deploy/resource/device"
+	"github.com/aptd3v/go-contain/pkg/create/errdefs"
 	"github.com/compose-spec/compose-go/v2/types"
 )
 
@@ -58,6 +61,7 @@ func WithDevice(setters ...device.SetDeviceConfig) SetResourceConfig {
 				return err
 			}
 		}
+
 		opt.Devices = append(opt.Devices, device)
 		return nil
 	}
@@ -82,5 +86,25 @@ func WithGenericResource(kind string, value int64) SetResourceConfig {
 		}
 		opt.GenericResources = append(opt.GenericResources, generic...)
 		return nil
+	}
+}
+
+// Fail is a function that returns a setter that always returns the given error
+//
+// note: this is useful for when you want to fail the resource config
+// and append the error to the service config error collection
+func Fail(err error) SetResourceConfig {
+	return func(opt *types.Resource) error {
+		return errdefs.NewServiceConfigError("resource", err.Error())
+	}
+}
+
+// Failf is a function that returns a setter that always returns the given error
+//
+// note: this is useful for when you want to fail the resource config
+// and append the error to the service config error collection
+func Failf(stringFormat string, args ...any) SetResourceConfig {
+	return func(opt *types.Resource) error {
+		return errdefs.NewServiceConfigError("resource", fmt.Sprintf(stringFormat, args...))
 	}
 }

@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/aptd3v/go-contain/pkg/create"
+	"github.com/aptd3v/go-contain/pkg/create/errdefs"
 	"github.com/docker/docker/api/types/container"
 	"github.com/docker/go-connections/nat"
 )
@@ -19,9 +20,27 @@ func WithEnv(key string, value string) create.SetContainerConfig {
 			config.Env = make([]string, 0)
 		}
 		if key == "" || value == "" {
-			return create.NewContainerConfigError("env", fmt.Sprintf("invalid environment variable: %s", key+"="+value))
+			return errdefs.NewContainerConfigError("env", fmt.Sprintf("invalid environment variable: %s", key+"="+value))
 		}
 		config.Env = append(config.Env, key+"="+value)
+		return nil
+	}
+}
+
+// WithEnvMap appends a map of environment variables to the container configuration
+// Parameters:
+//   - env: map of environment variables
+func WithEnvMap(env map[string]string) create.SetContainerConfig {
+	return func(config *container.Config) error {
+		if config.Env == nil {
+			config.Env = make([]string, 0)
+		}
+		for key, value := range env {
+			if key == "" || value == "" {
+				return errdefs.NewContainerConfigError("env", fmt.Sprintf("invalid environment variable: %s", key+"="+value))
+			}
+			config.Env = append(config.Env, key+"="+value)
+		}
 		return nil
 	}
 }
@@ -37,7 +56,7 @@ func WithExposedPort(protocol string, port string) create.SetContainerConfig {
 		}
 		p, err := nat.NewPort(protocol, port)
 		if err != nil {
-			return create.NewContainerConfigError("exposed_port", fmt.Sprintf("invalid exposed port: %s, %s", port, err))
+			return errdefs.NewContainerConfigError("exposed_port", fmt.Sprintf("invalid exposed port: %s, %s", port, err))
 		}
 		config.ExposedPorts[p] = struct{}{}
 		return nil
@@ -48,7 +67,7 @@ func WithExposedPort(protocol string, port string) create.SetContainerConfig {
 func WithHostName(hostname string) create.SetContainerConfig {
 	return func(config *container.Config) error {
 		if hostname == "" {
-			return create.NewContainerConfigError("hostname", fmt.Sprintf("invalid hostname: %s", hostname))
+			return errdefs.NewContainerConfigError("hostname", fmt.Sprintf("invalid hostname: %s", hostname))
 		}
 		config.Hostname = hostname
 		return nil
@@ -59,7 +78,7 @@ func WithHostName(hostname string) create.SetContainerConfig {
 func WithDomainName(domainname string) create.SetContainerConfig {
 	return func(config *container.Config) error {
 		if domainname == "" {
-			return create.NewContainerConfigError("domainname", fmt.Sprintf("invalid domain name: %s", domainname))
+			return errdefs.NewContainerConfigError("domainname", fmt.Sprintf("invalid domain name: %s", domainname))
 		}
 		config.Domainname = domainname
 		return nil
@@ -70,33 +89,33 @@ func WithDomainName(domainname string) create.SetContainerConfig {
 func WithImage(image string) create.SetContainerConfig {
 	return func(config *container.Config) error {
 		if image == "" {
-			return create.NewContainerConfigError("image", fmt.Sprintf("invalid image: %s", image))
+			return errdefs.NewContainerConfigError("image", fmt.Sprintf("invalid image: %s", image))
 		}
 		config.Image = image
 		return nil
 	}
 }
-func WithImagef(stringFormat string, args ...interface{}) create.SetContainerConfig {
+func WithImagef(stringFormat string, args ...any) create.SetContainerConfig {
 	return func(config *container.Config) error {
 		image := fmt.Sprintf(stringFormat, args...)
 		if image == "" {
-			return create.NewContainerConfigError("image", fmt.Sprintf("invalid image: %s", image))
+			return errdefs.NewContainerConfigError("image", fmt.Sprintf("invalid image: %s", image))
 		}
 		config.Image = image
 		return nil
 	}
 }
 
-// WithCommand sets the command to be run in the container
+// WithCommand appends the command to be run in the container
 // Parameters:
 //   - cmd: command and its arguments
 func WithCommand(cmd ...string) create.SetContainerConfig {
 	return func(config *container.Config) error {
 		if len(cmd) == 0 {
-			return create.NewContainerConfigError("command", "command is empty")
+			return errdefs.NewContainerConfigError("command", "command is empty")
 		}
 		if config.Cmd == nil {
-			config.Cmd = make([]string, 0)
+			config.Cmd = make([]string, 0, len(cmd))
 		}
 		config.Cmd = append(config.Cmd, cmd...)
 		return nil
@@ -107,7 +126,7 @@ func WithCommand(cmd ...string) create.SetContainerConfig {
 func WithUser(user string) create.SetContainerConfig {
 	return func(config *container.Config) error {
 		if user == "" {
-			return create.NewContainerConfigError("user", fmt.Sprintf("invalid user: %s", user))
+			return errdefs.NewContainerConfigError("user", fmt.Sprintf("invalid user: %s", user))
 		}
 		config.User = user
 		return nil
@@ -179,7 +198,7 @@ func WithEscapedArgs() create.SetContainerConfig {
 func WithVolume(volume string) create.SetContainerConfig {
 	return func(config *container.Config) error {
 		if volume == "" {
-			return create.NewContainerConfigError("volume", fmt.Sprintf("invalid volume: '%s'", volume))
+			return errdefs.NewContainerConfigError("volume", fmt.Sprintf("invalid volume: '%s'", volume))
 		}
 		if config.Volumes == nil {
 			config.Volumes = make(map[string]struct{})
@@ -193,7 +212,7 @@ func WithVolume(volume string) create.SetContainerConfig {
 func WithWorkingDir(dir string) create.SetContainerConfig {
 	return func(config *container.Config) error {
 		if dir == "" {
-			return create.NewContainerConfigError("working_dir", fmt.Sprintf("invalid working directory: '%s'", dir))
+			return errdefs.NewContainerConfigError("working_dir", fmt.Sprintf("invalid working directory: '%s'", dir))
 		}
 		config.WorkingDir = dir
 		return nil
@@ -212,10 +231,10 @@ func WithDisabledNetwork() create.SetContainerConfig {
 func WithOnBuild(args ...string) create.SetContainerConfig {
 	return func(config *container.Config) error {
 		if len(args) == 0 {
-			return create.NewContainerConfigError("onbuild", "onbuild args are empty")
+			return errdefs.NewContainerConfigError("onbuild", "onbuild args are empty")
 		}
 		if config.OnBuild == nil {
-			config.OnBuild = make([]string, 0)
+			config.OnBuild = make([]string, 0, len(args))
 		}
 		config.OnBuild = append(config.OnBuild, args...)
 		return nil
@@ -230,7 +249,7 @@ func WithLabel(label, value string) create.SetContainerConfig {
 
 	return func(config *container.Config) error {
 		if label == "" || value == "" {
-			return create.NewContainerConfigError("label", fmt.Sprintf("empty label: %s", label+"="+value))
+			return errdefs.NewContainerConfigError("label", fmt.Sprintf("empty label: %s", label+"="+value))
 		}
 		if config.Labels == nil {
 			config.Labels = make(map[string]string)
@@ -244,7 +263,7 @@ func WithLabel(label, value string) create.SetContainerConfig {
 func WithStopSignal(signal string) create.SetContainerConfig {
 	return func(config *container.Config) error {
 		if signal == "" {
-			return create.NewContainerConfigError("stop_signal", "empty stop signal")
+			return errdefs.NewContainerConfigError("stop_signal", "empty stop signal")
 		}
 		config.StopSignal = signal
 		return nil
@@ -255,10 +274,10 @@ func WithStopSignal(signal string) create.SetContainerConfig {
 func WithEntrypoint(entrypoint ...string) create.SetContainerConfig {
 	return func(config *container.Config) error {
 		if len(entrypoint) == 0 {
-			return create.NewContainerConfigError("entrypoint", "entrypoint is empty")
+			return errdefs.NewContainerConfigError("entrypoint", "entrypoint is empty")
 		}
 		if config.Entrypoint == nil {
-			config.Entrypoint = make([]string, 0)
+			config.Entrypoint = make([]string, 0, len(entrypoint))
 		}
 		config.Entrypoint = append(config.Entrypoint, entrypoint...)
 		return nil
@@ -269,10 +288,10 @@ func WithEntrypoint(entrypoint ...string) create.SetContainerConfig {
 func WithShell(shell ...string) create.SetContainerConfig {
 	return func(config *container.Config) error {
 		if len(shell) == 0 {
-			return create.NewContainerConfigError("shell", "shell is empty")
+			return errdefs.NewContainerConfigError("shell", "shell is empty")
 		}
 		if config.Shell == nil {
-			config.Shell = make([]string, 0)
+			config.Shell = make([]string, 0, len(shell))
 		}
 		config.Shell = append(config.Shell, shell...)
 		return nil
@@ -285,7 +304,7 @@ func WithShell(shell ...string) create.SetContainerConfig {
 func WithStopTimeout(timeout int) create.SetContainerConfig {
 	return func(config *container.Config) error {
 		if timeout <= 0 {
-			return create.NewContainerConfigError("stop_timeout", "invalid stop timeout")
+			return errdefs.NewContainerConfigError("stop_timeout", "invalid stop timeout")
 		}
 		config.StopTimeout = &timeout
 		return nil
@@ -300,7 +319,7 @@ func WithStopTimeout(timeout int) create.SetContainerConfig {
 func WithMacAddress(macAddress string) create.SetContainerConfig {
 	return func(config *container.Config) error {
 		if macAddress == "" {
-			return create.NewContainerConfigError("mac_address", "empty mac address")
+			return errdefs.NewContainerConfigError("mac_address", "empty mac address")
 		}
 		config.MacAddress = macAddress
 		return nil
@@ -313,7 +332,7 @@ func WithMacAddress(macAddress string) create.SetContainerConfig {
 // and append the error to the container config error collection
 func Fail(err error) create.SetContainerConfig {
 	return func(config *container.Config) error {
-		return create.NewContainerConfigError("container_config", err.Error())
+		return errdefs.NewContainerConfigError("container_config", err.Error())
 	}
 }
 
@@ -321,8 +340,8 @@ func Fail(err error) create.SetContainerConfig {
 //
 // note: this is useful for when you want to fail the container config
 // and append the error to the container config error collection
-func Failf(stringFormat string, args ...interface{}) create.SetContainerConfig {
+func Failf(stringFormat string, args ...any) create.SetContainerConfig {
 	return func(config *container.Config) error {
-		return create.NewContainerConfigError("container_config", fmt.Sprintf(stringFormat, args...))
+		return errdefs.NewContainerConfigError("container_config", fmt.Sprintf(stringFormat, args...))
 	}
 }

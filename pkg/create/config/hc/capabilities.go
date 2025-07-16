@@ -124,7 +124,7 @@ const ALL Capability = "ALL"
 func WithAddedCapabilities(caps ...Capability) create.SetHostConfig {
 	return func(opt *container.HostConfig) error {
 		if opt.CapAdd == nil {
-			opt.CapAdd = make(strslice.StrSlice, 0)
+			opt.CapAdd = make(strslice.StrSlice, 0, len(caps))
 		}
 		for _, cap := range caps {
 			opt.CapAdd = append(opt.CapAdd, string(cap))
@@ -139,20 +139,13 @@ func WithAddedCapabilities(caps ...Capability) create.SetHostConfig {
 func WithDroppedCapabilities(caps ...Capability) create.SetHostConfig {
 	return func(opt *container.HostConfig) error {
 		if opt.CapDrop == nil {
-			opt.CapDrop = make(strslice.StrSlice, 0)
+			opt.CapDrop = make(strslice.StrSlice, 0, len(caps))
 		}
 		for _, cap := range caps {
 			opt.CapDrop = append(opt.CapDrop, string(cap))
 		}
 		return nil
 	}
-}
-
-// WithNetCapabilities adds only networking-related capabilities
-//
-// NET_ADMIN, NET_RAW, NET_BIND_SERVICE
-func WithAddedNetCapabilities() create.SetHostConfig {
-	return WithAddedCapabilities(NET_ADMIN, NET_RAW, NET_BIND_SERVICE)
 }
 
 // WithDropAllCapabilities drops all capabilities
