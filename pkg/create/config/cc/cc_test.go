@@ -35,6 +35,16 @@ func TestAssignments(t *testing.T) {
 		message  string
 	}{
 		{
+			config: &container.Config{},
+			setFn:  cc.WithDisabledHealthCheck(),
+			field:  "Healthcheck",
+			expected: &container.HealthConfig{
+				Test: []string{"NONE"},
+			},
+			wantErr: false,
+			message: "WithDisabledHealthCheck ok",
+		},
+		{
 			config:   &container.Config{},
 			setFn:    cc.WithEnv("TEST", "test"),
 			field:    "Env",
