@@ -35,7 +35,7 @@ type Container struct {
 //
 // Note: 'name' is optional when using this container as a Compose service config.
 // It is required when using the Docker SDK directly.
-// If multiple strings are passed as the name, they will be joined with hyphens (e.g., "foo", "bar" → "foo-bar").
+// If multiple strings are passed as the name, they will be joined with hyphens (e.g., "foo", "bar" -> "foo-bar").
 func NewContainer(name ...string) *Container {
 	cName := ""
 	if len(name) > 0 {
