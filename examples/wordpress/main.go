@@ -152,7 +152,13 @@ func WordPressContainer() *create.Container {
 			cc.WithEnv("WORDPRESS_DB_PASSWORD", "examplepass"),
 			cc.WithEnv("WORDPRESS_DB_NAME", "exampledb"),
 			cc.WithExposedPort("tcp", "80"),
-			cc.WithCurlHealthCheck("http://localhost/wp-login.php", 10),
+			cc.WithHealthCheck(
+				health.WithTest("CMD", "curl", "-f", "http://localhost/wp-login.php"),
+				health.WithStartPeriod(5),
+				health.WithInterval(10),
+				health.WithTimeout(20),
+				health.WithRetries(3),
+			),
 		).
 		WithHostConfig(
 			hc.WithRestartPolicyUnlessStopped(),
