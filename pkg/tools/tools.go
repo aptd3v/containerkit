@@ -13,7 +13,7 @@ type PredicateClosure func() bool
 // WhenTrueFn is a function that takes a variadic number of setters and returns a single setter.
 // Only if it passes the provided predicate closures, the setters will be called.
 //
-// note: if any of the setters are nil, they will be skipped and not added to warnings
+// note: if any of the setters are nil, they will be skipped and not added to errors
 func WhenTrueFn[T any, O ~func(T) error](predicate PredicateClosure, fns ...O) O {
 	return func(t T) error {
 		if !predicate() {
@@ -33,7 +33,7 @@ func WhenTrueFn[T any, O ~func(T) error](predicate PredicateClosure, fns ...O) O
 // WhenTrue is a function that takes a boolean and a variadic number of setters and returns a single setter.
 // Only if the boolean is true, the setters will be called.
 //
-// note: if any of the setters are nil, they will be skipped and not added to warnings
+// note: if any of the setters are nil, they will be skipped and not added to errors
 func WhenTrue[T any, O ~func(T) error](check bool, fns ...O) O {
 	return WhenTrueFn(func() bool { return check }, fns...)
 }
@@ -43,7 +43,7 @@ func WhenTrue[T any, O ~func(T) error](check bool, fns ...O) O {
 // It returns a single setter.
 // Only if it passes the provided predicate closure, the setters will be called.
 //
-// note: if any of the setters are nil, they will be skipped and not added to warnings
+// note: if any of the setters are nil, they will be skipped and not added to errors
 func WhenTrueElseFn[T any, O ~func(T) error](predicate PredicateClosure, fns O, elseFn O) O {
 	return func(t T) error {
 		if predicate() {
@@ -64,7 +64,7 @@ func WhenTrueElseFn[T any, O ~func(T) error](predicate PredicateClosure, fns O, 
 // It returns a single setter.
 // Only if it passes the provided predicate closure, the setters will be called.
 //
-// note: if any of the setters are nil, they will be skipped and not added to warnings
+// note: if any of the setters are nil, they will be skipped and not added to errors
 func WhenTrueElse[T any, O ~func(T) error](check bool, fns O, elseFn O) O {
 	return WhenTrueElseFn(func() bool { return check }, fns, elseFn)
 }
@@ -128,7 +128,7 @@ func Or(preds ...bool) func() bool {
 
 // Group combines multiple setters into a single setter, If any of the setters return an error, the error will be grouped and returned.
 //
-// note: if any of the setters are nil, they will be skipped and not added to warnings
+// note: if any of the setters are nil, they will be skipped and not added to errors
 func Group[T any, O ~func(T) error](fns ...O) O {
 	errs := []error{}
 	return func(t T) error {
@@ -168,5 +168,21 @@ func OnlyIf[T any, O ~func(T) error](check CheckClosure, f O) O {
 			return f(t)
 		}
 		return nil
+	}
+}
+
+// Each is a function that takes a slice of items and a function that returns a setter.
+// It applies the setter function to the input for each item in the slice.
+//
+// note: if the setter function is nil, it will be skipped and not added to errors
+func Each[T any, V any, O ~func(V) error](items []T, f func(i int, t T) O) O {
+	return func(v V) error {
+		opts := []O{}
+		for i, item := range items {
+			if f != nil {
+				opts = append(opts, f(i, item))
+			}
+		}
+		return Group(opts...)(v)
 	}
 }
