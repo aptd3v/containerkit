@@ -314,18 +314,22 @@ func (p *Project) WithNetwork(name string, setters ...network.SetNetworkProjectC
 // Validate validates the project
 // returns an error if the project has errors
 func (p *Project) Validate() error {
+	errs := []error{}
 	// a basic project must have either a image or a build context
 	if len(p.wrapped.Services) == 0 {
-		return errdefs.NewProjectConfigError("project", "project must have at least one service")
+		errs = append(errs, errdefs.NewProjectConfigError("project", "project must have at least one service"))
 	}
 	for _, service := range p.wrapped.Services {
 		if service.Image == "" && service.Build == nil {
-			p.errs = append(p.errs, errdefs.NewProjectConfigError("project", fmt.Sprintf("service %s must have either a image or a build context", service.Name)))
+			errs = append(errs, errdefs.NewProjectConfigError("project", fmt.Sprintf("service %s must have either a image or a build context", service.Name)))
 			continue
 		}
 	}
 	if len(p.errs) > 0 {
-		return errdefs.NewProjectConfigError("project", errors.Join(p.errs...).Error())
+		errs = append(errs, errdefs.NewProjectConfigError("project", errors.Join(p.errs...).Error()))
+	}
+	if len(errs) > 0 {
+		return errors.Join(errs...)
 	}
 	return nil
 }
