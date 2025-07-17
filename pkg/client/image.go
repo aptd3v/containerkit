@@ -111,7 +111,7 @@ func (c *Client) ImageHistory(ctx context.Context, ref string) ([]response.Image
 
 // ImageBuild sends a request to the daemon to build images. The Body in the response implements
 // an io.ReadCloser and it's up to the caller to close it.
-func (c *Client) ImageBuild(ctx context.Context, setters ...build.SetImageBuildOption) (*response.ImageBuild, error) {
+func (c *Client) ImageBuild(ctx context.Context, context io.Reader, setters ...build.SetImageBuildOption) (*response.ImageBuild, error) {
 	op := dBuild.ImageBuildOptions{}
 	for _, setter := range setters {
 		if setter != nil {
@@ -120,7 +120,7 @@ func (c *Client) ImageBuild(ctx context.Context, setters ...build.SetImageBuildO
 			}
 		}
 	}
-	build, err := c.wrapped.ImageBuild(ctx, nil, op)
+	build, err := c.wrapped.ImageBuild(ctx, context, op)
 	if err != nil {
 		return nil, err
 	}
