@@ -2,8 +2,6 @@
 package build
 
 import (
-	"io"
-
 	"github.com/aptd3v/go-contain/pkg/client/auth"
 	"github.com/docker/docker/api/types/build"
 	"github.com/docker/docker/api/types/container"
@@ -205,14 +203,6 @@ func WithAuthConfig(name string, setters ...auth.SetRegistryAuthConfigOption) Se
 			o.AuthConfigs = make(map[string]registry.AuthConfig)
 		}
 		o.AuthConfigs[name] = authConfig
-		return nil
-	}
-}
-
-// WithContext sets the context for the image build.
-func WithContext(context io.Reader) SetImageBuildOption {
-	return func(o *build.ImageBuildOptions) error {
-		o.Context = context
 		return nil
 	}
 }
