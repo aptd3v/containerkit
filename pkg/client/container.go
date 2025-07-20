@@ -2,7 +2,9 @@ package client
 
 import (
 	"context"
+	"fmt"
 	"io"
+	"os"
 
 	"github.com/aptd3v/go-contain/pkg/client/options/container/attach"
 	"github.com/aptd3v/go-contain/pkg/client/options/container/checkpointcreate"
@@ -24,6 +26,7 @@ import (
 	"github.com/aptd3v/go-contain/pkg/client/options/container/wait"
 	"github.com/aptd3v/go-contain/pkg/client/response"
 	"github.com/aptd3v/go-contain/pkg/create"
+	"github.com/aptd3v/go-contain/pkg/terminal"
 	"github.com/docker/docker/api/types/checkpoint"
 	"github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/api/types/filters"
@@ -533,4 +536,23 @@ func (c *Client) ContainerAttach(ctx context.Context, id string, setters ...atta
 	return &response.ContainerHijackedResponse{
 		HijackedResponse: hijacked,
 	}, nil
+}
+
+// ContainerExecAttachTerminal attaches to a container exec command and returns a terminal session
+// that can be used to interact with the command. The session handles terminal setup,
+// raw mode, and cleanup automatically.
+func (c *Client) ContainerExecAttachTerminal(ctx context.Context, execID string, setters ...execattach.SetContainerExecAttachOption) (*terminal.Session, error) {
+	hijack, err := c.ContainerExecAttach(ctx, execID, setters...)
+	if err != nil {
+		return nil, fmt.Errorf("failed to attach to container exec: %w", err)
+	}
+
+	// Create and return a new terminal session
+	session, err := terminal.NewSession(os.Stdin, hijack.Conn, hijack.Reader)
+	if err != nil {
+		hijack.Close()
+		return nil, fmt.Errorf("failed to create terminal session: %w", err)
+	}
+
+	return session, nil
 }
