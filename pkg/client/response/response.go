@@ -9,6 +9,7 @@ import (
 	"github.com/docker/docker/api/types/image"
 	"github.com/docker/docker/api/types/network"
 	"github.com/docker/docker/api/types/registry"
+	"github.com/docker/docker/api/types/swarm"
 	"github.com/docker/docker/api/types/volume"
 )
 
@@ -166,4 +167,9 @@ type NetworkSummary struct {
 // NetworkPruneReport is a wrapper around the network.PruneReport type.
 type NetworkPruneReport struct {
 	network.PruneReport
+}
+
+// Swarm is a wrapper around the swarm type
+type Swarm struct {
+	swarm.Swarm
 }
