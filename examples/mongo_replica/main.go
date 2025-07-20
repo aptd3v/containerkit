@@ -112,15 +112,15 @@ func WithMongoReplica(index int) *create.Container {
 			cc.WithCommand("mongod", "--replSet", "rs0", "--bind_ip_all"),
 			cc.WithHealthCheck(
 				health.WithTest("CMD", "mongosh", "--eval", `db.adminCommand("ping")`),
-				health.WithInterval(1),
+				health.WithInterval("1s"),
+				health.WithTimeout("10s"),
+				health.WithStartPeriod("0s"),
 				health.WithRetries(5),
-				health.WithTimeout(10),
-				health.WithStartPeriod(1),
 			),
 			cc.WithExposedPort("tcp", "27017"),
 		).
 		WithHostConfig(
-			hc.WithRestartPolicyAlways(),
+			hc.WithRestartPolicyUnlessStopped(),
 		).
 		WithNetworkConfig(
 			nc.WithEndpoint("mongo-cluster"),
