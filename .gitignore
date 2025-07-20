@@ -39,3 +39,7 @@ examples/wordpress/docker-compose.yaml
 examples/wordpress/haproxy.cfg
 
 examples/mongo_replica/docker-compose.yaml
+
+
+# IDE
+.vscode/
