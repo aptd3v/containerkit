@@ -16,7 +16,6 @@ func WithDetach() SetContainerExecAttachOption {
 }
 
 // WithTty sets the tty flag for the exec attach options.
-// Check if there's a tty
 func WithTty() SetContainerExecAttachOption {
 	return func(o *container.ExecAttachOptions) error {
 		o.Tty = true
