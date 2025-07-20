@@ -90,7 +90,6 @@ func WithExecOptions() exec.SetContainerExecOption {
 		exec.WithAttachStdin(),
 		exec.WithAttachStdout(),
 		exec.WithTty(),
-		exec.WithPrivileged(),
 		exec.WithCmd("/bin/sh"),
 	)
 }
