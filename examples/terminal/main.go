@@ -13,6 +13,7 @@ import (
 	"github.com/aptd3v/go-contain/pkg/client"
 	"github.com/aptd3v/go-contain/pkg/client/options/container/exec"
 	"github.com/aptd3v/go-contain/pkg/client/options/container/execattach"
+	"github.com/aptd3v/go-contain/pkg/client/options/container/execresize"
 	"github.com/aptd3v/go-contain/pkg/client/options/container/remove"
 	"github.com/aptd3v/go-contain/pkg/client/options/image/pull"
 	"github.com/aptd3v/go-contain/pkg/create"
@@ -66,6 +67,15 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
+	monitor := session.MonitorSize()
+	go func() {
+		for size := range monitor {
+			err := cli.ContainerExecResize(ctx, execCreate.ID, execresize.WithSize(size.Width, size.Height))
+			if err != nil {
+				log.Fatal(err)
+			}
+		}
+	}()
 	err = session.Start()
 	if err != nil {
 		log.Fatal(err)
@@ -97,4 +107,5 @@ func cleanup(client *client.Client, cName string) {
 	}
 
 	fmt.Println("Cleanup completed")
+	os.Exit(0)
 }
