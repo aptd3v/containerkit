@@ -1,9 +1,13 @@
 package create
 
 import (
+	"archive/tar"
+	"bytes"
 	"errors"
 	"fmt"
+	"io"
 	"os"
+	"path/filepath"
 	"strings"
 
 	"github.com/aptd3v/go-contain/pkg/create/config/cc/health"
@@ -354,4 +358,91 @@ func (d *dockerFile) WithInline() build.SetBuildConfig {
 		return build.Failf("dockerfile is invalid: %s", errors.Join(d.errs...))
 	}
 	return build.WithDockerfileInline(d.String())
+}
+
+func (d *dockerFile) NewLocalBuildContext(src string) (io.Reader, error) {
+	var buf bytes.Buffer
+	tw := tar.NewWriter(&buf)
+
+	// Ensure sourceDir exists
+	if _, err := os.Stat(src); os.IsNotExist(err) {
+		return nil, fmt.Errorf("source directory %s does not exist", src)
+	}
+	dockerfileStr := d.String()
+
+	err := tw.WriteHeader(&tar.Header{
+		Name:     "Dockerfile",
+		Size:     int64(len([]byte(dockerfileStr))),
+		Mode:     0644,
+		Typeflag: tar.TypeReg,
+	})
+	if err != nil {
+		return nil, err
+	}
+	if _, err := tw.Write([]byte(dockerfileStr)); err != nil {
+		return nil, err
+	}
+
+	err = filepath.Walk(src, func(path string, info os.FileInfo, err error) error {
+		if err != nil {
+			return err
+		}
+
+		// Skip the source directory itself
+		if path == src {
+			return nil
+		}
+
+		relPath, err := filepath.Rel(src, path)
+		if err != nil {
+			return err
+		}
+		relPath = filepath.ToSlash(relPath)
+
+		if info.IsDir() {
+			// Add directory entry
+			header := &tar.Header{
+				Name:     relPath + "/",
+				Mode:     0755,
+				Typeflag: tar.TypeDir,
+			}
+			return tw.WriteHeader(header)
+		}
+
+		// Handle regular files
+		data, err := os.ReadFile(path)
+		if err != nil {
+			return err
+		}
+
+		header := &tar.Header{
+			Name:     relPath,
+			Size:     int64(len(data)),
+			Mode:     0644,
+			Typeflag: tar.TypeReg,
+		}
+
+		if err := tw.WriteHeader(header); err != nil {
+			return err
+		}
+
+		if _, err := tw.Write(data); err != nil {
+			return err
+		}
+
+		return nil
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	if err := d.Validate(); err != nil {
+		return nil, err
+	}
+
+	if err := tw.Close(); err != nil {
+		return nil, err
+	}
+
+	return &buf, nil
 }
