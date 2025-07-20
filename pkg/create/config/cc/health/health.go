@@ -10,41 +10,89 @@ import (
 
 type SetHealthcheckConfig func(opt *container.HealthConfig) error
 
-// WithkStartPeriod sets the start period for the health check
-// parameters:
-//   - startPeriod: the start period for the health check in seconds
-func WithStartPeriod(startPeriod int) SetHealthcheckConfig {
+// WithStartPeriod sets the start period for the health check.
+//
+// Accepts either:
+//   - int: interpreted as seconds
+//   - string: a valid time.ParseDuration string (e.g. "10s", "1m")
+//
+// A duration of 0 is allowed and disables the start delay.
+// Negative values will return an error.
+func WithStartPeriod[T ~int | string](startPeriod T) SetHealthcheckConfig {
 	return func(opt *container.HealthConfig) error {
-		if startPeriod < 0 {
-			return errdefs.NewContainerConfigError("healthcheck", "start_period must be greater than 0")
+		var duration time.Duration
+		var err error
+		switch v := any(startPeriod).(type) {
+		case int:
+			duration = time.Duration(v) * time.Second
+		case string:
+			duration, err = time.ParseDuration(v)
+			if err != nil {
+				return errdefs.NewContainerConfigError("healthcheck", fmt.Sprintf("error parsing start period: %s", err))
+			}
 		}
-		opt.StartPeriod = time.Duration(startPeriod) * time.Second
+		if duration < 0 {
+			return errdefs.NewContainerConfigError("healthcheck", "start period must be non-negative")
+		}
+		opt.StartPeriod = duration
 		return nil
 	}
 }
 
 // WithTimeout sets the timeout for the health check
-// parameters:
-//   - timeout: the timeout for the health check in seconds
-func WithTimeout(timeout int) SetHealthcheckConfig {
+//
+// Accepts either:
+//   - int: interpreted as seconds
+//   - string: a valid time.ParseDuration string (e.g. "10s", "1m")
+//
+// A duration of 0 is allowed and disables the timeout.
+// Negative values will return an error.
+func WithTimeout[T ~int | string](timeout T) SetHealthcheckConfig {
 	return func(opt *container.HealthConfig) error {
-		if timeout < 0 {
-			return errdefs.NewContainerConfigError("healthcheck", "timeout must be greater than 0")
+		var duration time.Duration
+		var err error
+		switch v := any(timeout).(type) {
+		case int:
+			duration = time.Duration(v) * time.Second
+		case string:
+			duration, err = time.ParseDuration(v)
+			if err != nil {
+				return errdefs.NewContainerConfigError("healthcheck", fmt.Sprintf("error parsing timeout: %s", err))
+			}
 		}
-		opt.Timeout = time.Duration(timeout) * time.Second
+		if duration < 0 {
+			return errdefs.NewContainerConfigError("healthcheck", "timeout must be non-negative")
+		}
+		opt.Timeout = duration
 		return nil
 	}
 }
 
 // WithInterval sets the interval for the health check
-// parameters:
-//   - interval: the interval for the health check in seconds
-func WithInterval(interval int) SetHealthcheckConfig {
+//
+// Accepts either:
+//   - int: interpreted as seconds
+//   - string: a valid time.ParseDuration string (e.g. "10s", "1m")
+//
+// A duration of 0 is allowed and disables the interval.
+// Negative values will return an error.
+func WithInterval[T ~int | string](interval T) SetHealthcheckConfig {
 	return func(opt *container.HealthConfig) error {
-		if interval < 0 {
-			return errdefs.NewContainerConfigError("healthcheck", "interval must be greater than or equal to 0")
+		var duration time.Duration
+		var err error
+		switch v := any(interval).(type) {
+		case int:
+			duration = time.Duration(v) * time.Second
+		case string:
+			duration, err = time.ParseDuration(v)
+			if err != nil {
+				return errdefs.NewContainerConfigError("healthcheck", fmt.Sprintf("error parsing interval: %s", err))
+			}
 		}
-		opt.Interval = time.Duration(interval) * time.Second
+		if duration < 0 {
+			return errdefs.NewContainerConfigError("healthcheck", "interval must be non-negative")
+		}
+		opt.Interval = duration
 		return nil
 	}
 }
@@ -62,7 +110,7 @@ func WithRetries(retries int) SetHealthcheckConfig {
 	}
 }
 
-// WithTest appends the test for the health check
+// WithTest appends the test slice for the health check
 // parameters:
 //   - test: the test for the health check
 func WithTest(test ...string) SetHealthcheckConfig {
