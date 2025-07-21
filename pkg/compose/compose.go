@@ -36,6 +36,30 @@ type SetComposeDownOption func(*ComposeDownOptions) error
 // SetComposeLogsOption is a function that sets a ComposeLogsOptions
 type SetComposeLogsOption func(*ComposeLogsOptions) error
 
+// SetComposeKillOption is a function that sets a ComposeKillOptions
+type SetComposeKillOption func(*ComposeKillOptions) error
+
+func (c *compose) Kill(ctx context.Context, setters ...SetComposeKillOption) error {
+	opt := &ComposeKillOptions{
+		Flags:  []string{"kill"},
+		Writer: os.Stdout,
+	}
+	for _, setter := range setters {
+		if err := setter(opt); err != nil {
+			return NewComposeKillError(err)
+		}
+	}
+	flags, err := opt.GenerateFlags()
+	if err != nil {
+		return NewComposeKillError(err)
+	}
+	cmd, err := c.command(ctx, opt.Writer, flags, opt.Profiles...)
+	if err != nil {
+		return NewComposeKillError(err)
+	}
+	return handleContextCancellation(ctx, cmd.Run())
+}
+
 func (c *compose) Up(ctx context.Context, setters ...SetComposeUpOption) error {
 	opt := &ComposeUpOptions{
 		//default flags
