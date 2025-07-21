@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"github.com/aptd3v/go-contain/pkg/compose"
+	"github.com/aptd3v/go-contain/pkg/compose/options/kill"
 	"github.com/aptd3v/go-contain/pkg/compose/options/up"
 	"github.com/aptd3v/go-contain/pkg/create"
 	"github.com/aptd3v/go-contain/pkg/create/config/cc"
@@ -29,19 +30,29 @@ with a specific profile.
 
 func main() {
 	project := create.NewProject("my-project")
-	project.WithService("never-service", create.NewContainer("never-service").
-		WithContainerConfig(
-			cc.WithImage("alpine:latest"),
-			cc.WithCommand("echo", "you wont see me"),
-		),
+	project.WithService("never-service",
+		create.NewContainer().
+			WithContainerConfig(
+				cc.WithImage("alpine:latest"),
+				cc.WithCommand("echo", "you wont see me"),
+			),
 		sc.WithProfiles("never"),
 	)
-	project.WithService("never-ever-service", create.NewContainer("never-ever-service").
-		WithContainerConfig(
-			cc.WithImage("alpine:latest"),
-			cc.WithCommand("echo", "you wont see me part II"),
-		),
+	project.WithService("never-ever-service",
+		create.NewContainer().
+			WithContainerConfig(
+				cc.WithImage("alpine:latest"),
+				cc.WithCommand("echo", "you wont see me part II"),
+			),
 		sc.WithProfiles("never-ever"),
+	)
+	project.WithService("kill-me-service",
+		create.NewContainer().
+			WithContainerConfig(
+				cc.WithImage("alpine:latest"),
+				cc.WithCommand("tail", "-f", "/dev/null"),
+			),
+		sc.WithProfiles("kill-me"),
 	)
 
 	for i, word := range strings.Split(paragraph, "\n") {
@@ -67,7 +78,24 @@ func main() {
 	if err != nil {
 		log.Fatalf("error executing example 'up' with profile 'tail': %v", err)
 	}
+	err = example.Up(context.Background(),
+		up.WithProfiles("kill-me"),
+		up.WithNoLogPrefix(),
+		up.WithRemoveOrphans(),
+		up.WithDetach(),
+	)
+	if err != nil {
+		log.Fatalf("error executing example 'up' with profile 'kill-me': %v", err)
+	}
 
+	err = example.Kill(context.Background(),
+		kill.WithSignal("SIGKILL"),
+		kill.WithRemoveOrphans(),
+		kill.WithProfiles("kill-me"),
+	)
+	if err != nil {
+		log.Fatalf("error executing example 'kill' with profile 'kill-me': %v", err)
+	}
 }
 
 func WithDependencyChain(index int, format string, a ...any) create.SetServiceConfig {
