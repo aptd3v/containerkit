@@ -13,6 +13,7 @@ import (
 	"github.com/aptd3v/go-contain/pkg/compose/options/up"
 	"github.com/aptd3v/go-contain/pkg/create"
 	"github.com/aptd3v/go-contain/pkg/create/config/cc"
+	"github.com/aptd3v/go-contain/pkg/create/config/cc/health"
 	"github.com/aptd3v/go-contain/pkg/create/config/hc"
 )
 
@@ -39,6 +40,14 @@ func main() {
 			cc.WithImage("nginx-example:latest"),
 			cc.WithCommand("nginx", "-g", "daemon off;"),
 			hc.WithPortBindings("tcp", "0.0.0.0", "8080", "80"),
+			cc.WithHealthCheck(
+				health.WithTest("CMD-SHELL", "curl -f http://localhost:80 || exit 1"),
+				health.WithInterval("10s"),
+				health.WithTimeout("5s"),
+				health.WithStartPeriod("0s"),
+				health.WithRetries(3),
+			),
+			hc.WithMemoryLimit("100MiB"),
 		),
 	)
 	app := compose.NewCompose(project)
