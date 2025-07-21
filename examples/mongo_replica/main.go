@@ -134,6 +134,7 @@ func Initialize(ctx context.Context, initContainer string, members []RSMember) e
 		tools.WhenTrue(os.Getenv("DOCKER_HOST") != "",
 			client.FromEnv(),
 		),
+		client.WithAPIVersionNegotiation(),
 	)
 	if err != nil {
 		return fmt.Errorf("failed to create Docker client: %w", err)
