@@ -11,6 +11,7 @@ var (
 	ErrComposeUpError   = fmt.Errorf("compose up error")
 	ErrComposeDownError = fmt.Errorf("compose down error")
 	ErrComposeLogsError = fmt.Errorf("compose logs error")
+	ErrComposeKillError = fmt.Errorf("compose kill error")
 )
 
 // ComposeFlagError is the error for the compose flag
@@ -35,6 +36,30 @@ func NewComposeFlagError(flag, message string) *ComposeFlagError {
 }
 func IsComposeFlagError(err error) bool {
 	return errors.Is(err, ErrComposeFlagError)
+}
+
+// ComposeKillError is the error for the compose kill command
+
+type ComposeKillError struct {
+	Message string
+}
+
+func (e *ComposeKillError) Unwrap() error {
+	return ErrComposeKillError
+}
+
+func (e *ComposeKillError) Error() string {
+	return fmt.Sprintf("compose kill error: %s", e.Message)
+}
+
+func NewComposeKillError(err error) *ComposeKillError {
+	return &ComposeKillError{
+		Message: err.Error(),
+	}
+}
+
+func IsComposeKillError(err error) bool {
+	return errors.Is(err, ErrComposeKillError)
 }
 
 // ComposeError is the error for the compose command
