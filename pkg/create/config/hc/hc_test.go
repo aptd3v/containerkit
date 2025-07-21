@@ -34,6 +34,91 @@ func TestAssignments(t *testing.T) {
 		expected any
 	}{
 		{
+			config:   &container.HostConfig{},
+			field:    "MemoryReservation",
+			setFn:    hc.WithMemoryReservation("100Error"),
+			wantErr:  true,
+			message:  "WithMemoryReservation error",
+			expected: nil,
+		},
+		{
+			config:   &container.HostConfig{},
+			field:    "MemoryReservation",
+			setFn:    hc.WithMemoryReservation("100M"),
+			wantErr:  false,
+			message:  "WithMemoryReservation ok",
+			expected: int64(100 * 1024 * 1024),
+		},
+		{
+			config:   &container.HostConfig{},
+			field:    "MemorySwap",
+			setFn:    hc.WithMemorySwap("100M"),
+			wantErr:  false,
+			message:  "WithMemorySwap ok",
+			expected: int64(100 * 1024 * 1024),
+		},
+		{
+			config:   &container.HostConfig{},
+			field:    "MemorySwap",
+			setFn:    hc.WithMemorySwap("100Error"),
+			wantErr:  true,
+			message:  "WithMemorySwap error",
+			expected: nil,
+		},
+		{
+			config:   &container.HostConfig{},
+			field:    "ShmSize",
+			setFn:    hc.WithShmSize("100Error"),
+			wantErr:  true,
+			message:  "WithShmSize error",
+			expected: nil,
+		},
+		{
+			config:   &container.HostConfig{},
+			field:    "MemoryReservation",
+			setFn:    hc.WithMemoryLimit("100Error"),
+			wantErr:  true,
+			message:  "WithMemoryLimit error",
+			expected: nil,
+		},
+
+		{
+			config:   &container.HostConfig{},
+			field:    "KernelMemory",
+			setFn:    hc.WithKernelMemory("100Error"),
+			wantErr:  true,
+			message:  "WithKernelMemory error",
+			expected: nil,
+		},
+
+		{
+			config:   &container.HostConfig{},
+			field:    "KernelMemory",
+			setFn:    hc.WithKernelMemory("100M"),
+			wantErr:  false,
+			message:  "WithKernelMemory ok",
+			expected: int64(100 * 1024 * 1024),
+		},
+
+		{
+			config:   &container.HostConfig{},
+			setFn:    hc.WithMemoryLimit("100M"),
+			field:    "Memory",
+			wantErr:  false,
+			message:  "WithMemoryLimit ok",
+			expected: int64(100 * 1024 * 1024),
+		},
+
+		{
+			config:   &container.HostConfig{},
+			setFn:    hc.WithShmSize("100M"),
+			field:    "ShmSize",
+			wantErr:  false,
+			message:  "WithShmSize ok",
+			expected: int64(100 * 1024 * 1024),
+		},
+
+		{
 			config: &container.HostConfig{},
 			setFn: hc.WithMountPoint(
 				mount.WithSource("/tmp/test"),
