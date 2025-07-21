@@ -222,3 +222,23 @@ func (opt *ComposeLogsOptions) GenerateFlags() ([]string, error) {
 	}
 	return flags, nil
 }
+
+type ComposeKillOptions struct {
+	Signal        *string
+	RemoveOrphans bool
+
+	Flags    []string
+	Writer   io.Writer
+	Profiles []string
+}
+
+func (opt *ComposeKillOptions) GenerateFlags() ([]string, error) {
+	flags := []string{"kill"}
+	if opt.Signal != nil {
+		flags = append(flags, "--signal", *opt.Signal)
+	}
+	if opt.RemoveOrphans {
+		flags = append(flags, "--remove-orphans")
+	}
+	return flags, nil
+}
