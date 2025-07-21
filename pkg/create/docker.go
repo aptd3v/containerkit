@@ -16,7 +16,7 @@ import (
 )
 
 type dockerFile struct {
-	strings.Builder
+	builder      strings.Builder
 	errs         []error
 	lastCmdIsRun bool
 	cmdSet       bool
@@ -28,14 +28,14 @@ type dockerFile struct {
 // note: Not safe for concurrent use.
 func NewDockerFile() *dockerFile {
 	return &dockerFile{
-		Builder: strings.Builder{},
+		builder: strings.Builder{},
 	}
 }
 
 // From sets the FROM instruction in the Dockerfile
 func (d *dockerFile) From(image string, tag string) *dockerFile {
 	defer d.setRunState(false)
-	_, err := d.Builder.WriteString(fmt.Sprintf("FROM %s:%s\n", image, tag))
+	_, err := d.builder.WriteString(fmt.Sprintf("FROM %s:%s\n", image, tag))
 	if err != nil {
 		d.errs = append(d.errs, err)
 	}
@@ -45,7 +45,7 @@ func (d *dockerFile) From(image string, tag string) *dockerFile {
 // FromAs sets the FROM instruction in the Dockerfile with an alias
 func (d *dockerFile) FromAs(image, alias string) *dockerFile {
 	defer d.setRunState(false)
-	_, err := d.Builder.WriteString(fmt.Sprintf("FROM %s AS %s\n", image, alias))
+	_, err := d.builder.WriteString(fmt.Sprintf("FROM %s AS %s\n", image, alias))
 	if err != nil {
 		d.errs = append(d.errs, err)
 	}
@@ -55,7 +55,7 @@ func (d *dockerFile) FromAs(image, alias string) *dockerFile {
 // Arg sets the ARG instruction in the Dockerfile
 func (d *dockerFile) Arg(arg string) *dockerFile {
 	defer d.setRunState(false)
-	_, err := d.Builder.WriteString(fmt.Sprintf("ARG %s\n", arg))
+	_, err := d.builder.WriteString(fmt.Sprintf("ARG %s\n", arg))
 	if err != nil {
 		d.errs = append(d.errs, err)
 	}
@@ -65,7 +65,7 @@ func (d *dockerFile) Arg(arg string) *dockerFile {
 // ArgKey sets the ARG instruction in the Dockerfile
 func (d *dockerFile) ArgKV(key string, value string) *dockerFile {
 	defer d.setRunState(false)
-	_, err := d.Builder.WriteString(fmt.Sprintf("ARG %s=%s\n", key, value))
+	_, err := d.builder.WriteString(fmt.Sprintf("ARG %s=%s\n", key, value))
 	if err != nil {
 		d.errs = append(d.errs, err)
 	}
@@ -75,7 +75,7 @@ func (d *dockerFile) ArgKV(key string, value string) *dockerFile {
 // Env sets the ENV instruction in the Dockerfile
 func (d *dockerFile) Env(key string, value string) *dockerFile {
 	defer d.setRunState(false)
-	_, err := d.Builder.WriteString(fmt.Sprintf("ENV %s=%s\n", key, value))
+	_, err := d.builder.WriteString(fmt.Sprintf("ENV %s=%s\n", key, value))
 	if err != nil {
 		d.errs = append(d.errs, err)
 	}
@@ -90,13 +90,13 @@ func (d *dockerFile) Copy(src string, dest string) *dockerFile {
 	dest = strings.TrimSpace(dest)
 	if strings.Contains(src, " ") || strings.Contains(dest, " ") {
 		// Required for paths containing whitespace
-		_, err := d.Builder.WriteString(fmt.Sprintf("COPY [\"%s\", \"%s\"]\n", src, dest))
+		_, err := d.builder.WriteString(fmt.Sprintf("COPY [\"%s\", \"%s\"]\n", src, dest))
 		if err != nil {
 			d.errs = append(d.errs, err)
 		}
 		return d
 	}
-	_, err := d.Builder.WriteString(fmt.Sprintf("COPY %s %s\n", src, dest))
+	_, err := d.builder.WriteString(fmt.Sprintf("COPY %s %s\n", src, dest))
 	if err != nil {
 		d.errs = append(d.errs, err)
 	}
@@ -106,7 +106,7 @@ func (d *dockerFile) Copy(src string, dest string) *dockerFile {
 // Entrypoint sets the ENTRYPOINT instruction in the Dockerfile
 func (d *dockerFile) Entrypoint(executable string, args ...string) *dockerFile {
 	defer d.setRunState(false)
-	_, err := d.Builder.WriteString(fmt.Sprintf("ENTRYPOINT [\"%s\", \"%s\"]\n", executable, strings.Join(args, "\", \"")))
+	_, err := d.builder.WriteString(fmt.Sprintf("ENTRYPOINT [\"%s\", \"%s\"]\n", executable, strings.Join(args, "\", \"")))
 	if err != nil {
 		d.errs = append(d.errs, err)
 	}
@@ -116,7 +116,7 @@ func (d *dockerFile) Entrypoint(executable string, args ...string) *dockerFile {
 // Expose sets the EXPOSE instruction in the Dockerfile
 func (d *dockerFile) Expose(port string) *dockerFile {
 	defer d.setRunState(false)
-	_, err := d.Builder.WriteString(fmt.Sprintf("EXPOSE %s\n", port))
+	_, err := d.builder.WriteString(fmt.Sprintf("EXPOSE %s\n", port))
 	if err != nil {
 		d.errs = append(d.errs, err)
 	}
@@ -126,7 +126,7 @@ func (d *dockerFile) Expose(port string) *dockerFile {
 // Label sets the LABEL instruction in the Dockerfile
 func (d *dockerFile) Label(key string, value string) *dockerFile {
 	defer d.setRunState(false)
-	_, err := d.Builder.WriteString(fmt.Sprintf("LABEL %s=%s\n", key, value))
+	_, err := d.builder.WriteString(fmt.Sprintf("LABEL %s=%s\n", key, value))
 	if err != nil {
 		d.errs = append(d.errs, err)
 	}
@@ -136,7 +136,7 @@ func (d *dockerFile) Label(key string, value string) *dockerFile {
 // Onbuild sets the ONBUILD instruction in the Dockerfile
 func (d *dockerFile) Onbuild(cmd string) *dockerFile {
 	defer d.setRunState(false)
-	_, err := d.Builder.WriteString(fmt.Sprintf("ONBUILD %s\n", cmd))
+	_, err := d.builder.WriteString(fmt.Sprintf("ONBUILD %s\n", cmd))
 	if err != nil {
 		d.errs = append(d.errs, err)
 	}
@@ -146,7 +146,7 @@ func (d *dockerFile) Onbuild(cmd string) *dockerFile {
 // Workdir sets the WORKDIR instruction in the Dockerfile
 func (d *dockerFile) Workdir(path string) *dockerFile {
 	defer d.setRunState(false)
-	_, err := d.Builder.WriteString(fmt.Sprintf("WORKDIR %s\n", path))
+	_, err := d.builder.WriteString(fmt.Sprintf("WORKDIR %s\n", path))
 	if err != nil {
 		d.errs = append(d.errs, err)
 	}
@@ -156,7 +156,7 @@ func (d *dockerFile) Workdir(path string) *dockerFile {
 // Stopsignal sets the STOPSIGNAL instruction in the Dockerfile
 func (d *dockerFile) StopSignal(signal string) *dockerFile {
 	defer d.setRunState(false)
-	_, err := d.Builder.WriteString(fmt.Sprintf("STOPSIGNAL %s\n", signal))
+	_, err := d.builder.WriteString(fmt.Sprintf("STOPSIGNAL %s\n", signal))
 	if err != nil {
 		d.errs = append(d.errs, err)
 	}
@@ -166,7 +166,7 @@ func (d *dockerFile) StopSignal(signal string) *dockerFile {
 // User sets the USER instruction in the Dockerfile
 func (d *dockerFile) User(user string) *dockerFile {
 	defer d.setRunState(false)
-	_, err := d.Builder.WriteString(fmt.Sprintf("USER %s\n", user))
+	_, err := d.builder.WriteString(fmt.Sprintf("USER %s\n", user))
 	if err != nil {
 		d.errs = append(d.errs, err)
 	}
@@ -176,7 +176,7 @@ func (d *dockerFile) User(user string) *dockerFile {
 // comment sets the comment instruction in the Dockerfile
 func (d *dockerFile) Comment(comment string) *dockerFile {
 	defer d.setRunState(false)
-	_, err := d.Builder.WriteString(fmt.Sprintf("# %s\n", comment))
+	_, err := d.builder.WriteString(fmt.Sprintf("# %s\n", comment))
 	if err != nil {
 		d.errs = append(d.errs, err)
 	}
@@ -186,7 +186,7 @@ func (d *dockerFile) Comment(comment string) *dockerFile {
 // Volumes sets the VOLUME instruction in the Dockerfile
 func (d *dockerFile) Volumes(volumes ...string) *dockerFile {
 	defer d.setRunState(false)
-	_, err := d.Builder.WriteString(fmt.Sprintf("VOLUME [\"%s\"]\n", strings.Join(volumes, "\", \"")))
+	_, err := d.builder.WriteString(fmt.Sprintf("VOLUME [\"%s\"]\n", strings.Join(volumes, "\", \"")))
 	if err != nil {
 		d.errs = append(d.errs, err)
 	}
@@ -211,7 +211,7 @@ func (d *dockerFile) Healthcheck(setters ...health.SetHealthcheckConfig) *docker
 		hc.Retries,
 		strings.Join(hc.Test, " "),
 	)
-	_, err := d.Builder.WriteString(str)
+	_, err := d.builder.WriteString(str)
 	if err != nil {
 		d.errs = append(d.errs, err)
 	}
@@ -226,13 +226,13 @@ func (d *dockerFile) Add(src string, dest string) *dockerFile {
 	dest = strings.TrimSpace(dest)
 	if strings.Contains(src, " ") || strings.Contains(dest, " ") {
 		// Required for paths containing whitespace
-		_, err := d.Builder.WriteString(fmt.Sprintf("ADD [\"%s\", \"%s\"]\n", src, dest))
+		_, err := d.builder.WriteString(fmt.Sprintf("ADD [\"%s\", \"%s\"]\n", src, dest))
 		if err != nil {
 			d.errs = append(d.errs, err)
 		}
 		return d
 	}
-	_, err := d.Builder.WriteString(fmt.Sprintf("ADD %s %s\n", src, dest))
+	_, err := d.builder.WriteString(fmt.Sprintf("ADD %s %s\n", src, dest))
 	if err != nil {
 		d.errs = append(d.errs, err)
 	}
@@ -248,7 +248,7 @@ func (d *dockerFile) CommandExec(executable string, args ...string) *dockerFile 
 		d.errs = append(d.errs, fmt.Errorf("command has already been set"))
 		return d
 	}
-	_, err := d.Builder.WriteString(fmt.Sprintf("CMD [\"%s\", \"%s\"]\n", executable, strings.Join(args, "\", \"")))
+	_, err := d.builder.WriteString(fmt.Sprintf("CMD [\"%s\", \"%s\"]\n", executable, strings.Join(args, "\", \"")))
 	if err != nil {
 		d.errs = append(d.errs, err)
 	}
@@ -264,7 +264,7 @@ func (d *dockerFile) CommandShell(executable string, args ...string) *dockerFile
 		d.errs = append(d.errs, fmt.Errorf("command has already been set"))
 		return d
 	}
-	_, err := d.Builder.WriteString(fmt.Sprintf("CMD %s %s\n", executable, strings.Join(args, " ")))
+	_, err := d.builder.WriteString(fmt.Sprintf("CMD %s %s\n", executable, strings.Join(args, " ")))
 	if err != nil {
 		d.errs = append(d.errs, err)
 	}
@@ -276,15 +276,15 @@ func (d *dockerFile) Run(cmd string) *dockerFile {
 	defer d.setRunState(true)
 	if d.lastCmdIsRun {
 		// trim last run newline to add continuation
-		nStr := strings.TrimSuffix(d.Builder.String(), "\n")
-		d.Builder.Reset()
-		_, err := d.Builder.WriteString(fmt.Sprintf("%s && \\\n\t%s\n", nStr, cmd))
+		nStr := strings.TrimSuffix(d.builder.String(), "\n")
+		d.builder.Reset()
+		_, err := d.builder.WriteString(fmt.Sprintf("%s && \\\n\t%s\n", nStr, cmd))
 		if err != nil {
 			d.errs = append(d.errs, err)
 		}
 		return d
 	}
-	_, err := d.Builder.WriteString(fmt.Sprintf("RUN %s\n", cmd))
+	_, err := d.builder.WriteString(fmt.Sprintf("RUN %s\n", cmd))
 	if err != nil {
 		d.errs = append(d.errs, err)
 	}
@@ -300,9 +300,9 @@ func (d *dockerFile) RunArgs(args ...string) *dockerFile {
 		return d
 	}
 	// trim last run newline to add continuation
-	nStr := strings.TrimSuffix(d.Builder.String(), "\n")
-	d.Builder.Reset()
-	_, err := d.Builder.WriteString(fmt.Sprintf("%s \\\n\t%s\n", nStr, strings.Join(args, " \\\n\t")))
+	nStr := strings.TrimSuffix(d.builder.String(), "\n")
+	d.builder.Reset()
+	_, err := d.builder.WriteString(fmt.Sprintf("%s \\\n\t%s\n", nStr, strings.Join(args, " \\\n\t")))
 	if err != nil {
 		d.errs = append(d.errs, err)
 	}
@@ -312,9 +312,9 @@ func (d *dockerFile) RunArgs(args ...string) *dockerFile {
 // Format formats the Dockerfile with the given arguments and resets the dockerfile with the formatted string
 func (d *dockerFile) Format(args ...any) *dockerFile {
 	defer d.setRunState(false)
-	nStr := d.Builder.String()
-	d.Builder.Reset()
-	_, err := d.Builder.WriteString(fmt.Sprintf(nStr, args...))
+	nStr := d.builder.String()
+	d.builder.Reset()
+	_, err := d.builder.WriteString(fmt.Sprintf(nStr, args...))
 	if err != nil {
 		d.errs = append(d.errs, err)
 	}
@@ -323,7 +323,7 @@ func (d *dockerFile) Format(args ...any) *dockerFile {
 
 // String returns the Dockerfile as a string
 func (d *dockerFile) String() string {
-	return d.Builder.String()
+	return d.builder.String()
 }
 
 // Export exports the Dockerfile to a file
@@ -360,7 +360,10 @@ func (d *dockerFile) WithInline() build.SetBuildConfig {
 	return build.WithDockerfileInline(d.String())
 }
 
-func (d *dockerFile) NewLocalBuildContext(src string) (io.Reader, error) {
+func (d *dockerFile) NewLocalBuildContext(src string) (ctx io.Reader, err error) {
+	if err := d.Validate(); err != nil {
+		return nil, err
+	}
 	var buf bytes.Buffer
 	tw := tar.NewWriter(&buf)
 
@@ -370,7 +373,7 @@ func (d *dockerFile) NewLocalBuildContext(src string) (io.Reader, error) {
 	}
 	dockerfileStr := d.String()
 
-	err := tw.WriteHeader(&tar.Header{
+	err = tw.WriteHeader(&tar.Header{
 		Name:     "Dockerfile",
 		Size:     int64(len([]byte(dockerfileStr))),
 		Mode:     0644,
