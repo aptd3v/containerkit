@@ -13,6 +13,7 @@ import (
 	mountType "github.com/docker/docker/api/types/mount"
 	"github.com/docker/docker/api/types/strslice"
 	"github.com/docker/go-connections/nat"
+	"github.com/docker/go-units"
 )
 
 // WithMountPoint allows to create a custom mount point for the container in the host mount configuration.
@@ -41,9 +42,21 @@ func WithMountPoint(setters ...mount.SetMountConfig) create.SetHostConfig {
 // WithMemoryLimit sets a memory limit for the container in the host configuration.
 // parameters:
 //   - memory: the memory limit in bytes
-func WithMemoryLimit(memory int64) create.SetHostConfig {
+//
+// note: the memory limit can be specified as an integer in bytes or as a string with a unit (e.g. "100M", "1G")
+func WithMemoryLimit[T int | string](memory T) create.SetHostConfig {
 	return func(opt *container.HostConfig) error {
-		opt.Memory = memory
+		switch v := any(memory).(type) {
+		case int:
+			opt.Memory = int64(v)
+		case string:
+			// parse the memory limit
+			memory, err := units.RAMInBytes(v)
+			if err != nil {
+				return errdefs.NewHostConfigError("memory", err.Error())
+			}
+			opt.Memory = memory
+		}
 		return nil
 	}
 }
@@ -267,9 +280,20 @@ func WithUserNSMode(mode string) create.SetHostConfig {
 // WithShmSize sets the size of the shared memory file system (/dev/shm) for the container in the host configuration.
 // parameters:
 //   - size: the size of the shared memory file system in bytes
-func WithShmSize(size int64) create.SetHostConfig {
+//
+// note: the size can be specified as an integer in bytes or as a string with a unit (e.g. "100M", "1G")
+func WithShmSize[T int | string](size T) create.SetHostConfig {
 	return func(opt *container.HostConfig) error {
-		opt.ShmSize = size
+		switch v := any(size).(type) {
+		case int:
+			opt.ShmSize = int64(v)
+		case string:
+			shmSize, err := units.RAMInBytes(v)
+			if err != nil {
+				return errdefs.NewHostConfigError("shm_size", err.Error())
+			}
+			opt.ShmSize = shmSize
+		}
 		return nil
 	}
 }
@@ -582,9 +606,21 @@ func WithCpusetCpus(cpus string) create.SetHostConfig {
 // WithMemoryReservation sets the memory soft limit
 // parameters:
 //   - memory: the memory soft limit
-func WithMemoryReservation(memory int64) create.SetHostConfig {
+//
+// note: the memory limit can be specified as an integer in bytes or as a string with a unit (e.g. "100M", "1G")
+func WithMemoryReservation[T int | string](memory T) create.SetHostConfig {
 	return func(opt *container.HostConfig) error {
-		opt.MemoryReservation = memory
+		switch v := any(memory).(type) {
+		case int:
+			opt.MemoryReservation = int64(v)
+		case string:
+			memory, err := units.RAMInBytes(v)
+			if err != nil {
+				return errdefs.NewHostConfigError("memory_reservation", err.Error())
+			}
+			opt.MemoryReservation = memory
+
+		}
 		return nil
 	}
 }
@@ -592,9 +628,20 @@ func WithMemoryReservation(memory int64) create.SetHostConfig {
 // WithMemorySwap sets the total memory limit (memory + swap)
 // parameters:
 //   - memorySwap: the total memory limit (memory + swap)
-func WithMemorySwap(memorySwap int64) create.SetHostConfig {
+//
+// note: the memory limit can be specified as an integer in bytes or as a string with a unit (e.g. "100M", "1G")
+func WithMemorySwap[T int | string](memorySwap T) create.SetHostConfig {
 	return func(opt *container.HostConfig) error {
-		opt.MemorySwap = memorySwap
+		switch v := any(memorySwap).(type) {
+		case int:
+			opt.MemorySwap = int64(v)
+		case string:
+			memorySwap, err := units.RAMInBytes(v)
+			if err != nil {
+				return errdefs.NewHostConfigError("memory_swap", err.Error())
+			}
+			opt.MemorySwap = memorySwap
+		}
 		return nil
 	}
 }
@@ -683,9 +730,20 @@ func WithMemorySwappiness(swappiness int64) create.SetHostConfig {
 // This is the hard limit for kernel memory that cannot be swapped out.
 // parameters:
 //   - memory: the kernel memory limit in bytes
-func WithKernelMemory(memory int64) create.SetHostConfig {
+//
+// note: the kernel memory limit can be specified as an integer in bytes or as a string with a unit (e.g. "100M", "1G")
+func WithKernelMemory[T int | string](memory T) create.SetHostConfig {
 	return func(opt *container.HostConfig) error {
-		opt.KernelMemory = memory
+		switch v := any(memory).(type) {
+		case int:
+			opt.KernelMemory = int64(v)
+		case string:
+			kernelMemory, err := units.RAMInBytes(v)
+			if err != nil {
+				return errdefs.NewHostConfigError("kernel_memory", err.Error())
+			}
+			opt.KernelMemory = kernelMemory
+		}
 		return nil
 	}
 }
