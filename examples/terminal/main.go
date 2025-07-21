@@ -29,7 +29,7 @@ func main() {
 		cc.WithCommand("tail", "-f", "/dev/null"),
 	)
 
-	cli, err := client.NewClient(client.FromEnv())
+	cli, err := client.NewClient(client.FromEnv(), client.WithAPIVersionNegotiation())
 	if err != nil {
 		log.Fatal(err)
 	}
