@@ -85,6 +85,7 @@ type SetPlatformConfig func(config *ocispec.Platform) error
 // It will return a container with the container config set.
 // If any of the setters return an error, the error will
 // be appended to the container's error slice.
+//
 // parameters:
 //   - setters: the setters to set the container config
 //
