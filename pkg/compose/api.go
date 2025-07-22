@@ -223,6 +223,7 @@ func (opt *ComposeLogsOptions) GenerateFlags() ([]string, error) {
 	return flags, nil
 }
 
+// ComposeKillOptions is the options for the compose kill command
 type ComposeKillOptions struct {
 	Signal        *string
 	RemoveOrphans bool
@@ -232,6 +233,11 @@ type ComposeKillOptions struct {
 	Profiles []string
 }
 
+// GenerateFlags generates the flags for the compose kill command
+//
+// It will return a slice of flags to append to the command Eg.
+//
+//	[]string{"kill", "--signal", "SIGKILL", "--remove-orphans"}
 func (opt *ComposeKillOptions) GenerateFlags() ([]string, error) {
 	flags := []string{"kill"}
 	if opt.Signal != nil {
