@@ -40,7 +40,7 @@ func TestAssignments(t *testing.T) {
 			field:    "CPUQuota",
 			wantErr:  false,
 			message:  "WithCPUQuota ok 100ms",
-			expected: int64(100),
+			expected: int64(100000),
 		},
 		{
 			config:   &container.HostConfig{},
@@ -92,7 +92,7 @@ func TestAssignments(t *testing.T) {
 		},
 		{
 			config:   &container.HostConfig{},
-			setFn:    hc.WithBlkioDeviceReadIOps("", "100MiB"),
+			setFn:    hc.WithBlkioDeviceReadIOps("", 100),
 			field:    "BlkioDeviceReadIOps",
 			wantErr:  true,
 			message:  "WithBlkioDeviceReadIOps error empty device path",
@@ -100,7 +100,7 @@ func TestAssignments(t *testing.T) {
 		},
 		{
 			config:   &container.HostConfig{},
-			setFn:    hc.WithBlkioDeviceWriteIOps("", "100MiB"),
+			setFn:    hc.WithBlkioDeviceWriteIOps("", 100),
 			field:    "BlkioDeviceWriteIOps",
 			wantErr:  true,
 			message:  "WithBlkioDeviceWriteIOps error empty device path",
@@ -114,25 +114,16 @@ func TestAssignments(t *testing.T) {
 			message:  "WithBlkioDeviceReadBps error bad rate",
 			expected: nil,
 		},
-
-		{
-			config:   &container.HostConfig{},
-			setFn:    hc.WithBlkioDeviceWriteIOps("/dev/sda", "44S"),
-			field:    "BlkioDeviceWriteIOps",
-			wantErr:  true,
-			message:  "WithBlkioDeviceWriteIOps error bad rate",
-			expected: nil,
-		},
 		{
 			config:  &container.HostConfig{},
-			setFn:   hc.WithBlkioDeviceWriteIOps("/dev/sda", "100KiB"),
+			setFn:   hc.WithBlkioDeviceWriteIOps("/dev/sda", 100),
 			field:   "BlkioDeviceWriteIOps",
 			wantErr: false,
 			message: "WithBlkioDeviceWriteIOps ok 100KiB",
 			expected: []*blkiodev.ThrottleDevice{
 				{
 					Path: "/dev/sda",
-					Rate: 100 * 1024,
+					Rate: 100,
 				},
 			},
 		},
@@ -157,24 +148,17 @@ func TestAssignments(t *testing.T) {
 			message:  "WithBlkioDeviceWriteBps error bad rate",
 			expected: nil,
 		},
-		{
-			config:   &container.HostConfig{},
-			setFn:    hc.WithBlkioDeviceReadIOps("/dev/sda", "error"),
-			field:    "BlkioDeviceReadIOps",
-			wantErr:  true,
-			message:  "WithBlkioDeviceReadIOps error bad rate",
-			expected: nil,
-		},
+
 		{
 			config:  &container.HostConfig{},
-			setFn:   hc.WithBlkioDeviceReadIOps("/dev/sda", "100KiB"),
+			setFn:   hc.WithBlkioDeviceReadIOps("/dev/sda", 100),
 			field:   "BlkioDeviceReadIOps",
 			wantErr: false,
 			message: "WithBlkioDeviceReadIOps ok 100KiB",
 			expected: []*blkiodev.ThrottleDevice{
 				{
 					Path: "/dev/sda",
-					Rate: 100 * 1024,
+					Rate: 100,
 				},
 			},
 		},

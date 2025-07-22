@@ -1168,11 +1168,10 @@ func WithBlkioDeviceWriteBps[T int | string](devicePath string, rate T) create.S
 //
 // Parameters:
 //   - devicePath: the device path (e.g., "/dev/sda")
-//   - rate: the maximum read IOPS limit, either as an int or a string with units
-//     (e.g., "10MiB", "1KiB").
+//   - rate: the maximum read IOPS limit
 //
 // Returns an error if the string rate cannot be parsed.
-func WithBlkioDeviceReadIOps[T int | string](devicePath string, rate T) create.SetHostConfig {
+func WithBlkioDeviceReadIOps(devicePath string, rate uint64) create.SetHostConfig {
 	return func(opt *container.HostConfig) error {
 		if opt.BlkioDeviceReadIOps == nil {
 			opt.BlkioDeviceReadIOps = make([]*blkiodev.ThrottleDevice, 0)
@@ -1181,21 +1180,9 @@ func WithBlkioDeviceReadIOps[T int | string](devicePath string, rate T) create.S
 			return errdefs.NewHostConfigError("blkio_device_write_iops", "device path cannot be empty")
 		}
 
-		var rateVal uint64
-		switch v := any(rate).(type) {
-		case int:
-			rateVal = uint64(v)
-		case string:
-			parsedBytes, err := units.RAMInBytes(v)
-			if err != nil {
-				return errdefs.NewHostConfigError("blkio_device_read_iops", err.Error())
-			}
-			rateVal = uint64(parsedBytes)
-		}
-
 		opt.BlkioDeviceReadIOps = append(opt.BlkioDeviceReadIOps, &blkiodev.ThrottleDevice{
 			Path: devicePath,
-			Rate: rateVal,
+			Rate: rate,
 		})
 		return nil
 	}
@@ -1206,11 +1193,10 @@ func WithBlkioDeviceReadIOps[T int | string](devicePath string, rate T) create.S
 //
 // Parameters:
 //   - devicePath: the device path (e.g., "/dev/sda")
-//   - rate: the maximum write IOPS limit, either as an int or a string with units
-//     (e.g., "10MiB", "1KiB").
+//   - rate: the maximum write IOPS limit
 //
 // Returns an error if the string rate cannot be parsed.
-func WithBlkioDeviceWriteIOps[T int | string](devicePath string, rate T) create.SetHostConfig {
+func WithBlkioDeviceWriteIOps(devicePath string, rate uint64) create.SetHostConfig {
 	return func(opt *container.HostConfig) error {
 		if opt.BlkioDeviceWriteIOps == nil {
 			opt.BlkioDeviceWriteIOps = make([]*blkiodev.ThrottleDevice, 0)
@@ -1219,21 +1205,9 @@ func WithBlkioDeviceWriteIOps[T int | string](devicePath string, rate T) create.
 			return errdefs.NewHostConfigError("blkio_device_write_iops", "device path cannot be empty")
 		}
 
-		var rateVal uint64
-		switch v := any(rate).(type) {
-		case int:
-			rateVal = uint64(v)
-		case string:
-			parsedBytes, err := units.RAMInBytes(v)
-			if err != nil {
-				return errdefs.NewHostConfigError("blkio_device_write_iops", err.Error())
-			}
-			rateVal = uint64(parsedBytes)
-		}
-
 		opt.BlkioDeviceWriteIOps = append(opt.BlkioDeviceWriteIOps, &blkiodev.ThrottleDevice{
 			Path: devicePath,
-			Rate: rateVal,
+			Rate: rate,
 		})
 		return nil
 	}
