@@ -36,10 +36,10 @@ func TestAssignments(t *testing.T) {
 		//WithCPUQuota
 		{
 			config:   &container.HostConfig{},
-			setFn:    hc.WithCPUQuota("100us"),
+			setFn:    hc.WithCPUQuota("100ms"),
 			field:    "CPUQuota",
 			wantErr:  false,
-			message:  "WithCPUQuota ok 100us",
+			message:  "WithCPUQuota ok 100ms",
 			expected: int64(100),
 		},
 		{
