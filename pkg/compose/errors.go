@@ -6,12 +6,13 @@ import (
 )
 
 var (
-	ErrComposeError     = fmt.Errorf("compose error")
-	ErrComposeFlagError = fmt.Errorf("compose flag error")
-	ErrComposeUpError   = fmt.Errorf("compose up error")
-	ErrComposeDownError = fmt.Errorf("compose down error")
-	ErrComposeLogsError = fmt.Errorf("compose logs error")
-	ErrComposeKillError = fmt.Errorf("compose kill error")
+	ErrComposeError       = fmt.Errorf("compose error")
+	ErrComposeFlagError   = fmt.Errorf("compose flag error")
+	ErrComposeUpError     = fmt.Errorf("compose up error")
+	ErrComposeDownError   = fmt.Errorf("compose down error")
+	ErrComposeLogsError   = fmt.Errorf("compose logs error")
+	ErrComposeKillError   = fmt.Errorf("compose kill error")
+	ErrComposeEventsError = fmt.Errorf("compose events error")
 )
 
 // ComposeFlagError is the error for the compose flag
@@ -60,6 +61,30 @@ func NewComposeKillError(err error) *ComposeKillError {
 
 func IsComposeKillError(err error) bool {
 	return errors.Is(err, ErrComposeKillError)
+}
+
+// ComposeEventsError is the error for the compose events command
+
+type ComposeEventsError struct {
+	Message string
+}
+
+func (e *ComposeEventsError) Unwrap() error {
+	return ErrComposeEventsError
+}
+
+func (e *ComposeEventsError) Error() string {
+	return fmt.Sprintf("compose events error: %s", e.Message)
+}
+
+func NewComposeEventsError(err error) *ComposeEventsError {
+	return &ComposeEventsError{
+		Message: err.Error(),
+	}
+}
+
+func IsComposeEventsError(err error) bool {
+	return errors.Is(err, ErrComposeEventsError)
 }
 
 // ComposeError is the error for the compose command
