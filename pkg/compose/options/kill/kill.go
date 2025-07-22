@@ -7,14 +7,6 @@ import (
 	"github.com/aptd3v/go-contain/pkg/compose"
 )
 
-// SetComposeKillOption is the type for the compose kill options
-type SetComposeKillOption func(*compose.ComposeKillOptions) error
-
-// ComposeKillOptions is the type for the compose kill options
-type ComposeKillOptions struct {
-	Signal *string
-}
-
 // WithSignal is a function that sets the signal for the kill
 func WithSignal(signal string) compose.SetComposeKillOption {
 	return func(opt *compose.ComposeKillOptions) error {
