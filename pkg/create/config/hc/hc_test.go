@@ -35,6 +35,30 @@ func TestAssignments(t *testing.T) {
 	}{
 		{
 			config:   &container.HostConfig{},
+			setFn:    hc.WithCPUQuota("error"),
+			field:    "CPUQuota",
+			wantErr:  true,
+			message:  "WithCPUQuota error unparseable time string",
+			expected: nil,
+		},
+		{
+			config:   &container.HostConfig{},
+			setFn:    hc.WithCPUQuota(-1),
+			field:    "CPUQuota",
+			wantErr:  true,
+			message:  "WithCPUQuota error negative",
+			expected: nil,
+		},
+		{
+			config:   &container.HostConfig{},
+			setFn:    hc.WithCPUQuota("100ms"),
+			field:    "CPUQuota",
+			wantErr:  false,
+			message:  "WithCPUQuota ok 100ms",
+			expected: int64(100000),
+		},
+		{
+			config:   &container.HostConfig{},
 			setFn:    hc.WithSysctls("", "1"),
 			field:    "Sysctls",
 			wantErr:  true,
