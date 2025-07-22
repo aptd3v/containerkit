@@ -796,9 +796,13 @@ func WithCPUPercent(percent int64) create.SetHostConfig {
 	}
 }
 
-// WithCPUQuota sets the CPU CFS (Completely Fair Scheduler) quota
-// parameters:
-//   - quota: the CPU CFS (Completely Fair Scheduler) quota
+// WithCPUQuota sets the CPU CFS (Completely Fair Scheduler) quota for the container.
+//
+// The CPU quota limits the total CPU time that all tasks in a container can use during one period.
+// A value of 0 means no quota (no limit).
+//
+// Parameters:
+//   - quota: the CPU quota in microseconds (e.g., 100000 for 100ms)
 func WithCPUQuota(quota int64) create.SetHostConfig {
 	return func(opt *container.HostConfig) error {
 		opt.CPUQuota = quota
