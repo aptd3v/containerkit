@@ -3,6 +3,7 @@ package hc
 
 import (
 	"fmt"
+	"strconv"
 	"strings"
 
 	"github.com/aptd3v/go-contain/pkg/create"
@@ -598,6 +599,12 @@ func WithCPUQuota(quota int64) create.SetHostConfig {
 //   - cpus: the CPUs in which execution is allowed
 func WithCpusetCpus(cpus string) create.SetHostConfig {
 	return func(opt *container.HostConfig) error {
+		if cpus == "" {
+			return errdefs.NewHostConfigError("cpuset_cpus", "cpus is required")
+		}
+		if err := validateCpuset(cpus); err != nil {
+			return errdefs.NewHostConfigError("cpuset_cpus", err.Error())
+		}
 		opt.CpusetCpus = cpus
 		return nil
 	}
@@ -708,9 +715,39 @@ func WithCPURealtimeRuntime(runtime int64) create.SetHostConfig {
 //   - mems: the memory nodes in which execution is allowed
 func WithCpusetMems(mems string) create.SetHostConfig {
 	return func(opt *container.HostConfig) error {
+		if mems == "" {
+			return errdefs.NewHostConfigError("cpuset_mems", "mems is required")
+		}
+		if err := validateCpuset(mems); err != nil {
+			return errdefs.NewHostConfigError("cpuset_mems", err.Error())
+		}
 		opt.CpusetMems = mems
 		return nil
 	}
+}
+func validateCpuset(mems string) error {
+	ranges := strings.Split(mems, ",")
+	for _, r := range ranges {
+		r = strings.TrimSpace(r)
+		if r == "" {
+			return fmt.Errorf("empty cpuset range")
+		}
+		parts := strings.Split(r, "-")
+		if len(parts) == 1 {
+			if _, err := strconv.Atoi(parts[0]); err != nil {
+				return fmt.Errorf("invalid cpuset value: %s", r)
+			}
+		} else if len(parts) == 2 {
+			start, err1 := strconv.Atoi(parts[0])
+			end, err2 := strconv.Atoi(parts[1])
+			if err1 != nil || err2 != nil || start > end {
+				return fmt.Errorf("invalid cpuset range: %s", r)
+			}
+		} else {
+			return fmt.Errorf("invalid cpuset format: %s", r)
+		}
+	}
+	return nil
 }
 
 // WithMemorySwappiness tunes container memory swappiness (0 to 100).
@@ -721,6 +758,10 @@ func WithCpusetMems(mems string) create.SetHostConfig {
 //   - swappiness: the swappiness level
 func WithMemorySwappiness(swappiness int64) create.SetHostConfig {
 	return func(opt *container.HostConfig) error {
+		if swappiness < 0 || swappiness > 100 {
+			return errdefs.NewHostConfigError("memory_swappiness", "swappiness must be between 0 and 100")
+		}
+
 		opt.MemorySwappiness = &swappiness
 		return nil
 	}
@@ -753,6 +794,9 @@ func WithKernelMemory[T int | string](memory T) create.SetHostConfig {
 //   - limit: the PIDs limit
 func WithPidsLimit(limit int64) create.SetHostConfig {
 	return func(opt *container.HostConfig) error {
+		if limit < -1 || limit == 0 {
+			return errdefs.NewHostConfigError("pids_limit", "limit must be -1 (unlimited) or a positive integer")
+		}
 		opt.PidsLimit = &limit
 		return nil
 	}
@@ -764,6 +808,9 @@ func WithPidsLimit(limit int64) create.SetHostConfig {
 //   - weight: the block IO weight
 func WithBlkioWeight(weight uint16) create.SetHostConfig {
 	return func(opt *container.HostConfig) error {
+		if weight < 10 || weight > 1000 {
+			return errdefs.NewHostConfigError("blkio_weight", "weight must be between 10 and 1000")
+		}
 		opt.BlkioWeight = weight
 		return nil
 	}
