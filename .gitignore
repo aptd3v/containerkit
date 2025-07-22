@@ -40,6 +40,7 @@ examples/wordpress/haproxy.cfg
 
 examples/mongo_replica/docker-compose.yaml
 
+examples/structs/docker-compose.yml
 
 # IDE
 .vscode/
