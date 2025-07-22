@@ -33,6 +33,15 @@ func TestAssignments(t *testing.T) {
 		message  string
 		expected any
 	}{
+		//WithCPUQuota
+		{
+			config:   &container.HostConfig{},
+			setFn:    hc.WithCPUQuota("100us"),
+			field:    "CPUQuota",
+			wantErr:  false,
+			message:  "WithCPUQuota ok 100us",
+			expected: int64(100),
+		},
 		{
 			config:   &container.HostConfig{},
 			setFn:    hc.WithCPUQuota("error"),
