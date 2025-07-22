@@ -112,7 +112,7 @@ func WithWorkingDir(workingDir string) SetContainerExecOption {
 }
 
 // WithCmd appends the command to the exec options.
-func WithCmd(cmd ...string) SetContainerExecOption {
+func WithCommand(cmd ...string) SetContainerExecOption {
 
 	return func(o *container.ExecOptions) error {
 		if o.Cmd == nil {
