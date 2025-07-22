@@ -802,7 +802,7 @@ func WithCPUPercent(percent int64) create.SetHostConfig {
 // A value of 0 means no quota (no limit).
 //
 // Parameters:
-//   - quota: the CPU quota in microseconds or a duration string (e.g., 100000, "100us", "100ms", "1s")
+//   - quota: the CPU quota in microseconds or a duration string (e.g., 100000, "1ms", "100ms", "1s")
 func WithCPUQuota[T int | string](quotaInput T) create.SetHostConfig {
 	return func(opt *container.HostConfig) error {
 		var quota int64
