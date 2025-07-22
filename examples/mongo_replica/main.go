@@ -158,7 +158,7 @@ func Initialize(ctx context.Context, initContainer string, members []RSMember) e
 	res, err := cli.ContainerExecCreate(
 		ctx,
 		initContainer,
-		exec.WithCmd(command...),
+		exec.WithCommand(command...),
 		exec.WithAttachStdout(),
 		exec.WithAttachStderr(),
 	)
