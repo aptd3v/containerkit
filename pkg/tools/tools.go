@@ -87,14 +87,14 @@ func AndFn(preds ...PredicateClosure) func() bool {
 
 // And is a function that takes a variadic number of booleans and returns true if all the booleans are true.
 func And(preds ...bool) func() bool {
-	return AndFn(func() bool {
+	return func() bool {
 		for _, pred := range preds {
 			if !pred {
 				return false
 			}
 		}
 		return true
-	})
+	}
 }
 
 // OrFn is a function that takes a variadic number of predicates and returns a single predicate.
@@ -116,19 +116,21 @@ func OrFn(preds ...PredicateClosure) func() bool {
 
 // Or is a function that takes a variadic number of booleans and returns true if any of the booleans are true.
 func Or(preds ...bool) func() bool {
-	return OrFn(func() bool {
+	return func() bool {
 		for _, pred := range preds {
 			if pred {
 				return true
 			}
 		}
 		return false
-	})
+	}
 }
 
-// Group combines multiple setters into a single setter, If any of the setters return an error, the error will be grouped and returned.
+// Group combines multiple setters into a single setter.
+// If any of the setters return an error, the error will be grouped and returned.
 //
-// note: if any of the setters are nil, they will be skipped and not added to errors
+// Note: if any of the setters are nil, they will be skipped and not added to errors.
+
 func Group[T any, O ~func(T) error](fns ...O) O {
 	return func(t T) error {
 		errs := []error{}
@@ -158,7 +160,7 @@ type CheckClosure func() (bool, error)
 func OnlyIf[T any, O ~func(T) error](check CheckClosure, f O) O {
 	return func(t T) error {
 		if check == nil {
-			return errors.New("check closure is nil")
+			return errors.New("tools.OnlyIf: check closure is nil")
 		}
 		ok, err := check()
 		if err != nil {
@@ -177,11 +179,12 @@ func OnlyIf[T any, O ~func(T) error](check CheckClosure, f O) O {
 // note: if the setter function is nil, it will be skipped and not added to errors
 func Each[T any, V any, O ~func(V) error](items []T, f func(i int, t T) O) O {
 	return func(v V) error {
-		opts := []O{}
+		if len(items) == 0 || f == nil {
+			return nil
+		}
+		opts := make([]O, 0, len(items))
 		for i, item := range items {
-			if f != nil {
-				opts = append(opts, f(i, item))
-			}
+			opts = append(opts, f(i, item))
 		}
 		return Group(opts...)(v)
 	}
