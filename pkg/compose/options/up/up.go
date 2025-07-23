@@ -101,7 +101,7 @@ func WithBuild() compose.SetComposeUpOption {
 
 // WithExitCodeFrom sets the exit code from option
 //
-// --exit-code-from		Return the exit code of the selected service container. Implies --abort-on-container-exit
+// --exit-code-from Return the exit code of the selected service container. Implies --abort-on-container-exit
 func WithExitCodeFrom(service string) compose.SetComposeUpOption {
 	return func(opt *compose.ComposeUpOptions) error {
 		opt.ExitCodeFrom = &service
@@ -111,7 +111,7 @@ func WithExitCodeFrom(service string) compose.SetComposeUpOption {
 
 // WithForceRecreate sets the force recreate option to true
 //
-// --force-recreate		Recreate containers even if their configuration and image haven't changed
+// --force-recreate Recreate containers even if their configuration and image haven't changed
 func WithForceRecreate() compose.SetComposeUpOption {
 	return func(opt *compose.ComposeUpOptions) error {
 		opt.ForceRecreate = true
@@ -144,7 +144,7 @@ func WithNoAttach(service string) compose.SetComposeUpOption {
 
 // WithNoBuild sets the no build option to true
 //
-// --no-build		Don't build an image, even if it's policy
+// --no-build Don't build an image, even if it's policy
 func WithNoBuild() compose.SetComposeUpOption {
 	return func(opt *compose.ComposeUpOptions) error {
 		opt.NoBuild = true
@@ -154,7 +154,7 @@ func WithNoBuild() compose.SetComposeUpOption {
 
 // WithNoColor sets the no color option to true
 //
-// --no-color		Produce monochrome output
+// --no-color Produce monochrome output
 func WithNoColor() compose.SetComposeUpOption {
 	return func(opt *compose.ComposeUpOptions) error {
 		opt.NoColor = true
@@ -164,7 +164,7 @@ func WithNoColor() compose.SetComposeUpOption {
 
 // WithNoDeps sets the no deps option to true
 //
-// --no-deps		Don't start linked services
+// --no-deps Don't start linked services
 func WithNoDeps() compose.SetComposeUpOption {
 	return func(opt *compose.ComposeUpOptions) error {
 		opt.NoDeps = true
@@ -174,7 +174,7 @@ func WithNoDeps() compose.SetComposeUpOption {
 
 // WithNoLogPrefix sets the no log prefix option to true
 //
-// --no-log-prefix		Don't print prefix in logs
+// --no-log-prefix Don't print prefix in logs
 func WithNoLogPrefix() compose.SetComposeUpOption {
 	return func(opt *compose.ComposeUpOptions) error {
 		opt.NoLogPrefix = true
@@ -184,7 +184,7 @@ func WithNoLogPrefix() compose.SetComposeUpOption {
 
 // WithNoRecreate sets the no recreate option to true
 //
-// --no-recreate		If containers already exist, don't recreate them. Incompatible with --force-recreate.
+// --no-recreate If containers already exist, don't recreate them. Incompatible with --force-recreate.
 func WithNoRecreate() compose.SetComposeUpOption {
 	return func(opt *compose.ComposeUpOptions) error {
 		opt.NoRecreate = true
@@ -194,7 +194,7 @@ func WithNoRecreate() compose.SetComposeUpOption {
 
 // WithPull sets the pull option
 //
-// --pull 	policy	Pull image before running ("always"|"missing"|"never")
+// --pull policy Pull image before running ("always"|"missing"|"never")
 func WithPull(policy PullPolicy) compose.SetComposeUpOption {
 	return func(opt *compose.ComposeUpOptions) error {
 		pull := string(policy)
@@ -205,7 +205,7 @@ func WithPull(policy PullPolicy) compose.SetComposeUpOption {
 
 // WithNoStart sets the no start option to true
 //
-// --no-start		Don't start the services after creating them
+// --no-start Don't start the services after creating them
 func WithNoStart() compose.SetComposeUpOption {
 	return func(opt *compose.ComposeUpOptions) error {
 		opt.NoStart = true
@@ -215,7 +215,7 @@ func WithNoStart() compose.SetComposeUpOption {
 
 // WithQuietPull sets the quiet pull option to true
 //
-// --quiet-pull		Pull without printing progress information
+// --quiet-pull Pull without printing progress information
 func WithQuietPull() compose.SetComposeUpOption {
 	return func(opt *compose.ComposeUpOptions) error {
 		opt.QuietPull = true
@@ -278,7 +278,7 @@ func WithTimestamps() compose.SetComposeUpOption {
 
 // WithWait sets the wait option to true
 //
-// --wait		Wait for services to be running|healthy. Implies detached mode.
+// --wait Wait for services to be running|healthy. Implies detached mode.
 func WithWait() compose.SetComposeUpOption {
 	return func(opt *compose.ComposeUpOptions) error {
 		opt.Wait = true
@@ -288,7 +288,7 @@ func WithWait() compose.SetComposeUpOption {
 
 // WithWaitTimeout sets the wait timeout option
 //
-// --wait-timeout		Maximum duration in seconds to wait for the project to be running|healthy
+// --wait-timeout Maximum duration in seconds to wait for the project to be running|healthy
 func WithWaitTimeout(timeout int) compose.SetComposeUpOption {
 	return func(opt *compose.ComposeUpOptions) error {
 		opt.WaitTimeout = &timeout
@@ -304,7 +304,7 @@ func WithWatch() compose.SetComposeUpOption {
 
 // WithYes sets the yes option to true
 //
-// -y, --yes		Assume "yes" as answer to all prompts and run non-interactively
+// -y, --yes Assume "yes" as answer to all prompts and run non-interactively
 func WithYes() compose.SetComposeUpOption {
 	return func(opt *compose.ComposeUpOptions) error {
 		opt.Yes = true
