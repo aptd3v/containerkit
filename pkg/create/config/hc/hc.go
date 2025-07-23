@@ -2,6 +2,7 @@
 package hc
 
 import (
+	"errors"
 	"fmt"
 	"strconv"
 	"strings"
@@ -55,7 +56,7 @@ func WithMemoryLimit[T int | string](memory T) create.SetHostConfig {
 			// parse the memory limit
 			memory, err := units.RAMInBytes(v)
 			if err != nil {
-				return errdefs.NewHostConfigError("memory", err.Error())
+				return errdefs.NewHostConfigError("memory_limit", err.Error())
 			}
 			opt.Memory = memory
 		}
@@ -87,25 +88,25 @@ func WithPortBindings(protocol, hostIP, hostPort, containerPort string) create.S
 	return func(opt *container.HostConfig) error {
 
 		if containerPort == "" {
-			return errdefs.NewHostConfigError("port", "empty container port")
+			return errdefs.NewHostConfigError("port_bindings", "empty container port")
 		}
 		if hostPort == "" {
-			return errdefs.NewHostConfigError("port", "empty host port")
+			return errdefs.NewHostConfigError("port_bindings", "empty host port")
 		}
 		if hostIP == "" {
-			return errdefs.NewHostConfigError("port", "empty host IP")
+			return errdefs.NewHostConfigError("port_bindings", "empty host IP")
 		}
 		if protocol == "" {
-			return errdefs.NewHostConfigError("port", "empty protocol")
+			return errdefs.NewHostConfigError("port_bindings", "empty protocol")
 		}
 
 		cPort, err := nat.NewPort(protocol, containerPort)
 		if err != nil {
-			return errdefs.NewHostConfigError("port", err.Error())
+			return errdefs.NewHostConfigError("port_bindings", err.Error())
 		}
 		hostPort, err := nat.NewPort(protocol, hostPort)
 		if err != nil {
-			return errdefs.NewHostConfigError("port", err.Error())
+			return errdefs.NewHostConfigError("port_bindings", err.Error())
 		}
 
 		if opt.PortBindings == nil {
@@ -196,7 +197,7 @@ func WithVolumeBinds(binds ...string) create.SetHostConfig {
 			opt.Binds = make([]string, 0, len(binds))
 		}
 		if err := validateMounts(binds); err != nil {
-			return err
+			return errdefs.NewHostConfigError("volume_binds", err.Error())
 		}
 		opt.Binds = append(opt.Binds, binds...)
 		return nil
@@ -253,7 +254,7 @@ func validateMounts(mounts []string) error {
 	}
 
 	if len(errMsgs) > 0 {
-		return errdefs.NewHostConfigError("mounts", strings.Join(errMsgs, "\n"))
+		return errors.New(strings.Join(errMsgs, "\n"))
 	}
 	return nil
 }
@@ -666,13 +667,13 @@ func WithPrivileged() create.SetHostConfig {
 func WithAddedDevice(device string, pathInContainer string, permissions string) create.SetHostConfig {
 	return func(opt *container.HostConfig) error {
 		if strings.TrimSpace(device) == "" {
-			return errdefs.NewHostConfigError("device", "host device path cannot be empty")
+			return errdefs.NewHostConfigError("devices", "host device path cannot be empty")
 		}
 		if strings.TrimSpace(pathInContainer) == "" {
-			return errdefs.NewHostConfigError("device", "container device path cannot be empty")
+			return errdefs.NewHostConfigError("devices", "container device path cannot be empty")
 		}
 		if !isValidDevicePermission(permissions) {
-			return errdefs.NewHostConfigError("device", "invalid device permissions (must be combination of 'r', 'w', 'm')")
+			return errdefs.NewHostConfigError("devices", "invalid device permissions (must be combination of 'r', 'w', 'm')")
 		}
 
 		if opt.Devices == nil {
@@ -902,13 +903,13 @@ func WithMemorySwap[T int | string](memorySwap T) create.SetHostConfig {
 func WithUlimits(name string, soft, hard int64) create.SetHostConfig {
 	return func(opt *container.HostConfig) error {
 		if name == "" {
-			return errdefs.NewHostConfigError("ulimit", "ulimit name cannot be empty")
+			return errdefs.NewHostConfigError("ulimits", "ulimit name cannot be empty")
 		}
 		if soft < 0 || hard < 0 {
-			return errdefs.NewHostConfigError("ulimit", "ulimit values must be non-negative")
+			return errdefs.NewHostConfigError("ulimits", "ulimit values must be non-negative")
 		}
 		if soft > hard {
-			return errdefs.NewHostConfigError("ulimit", fmt.Sprintf("soft limit (%d) cannot be greater than hard limit (%d)", soft, hard))
+			return errdefs.NewHostConfigError("ulimits", fmt.Sprintf("soft limit (%d) cannot be greater than hard limit (%d)", soft, hard))
 		}
 		if opt.Ulimits == nil {
 			opt.Ulimits = make([]*container.Ulimit, 0)
