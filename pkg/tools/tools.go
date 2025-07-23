@@ -130,8 +130,8 @@ func Or(preds ...bool) func() bool {
 //
 // note: if any of the setters are nil, they will be skipped and not added to errors
 func Group[T any, O ~func(T) error](fns ...O) O {
-	errs := []error{}
 	return func(t T) error {
+		errs := []error{}
 
 		for _, fn := range fns {
 			if fn != nil {
