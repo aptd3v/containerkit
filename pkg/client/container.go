@@ -177,25 +177,48 @@ the response. This allows the caller to synchronize ContainerWait with other cal
 "next-exit" condition before issuing a ContainerStart request.
 */
 func (c *Client) ContainerWait(ctx context.Context, id string, condition wait.WaitCondition) (<-chan response.ContainerWait, <-chan error) {
-	wait, err := c.wrapped.ContainerWait(ctx, id, container.WaitCondition(condition))
-	if err != nil {
-		return nil, nil
-	}
-	waitChan := make(chan response.ContainerWait)
+	waitCh, errCh := c.wrapped.ContainerWait(ctx, id, container.WaitCondition(condition))
+
+	outWait := make(chan response.ContainerWait, 1)
+	outErr := make(chan error, 1)
+
 	go func() {
-		defer close(waitChan)
-		for {
-			select {
-			case <-ctx.Done():
-				return
-			case wait := <-wait:
-				waitChan <- response.ContainerWait{
-					WaitResponse: wait,
-				}
+		defer close(outWait)
+		defer close(outErr)
+
+		select {
+		case <-ctx.Done():
+			return
+		case err, ok := <-errCh:
+			if ok && err != nil {
+				outErr <- err
+			}
+		case wait, ok := <-waitCh:
+			if ok {
+				outWait <- response.ContainerWait{WaitResponse: wait}
 			}
 		}
 	}()
-	return waitChan, nil
+
+	return outWait, outErr
+}
+
+// ContainerWaitSync blocks until the container reaches the desired state,
+// an error occurs, or the context is cancelled.
+//
+// Returns nil if the container completes successfully or if the context is cancelled,
+// and returns a non-nil error only if the container fails or Docker reports an error.
+func (c *Client) ContainerWaitSync(ctx context.Context, id string, condition wait.WaitCondition) error {
+	waitCh, errCh := c.ContainerWait(ctx, id, condition)
+
+	select {
+	case <-ctx.Done():
+		return nil
+	case err := <-errCh:
+		return err
+	case <-waitCh:
+		return nil
+	}
 }
 
 // ContainerStats returns near realtime stats for a given container.
