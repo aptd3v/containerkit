@@ -13,7 +13,7 @@ import (
 	"strings"
 
 	"github.com/aptd3v/go-contain/pkg/client"
-	"github.com/aptd3v/go-contain/pkg/client/options/container/exec"
+	"github.com/aptd3v/go-contain/pkg/client/options/container/execopt"
 	"github.com/aptd3v/go-contain/pkg/compose"
 	"github.com/aptd3v/go-contain/pkg/compose/options/up"
 	"github.com/aptd3v/go-contain/pkg/create"
@@ -158,9 +158,9 @@ func Initialize(ctx context.Context, initContainer string, members []RSMember) e
 	res, err := cli.ContainerExecCreate(
 		ctx,
 		initContainer,
-		exec.WithCommand(command...),
-		exec.WithAttachStdout(),
-		exec.WithAttachStderr(),
+		execopt.WithCommand(command...),
+		execopt.WithAttachStdout(),
+		execopt.WithAttachStderr(),
 	)
 	if err != nil {
 		return fmt.Errorf("failed to create exec command: %w", err)

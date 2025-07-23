@@ -12,8 +12,8 @@ import (
 	"github.com/aptd3v/go-contain/pkg/client/options/container/checkpointlist"
 	"github.com/aptd3v/go-contain/pkg/client/options/container/commit"
 	"github.com/aptd3v/go-contain/pkg/client/options/container/copyto"
-	"github.com/aptd3v/go-contain/pkg/client/options/container/exec"
 	"github.com/aptd3v/go-contain/pkg/client/options/container/execattach"
+	"github.com/aptd3v/go-contain/pkg/client/options/container/execopt"
 	"github.com/aptd3v/go-contain/pkg/client/options/container/execresize"
 	"github.com/aptd3v/go-contain/pkg/client/options/container/execstart"
 	"github.com/aptd3v/go-contain/pkg/client/options/container/list"
@@ -234,7 +234,7 @@ func (c *Client) ContainerStats(ctx context.Context, id string, stream bool) (*r
 }
 
 // ContainerExecCreate creates a new exec configuration to run an exec process.
-func (c *Client) ContainerExecCreate(ctx context.Context, containerID string, setters ...exec.SetContainerExecOption) (*response.ContainerExecCreate, error) {
+func (c *Client) ContainerExecCreate(ctx context.Context, containerID string, setters ...execopt.SetContainerExecOption) (*response.ContainerExecCreate, error) {
 	op := container.ExecOptions{}
 	for _, setter := range setters {
 		if setter != nil {

@@ -11,8 +11,8 @@ import (
 	"syscall"
 
 	"github.com/aptd3v/go-contain/pkg/client"
-	"github.com/aptd3v/go-contain/pkg/client/options/container/exec"
 	"github.com/aptd3v/go-contain/pkg/client/options/container/execattach"
+	"github.com/aptd3v/go-contain/pkg/client/options/container/execopt"
 	"github.com/aptd3v/go-contain/pkg/client/options/container/execresize"
 	"github.com/aptd3v/go-contain/pkg/client/options/container/remove"
 	"github.com/aptd3v/go-contain/pkg/client/options/image/pull"
@@ -84,13 +84,13 @@ func main() {
 	defer session.Close()
 
 }
-func WithExecOptions() exec.SetContainerExecOption {
+func WithExecOptions() execopt.SetContainerExecOption {
 	return tools.Group(
-		exec.WithAttachStderr(),
-		exec.WithAttachStdin(),
-		exec.WithAttachStdout(),
-		exec.WithTty(),
-		exec.WithCommand("/bin/sh"),
+		execopt.WithAttachStderr(),
+		execopt.WithAttachStdin(),
+		execopt.WithAttachStdout(),
+		execopt.WithTty(),
+		execopt.WithCommand("/bin/sh"),
 	)
 }
 
