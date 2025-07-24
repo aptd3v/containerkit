@@ -99,7 +99,7 @@ func main() {
 	}
 	fmt.Println("MongoDB replica set", "rs0", "url", url)
 	fmt.Println("MongoDB replica set initialized and running.")
-	fmt.Println("You can access Mongo Express at http://localhost:3000")
+	fmt.Println("You can access Mongo Express at http://localhost:8081")
 	fmt.Println("Press Ctrl+C to stop the containers.")
 	<-ctx.Done()
 }
@@ -183,7 +183,7 @@ func WithMongoExpress(url string) *create.Container {
 			cc.WithEnv("ME_CONFIG_MONGODB_AUTH_PASSWORD", "password"),
 		).
 		WithHostConfig(
-			hc.WithPortBindings("tcp", "0.0.0.0", "3000", "8081"),
+			hc.WithPortBindings("tcp", "0.0.0.0", "8081", "8081"),
 			hc.WithRestartPolicyAlways(),
 		).
 		WithNetworkConfig(
