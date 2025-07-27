@@ -85,6 +85,7 @@ type SetPlatformConfig func(config *ocispec.Platform) error
 // It will return a container with the container config set.
 // If any of the setters return an error, the error will
 // be appended to the container's error slice.
+//
 // parameters:
 //   - setters: the setters to set the container config
 //
@@ -162,6 +163,7 @@ func (c *Container) WithContainerConfig(setters ...SetContainerConfig) *Containe
 // It will return a container with the host config set.
 // If any of the setters return an error, the error will be
 // appended to the container's error slice.
+//
 // parameters:
 //   - setters: the setters to set the host config
 func (c *Container) WithHostConfig(setters ...SetHostConfig) *Container {
@@ -184,6 +186,7 @@ func (c *Container) WithHostConfig(setters ...SetHostConfig) *Container {
 // It will return a container with the network config set.
 // If any of the setters return an error, the error will be
 // appended to the container's error slice.
+//
 // parameters:
 //   - setters: the setters to set the network config
 func (c *Container) WithNetworkConfig(setters ...SetNetworkConfig) *Container {

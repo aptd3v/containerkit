@@ -2,8 +2,11 @@
 package hc
 
 import (
+	"errors"
 	"fmt"
+	"strconv"
 	"strings"
+	"time"
 
 	"github.com/aptd3v/go-contain/pkg/create"
 	"github.com/aptd3v/go-contain/pkg/create/config/hc/mount"
@@ -13,6 +16,7 @@ import (
 	mountType "github.com/docker/docker/api/types/mount"
 	"github.com/docker/docker/api/types/strslice"
 	"github.com/docker/go-connections/nat"
+	"github.com/docker/go-units"
 )
 
 // WithMountPoint allows to create a custom mount point for the container in the host mount configuration.
@@ -41,18 +45,29 @@ func WithMountPoint(setters ...mount.SetMountConfig) create.SetHostConfig {
 // WithMemoryLimit sets a memory limit for the container in the host configuration.
 // parameters:
 //   - memory: the memory limit in bytes
-func WithMemoryLimit(memory int64) create.SetHostConfig {
+//
+// note: the memory limit can be specified as an integer in bytes or as a string with a unit (e.g. "100M", "1G")
+func WithMemoryLimit[T int | string](memory T) create.SetHostConfig {
 	return func(opt *container.HostConfig) error {
-		opt.Memory = memory
+		switch v := any(memory).(type) {
+		case int:
+			opt.Memory = int64(v)
+		case string:
+			// parse the memory limit
+			memory, err := units.RAMInBytes(v)
+			if err != nil {
+				return errdefs.NewHostConfigError("memory_limit", err.Error())
+			}
+			opt.Memory = memory
+		}
 		return nil
 	}
 }
 
 // WithRestartAlways sets a restart policy that ensures the container is always restarted upon exit.
-// parameters:
-//   - maxRetryCount: the maximum number of retries before giving up
-func WithRestartAlways(maxRetryCount int) create.SetHostConfig {
-	return WithRestartPolicy(RestartPolicyAlways, maxRetryCount)
+// This policy restarts the container indefinitely, ignoring any retry limits.
+func WithRestartAlways() create.SetHostConfig {
+	return WithRestartPolicy(RestartPolicyAlways, 0)
 }
 
 // WithAutoRemove sets the container to be automatically removed when it exits.
@@ -73,25 +88,25 @@ func WithPortBindings(protocol, hostIP, hostPort, containerPort string) create.S
 	return func(opt *container.HostConfig) error {
 
 		if containerPort == "" {
-			return errdefs.NewHostConfigError("port", "empty container port")
+			return errdefs.NewHostConfigError("port_bindings", "empty container port")
 		}
 		if hostPort == "" {
-			return errdefs.NewHostConfigError("port", "empty host port")
+			return errdefs.NewHostConfigError("port_bindings", "empty host port")
 		}
 		if hostIP == "" {
-			return errdefs.NewHostConfigError("port", "empty host IP")
+			return errdefs.NewHostConfigError("port_bindings", "empty host IP")
 		}
 		if protocol == "" {
-			return errdefs.NewHostConfigError("port", "empty protocol")
+			return errdefs.NewHostConfigError("port_bindings", "empty protocol")
 		}
 
 		cPort, err := nat.NewPort(protocol, containerPort)
 		if err != nil {
-			return errdefs.NewHostConfigError("port", err.Error())
+			return errdefs.NewHostConfigError("port_bindings", err.Error())
 		}
 		hostPort, err := nat.NewPort(protocol, hostPort)
 		if err != nil {
-			return errdefs.NewHostConfigError("port", err.Error())
+			return errdefs.NewHostConfigError("port_bindings", err.Error())
 		}
 
 		if opt.PortBindings == nil {
@@ -182,7 +197,7 @@ func WithVolumeBinds(binds ...string) create.SetHostConfig {
 			opt.Binds = make([]string, 0, len(binds))
 		}
 		if err := validateMounts(binds); err != nil {
-			return err
+			return errdefs.NewHostConfigError("volume_binds", err.Error())
 		}
 		opt.Binds = append(opt.Binds, binds...)
 		return nil
@@ -239,7 +254,7 @@ func validateMounts(mounts []string) error {
 	}
 
 	if len(errMsgs) > 0 {
-		return errdefs.NewHostConfigError("mounts", strings.Join(errMsgs, "\n"))
+		return errors.New(strings.Join(errMsgs, "\n"))
 	}
 	return nil
 }
@@ -249,16 +264,22 @@ func validateMounts(mounts []string) error {
 //   - mode: the UTS namespace mode to use
 func WithUTSMode(mode string) create.SetHostConfig {
 	return func(opt *container.HostConfig) error {
+		if mode == "" {
+			return errdefs.NewHostConfigError("uts_mode", "mode cannot be empty")
+		}
 		opt.UTSMode = container.UTSMode(mode)
 		return nil
 	}
 }
 
-// WithUserNSMode sets the user namespace mode to be used for the container in the host configuration.
+// WithUserNSMode sets the user namespace mode for the container in the host configuration.
 // parameters:
-//   - mode: the user namespace mode to use
+//   - mode: the user namespace mode to use, e.g., "host", "private", "container:<id>"
 func WithUserNSMode(mode string) create.SetHostConfig {
 	return func(opt *container.HostConfig) error {
+		if mode == "" {
+			return errdefs.NewHostConfigError("userns_mode", "mode cannot be empty")
+		}
 		opt.UsernsMode = container.UsernsMode(mode)
 		return nil
 	}
@@ -267,16 +288,27 @@ func WithUserNSMode(mode string) create.SetHostConfig {
 // WithShmSize sets the size of the shared memory file system (/dev/shm) for the container in the host configuration.
 // parameters:
 //   - size: the size of the shared memory file system in bytes
-func WithShmSize(size int64) create.SetHostConfig {
+//
+// note: the size can be specified as an integer in bytes or as a string with a unit (e.g. "100M", "1G")
+func WithShmSize[T int | string](size T) create.SetHostConfig {
 	return func(opt *container.HostConfig) error {
-		opt.ShmSize = size
+		switch v := any(size).(type) {
+		case int:
+			opt.ShmSize = int64(v)
+		case string:
+			shmSize, err := units.RAMInBytes(v)
+			if err != nil {
+				return errdefs.NewHostConfigError("shm_size", err.Error())
+			}
+			opt.ShmSize = shmSize
+		}
 		return nil
 	}
 }
 
-// WithRuntime sets the runtime for the container in the host configuration.
+// WithRuntime sets the OCI runtime for the container in the host configuration.
 // parameters:
-//   - runtime: the runtime to use
+//   - runtime: the runtime to use, e.g., "runc", "nvidia", or custom runtimes installed on the host.
 func WithRuntime(runtime string) create.SetHostConfig {
 	return func(opt *container.HostConfig) error {
 		opt.Runtime = runtime
@@ -295,33 +327,58 @@ func WithConsoleSize(height uint, width uint) create.SetHostConfig {
 	}
 }
 
-// WithIsolation sets the isolation mode to be used for the container in the host configuration.
-// parameters:
-//   - isolation: the isolation mode to use
+// WithIsolation sets the isolation mode for the container in the host configuration.
+// Parameters:
+//   - isolation: the isolation mode to use. Valid values typically include "default", "process", and "hyperv".
 //
-// Note: This function applies isolation settings only in Windows environments.
+// Note: This function applies isolation settings only on Windows environments.
 func WithIsolation(isolation string) create.SetHostConfig {
 	return func(opt *container.HostConfig) error {
-		opt.Isolation = container.Isolation(isolation)
-		return nil
+		switch isolation {
+		case "", "default", "process", "hyperv":
+			opt.Isolation = container.Isolation(isolation)
+			return nil
+		default:
+			return errdefs.NewHostConfigError("isolation", "invalid isolation mode")
+		}
 	}
 }
 
-// WithCPUCount sets the number of CPUs for the container in the host configuration.
-// parameters:
-//   - count: the number of CPUs to use
+// WithCPUCount sets the number of CPUs allocated to the container in the host configuration.
+//
+// Parameters:
+//   - count: the number of CPUs to allocate to the container.
+//
+// Returns an error if count is less than 1.
 func WithCPUCount(count int64) create.SetHostConfig {
 	return func(opt *container.HostConfig) error {
+		if count < 1 {
+			return errdefs.NewHostConfigError("cpu_count", "CPU count must be at least 1")
+		}
 		opt.CPUCount = count
 		return nil
 	}
 }
 
-// WithReadonlyPaths appends a list of paths to be marked as read-only in the host configuration.
-// parameters:
-//   - paths: the paths to mark as read-only
+// WithReadonlyPaths appends a list of paths to be marked as read-only inside the container.
+//
+// These paths are mounted as read-only from the host and are inaccessible for writing
+// by any process in the container.
+//
+// Parameters:
+//   - paths: one or more absolute paths to mark as read-only
+//
+// Returns an error if any path is empty or not absolute.
 func WithReadonlyPaths(paths ...string) create.SetHostConfig {
 	return func(opt *container.HostConfig) error {
+		for _, path := range paths {
+			if strings.TrimSpace(path) == "" {
+				return errdefs.NewHostConfigError("readonly_paths", "path cannot be empty")
+			}
+			if !strings.HasPrefix(path, "/") {
+				return errdefs.NewHostConfigError("readonly_paths", fmt.Sprintf("path must be absolute: %q", path))
+			}
+		}
 		if opt.ReadonlyPaths == nil {
 			opt.ReadonlyPaths = make([]string, 0, len(paths))
 		}
@@ -330,11 +387,25 @@ func WithReadonlyPaths(paths ...string) create.SetHostConfig {
 	}
 }
 
-// WithMaskedPaths appends a list of paths to be masked inside the container in the host configuration (this overrides the default set of paths).
-// parameters:
-//   - paths: the paths to mask
+// WithMaskedPaths appends a list of paths to be masked inside the container.
+//
+// Masked paths are mounted as read-only and inaccessible from within the container,
+// overriding the default masked paths (e.g., "/proc/kcore", "/proc/latency_stats").
+//
+// Parameters:
+//   - paths: one or more absolute paths to mask
+//
+// Returns an error if any path is empty or not absolute.
 func WithMaskedPaths(paths ...string) create.SetHostConfig {
 	return func(opt *container.HostConfig) error {
+		for _, path := range paths {
+			if strings.TrimSpace(path) == "" {
+				return errdefs.NewHostConfigError("masked_paths", "path cannot be empty")
+			}
+			if !strings.HasPrefix(path, "/") {
+				return errdefs.NewHostConfigError("masked_paths", fmt.Sprintf("path must be absolute: %q", path))
+			}
+		}
 		if opt.MaskedPaths == nil {
 			opt.MaskedPaths = make([]string, 0, len(paths))
 		}
@@ -343,26 +414,45 @@ func WithMaskedPaths(paths ...string) create.SetHostConfig {
 	}
 }
 
-// WithNetworkMode sets the network mode for the container in the host configuration
-// parameters:
-//   - mode: the network mode to use
+// WithNetworkMode sets the network mode for the container in the host configuration.
 //
-// Note: This function applies network settings only in Linux environments.
+// Accepts standard Docker network modes such as:
+//   - "bridge"    (default)
+//   - "host"      (shares host's network stack)
+//   - "none"      (no network)
+//   - "container:<id|name>" (joins another container's network namespace)
+//
+// Returns an error if the mode is empty or not one of the supported formats.
 func WithNetworkMode(mode string) create.SetHostConfig {
 	return func(opt *container.HostConfig) error {
-		// Handle container network namespace sharing
-		opt.NetworkMode = container.NetworkMode(mode)
-		return nil
+		mode = strings.TrimSpace(mode)
+		if mode == "" ||
+			mode == "bridge" ||
+			mode == "host" ||
+			mode == "none" ||
+			strings.HasPrefix(mode, "container:") {
+			opt.NetworkMode = container.NetworkMode(mode)
+			return nil
+		}
+		return errdefs.NewHostConfigError("network_mode", fmt.Sprintf("invalid network mode: %q", mode))
 	}
 }
 
-// WithVolumeDriver sets the volume driver for the container in the host configuration
-// parameters:
-//   - driver: the volume driver to use
+// WithVolumeDriver sets the volume driver for the container in the host configuration.
 //
-// note: this is not used in compose
+// The volume driver specifies the plugin or mechanism used to manage volumes mounted into the container.
+// This option is typically only used with the Docker API directly, not with Docker Compose.
+//
+// Parameters:
+//   - driver: the name of the volume driver to use.
+//
+// Returns an error if the driver name is empty or contains only whitespace.
 func WithVolumeDriver(driver string) create.SetHostConfig {
 	return func(opt *container.HostConfig) error {
+		driver = strings.TrimSpace(driver)
+		if driver == "" {
+			return errdefs.NewHostConfigError("volume_driver", "volume driver cannot be empty")
+		}
 		opt.VolumeDriver = driver
 		return nil
 	}
@@ -381,31 +471,72 @@ func WithVolumesFrom(from string) create.SetHostConfig {
 	}
 }
 
-// WithIpcMode sets the IPC mode for the container in the host configuration.
-// parameters:
-//   - mode: the IPC mode to use
+// WithIpcMode sets the IPC (Inter-Process Communication) mode for the container.
+//
+// IPC mode controls how processes inside the container share memory and other IPC resources.
+// Common valid values include:
+//   - ""              (default — isolated IPC namespace)
+//   - "host"          (use the host's IPC namespace)
+//   - "private"       (use a private IPC namespace)
+//   - "shareable"     (allows other containers to join this container's IPC namespace)
+//   - "container:<id>" (join another container’s IPC namespace)
+//
+// Parameters:
+//   - mode: the IPC mode to use.
+//
+// Returns an error if the mode is invalid or improperly formatted.
 func WithIpcMode(mode string) create.SetHostConfig {
 	return func(opt *container.HostConfig) error {
-		opt.IpcMode = container.IpcMode(mode)
-		return nil
+		if mode == "" || mode == "host" || mode == "private" || mode == "shareable" || strings.HasPrefix(mode, "container:") {
+			opt.IpcMode = container.IpcMode(mode)
+			return nil
+		}
+		return errdefs.NewHostConfigError("ipc_mode", fmt.Sprintf("invalid IPC mode: %q", mode))
 	}
 }
 
-// WithCgroup sets the cgroup for the container in the host configuration.
-// parameters:
-//   - cgroup: the cgroup to use
+// WithCgroup sets the cgroup namespace mode for the container in the host configuration.
+//
+// The cgroup namespace determines how the container is isolated in terms of resource control.
+// Valid values include:
+//   - ""           (default behavior — Docker decides)
+//   - "host"       (container shares the host's cgroup namespace)
+//   - "private"    (container gets its own cgroup namespace)
+//   - "none"       (disable cgroup namespace, if supported)
+//
+// Parameters:
+//   - cgroup: the cgroup namespace mode to use
+//
+// Returns an error if the cgroup mode is invalid.
 func WithCgroup(cgroup string) create.SetHostConfig {
 	return func(opt *container.HostConfig) error {
+		valid := map[string]bool{
+			"": true, "host": true, "private": true, "none": true,
+		}
+		if !valid[cgroup] {
+			return errdefs.NewHostConfigError("cgroup", fmt.Sprintf("invalid cgroup mode: %q", cgroup))
+		}
 		opt.Cgroup = container.CgroupSpec(cgroup)
 		return nil
 	}
 }
 
-// WithOomScoreAdj sets the OOM score adjustment for the container in the host configuration.
-// parameters:
-//   - score: the OOM score adjustment
+// WithOomScoreAdj sets the Out-Of-Memory (OOM) score adjustment for the container.
+//
+// The OOM score adjustment ranges from -1000 to 1000 and tells the kernel how likely
+// it is to kill the container’s process when the system is under memory pressure.
+// - A value closer to -1000 means the process is protected from OOM killing.
+// - A value closer to 1000 makes the process more likely to be killed.
+//
+// Parameters:
+//   - score: an integer between -1000 and 1000 (inclusive)
+//
+// Returns an error if the score is outside the valid range.
 func WithOomScoreAdj(score int) create.SetHostConfig {
 	return func(opt *container.HostConfig) error {
+		if score < -1000 || score > 1000 {
+			return errdefs.NewHostConfigError("oom_score_adj", "value must be between -1000 and 1000")
+		}
 		opt.OomScoreAdj = score
 		return nil
 	}
@@ -423,6 +554,10 @@ func WithOomKillDisable() create.SetHostConfig {
 }
 
 // WithPidMode sets the PID mode for the container in the host configuration.
+//
+// PID mode controls the process ID namespace isolation of the container.
+// Common values include "host", "container:<name|id>", or an empty string for private namespace.
+//
 // parameters:
 //   - mode: the PID mode to use
 func WithPidMode(mode string) create.SetHostConfig {
@@ -450,9 +585,17 @@ func WithReadOnlyRootfs() create.SetHostConfig {
 	}
 }
 
-// WithSecurityOpts appends a list of string values to customize labels for MLS systems, such as SELinux.
+// WithSecurityOpts appends security options to the container's host configuration.
+//
+// These options customize security labels or settings used by Mandatory Access Control (MAC) systems
+// like SELinux, AppArmor, or Seccomp. They allow fine-tuning container security contexts,
+// such as specifying custom SELinux labels or disabling certain security profiles.
+//
+// Docker itself does minimal validation on these strings, so this function simply appends them.
+// Users should provide valid options according to their security system's documentation.
+//
 // parameters:
-//   - opts: the security options to add
+//   - opts: a variadic list of security options to append (e.g., SELinux labels or profile overrides)
 func WithSecurityOpts(opts ...string) create.SetHostConfig {
 	return func(opt *container.HostConfig) error {
 		if opt.SecurityOpt == nil {
@@ -463,12 +606,23 @@ func WithSecurityOpts(opts ...string) create.SetHostConfig {
 	}
 }
 
-// WithStorageOpt appends storage driver options per container to the host configuration.
+// WithStorageOpt appends a storage driver option for the container's host configuration.
+// Storage options are key-value pairs passed to the container storage driver to configure
+// specific behaviors like size limits, encryption, or performance settings.
+//
+// Since storage options are driver-specific and Docker itself does minimal validation,
+// this function trims whitespace and requires a non-empty key to avoid invalid or
+// meaningless options that might cause runtime errors or unexpected behavior.
+//
 // parameters:
-//   - key: the key of the storage option
-//   - value: the value of the storage option
+//   - key: the storage option key (must be non-empty after trimming whitespace)
+//   - value: the value for the storage option
 func WithStorageOpt(key, value string) create.SetHostConfig {
 	return func(opt *container.HostConfig) error {
+		key = strings.TrimSpace(key)
+		if key == "" {
+			return errdefs.NewHostConfigError("storage_opt", "storage option key cannot be empty")
+		}
 		if opt.StorageOpt == nil {
 			opt.StorageOpt = make(map[string]string)
 		}
@@ -491,9 +645,8 @@ func WithTmpfs(key, value string) create.SetHostConfig {
 	}
 }
 
-// WithPrivileged sets the Privileged mode to the host configuration which allows the following:
-// parameters:
-//   - privileged: the privileged mode to use
+// WithPrivileged enables privileged mode for the container.
+// Privileged mode grants the container extended Linux capabilities and access to devices.
 func WithPrivileged() create.SetHostConfig {
 	return func(opt *container.HostConfig) error {
 		opt.Privileged = true
@@ -501,11 +654,28 @@ func WithPrivileged() create.SetHostConfig {
 	}
 }
 
-// WithDevice appends a device to the host configuration.
-// parameters:
-//   - device: the device to add
+// WithAddedDevice adds a device mapping to the container's host configuration.
+//
+// This allows the container to access a device from the host (e.g., /dev/snd, /dev/ttyUSB0).
+//
+// Parameters:
+//   - device: the path to the device on the host (e.g., "/dev/snd").
+//   - pathInContainer: the path the device will be available at inside the container (e.g., "/dev/snd").
+//   - permissions: cgroup permissions for the device ("r", "w", "m", or combinations like "rw").
+//
+// Returns an error if any parameter is empty or permissions contain invalid characters.
 func WithAddedDevice(device string, pathInContainer string, permissions string) create.SetHostConfig {
 	return func(opt *container.HostConfig) error {
+		if strings.TrimSpace(device) == "" {
+			return errdefs.NewHostConfigError("devices", "host device path cannot be empty")
+		}
+		if strings.TrimSpace(pathInContainer) == "" {
+			return errdefs.NewHostConfigError("devices", "container device path cannot be empty")
+		}
+		if !isValidDevicePermission(permissions) {
+			return errdefs.NewHostConfigError("devices", "invalid device permissions (must be combination of 'r', 'w', 'm')")
+		}
+
 		if opt.Devices == nil {
 			opt.Devices = make([]container.DeviceMapping, 0)
 		}
@@ -518,52 +688,139 @@ func WithAddedDevice(device string, pathInContainer string, permissions string) 
 	}
 }
 
-// WithContainerIDFile adds a containerIDFile to the host configuration.
-// After running client.ContainerCreate command, the /path/to/container-id.txt file will contain the ID of the started container.
-// parameters:
-//   - path: the path to the containerIDFile
+// isValidDevicePermission checks if permissions contain only valid cgroup characters: r (read), w (write), m (mknod).
+func isValidDevicePermission(p string) bool {
+	seen := map[rune]bool{}
+	for _, r := range p {
+		switch r {
+		case 'r', 'w', 'm':
+			if seen[r] {
+				return false // disallow duplicates
+			}
+			seen[r] = true
+		default:
+			return false
+		}
+	}
+	return len(p) > 0
+}
+
+// WithContainerIDFile sets the path to a file where the container ID will be written after creation.
+//
+// After `client.ContainerCreate`, Docker will write the container's ID to this file.
+// This is useful for external tooling or scripts that need to reference the container after it starts.
+//
+// Parameters:
+//   - path: absolute or relative path to the container ID file.
+//
+// Returns an error if the path is empty or only whitespace.
 func WithContainerIDFile(path string) create.SetHostConfig {
 	return func(opt *container.HostConfig) error {
+		if strings.TrimSpace(path) == "" {
+			return errdefs.NewHostConfigError("container_id_file", "path cannot be empty")
+		}
 		opt.ContainerIDFile = path
 		return nil
 	}
 }
 
-// WithCPUShares sets the CPU shares (relative weight) for the container
-// parameters:
-//   - shares: the CPU shares to use
+// WithCPUShares sets the CPU shares (relative weight) for the container.
+//
+// CPU shares define the relative CPU time available to the container compared to others.
+// For example, 1024 is the default (normal priority), 512 is half the CPU weight, 2048 is double.
+//
+// Parameters:
+//   - shares: the number of CPU shares (must be a positive integer).
+//
+// Returns an error if the value is less than or equal to zero.
 func WithCPUShares(shares int64) create.SetHostConfig {
 	return func(opt *container.HostConfig) error {
+		if shares <= 0 {
+			return errdefs.NewHostConfigError("cpu_shares", "CPU shares must be a positive integer")
+		}
 		opt.CPUShares = shares
 		return nil
 	}
 }
 
-// WithCPUPeriod sets the CPU CFS (Completely Fair Scheduler) period
-// parameters:
-//   - period: the CPU CFS (Completely Fair Scheduler) period
-func WithCPUPeriod(period int64) create.SetHostConfig {
+// WithCPUPeriod sets the CPU CFS (Completely Fair Scheduler) period in microseconds.
+//
+// This defines the time window used by the CFS quota system to restrict CPU usage.
+// It is typically used with CPUQuota to control CPU bandwidth allocation.
+//
+// Accepts either:
+//   - an int value in microseconds (e.g., 100000 for 100ms), or
+//   - a duration string (e.g., "100ms", "1s").
+//
+// Valid values range from 1,000 to 1,000,000 microseconds (1ms to 1s), inclusive.
+// Returns an error if the input is out of range or invalid.
+func WithCPUPeriod[T int | string](period T) create.SetHostConfig {
 	return func(opt *container.HostConfig) error {
-		opt.CPUPeriod = period
+		var micros int64
+
+		switch v := any(period).(type) {
+		case int:
+			micros = int64(v)
+		case string:
+			dur, err := time.ParseDuration(v)
+			if err != nil {
+				return errdefs.NewHostConfigError("cpu_period", err.Error())
+			}
+			micros = dur.Microseconds()
+		}
+
+		if micros < 1000 || micros > 1_000_000 {
+			return errdefs.NewHostConfigError("cpu_period", "CPU period must be between 1,000 and 1,000,000 microseconds")
+		}
+
+		opt.CPUPeriod = micros
 		return nil
 	}
 }
 
-// WithCPUPercent sets the CPU percentage for the container
-// parameters:
-//   - percent: the CPU percentage to use
+// WithCPUPercent sets the CPU percentage limit for the container.
+//
+// This option specifies the maximum amount of CPU the container can use as a percentage
+// (e.g., 50 means the container can use up to 50% of one CPU core).
+//
+// Parameters:
+//   - percent: the desired CPU limit as a percentage (0–100, or more for multi-core allocation).
+//
+// Returns an error if the percent is negative.
 func WithCPUPercent(percent int64) create.SetHostConfig {
 	return func(opt *container.HostConfig) error {
+		if percent < 0 {
+			return errdefs.NewHostConfigError("cpu_percent", "CPU percent must be non-negative")
+		}
 		opt.CPUPercent = percent
 		return nil
 	}
 }
 
-// WithCPUQuota sets the CPU CFS (Completely Fair Scheduler) quota
-// parameters:
-//   - quota: the CPU CFS (Completely Fair Scheduler) quota
-func WithCPUQuota(quota int64) create.SetHostConfig {
+// WithCPUQuota sets the CPU CFS (Completely Fair Scheduler) quota for the container.
+//
+// The CPU quota limits the total CPU time that all tasks in a container can use during one scheduling period.
+// A value of 0 means no quota (no limit).
+//
+// Parameters:
+//   - quota: the CPU quota in microseconds or a duration string (e.g., 100000, "1ms", "100ms", "1s")
+func WithCPUQuota[T int | string](quotaInput T) create.SetHostConfig {
 	return func(opt *container.HostConfig) error {
+		var quota int64
+		switch v := any(quotaInput).(type) {
+		case int:
+			quota = int64(v)
+		case string:
+			duration, err := time.ParseDuration(v)
+			if err != nil {
+				return errdefs.NewHostConfigError("cpu_quota", err.Error())
+			}
+			quota = duration.Microseconds()
+		}
+		if quota < 0 {
+			return errdefs.NewHostConfigError("cpu_quota", "quota must be non-negative")
+		}
+
 		opt.CPUQuota = quota
 		return nil
 	}
@@ -574,6 +831,12 @@ func WithCPUQuota(quota int64) create.SetHostConfig {
 //   - cpus: the CPUs in which execution is allowed
 func WithCpusetCpus(cpus string) create.SetHostConfig {
 	return func(opt *container.HostConfig) error {
+		if cpus == "" {
+			return errdefs.NewHostConfigError("cpuset_cpus", "cpus is required")
+		}
+		if err := validateCpuset(cpus); err != nil {
+			return errdefs.NewHostConfigError("cpuset_cpus", err.Error())
+		}
 		opt.CpusetCpus = cpus
 		return nil
 	}
@@ -582,9 +845,21 @@ func WithCpusetCpus(cpus string) create.SetHostConfig {
 // WithMemoryReservation sets the memory soft limit
 // parameters:
 //   - memory: the memory soft limit
-func WithMemoryReservation(memory int64) create.SetHostConfig {
+//
+// note: the memory limit can be specified as an integer in bytes or as a string with a unit (e.g. "100M", "1G")
+func WithMemoryReservation[T int | string](memory T) create.SetHostConfig {
 	return func(opt *container.HostConfig) error {
-		opt.MemoryReservation = memory
+		switch v := any(memory).(type) {
+		case int:
+			opt.MemoryReservation = int64(v)
+		case string:
+			memory, err := units.RAMInBytes(v)
+			if err != nil {
+				return errdefs.NewHostConfigError("memory_reservation", err.Error())
+			}
+			opt.MemoryReservation = memory
+
+		}
 		return nil
 	}
 }
@@ -592,20 +867,50 @@ func WithMemoryReservation(memory int64) create.SetHostConfig {
 // WithMemorySwap sets the total memory limit (memory + swap)
 // parameters:
 //   - memorySwap: the total memory limit (memory + swap)
-func WithMemorySwap(memorySwap int64) create.SetHostConfig {
+//
+// note: the memory limit can be specified as an integer in bytes or as a string with a unit (e.g. "100M", "1G")
+func WithMemorySwap[T int | string](memorySwap T) create.SetHostConfig {
 	return func(opt *container.HostConfig) error {
-		opt.MemorySwap = memorySwap
+		switch v := any(memorySwap).(type) {
+		case int:
+			opt.MemorySwap = int64(v)
+		case string:
+			memorySwap, err := units.RAMInBytes(v)
+			if err != nil {
+				return errdefs.NewHostConfigError("memory_swap", err.Error())
+			}
+			opt.MemorySwap = memorySwap
+		}
 		return nil
 	}
 }
 
-// WithUlimits appends a ulimit option to the host configuration.
-// parameters:
-//   - name: the name of the ulimit
-//   - soft: the soft limit
-//   - hard: the hard limit
+// WithUlimits adds a user resource limit (ulimit) to the container's host configuration.
+//
+// Ulimits define resource constraints for processes running inside the container,
+// such as the maximum number of open files ("nofile") or processes ("nproc").
+//
+// Parameters:
+//   - name: the name of the resource to limit (e.g., "nofile", "nproc").
+//   - soft: the soft limit, which is the value enforced for running processes.
+//   - hard: the hard limit, which is the maximum value to which the soft limit can be raised.
+//
+// Returns an error if:
+//   - the name is empty,
+//   - any limit is negative,
+//   - or the soft limit is greater than the hard limit.
+
 func WithUlimits(name string, soft, hard int64) create.SetHostConfig {
 	return func(opt *container.HostConfig) error {
+		if name == "" {
+			return errdefs.NewHostConfigError("ulimits", "ulimit name cannot be empty")
+		}
+		if soft < 0 || hard < 0 {
+			return errdefs.NewHostConfigError("ulimits", "ulimit values must be non-negative")
+		}
+		if soft > hard {
+			return errdefs.NewHostConfigError("ulimits", fmt.Sprintf("soft limit (%d) cannot be greater than hard limit (%d)", soft, hard))
+		}
 		if opt.Ulimits == nil {
 			opt.Ulimits = make([]*container.Ulimit, 0)
 		}
@@ -632,24 +937,43 @@ func WithInit() create.SetHostConfig {
 }
 
 // WithCPURealtimePeriod sets the CPU real-time period in microseconds.
-// This option is only applicable when running containers on operating systems
-// that support CPU real-time scheduler.
-// parameters:
-//   - period: the CPU real-time period in microseconds
-func WithCPURealtimePeriod(period int64) create.SetHostConfig {
+// This controls the scheduling period for real-time tasks in the container.
+//
+// Accepts either:
+//   - an int value representing microseconds directly (e.g. 100000 for 100ms), or
+//   - a duration string (e.g. "1ms", "1s", "750ms").
+//
+// Valid values range from 1,000 to 1,000,000 microseconds (1ms to 1s), inclusive.
+func WithCPURealtimePeriod[T int | string](period T) create.SetHostConfig {
 	return func(opt *container.HostConfig) error {
-		opt.CPURealtimePeriod = period
+		switch v := any(period).(type) {
+		case int:
+			opt.CPURealtimePeriod = int64(v)
+		case string:
+			period, err := time.ParseDuration(v)
+			if err != nil {
+				return errdefs.NewHostConfigError("cpu_realtime_period", err.Error())
+			}
+			micro := period.Microseconds()
+			if micro < 1000 || micro > 1_000_000 {
+				return errdefs.NewHostConfigError("cpu_realtime_period", "must be between 1000 and 1,000,000 microseconds")
+			}
+
+			opt.CPURealtimePeriod = int64(period.Microseconds())
+		}
 		return nil
 	}
 }
 
 // WithCPURealtimeRuntime sets the CPU real-time runtime in microseconds.
-// This option is only applicable when running containers on operating systems
-// that support CPU real-time scheduler.
+// A value of -1 disables the limit (default).
 // parameters:
 //   - runtime: the CPU real-time runtime in microseconds
 func WithCPURealtimeRuntime(runtime int64) create.SetHostConfig {
 	return func(opt *container.HostConfig) error {
+		if runtime < -1 {
+			return errdefs.NewHostConfigError("cpu_realtime_runtime", "runtime must be -1 or >= 0")
+		}
 		opt.CPURealtimeRuntime = runtime
 		return nil
 	}
@@ -661,9 +985,39 @@ func WithCPURealtimeRuntime(runtime int64) create.SetHostConfig {
 //   - mems: the memory nodes in which execution is allowed
 func WithCpusetMems(mems string) create.SetHostConfig {
 	return func(opt *container.HostConfig) error {
+		if mems == "" {
+			return errdefs.NewHostConfigError("cpuset_mems", "mems is required")
+		}
+		if err := validateCpuset(mems); err != nil {
+			return errdefs.NewHostConfigError("cpuset_mems", err.Error())
+		}
 		opt.CpusetMems = mems
 		return nil
 	}
+}
+func validateCpuset(mems string) error {
+	ranges := strings.Split(mems, ",")
+	for _, r := range ranges {
+		r = strings.TrimSpace(r)
+		if r == "" {
+			return fmt.Errorf("empty cpuset range")
+		}
+		parts := strings.Split(r, "-")
+		if len(parts) == 1 {
+			if _, err := strconv.Atoi(parts[0]); err != nil {
+				return fmt.Errorf("invalid cpuset value: %s", r)
+			}
+		} else if len(parts) == 2 {
+			start, err1 := strconv.Atoi(parts[0])
+			end, err2 := strconv.Atoi(parts[1])
+			if err1 != nil || err2 != nil || start > end {
+				return fmt.Errorf("invalid cpuset range: %s", r)
+			}
+		} else {
+			return fmt.Errorf("invalid cpuset format: %s", r)
+		}
+	}
+	return nil
 }
 
 // WithMemorySwappiness tunes container memory swappiness (0 to 100).
@@ -674,6 +1028,10 @@ func WithCpusetMems(mems string) create.SetHostConfig {
 //   - swappiness: the swappiness level
 func WithMemorySwappiness(swappiness int64) create.SetHostConfig {
 	return func(opt *container.HostConfig) error {
+		if swappiness < 0 || swappiness > 100 {
+			return errdefs.NewHostConfigError("memory_swappiness", "swappiness must be between 0 and 100")
+		}
+
 		opt.MemorySwappiness = &swappiness
 		return nil
 	}
@@ -683,9 +1041,20 @@ func WithMemorySwappiness(swappiness int64) create.SetHostConfig {
 // This is the hard limit for kernel memory that cannot be swapped out.
 // parameters:
 //   - memory: the kernel memory limit in bytes
-func WithKernelMemory(memory int64) create.SetHostConfig {
+//
+// note: the kernel memory limit can be specified as an integer in bytes or as a string with a unit (e.g. "100M", "1G")
+func WithKernelMemory[T int | string](memory T) create.SetHostConfig {
 	return func(opt *container.HostConfig) error {
-		opt.KernelMemory = memory
+		switch v := any(memory).(type) {
+		case int:
+			opt.KernelMemory = int64(v)
+		case string:
+			kernelMemory, err := units.RAMInBytes(v)
+			if err != nil {
+				return errdefs.NewHostConfigError("kernel_memory", err.Error())
+			}
+			opt.KernelMemory = kernelMemory
+		}
 		return nil
 	}
 }
@@ -695,6 +1064,9 @@ func WithKernelMemory(memory int64) create.SetHostConfig {
 //   - limit: the PIDs limit
 func WithPidsLimit(limit int64) create.SetHostConfig {
 	return func(opt *container.HostConfig) error {
+		if limit < -1 || limit == 0 {
+			return errdefs.NewHostConfigError("pids_limit", "limit must be -1 (unlimited) or a positive integer")
+		}
 		opt.PidsLimit = &limit
 		return nil
 	}
@@ -706,54 +1078,109 @@ func WithPidsLimit(limit int64) create.SetHostConfig {
 //   - weight: the block IO weight
 func WithBlkioWeight(weight uint16) create.SetHostConfig {
 	return func(opt *container.HostConfig) error {
+		if weight < 10 || weight > 1000 {
+			return errdefs.NewHostConfigError("blkio_weight", "weight must be between 10 and 1000")
+		}
 		opt.BlkioWeight = weight
 		return nil
 	}
 }
 
-// WithBlkioDeviceReadBps appends the block IO read rate limit for a device.
-// parameters:
-//   - devicePath: the path to the device
-//   - rate: the read rate limit
-func WithBlkioDeviceReadBps(devicePath string, rate uint64) create.SetHostConfig {
+// WithBlkioDeviceReadBps appends a block IO read bandwidth throttle limit
+// for a specific device to the container's host configuration.
+// It limits the read rate (in bytes per second) on the specified device within the container.
+//
+// Parameters:
+//   - devicePath: the device path (e.g., "/dev/sda")
+//   - rate: the maximum read rate limit, either as an int (bytes per second)
+//     or a human-readable string with units (e.g., "10MiB", "500KiB").
+//
+// Returns an error if the string rate cannot be parsed.
+func WithBlkioDeviceReadBps[T int | string](devicePath string, rate T) create.SetHostConfig {
 	return func(opt *container.HostConfig) error {
 		if opt.BlkioDeviceReadBps == nil {
 			opt.BlkioDeviceReadBps = make([]*blkiodev.ThrottleDevice, 0)
 		}
+		if devicePath == "" {
+			return errdefs.NewHostConfigError("blkio_device_read_bps", "device path cannot be empty")
+		}
+
+		var rateVal uint64
+		switch v := any(rate).(type) {
+		case int:
+			rateVal = uint64(v)
+		case string:
+			parsedBytes, err := units.RAMInBytes(v)
+			if err != nil {
+				return errdefs.NewHostConfigError("blkio_device_read_bps", err.Error())
+			}
+			rateVal = uint64(parsedBytes)
+		}
+
 		opt.BlkioDeviceReadBps = append(opt.BlkioDeviceReadBps, &blkiodev.ThrottleDevice{
 			Path: devicePath,
-			Rate: rate,
+			Rate: rateVal,
 		})
 		return nil
 	}
 }
 
-// WithBlkioDeviceWriteBps appends the block IO write rate limit for a device.
-// parameters:
-//   - devicePath: the path to the device
-//   - rate: the write rate limit
-func WithBlkioDeviceWriteBps(devicePath string, rate uint64) create.SetHostConfig {
+// WithBlkioDeviceWriteBps appends a block IO write bandwidth throttle limit
+// for a specific device to the container's host configuration.
+// It limits the write rate (in bytes per second) on the specified device within the container.
+//
+// Parameters:
+//   - devicePath: the device path (e.g., "/dev/sda")
+//   - rate: the maximum write rate limit, either as an int (bytes per second)
+//     or a human-readable string with units (e.g., "10MiB", "500KiB").
+//
+// Returns an error if the string rate cannot be parsed.
+func WithBlkioDeviceWriteBps[T int | string](devicePath string, rate T) create.SetHostConfig {
 	return func(opt *container.HostConfig) error {
 		if opt.BlkioDeviceWriteBps == nil {
 			opt.BlkioDeviceWriteBps = make([]*blkiodev.ThrottleDevice, 0)
 		}
+		if devicePath == "" {
+			return errdefs.NewHostConfigError("blkio_device_write_bps", "device path cannot be empty")
+		}
+
+		var rateVal uint64
+		switch v := any(rate).(type) {
+		case int:
+			rateVal = uint64(v)
+		case string:
+			parsedBytes, err := units.RAMInBytes(v)
+			if err != nil {
+				return errdefs.NewHostConfigError("blkio_device_write_bps", err.Error())
+			}
+			rateVal = uint64(parsedBytes)
+		}
+
 		opt.BlkioDeviceWriteBps = append(opt.BlkioDeviceWriteBps, &blkiodev.ThrottleDevice{
 			Path: devicePath,
-			Rate: rate,
+			Rate: rateVal,
 		})
 		return nil
 	}
 }
 
-// WithBlkioDeviceReadIOps appends the block IO read rate limit for a device.
-// parameters:
-//   - devicePath: the path to the device
-//   - rate: the read rate limit
+// WithBlkioDeviceReadIOps appends a block IO read operations per second (IOPS) limit
+// for a specific device to the container's host configuration.
+//
+// Parameters:
+//   - devicePath: the device path (e.g., "/dev/sda")
+//   - rate: the maximum read IOPS limit
+//
+// Returns an error if the string rate cannot be parsed.
 func WithBlkioDeviceReadIOps(devicePath string, rate uint64) create.SetHostConfig {
 	return func(opt *container.HostConfig) error {
 		if opt.BlkioDeviceReadIOps == nil {
 			opt.BlkioDeviceReadIOps = make([]*blkiodev.ThrottleDevice, 0)
 		}
+		if devicePath == "" {
+			return errdefs.NewHostConfigError("blkio_device_write_iops", "device path cannot be empty")
+		}
+
 		opt.BlkioDeviceReadIOps = append(opt.BlkioDeviceReadIOps, &blkiodev.ThrottleDevice{
 			Path: devicePath,
 			Rate: rate,
@@ -762,15 +1189,23 @@ func WithBlkioDeviceReadIOps(devicePath string, rate uint64) create.SetHostConfi
 	}
 }
 
-// WithBlkioDeviceWriteIOps appends the block IO write rate limit for a device.
-// parameters:
-//   - devicePath: the path to the device
-//   - rate: the write rate limit
+// WithBlkioDeviceWriteIOps appends a block IO write operations per second (IOPS) limit
+// for a specific device to the container's host configuration.
+//
+// Parameters:
+//   - devicePath: the device path (e.g., "/dev/sda")
+//   - rate: the maximum write IOPS limit
+//
+// Returns an error if the string rate cannot be parsed.
 func WithBlkioDeviceWriteIOps(devicePath string, rate uint64) create.SetHostConfig {
 	return func(opt *container.HostConfig) error {
 		if opt.BlkioDeviceWriteIOps == nil {
 			opt.BlkioDeviceWriteIOps = make([]*blkiodev.ThrottleDevice, 0)
 		}
+		if devicePath == "" {
+			return errdefs.NewHostConfigError("blkio_device_write_iops", "device path cannot be empty")
+		}
+
 		opt.BlkioDeviceWriteIOps = append(opt.BlkioDeviceWriteIOps, &blkiodev.ThrottleDevice{
 			Path: devicePath,
 			Rate: rate,
@@ -779,22 +1214,35 @@ func WithBlkioDeviceWriteIOps(devicePath string, rate uint64) create.SetHostConf
 	}
 }
 
-// WithSysctls appends a sysctl configuration for the container
-// parameters:
-//   - sysctls: the sysctls to use
+// WithSysctls adds or updates a sysctl key-value pair in the container's host configuration.
+// Sysctls allow tuning of kernel parameters inside the container.
+//
+// Parameters:
+//   - key: the sysctl parameter name (e.g., "net.ipv4.ip_forward")
+//   - value: the sysctl parameter value (e.g., "1")
+//
+// Note: The effectiveness of sysctls depends on the container runtime and host kernel support.
 func WithSysctls(key, value string) create.SetHostConfig {
 	return func(opt *container.HostConfig) error {
 		if opt.Sysctls == nil {
 			opt.Sysctls = make(map[string]string)
 		}
+		if key == "" {
+			return errdefs.NewHostConfigError("sysctls", "key cannot be empty")
+		}
+
 		opt.Sysctls[key] = value
 		return nil
 	}
 }
 
-// WithDeviceCgroupRules sets the device cgroup rules for the container
-// parameters:
-//   - rules: the device cgroup rules to use
+// WithDeviceCgroupRules appends device cgroup rules to the container's host configuration.
+// Device cgroup rules control access to devices inside the container.
+//
+// Parameters:
+//   - rules: one or more device cgroup rule strings (e.g., "c 1:3 rwm").
+//
+// Note: Rules must follow the device cgroup format accepted by the Linux kernel.
 func WithDeviceCgroupRules(rules ...string) create.SetHostConfig {
 	return func(opt *container.HostConfig) error {
 		if opt.DeviceCgroupRules == nil {
@@ -805,9 +1253,11 @@ func WithDeviceCgroupRules(rules ...string) create.SetHostConfig {
 	}
 }
 
-// WithCgroupParent sets the cgroup parent for the container
-// parameters:
-//   - parent: the cgroup parent to use
+// WithCgroupParent sets the cgroup parent for the container in the host configuration.
+// This determines the parent cgroup under which the container's cgroup will be created.
+//
+// Parameters:
+//   - parent: the cgroup parent path (e.g., "docker", "system.slice")
 func WithCgroupParent(parent string) create.SetHostConfig {
 	return func(opt *container.HostConfig) error {
 		opt.CgroupParent = parent
@@ -815,12 +1265,16 @@ func WithCgroupParent(parent string) create.SetHostConfig {
 	}
 }
 
-// WithDeviceRequest sets the device request for the container
-// parameters:
-//   - driver: the driver to use
-//   - count: the count of the device
-//   - deviceIDs: the device IDs
-//   - capabilities: the capabilities of the device
+// WithDeviceRequest adds a device request to the container's host configuration.
+// Device requests specify special device access requirements, such as GPUs.
+//
+// Parameters:
+//   - driver: the device driver name (e.g., "nvidia")
+//   - count: the number of devices to request (use -1 for all available)
+//   - deviceIDs: specific device IDs to request (empty for any)
+//   - capabilities: list of capability sets required (e.g., [][]string{{"gpu"}, {"compute"}})
+//
+// Note: Device requests are commonly used for GPU access and require appropriate drivers.
 func WithDeviceRequest(driver string, count int, deviceIDs []string, capabilities [][]string) create.SetHostConfig {
 	return func(opt *container.HostConfig) error {
 		if opt.DeviceRequests == nil {
@@ -837,10 +1291,13 @@ func WithDeviceRequest(driver string, count int, deviceIDs []string, capabilitie
 	}
 }
 
-// WithLogDriver sets the log driver for the container
-// parameters:
-//   - driver: the log driver to use
-//   - options: the options for the log driver
+// WithLogDriver sets the log driver and its options for the container.
+//
+// Parameters:
+//   - driver: the log driver to use (e.g., "json-file", "syslog", "fluentd")
+//   - options: a map of driver-specific options to configure the log driver
+//
+// Note: The supported log drivers and options depend on the container runtime and host configuration.
 func WithLogDriver(driver string, options map[string]string) create.SetHostConfig {
 	return func(opt *container.HostConfig) error {
 		opt.LogConfig = container.LogConfig{

@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>go-contain - Docker Container Management in Go</title>
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            margin: 0;
+            padding: 0;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            overflow-x: hidden;
+        }
+
+        body::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="grain" width="100" height="100" patternUnits="userSpaceOnUse"><circle cx="50" cy="50" r="1" fill="white" opacity="0.1"/></pattern></defs><rect width="100" height="100" fill="url(%23grain)"/></svg>');
+            pointer-events: none;
+        }
+
+        .container {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(20px);
+            padding: 3.5rem;
+            border-radius: 24px;
+            box-shadow:
+                0 25px 50px rgba(0, 0, 0, 0.15),
+                0 0 0 1px rgba(255, 255, 255, 0.1);
+            text-align: center;
+            max-width: 700px;
+            margin: 2rem;
+            position: relative;
+            animation: slideUp 0.8s ease-out;
+        }
+
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        h1 {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 1rem;
+            font-size: 3rem;
+            font-weight: 800;
+            letter-spacing: -0.02em;
+        }
+
+        .subtitle {
+            color: #64748b;
+            font-size: 1.3rem;
+            margin-bottom: 2.5rem;
+            font-weight: 500;
+        }
+
+        .features {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.8rem;
+            margin: 2.5rem 0;
+        }
+
+        .feature {
+            background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+            padding: 2rem;
+            border-radius: 16px;
+            border: 1px solid rgba(148, 163, 184, 0.1);
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .feature::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: linear-gradient(90deg, #667eea, #764ba2);
+        }
+
+        .feature:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+        }
+
+        .feature h3 {
+            color: #1e293b;
+            margin-bottom: 0.8rem;
+            font-size: 1.2rem;
+            font-weight: 600;
+        }
+
+        .feature p {
+            color: #64748b;
+            font-size: 0.95rem;
+            line-height: 1.6;
+            margin: 0;
+        }
+
+        .status {
+            background: linear-gradient(135deg, #dcfce7 0%, #bbf7d0 100%);
+            color: #166534;
+            padding: 1.2rem;
+            border-radius: 12px;
+            margin-top: 2.5rem;
+            font-weight: 600;
+            border: 1px solid rgba(34, 197, 94, 0.2);
+            position: relative;
+        }
+
+        .status::before {
+            content: '✓';
+            margin-right: 0.5rem;
+            font-weight: bold;
+        }
+
+        .logo {
+            font-size: 4rem;
+            margin-bottom: 1.5rem;
+            filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.1));
+        }
+
+        .code-example {
+            margin-top: 3rem;
+            text-align: left;
+        }
+
+        .code-example h3 {
+            color: #1e293b;
+            margin-bottom: 1rem;
+            font-size: 1.3rem;
+            font-weight: 600;
+        }
+
+        .code-example p {
+            color: #64748b;
+            margin-bottom: 1.5rem;
+            font-size: 1rem;
+            line-height: 1.6;
+        }
+
+        .code-block {
+            background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
+            border: 1px solid #475569;
+            border-radius: 12px;
+            padding: 1.5rem;
+            overflow-x: auto;
+            position: relative;
+        }
+
+        .code-block::before {
+            content: 'CODE';
+            position: absolute;
+            top: -10px;
+            left: 20px;
+            background: #f8fafc;
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
+            font-size: 0.7rem;
+            font-weight: 600;
+            color: #475569;
+            border: 1px solid #e2e8f0;
+            letter-spacing: 0.05em;
+            text-transform: uppercase;
+        }
+
+        .code-block pre {
+            margin: 0;
+            font-family: 'JetBrains Mono', 'Fira Code', 'Courier New', monospace;
+            font-size: 0.9rem;
+            line-height: 1.5;
+            color: #e2e8f0;
+        }
+
+        .code-block code {
+            background: none;
+            padding: 0;
+        }
+
+        .code-block .comment {
+            color: #64748b;
+            font-style: italic;
+        }
+
+        .code-block .keyword {
+            color: #fbbf24;
+            font-weight: 600;
+        }
+
+        .code-block .string {
+            color: #34d399;
+        }
+
+        .code-block .number {
+            color: #60a5fa;
+        }
+
+        .code-block .function {
+            color: #a78bfa;
+        }
+
+        .code-block .type {
+            color: #f97316;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 2rem;
+                margin: 1rem;
+            }
+
+            h1 {
+                font-size: 2.5rem;
+            }
+
+            .features {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <h1>go-contain</h1>
+        <p class="subtitle">Docker Container Management in Go</p>
+
+        <div class="status">
+            nginx server running successfully with go-contain
+        </div>
+
+        <div class="code-example">
+            <h3>This Example</h3>
+            <p>This nginx server was built and deployed using go-contain:</p>
+            <div class="code-block">
+                <pre><code><span class="comment">// 1. Create build context with Dockerfile</span>
+dctx, err := <span class="function">WithDockerContext</span>(<span class="string">"./examples/nginx"</span>)
+
+<span class="comment">// 2. Build custom nginx image</span>
+cli, err := client.<span class="function">NewClient</span>(client.<span class="function">FromEnv</span>())
+resp, err := cli.<span class="function">ImageBuild</span>(ctx, dctx, build.<span class="function">WithTags</span>(<span class="string">"nginx-example:latest"</span>))
+
+<span class="comment">// 3. Create compose project</span>
+project := create.<span class="function">NewProject</span>(<span class="string">"nginx-example"</span>)
+project.<span class="function">WithService</span>(<span class="string">"nginx"</span>, create.<span class="function">NewContainer</span>().
+    <span class="function">With</span>(
+        cc.<span class="function">WithImage</span>(<span class="string">"nginx-example:latest"</span>),
+        cc.<span class="function">WithCommand</span>(<span class="string">"nginx"</span>, <span class="string">"-g"</span>, <span class="string">"daemon off;"</span>),
+        hc.<span class="function">WithPortBindings</span>(<span class="string">"tcp"</span>, <span class="string">"0.0.0.0"</span>, <span class="string">"8080"</span>, <span class="string">"80"</span>),
+    ),
+)
+
+<span class="comment">// 4. Deploy with compose</span>
+app := compose.<span class="function">NewCompose</span>(project)
+err = app.<span class="function">Up</span>(ctx, up.<span class="function">WithDetach</span>(), up.<span class="function">WithRemoveOrphans</span>())
+
+<span class="comment">// Helper function that creates the Dockerfile</span>
+<span class="keyword">func</span> <span class="function">WithDockerContext</span>(path <span class="type">string</span>) (<span class="type">io.Reader</span>, <span class="type">error</span>) {
+    df := create.<span class="function">NewDockerFile</span>()
+    df.<span class="function">From</span>(<span class="string">"nginx"</span>, <span class="string">"latest"</span>)
+    df.<span class="function">Copy</span>(<span class="string">"nginx.conf"</span>, <span class="string">"/etc/nginx/nginx.conf"</span>)
+    df.<span class="function">Copy</span>(<span class="string">"index.html"</span>, <span class="string">"/usr/share/nginx/html/index.html"</span>)
+    <span class="keyword">return</span> df.<span class="function">NewLocalBuildContext</span>(path)
+}</code></pre>
+            </div>
+        </div>
+    </div>
+</body>
+
+</html>

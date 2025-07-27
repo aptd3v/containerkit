@@ -13,7 +13,7 @@ import (
 	"strings"
 
 	"github.com/aptd3v/go-contain/pkg/client"
-	"github.com/aptd3v/go-contain/pkg/client/options/container/exec"
+	"github.com/aptd3v/go-contain/pkg/client/options/container/execopt"
 	"github.com/aptd3v/go-contain/pkg/compose"
 	"github.com/aptd3v/go-contain/pkg/compose/options/up"
 	"github.com/aptd3v/go-contain/pkg/create"
@@ -99,7 +99,7 @@ func main() {
 	}
 	fmt.Println("MongoDB replica set", "rs0", "url", url)
 	fmt.Println("MongoDB replica set initialized and running.")
-	fmt.Println("You can access Mongo Express at http://localhost:3000")
+	fmt.Println("You can access Mongo Express at http://localhost:8081")
 	fmt.Println("Press Ctrl+C to stop the containers.")
 	<-ctx.Done()
 }
@@ -112,15 +112,15 @@ func WithMongoReplica(index int) *create.Container {
 			cc.WithCommand("mongod", "--replSet", "rs0", "--bind_ip_all"),
 			cc.WithHealthCheck(
 				health.WithTest("CMD", "mongosh", "--eval", `db.adminCommand("ping")`),
-				health.WithInterval(1),
+				health.WithInterval("1s"),
+				health.WithTimeout("10s"),
+				health.WithStartPeriod("0s"),
 				health.WithRetries(5),
-				health.WithTimeout(10),
-				health.WithStartPeriod(1),
 			),
 			cc.WithExposedPort("tcp", "27017"),
 		).
 		WithHostConfig(
-			hc.WithRestartPolicyAlways(),
+			hc.WithRestartPolicyUnlessStopped(),
 		).
 		WithNetworkConfig(
 			nc.WithEndpoint("mongo-cluster"),
@@ -134,6 +134,7 @@ func Initialize(ctx context.Context, initContainer string, members []RSMember) e
 		tools.WhenTrue(os.Getenv("DOCKER_HOST") != "",
 			client.FromEnv(),
 		),
+		client.WithAPIVersionNegotiation(),
 	)
 	if err != nil {
 		return fmt.Errorf("failed to create Docker client: %w", err)
@@ -157,9 +158,9 @@ func Initialize(ctx context.Context, initContainer string, members []RSMember) e
 	res, err := cli.ContainerExecCreate(
 		ctx,
 		initContainer,
-		exec.WithCmd(command...),
-		exec.WithAttachStdout(),
-		exec.WithAttachStderr(),
+		execopt.WithCommand(command...),
+		execopt.WithAttachStdout(),
+		execopt.WithAttachStderr(),
 	)
 	if err != nil {
 		return fmt.Errorf("failed to create exec command: %w", err)
@@ -182,7 +183,7 @@ func WithMongoExpress(url string) *create.Container {
 			cc.WithEnv("ME_CONFIG_MONGODB_AUTH_PASSWORD", "password"),
 		).
 		WithHostConfig(
-			hc.WithPortBindings("tcp", "0.0.0.0", "3000", "8081"),
+			hc.WithPortBindings("tcp", "0.0.0.0", "8081", "8081"),
 			hc.WithRestartPolicyAlways(),
 		).
 		WithNetworkConfig(

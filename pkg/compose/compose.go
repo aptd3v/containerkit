@@ -36,6 +36,58 @@ type SetComposeDownOption func(*ComposeDownOptions) error
 // SetComposeLogsOption is a function that sets a ComposeLogsOptions
 type SetComposeLogsOption func(*ComposeLogsOptions) error
 
+// SetComposeKillOption is a function that sets a ComposeKillOptions
+type SetComposeKillOption func(*ComposeKillOptions) error
+
+// Events is a function that runs the docker compose events command
+// it returns a channel of Events and an error if the command fails
+// it also returns nil if the context is canceled
+func (c *compose) Events(ctx context.Context, service string) (<-chan Events, <-chan error, error) {
+	eventsCh := make(chan Events, 1)
+	errCh := make(chan error, 1)
+
+	writer := newEventsWriter(ctx, eventsCh, errCh)
+	cmd, err := c.command(ctx, writer, []string{"events", "--json", service})
+	if err != nil {
+		return nil, nil, NewComposeEventsError(err)
+	}
+
+	go func() {
+		defer close(eventsCh)
+		defer close(errCh)
+
+		if err := handleContextCancellation(ctx, cmd.Run()); err != nil {
+			errCh <- NewComposeEventsError(err)
+		}
+	}()
+
+	return eventsCh, errCh, nil
+}
+
+// Kill is a function that runs the docker compose kill command
+// it returns an error if the command fails, or nil if the command succeeds
+// it also returns nil if the context is canceled
+func (c *compose) Kill(ctx context.Context, setters ...SetComposeKillOption) error {
+	opt := &ComposeKillOptions{
+		Flags:  []string{"kill"},
+		Writer: os.Stdout,
+	}
+	for _, setter := range setters {
+		if err := setter(opt); err != nil {
+			return NewComposeKillError(err)
+		}
+	}
+	flags, err := opt.GenerateFlags()
+	if err != nil {
+		return NewComposeKillError(err)
+	}
+	cmd, err := c.command(ctx, opt.Writer, flags, opt.Profiles...)
+	if err != nil {
+		return NewComposeKillError(err)
+	}
+	return handleContextCancellation(ctx, cmd.Run())
+}
+
 func (c *compose) Up(ctx context.Context, setters ...SetComposeUpOption) error {
 	opt := &ComposeUpOptions{
 		//default flags
@@ -167,7 +219,19 @@ func (c *compose) command(ctx context.Context, writer io.Writer, args []string, 
 }
 
 func handleContextCancellation(ctx context.Context, err error) error {
-	if errors.Is(err, context.Canceled) || ctx.Err() == context.Canceled {
+	if err == nil {
+		return nil
+	}
+	if errors.Is(err, context.Canceled) {
+		return nil
+	}
+	if ctx.Err() == context.Canceled {
+		return nil
+	}
+	if errors.Is(err, context.DeadlineExceeded) {
+		return nil
+	}
+	if ctx.Err() == context.DeadlineExceeded {
 		return nil
 	}
 	return err

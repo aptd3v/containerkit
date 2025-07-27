@@ -2,7 +2,9 @@ package client
 
 import (
 	"context"
+	"fmt"
 	"io"
+	"os"
 
 	"github.com/aptd3v/go-contain/pkg/client/options/container/attach"
 	"github.com/aptd3v/go-contain/pkg/client/options/container/checkpointcreate"
@@ -10,8 +12,8 @@ import (
 	"github.com/aptd3v/go-contain/pkg/client/options/container/checkpointlist"
 	"github.com/aptd3v/go-contain/pkg/client/options/container/commit"
 	"github.com/aptd3v/go-contain/pkg/client/options/container/copyto"
-	"github.com/aptd3v/go-contain/pkg/client/options/container/exec"
 	"github.com/aptd3v/go-contain/pkg/client/options/container/execattach"
+	"github.com/aptd3v/go-contain/pkg/client/options/container/execopt"
 	"github.com/aptd3v/go-contain/pkg/client/options/container/execresize"
 	"github.com/aptd3v/go-contain/pkg/client/options/container/execstart"
 	"github.com/aptd3v/go-contain/pkg/client/options/container/list"
@@ -24,6 +26,7 @@ import (
 	"github.com/aptd3v/go-contain/pkg/client/options/container/wait"
 	"github.com/aptd3v/go-contain/pkg/client/response"
 	"github.com/aptd3v/go-contain/pkg/create"
+	"github.com/aptd3v/go-contain/pkg/terminal"
 	"github.com/docker/docker/api/types/checkpoint"
 	"github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/api/types/filters"
@@ -174,25 +177,48 @@ the response. This allows the caller to synchronize ContainerWait with other cal
 "next-exit" condition before issuing a ContainerStart request.
 */
 func (c *Client) ContainerWait(ctx context.Context, id string, condition wait.WaitCondition) (<-chan response.ContainerWait, <-chan error) {
-	wait, err := c.wrapped.ContainerWait(ctx, id, container.WaitCondition(condition))
-	if err != nil {
-		return nil, nil
-	}
-	waitChan := make(chan response.ContainerWait)
+	waitCh, errCh := c.wrapped.ContainerWait(ctx, id, container.WaitCondition(condition))
+
+	outWait := make(chan response.ContainerWait, 1)
+	outErr := make(chan error, 1)
+
 	go func() {
-		defer close(waitChan)
-		for {
-			select {
-			case <-ctx.Done():
-				return
-			case wait := <-wait:
-				waitChan <- response.ContainerWait{
-					WaitResponse: wait,
-				}
+		defer close(outWait)
+		defer close(outErr)
+
+		select {
+		case <-ctx.Done():
+			return
+		case err, ok := <-errCh:
+			if ok && err != nil {
+				outErr <- err
+			}
+		case wait, ok := <-waitCh:
+			if ok {
+				outWait <- response.ContainerWait{WaitResponse: wait}
 			}
 		}
 	}()
-	return waitChan, nil
+
+	return outWait, outErr
+}
+
+// ContainerWaitSync blocks until the container reaches the desired state,
+// an error occurs, or the context is cancelled.
+//
+// Returns nil if the container completes successfully or if the context is cancelled,
+// and returns a non-nil error only if the container fails or Docker reports an error.
+func (c *Client) ContainerWaitSync(ctx context.Context, id string, condition wait.WaitCondition) error {
+	waitCh, errCh := c.ContainerWait(ctx, id, condition)
+
+	select {
+	case <-ctx.Done():
+		return nil
+	case err := <-errCh:
+		return err
+	case <-waitCh:
+		return nil
+	}
 }
 
 // ContainerStats returns near realtime stats for a given container.
@@ -208,7 +234,7 @@ func (c *Client) ContainerStats(ctx context.Context, id string, stream bool) (*r
 }
 
 // ContainerExecCreate creates a new exec configuration to run an exec process.
-func (c *Client) ContainerExecCreate(ctx context.Context, containerID string, setters ...exec.SetContainerExecOption) (*response.ContainerExecCreate, error) {
+func (c *Client) ContainerExecCreate(ctx context.Context, containerID string, setters ...execopt.SetContainerExecOption) (*response.ContainerExecCreate, error) {
 	op := container.ExecOptions{}
 	for _, setter := range setters {
 		if setter != nil {
@@ -533,4 +559,23 @@ func (c *Client) ContainerAttach(ctx context.Context, id string, setters ...atta
 	return &response.ContainerHijackedResponse{
 		HijackedResponse: hijacked,
 	}, nil
+}
+
+// ContainerExecAttachTerminal attaches to a container exec command and returns a terminal session
+// that can be used to interact with the command. The session handles terminal setup,
+// raw mode, and cleanup automatically.
+func (c *Client) ContainerExecAttachTerminal(ctx context.Context, execID string, setters ...execattach.SetContainerExecAttachOption) (*terminal.Session, error) {
+	hijack, err := c.ContainerExecAttach(ctx, execID, setters...)
+	if err != nil {
+		return nil, fmt.Errorf("failed to attach to container exec: %w", err)
+	}
+
+	// Create and return a new terminal session
+	session, err := terminal.NewSession(os.Stdin, hijack.Conn, hijack.Reader)
+	if err != nil {
+		hijack.Close()
+		return nil, fmt.Errorf("failed to create terminal session: %w", err)
+	}
+
+	return session, nil
 }

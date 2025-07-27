@@ -1,5 +1,5 @@
-// package exec provides options for the container exec.
-package exec
+// package execopt provides options for the container exec create.
+package execopt
 
 import (
 	"fmt"
@@ -7,7 +7,7 @@ import (
 	"github.com/docker/docker/api/types/container"
 )
 
-// SetContainerExecOption is a function that sets a parameter for the container exec.
+// SetContainerExecOption is a function that sets a parameter for the container exec create.
 type SetContainerExecOption func(*container.ExecOptions) error
 
 // WithUser sets the user for the exec options.
@@ -112,7 +112,7 @@ func WithWorkingDir(workingDir string) SetContainerExecOption {
 }
 
 // WithCmd appends the command to the exec options.
-func WithCmd(cmd ...string) SetContainerExecOption {
+func WithCommand(cmd ...string) SetContainerExecOption {
 
 	return func(o *container.ExecOptions) error {
 		if o.Cmd == nil {

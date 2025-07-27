@@ -5,6 +5,7 @@ import (
 
 	"github.com/aptd3v/go-contain/pkg/create"
 	"github.com/aptd3v/go-contain/pkg/create/config/hc/mount"
+	"github.com/aptd3v/go-contain/pkg/tools"
 )
 
 // WithRWHostBindMount creates a read-write host bound mount
@@ -190,16 +191,11 @@ func WithTmpfsMountCustomOptions(target string, sizeBytes int, flags ...[]string
 //   - target: the target of the mount
 //   - readonly: true if the mount should be read only, false otherwise
 func WithNonRecursiveBindMount(source, target string, readonly bool) create.SetHostConfig {
-	opts := []mount.SetMountConfig{
+	return WithMountPoint(
 		mount.WithType(mount.MountTypeBind),
 		mount.WithSource(source),
 		mount.WithTarget(target),
 		mount.WithBindNonRecursive(),
-	}
-	if readonly {
-		opts = append(opts, mount.WithReadOnly())
-	} else {
-		opts = append(opts, mount.WithReadWrite())
-	}
-	return WithMountPoint(opts...)
+		tools.WhenTrueElse(readonly, mount.WithReadOnly(), mount.WithReadWrite()),
+	)
 }
