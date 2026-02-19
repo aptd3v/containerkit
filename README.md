@@ -517,7 +517,7 @@ go-contain-codegen -f docker-compose.yaml -o main.go -main
 |------|-------------|
 | `-f` | Compose file path (repeatable). Defaults to `docker-compose.yaml` / `compose.yaml` if omitted. |
 | `-o` | Output Go file (default: stdout). |
-| `-pkg` | Package name for generated code (default: `main`). Use a library name (e.g. `mypkg`) to get `func Project() *create.Project` for use by other packages. |
+| `-pkg` | Package name for generated code (default: `main`). Use a library name (e.g. `mypkg`) to get `func WithCompose() *create.Project` for use by other packages. |
 | `-main` | Emit `func main()` that runs `compose.Up` and defers `Down`. Omit for project-only output (tests, libraries). |
 | `-env` | Path to a single `.env` file; if set, only this file is used for variable substitution for all `-f` files. |
 | `-profile` | Compose profile to include (repeatable). Only services with these profiles are generated. |
@@ -531,7 +531,7 @@ go-contain-codegen -f docker-compose.yaml -o main.go -main
 # Standalone runnable main package
 go-contain-codegen -f docker-compose.yaml -o main.go -main
 
-# Library package: other code can call mypkg.Project()
+# Library package: other code can call mypkg.WithCompose(); composable With-prefixed funcs (e.g. WithApiContainer(), WithApiServiceConfig() *create.Container / create.SetServiceConfig)
 go-contain-codegen -f docker-compose.yaml -o pkg.go -pkg mypkg
 
 # Multiple compose files + single env
