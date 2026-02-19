@@ -44,3 +44,6 @@ examples/structs/docker-compose.yml
 
 # IDE
 .vscode/
+
+# macOS
+.DS_Store
