@@ -27,6 +27,7 @@ go.work.sum
 # env file
 .env
 
+
 # Editor/IDE
 # .idea/
 # .vscode/
@@ -49,3 +50,8 @@ volumes/
 
 # macOS
 .DS_Store
+
+# codegen testdata
+!internal/codegen/testdata/docker-compose.yaml
+!internal/codegen/testdata/.env
+internal/codegen/COVERAGE.md
