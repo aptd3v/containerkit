@@ -489,20 +489,42 @@ func convertVolumes(hostConfig *container.HostConfig) []types.ServiceVolumeConfi
 	volumeRules := make([]types.ServiceVolumeConfig, 0)
 
 	binds := hostConfig.Binds
-	//binds are validated in the hc package and we can assume they are valid
+	// binds are validated in the hc package and we can assume they are valid
 	for _, bind := range binds {
-		// Trim whitespace from all parts
-		parts := strings.Split(bind, ":")
-		sourcePath := strings.TrimSpace(parts[0])
-		targetPath := strings.TrimSpace(parts[1])
-		mode := strings.TrimSpace(parts[2])
+		// Parse "source:target:mode" (mode may be comma-separated e.g. ro,z)
+		last := strings.LastIndex(bind, ":")
+		if last == -1 {
+			continue
+		}
+		mode := strings.TrimSpace(bind[last+1:])
+		rest := strings.TrimSpace(bind[:last])
+		sep := ":/"
+		idx := strings.Index(rest, sep)
+		if idx == -1 {
+			continue
+		}
+		sourcePath := strings.TrimSpace(rest[:idx])
+		targetPath := strings.TrimSpace(rest[idx+len(sep):])
+		if targetPath != "" && targetPath[0] != '/' {
+			targetPath = "/" + targetPath
+		}
 
-		volumeRules = append(volumeRules, types.ServiceVolumeConfig{
-			Type:     "bind", // Always bind type for WithVolumeBinds
+		readOnly := strings.Contains(mode, "ro") || strings.Contains(mode, "readonly")
+		config := types.ServiceVolumeConfig{
+			Type:     "bind",
 			Source:   sourcePath,
 			Target:   targetPath,
-			ReadOnly: mode == "ro",
-		})
+			ReadOnly: readOnly,
+		}
+		// SELinux labels z (shared) or Z (private) for bind mounts
+		for _, part := range strings.Split(mode, ",") {
+			part = strings.TrimSpace(part)
+			if part == "z" || part == "Z" {
+				config.Bind = &types.ServiceVolumeBind{SELinux: part}
+				break
+			}
+		}
+		volumeRules = append(volumeRules, config)
 	}
 
 	mounts := hostConfig.Mounts
