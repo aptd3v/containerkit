@@ -32,6 +32,7 @@ const (
 	pkgCompose  = "github.com/aptd3v/go-contain/pkg/compose"
 	pkgUp       = "github.com/aptd3v/go-contain/pkg/compose/options/up"
 	pkgDown     = "github.com/aptd3v/go-contain/pkg/compose/options/down"
+	pkgTools    = "github.com/aptd3v/go-contain/pkg/tools"
 )
 
 // Generate produces a Go source file that builds the given compose project using go-contain.
@@ -73,10 +74,21 @@ func Generate(project *types.Project, opts Options) ([]byte, error) {
 		body = append(body, jen.Line(), jen.Comment("// Services"))
 		for _, name := range serviceNames {
 			svc := project.Services[name]
-			body = append(body, genService(name, &svc))
+			_, _, callStmt := genServiceFunc(name, &svc)
+			body = append(body, callStmt)
 		}
 	}
 	body = append(body, jen.Line(), jen.Return(jen.Id("project")))
+
+	// Emit container and optional service-config function per service before the project var/func.
+	for _, name := range serviceNames {
+		svc := project.Services[name]
+		containerFunc, serviceConfigFunc, _ := genServiceFunc(name, &svc)
+		f.Add(containerFunc)
+		if serviceConfigFunc != nil {
+			f.Add(serviceConfigFunc)
+		}
+	}
 
 	if pkg == "main" {
 		f.Var().Id("project").Op("=").Parens(
@@ -84,14 +96,14 @@ func Generate(project *types.Project, opts Options) ([]byte, error) {
 		).Call()
 	} else {
 		// Library package: expose a function so other packages can use it.
-		f.Comment("// Project returns the compose project for use by other packages.")
-		f.Func().Id("Project").Params().Op("*").Qual(pkgCreate, "Project").Block(body...)
+		f.Comment("// WithCompose returns the compose project for use by other packages.")
+		f.Func().Id("WithCompose").Params().Op("*").Qual(pkgCreate, "Project").Block(body...)
 	}
 
 	if opts.EmitMain {
 		projectExpr := jen.Id("project")
 		if pkg != "main" {
-			projectExpr = jen.Id("Project").Call()
+			projectExpr = jen.Id("WithCompose").Call()
 		}
 		upArgs := []jen.Code{
 			jen.Id("ctx"),
