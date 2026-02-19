@@ -39,15 +39,19 @@ type SetComposeLogsOption func(*ComposeLogsOptions) error
 // SetComposeKillOption is a function that sets a ComposeKillOptions
 type SetComposeKillOption func(*ComposeKillOptions) error
 
-// Events is a function that runs the docker compose events command
-// it returns a channel of Events and an error if the command fails
-// it also returns nil if the context is canceled
-func (c *compose) Events(ctx context.Context, service string) (<-chan Events, <-chan error, error) {
+// Events runs the docker compose events command.
+// Pass an empty service string to receive events for all services.
+// When the project uses profiles, pass the same profiles used for up/down (e.g. Events(ctx, "", "minimal", "full")).
+func (c *compose) Events(ctx context.Context, service string, profiles ...string) (<-chan Events, <-chan error, error) {
 	eventsCh := make(chan Events, 1)
 	errCh := make(chan error, 1)
 
 	writer := newEventsWriter(ctx, eventsCh, errCh)
-	cmd, err := c.command(ctx, writer, []string{"events", "--json", service})
+	args := []string{"events", "--json"}
+	if service != "" {
+		args = append(args, service)
+	}
+	cmd, err := c.command(ctx, writer, args, profiles...)
 	if err != nil {
 		return nil, nil, NewComposeEventsError(err)
 	}
@@ -125,7 +129,7 @@ func (c *compose) Down(ctx context.Context, setters ...SetComposeDownOption) err
 		return NewComposeDownError(err)
 	}
 
-	cmd, err := c.command(ctx, opt.Writer, flags)
+	cmd, err := c.command(ctx, opt.Writer, flags, opt.Profiles...)
 	if err != nil {
 		return NewComposeDownError(err)
 	}

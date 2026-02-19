@@ -1,18 +1,18 @@
 # go-contain
 
->**go-contain** brings declarative, dynamic Docker Compose to Go. Programmatically define, extend, and orchestrate multi-container environments with the flexibility of code, all while staying fully compatible with existing YAML workflows.
+> **go-contain** brings declarative, dynamic Docker Compose to Go. Programmatically define, extend, and orchestrate multi-container environments with the flexibility of code, all while staying fully compatible with existing YAML workflows.
 
-![Go Version](https://img.shields.io/badge/go-1.23.0-blue)
-[![Go Reference](https://pkg.go.dev/badge/github.com/aptd3v/go-contain.svg)](https://pkg.go.dev/github.com/aptd3v/go-contain)
-[![Go Report Card](https://goreportcard.com/badge/github.com/aptd3v/go-contain)](https://goreportcard.com/report/github.com/aptd3v/go-contain)
+Go Version
+[Go Reference](https://pkg.go.dev/github.com/aptd3v/go-contain)
+[Go Report Card](https://goreportcard.com/report/github.com/aptd3v/go-contain)
 
 ## Features
 
-* Support for Docker Compose commands `up`, `down`, `logs`, (more coming soon!)
-* Declarative container/service creation with chainable options
-* Native Go option setters for containers, networks, volumes, and health checks etc.
-* IDE-friendly
-* Designed for automation, CI/CD pipelines, and advanced dev environments
+- Support for Docker Compose commands `up`, `down`, `logs`, (more coming soon!)
+- Declarative container/service creation with chainable options
+- Native Go option setters for containers, networks, volumes, and health checks etc.
+- IDE-friendly
+- Designed for automation, CI/CD pipelines, and advanced dev environments
 
 ---
 
@@ -21,6 +21,7 @@
 While Docker Compose YAML files work great for simple, static configurations, **go-contain** unlocks the full power of programmatic infrastructure definition. Here's why you might choose go-contain over traditional approaches:
 
 ### **Programmatic Infrastructure Control**
+
 ```go
 // Generate infrastructure from data, APIs, configs - A real pain with static YAML
 
@@ -55,6 +56,7 @@ envConfig := fetchEnvironmentFromAPI()
 project := setupEnvironment(envConfig)
 compose.NewCompose(project).Up(context.Background())
 ```
+
 ```yaml
 # Docker Compose scaling creates IDENTICAL containers - no per-instance customization
 version: '3.8'
@@ -76,6 +78,7 @@ services:
 ```
 
 ### **Dynamic & Conditional Configuration**
+
 ```go
 // Environment-based logic, loops, and conditionals
 for _, env := range []string{"dev", "staging", "prod"} {
@@ -94,7 +97,8 @@ for _, env := range []string{"dev", "staging", "prod"} {
 // No native support for conditionals or loops
 ```
 
-###  **Code Reusability & Composition**
+### **Code Reusability & Composition**
+
 ```go
 // Create reusable components and patterns
 func DatabaseContainer(name, version string)  *create.Container {
@@ -126,6 +130,7 @@ project.WithService("order-service-cache", RedisContainer())
 ```
 
 ### **Perfect for Automation & CI/CD**
+
 ```go
 // Integrate with existing Go tools and workflows
 func DeployEnvironment(ctx context.Context, env string, replicas int) error {
@@ -144,6 +149,7 @@ func DeployEnvironment(ctx context.Context, env string, replicas int) error {
 ```
 
 ### Portable Container Configuration
+
 In `go-contain` the underlying docker sdk is also wrapped as well, allowing you to use the same configuration for docker client control, and compose.
 
 ```go
@@ -196,14 +202,15 @@ func MySimpleContainer(tag string) *create.Container {
 
 ```
 
-
 ### **Leverage Go's Ecosystem**
+
 - **Testing**: Write unit tests for your infrastructure code
 - **Debugging**: Use Go's debugging tools and error handling
 - **Libraries**: Integrate with any Go package (HTTP clients, databases, etc.)
 - **Tooling**: Build CLIs, APIs, and automation around your containers
 
 ### **Still Docker Compose Compatible**
+
 ```go
 // Export to standard YAML when needed
 if err := project.Export("./docker-compose.yaml", 0644); err != nil {
@@ -242,7 +249,9 @@ mkdir my-containers && cd my-containers
 go mod init my-containers
 go get github.com/aptd3v/go-contain@latest
 ```
+
 ## Create main.go
+
 ```go
 package main
 
@@ -266,7 +275,9 @@ func main() {
 	compose.NewCompose(project).Up(context.Background())
 }
 ```
+
 ## Run it
+
 ```bash
 go run main.go
 ```
@@ -345,9 +356,11 @@ project.WithService("api",
         ),
 )
 ```
+
 ## Or use underlying docker SDK structs if desired
 
-Check out [`examples/structs`](./examples/structs) to see how using both can be useful.
+Check out `[examples/structs](./examples/structs)` to see how using both can be useful.
+
 ```go
 project.WithService("api", &create.Container{
 		Config: &create.MergedConfig{
@@ -376,6 +389,7 @@ project.WithService("api", &create.Container{
 		},
 	})
 ```
+
 ---
 
 ## tools Package: Declarative Logic for Setters
@@ -384,11 +398,11 @@ The `tools` package provides composable helpers for conditional configuration. T
 
 ### Highlights
 
-* `tools.WhenTrue(...)` – Apply setters only if a boolean is true
-* `tools.WhenTrueFn(...)` – Like above, but accepts  predicate closure `func() bool`
-* `tools.OnlyIf(...)` – Apply a setter only if a runtime check passes `func () (bool, error)`
-* `tools.Group(...)` – Combine multiple setters into one `func[T any, O ~func(T) error](fns ...O) O`
-* `tools.And(...)`, `tools.Or(...)` – Compose multiple predicate closures
+- `tools.WhenTrue(...)` – Apply setters only if a boolean is true
+- `tools.WhenTrueFn(...)` – Like above, but accepts  predicate closure `func() bool`
+- `tools.OnlyIf(...)` – Apply a setter only if a runtime check passes `func () (bool, error)`
+- `tools.Group(...)` – Combine multiple setters into one `func[T any, O ~func(T) error](fns ...O) O`
+- `tools.And(...)`, `tools.Or(...)` – Compose multiple predicate closures
 
 ### Example
 
@@ -470,13 +484,19 @@ func EnvFileExists(name string) tools.CheckClosure {
 }
 ```
 
-
-
 ### Examples
 
-Explore examples in the [`examples/`](./examples) directory:
+Explore examples in the `[examples/](./examples)` directory:
 
+**Supabase** (`[examples/supabase](./examples/supabase)`) — one-execute Supabase stack with minimal/full profiles and optional resource limits (run from repo root):
 
+```bash
+go run ./examples/supabase/                    # minimal, no resource limits
+go run ./examples/supabase/ -profile full      # full stack
+go run ./examples/supabase/ -resource-limits  # minimal with resource limits
+go run ./examples/supabase/ -profile full -resource-limits
+go run ./examples/supabase/ -volumes-path /data/volumes
+```
 
 ### Getting Help
 
@@ -484,29 +504,29 @@ Explore examples in the [`examples/`](./examples) directory:
 - **Issues**: [GitHub Issues](https://github.com/aptd3v/go-contain/issues)
 - **Discussions**: [GitHub Discussions](https://github.com/aptd3v/go-contain/discussions)
 
-
 ## Roadmap
 
-### Current Features 
+### Current Features
+
 - ✅ Core Compose commands: `up`, `down`, `logs`
 - ✅ Container, network, and volume service configuration 
 - ✅ Conditional logic with `tools` package
 - ✅ YAML export for compatibility
 
-### In Development  
+### In Development
+
 - Additional Compose commands: `restart`, `stop`, `start`, `ps`
 - Enhanced Docker SDK client features
 - Image registry authentication helpers
 - More comprehensive test coverage
 
 ### Ideas & Suggestions
-Have ideas for go-contain? We'd love to hear them! Open an [issue](https://github.com/aptd3v/go-contain/issues) or start a [discussion](https://github.com/aptd3v/go-contain/discussions).
 
+Have ideas for go-contain? We'd love to hear them! Open an [issue](https://github.com/aptd3v/go-contain/issues) or start a [discussion](https://github.com/aptd3v/go-contain/discussions).
 
 ### License
 
 MIT License. See [LICENSE](./LICENSE) for details.
-
 
 ### Contributions
 
