@@ -10,18 +10,28 @@ import (
 	"github.com/dave/jennifer/jen"
 )
 
-// genService returns project.WithService(name, create.NewContainer(...), ...) for one service.
-func genService(name string, svc *types.ServiceConfig) *jen.Statement {
+// serviceFuncName returns an exported Go name for a service (e.g. "api" -> "Api", "my-service" -> "MyService").
+func serviceFuncName(serviceName string) string {
+	parts := strings.Split(serviceName, "-")
+	for i, p := range parts {
+		if len(p) > 0 {
+			parts[i] = strings.ToUpper(p[:1]) + p[1:]
+		}
+	}
+	return strings.Join(parts, "")
+}
+
+// genContainerExpr returns the container expression (second argument to WithService):
+// create.NewContainer(...).WithContainerConfig(...).WithHostConfig(...).WithNetworkConfig(...).WithPlatformConfig(...).
+func genContainerExpr(name string, svc *types.ServiceConfig) *jen.Statement {
 	containerName := name
 	if svc.ContainerName != "" {
 		containerName = svc.ContainerName
 	}
-
 	ccParts := genContainerConfig(svc)
 	hcParts := genHostConfig(svc)
 	ncParts := genNetworkConfig(svc)
 	pcParts := genPlatformConfig(svc)
-	scParts := genServiceLevelConfig(svc)
 
 	container := jen.Qual(pkgCreate, "NewContainer").Call(jen.Lit(containerName))
 	if len(ccParts) > 0 {
@@ -36,10 +46,31 @@ func genService(name string, svc *types.ServiceConfig) *jen.Statement {
 	if len(pcParts) > 0 {
 		container = container.Dot("WithPlatformConfig").Call(pcParts...)
 	}
+	return container
+}
 
-	args := []jen.Code{jen.Lit(name), container}
-	args = append(args, scParts...)
-	return jen.Id("project").Dot("WithService").Call(args...)
+// genServiceFunc returns the container function, optional service-config function, and the WithService call.
+// Container function: With<Name>Container() *create.Container.
+// Service-config function (if any): With<Name>ServiceConfig() create.SetServiceConfig { return tools.Group(...) }.
+// Call: project.WithService(name, WithXxxContainer(), WithXxxServiceConfig()) or project.WithService(name, WithXxxContainer()).
+func genServiceFunc(name string, svc *types.ServiceConfig) (containerFuncDef *jen.Statement, serviceConfigFuncDef *jen.Statement, callStmt *jen.Statement) {
+	containerFnName := "With" + serviceFuncName(name) + "Container"
+	containerExpr := genContainerExpr(name, svc)
+	containerFuncDef = jen.Func().Id(containerFnName).Params().
+		Op("*").Qual(pkgCreate, "Container").
+		Block(jen.Return(containerExpr))
+
+	scParts := genServiceLevelConfig(svc)
+	callArgs := []jen.Code{jen.Lit(name), jen.Id(containerFnName).Call()}
+	if len(scParts) > 0 {
+		configFnName := "With" + serviceFuncName(name) + "ServiceConfig"
+		serviceConfigFuncDef = jen.Func().Id(configFnName).Params().
+			Qual(pkgCreate, "SetServiceConfig").
+			Block(jen.Return(jen.Qual(pkgTools, "Group").Call(scParts...)))
+		callArgs = append(callArgs, jen.Id(configFnName).Call())
+	}
+	callStmt = jen.Id("project").Dot("WithService").Call(callArgs...)
+	return containerFuncDef, serviceConfigFuncDef, callStmt
 }
 
 func genContainerConfig(svc *types.ServiceConfig) []jen.Code {
