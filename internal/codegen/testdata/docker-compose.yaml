@@ -1,0 +1,141 @@
+name: some-stack
+
+services:
+  api:
+    image: nginx:${NGINX_TAG:-alpine}
+    expose:
+      - "80"
+      - "443"
+    ports:
+      - "${APP_PORT:-3000}:80"
+    environment:
+      - NGINX_ENV=production
+      - API_SECRET=${API_SECRET:-dev-secret}
+    volumes:
+      - api-cache:/var/cache/nginx
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+    networks:
+      frontend:
+        aliases:
+          - api
+          - api.internal
+      backend:
+        ipv4_address: 172.28.0.10
+    restart: "on-failure: 3"
+    stop_grace_period: 15s
+    dns_search:
+      - internal
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://localhost/"]
+      interval: 10s
+      timeout: 3s
+      retries: 3
+      start_period: 5s
+    deploy:
+      labels:
+        app: api
+        tier: front
+      update_config:
+        parallelism: 1
+        delay: 10s
+        failure_action: rollback
+        order: start-first
+      rollback_config:
+        parallelism: 1
+        delay: 5s
+        order: stop-first
+      resources:
+        limits:
+          memory: 512M
+          cpus: "0.5"
+        reservations:
+          memory: 128M
+          cpus: "0.25"
+    annotations:
+      com.example.role: "api"
+
+  db:
+    image: ${POSTGRES_IMAGE:-postgres:16-alpine}
+    environment:
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - POSTGRES_DB=${POSTGRES_DB}
+      - PGDATA=/var/lib/postgresql/data/pgdata
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - backend
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d postgres"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+      start_period: 10s
+    deploy:
+      resources:
+        reservations:
+          memory: 256M
+    ports:
+      - "${PGPORT:-5432}:5432"
+
+  redis:
+    image: ${REDIS_IMAGE:-redis:7-alpine}
+    command: redis-server --appendonly yes
+    volumes:
+      - redis_data:/data
+    networks:
+      - backend
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 3
+
+  curler:
+    image: curlimages/curl:latest
+    command: ["sh", "-c", "while true; do curl -s http://api/; sleep 2; done"]
+    depends_on:
+      - api
+    networks:
+      - frontend
+    deploy:
+      replicas: 5
+
+  worker:
+    image: alpine:latest
+    command: ["sh", "-c", "echo worker; sleep 3600"]
+    environment:
+      - DATABASE_URL=postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}
+      - REDIS_URL=redis://redis:6379/0
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - backend
+    restart: "on-failure: 5"
+    deploy:
+      replicas: 1
+      resources:
+        limits:
+          memory: 128M
+    profiles:
+      - full
+
+networks:
+  frontend:
+    driver: bridge
+  backend:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.28.0.0/16
+          gateway: 172.28.0.1
+
+volumes:
+  postgres_data:
+  redis_data:
+  api-cache:
