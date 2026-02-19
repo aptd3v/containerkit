@@ -504,6 +504,43 @@ go run ./examples/supabase/ -volumes-path /data/volumes
 - **Issues**: [GitHub Issues](https://github.com/aptd3v/go-contain/issues)
 - **Discussions**: [GitHub Discussions](https://github.com/aptd3v/go-contain/discussions)
 
+### Codegen CLI
+
+Generate go-contain-compatible Go code from existing Docker Compose YAML:
+
+```bash
+go install github.com/aptd3v/go-contain/cmd/go-contain-codegen@latest
+go-contain-codegen -f docker-compose.yaml -o main.go -main
+```
+
+| Flag | Description |
+|------|-------------|
+| `-f` | Compose file path (repeatable). Defaults to `docker-compose.yaml` / `compose.yaml` if omitted. |
+| `-o` | Output Go file (default: stdout). |
+| `-pkg` | Package name for generated code (default: `main`). Use a library name (e.g. `mypkg`) to get `func Project() *create.Project` for use by other packages. |
+| `-main` | Emit `func main()` that runs `compose.Up` and defers `Down`. Omit for project-only output (tests, libraries). |
+| `-env` | Path to a single `.env` file; if set, only this file is used for variable substitution for all `-f` files. |
+| `-profile` | Compose profile to include (repeatable). Only services with these profiles are generated. |
+| `-project` | Override the project name in generated code. |
+
+**Env files:** By default, for each `-f` file the CLI loads a `.env` in that file’s directory (later files can override variables). Use `-env path/to/.env` to use one env file for every `-f` file. Warnings are printed when a variable is overwritten.
+
+**Examples:**
+
+```bash
+# Standalone runnable main package
+go-contain-codegen -f docker-compose.yaml -o main.go -main
+
+# Library package: other code can call mypkg.Project()
+go-contain-codegen -f docker-compose.yaml -o pkg.go -pkg mypkg
+
+# Multiple compose files + single env
+go-contain-codegen -f base.yaml -f override.yaml -env .env -o main.go -main
+
+# Include only services in the "full" profile
+go-contain-codegen -f docker-compose.yaml -profile full -o main.go -main
+```
+
 ## Roadmap
 
 ### Current Features
@@ -512,6 +549,7 @@ go run ./examples/supabase/ -volumes-path /data/volumes
 - ✅ Container, network, and volume service configuration 
 - ✅ Conditional logic with `tools` package
 - ✅ YAML export for compatibility
+- ✅ Codegen CLI: generate go-contain code from existing docker-compose files
 
 ### In Development
 
