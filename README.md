@@ -545,7 +545,7 @@ go-contain-codegen -f docker-compose.yaml -profile full -o main.go -main
 
 ### Current Features
 
-- ✅ Core Compose commands: `up`, `down`, `logs`
+- ✅ Core Compose commands: `up`, `down`, `logs`, `restart`, `stop`, `start`, `ps`, `kill`
 - ✅ Container, network, and volume service configuration 
 - ✅ Conditional logic with `tools` package
 - ✅ YAML export for compatibility
