@@ -41,7 +41,7 @@ Environment variables (optional): `SUPABASE_PROFILE`, `SUPABASE_RESOURCE_LIMITS=
 To reset DB and config and start fresh:
 
 ```bash
-rm -rf volumes
+rm -rf volumes #  if ran previously
 go run ./examples/supabase/ -profile minimal
 ```
 
