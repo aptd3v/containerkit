@@ -248,3 +248,249 @@ func (opt *ComposeKillOptions) GenerateFlags() ([]string, error) {
 	}
 	return flags, nil
 }
+
+// ComposePsOptions is the options for the compose ps command
+type ComposePsOptions struct {
+	All          bool
+	Filter       []string // e.g. "status=running"
+	Format       string
+	NoTrunc      bool
+	Orphans      *bool // nil = default (true); false = --no-orphans
+	Quiet        bool
+	Services     bool // --services: display services
+	Status       string
+	Writer       io.Writer
+	Profiles     []string
+	ServiceNames []string
+	Flags        []string
+}
+
+func (opt *ComposePsOptions) GenerateFlags() ([]string, error) {
+	flags := []string{"ps"}
+	if opt.All {
+		flags = append(flags, "--all")
+	}
+	for _, f := range opt.Filter {
+		flags = append(flags, "--filter", f)
+	}
+	if opt.Format != "" {
+		flags = append(flags, "--format", opt.Format)
+	}
+	if opt.NoTrunc {
+		flags = append(flags, "--no-trunc")
+	}
+	if opt.Orphans != nil && !*opt.Orphans {
+		flags = append(flags, "--no-orphans")
+	}
+	if opt.Quiet {
+		flags = append(flags, "--quiet")
+	}
+	if opt.Services {
+		flags = append(flags, "--services")
+	}
+	if opt.Status != "" {
+		flags = append(flags, "--status", opt.Status)
+	}
+	return flags, nil
+}
+
+// ComposeStartOptions is the options for the compose start command
+type ComposeStartOptions struct {
+	Wait         bool
+	WaitTimeout  *int
+	Writer       io.Writer
+	Profiles     []string
+	ServiceNames []string
+	Flags        []string
+}
+
+func (opt *ComposeStartOptions) GenerateFlags() ([]string, error) {
+	flags := []string{"start"}
+	if opt.Wait {
+		flags = append(flags, "--wait")
+	}
+	if opt.WaitTimeout != nil {
+		flags = append(flags, "--wait-timeout", strconv.Itoa(*opt.WaitTimeout))
+	}
+	return flags, nil
+}
+
+// ComposeStopOptions is the options for the compose stop command
+type ComposeStopOptions struct {
+	Timeout      *int
+	Writer       io.Writer
+	Profiles     []string
+	ServiceNames []string
+	Flags        []string
+}
+
+func (opt *ComposeStopOptions) GenerateFlags() ([]string, error) {
+	flags := []string{"stop"}
+	if opt.Timeout != nil {
+		flags = append(flags, "--timeout", strconv.Itoa(*opt.Timeout))
+	}
+	return flags, nil
+}
+
+// ComposeRestartOptions is the options for the compose restart command
+type ComposeRestartOptions struct {
+	NoDeps       bool
+	Timeout      *int
+	Writer       io.Writer
+	Profiles     []string
+	ServiceNames []string
+	Flags        []string
+}
+
+func (opt *ComposeRestartOptions) GenerateFlags() ([]string, error) {
+	flags := []string{"restart"}
+	if opt.NoDeps {
+		flags = append(flags, "--no-deps")
+	}
+	if opt.Timeout != nil {
+		flags = append(flags, "--timeout", strconv.Itoa(*opt.Timeout))
+	}
+	return flags, nil
+}
+
+// ComposeBuildOptions is the options for the compose build command
+type ComposeBuildOptions struct {
+	BuildArg         []string // key=value, appended as --build-arg each
+	Builder           string
+	Check            bool
+	Memory           string   // e.g. "2G"
+	NoCache          bool
+	Print            bool
+	Provenance       bool
+	Pull             bool
+	Push             bool
+	Quiet            bool
+	SBOM             bool
+	SSH              []string // e.g. "default" or "key=path"
+	WithDependencies bool
+	Writer           io.Writer
+	Profiles         []string
+	ServiceNames     []string
+	Flags            []string
+}
+
+func (opt *ComposeBuildOptions) GenerateFlags() ([]string, error) {
+	flags := []string{"build"}
+	for _, a := range opt.BuildArg {
+		flags = append(flags, "--build-arg", a)
+	}
+	if opt.Builder != "" {
+		flags = append(flags, "--builder", opt.Builder)
+	}
+	if opt.Check {
+		flags = append(flags, "--check")
+	}
+	if opt.Memory != "" {
+		flags = append(flags, "--memory", opt.Memory)
+	}
+	if opt.NoCache {
+		flags = append(flags, "--no-cache")
+	}
+	if opt.Print {
+		flags = append(flags, "--print")
+	}
+	if opt.Provenance {
+		flags = append(flags, "--provenance")
+	}
+	if opt.Pull {
+		flags = append(flags, "--pull")
+	}
+	if opt.Push {
+		flags = append(flags, "--push")
+	}
+	if opt.Quiet {
+		flags = append(flags, "--quiet")
+	}
+	if opt.SBOM {
+		flags = append(flags, "--sbom")
+	}
+	for _, s := range opt.SSH {
+		flags = append(flags, "--ssh", s)
+	}
+	if opt.WithDependencies {
+		flags = append(flags, "--with-dependencies")
+	}
+	return flags, nil
+}
+
+// ComposePullOptions is the options for the compose pull command
+type ComposePullOptions struct {
+	IgnoreBuildable     bool
+	IgnorePullFailures  bool
+	IncludeDeps         bool
+	Policy              string   // e.g. "missing", "always", "never"
+	Quiet               bool
+	Writer              io.Writer
+	Profiles            []string
+	ServiceNames        []string
+	Flags               []string
+}
+
+func (opt *ComposePullOptions) GenerateFlags() ([]string, error) {
+	flags := []string{"pull"}
+	if opt.IgnoreBuildable {
+		flags = append(flags, "--ignore-buildable")
+	}
+	if opt.IgnorePullFailures {
+		flags = append(flags, "--ignore-pull-failures")
+	}
+	if opt.IncludeDeps {
+		flags = append(flags, "--include-deps")
+	}
+	if opt.Policy != "" {
+		flags = append(flags, "--policy", opt.Policy)
+	}
+	if opt.Quiet {
+		flags = append(flags, "--quiet")
+	}
+	return flags, nil
+}
+
+// ComposeExecOptions is the options for the compose exec command.
+// Usage: docker compose exec [OPTIONS] SERVICE COMMAND [ARGS...]
+// Service and Command are required; set via WithService and WithCommand.
+type ComposeExecOptions struct {
+	Detach    bool
+	Env       []string // key=value, passed as -e each
+	Index     *int     // --index for multi-replica services
+	NoTTY     bool     // -T: disable TTY
+	Privileged bool
+	User      string   // -u
+	Workdir   string   // -w
+	Writer    io.Writer
+	Stdin     io.Reader // optional; forwarded to the container after compose file is read
+	Profiles  []string
+	Service   string   // required: service name
+	Command   []string  // required: command and args (e.g. ["sh", "-c", "echo hi"])
+}
+
+func (opt *ComposeExecOptions) GenerateFlags() ([]string, error) {
+	flags := []string{"exec"}
+	if opt.Detach {
+		flags = append(flags, "--detach")
+	}
+	for _, e := range opt.Env {
+		flags = append(flags, "--env", e)
+	}
+	if opt.Index != nil {
+		flags = append(flags, "--index", strconv.Itoa(*opt.Index))
+	}
+	if opt.NoTTY {
+		flags = append(flags, "--no-tty")
+	}
+	if opt.Privileged {
+		flags = append(flags, "--privileged")
+	}
+	if opt.User != "" {
+		flags = append(flags, "--user", opt.User)
+	}
+	if opt.Workdir != "" {
+		flags = append(flags, "--workdir", opt.Workdir)
+	}
+	return flags, nil
+}

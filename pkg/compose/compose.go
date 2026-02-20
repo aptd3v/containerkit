@@ -39,15 +39,40 @@ type SetComposeLogsOption func(*ComposeLogsOptions) error
 // SetComposeKillOption is a function that sets a ComposeKillOptions
 type SetComposeKillOption func(*ComposeKillOptions) error
 
-// Events is a function that runs the docker compose events command
-// it returns a channel of Events and an error if the command fails
-// it also returns nil if the context is canceled
-func (c *compose) Events(ctx context.Context, service string) (<-chan Events, <-chan error, error) {
+// SetComposePsOption is a function that sets a ComposePsOptions
+type SetComposePsOption func(*ComposePsOptions) error
+
+// SetComposeStartOption is a function that sets a ComposeStartOptions
+type SetComposeStartOption func(*ComposeStartOptions) error
+
+// SetComposeStopOption is a function that sets a ComposeStopOptions
+type SetComposeStopOption func(*ComposeStopOptions) error
+
+// SetComposeRestartOption is a function that sets a ComposeRestartOptions
+type SetComposeRestartOption func(*ComposeRestartOptions) error
+
+// SetComposeBuildOption is a function that sets a ComposeBuildOptions
+type SetComposeBuildOption func(*ComposeBuildOptions) error
+
+// SetComposePullOption is a function that sets a ComposePullOptions
+type SetComposePullOption func(*ComposePullOptions) error
+
+// SetComposeExecOption is a function that sets a ComposeExecOptions
+type SetComposeExecOption func(*ComposeExecOptions) error
+
+// Events runs the docker compose events command.
+// Pass an empty service string to receive events for all services.
+// When the project uses profiles, pass the same profiles used for up/down (e.g. Events(ctx, "", "minimal", "full")).
+func (c *compose) Events(ctx context.Context, service string, profiles ...string) (<-chan Events, <-chan error, error) {
 	eventsCh := make(chan Events, 1)
 	errCh := make(chan error, 1)
 
 	writer := newEventsWriter(ctx, eventsCh, errCh)
-	cmd, err := c.command(ctx, writer, []string{"events", "--json", service})
+	args := []string{"events", "--json"}
+	if service != "" {
+		args = append(args, service)
+	}
+	cmd, err := c.command(ctx, writer, args, profiles, nil)
 	if err != nil {
 		return nil, nil, NewComposeEventsError(err)
 	}
@@ -81,7 +106,7 @@ func (c *compose) Kill(ctx context.Context, setters ...SetComposeKillOption) err
 	if err != nil {
 		return NewComposeKillError(err)
 	}
-	cmd, err := c.command(ctx, opt.Writer, flags, opt.Profiles...)
+	cmd, err := c.command(ctx, opt.Writer, flags, opt.Profiles, nil)
 	if err != nil {
 		return NewComposeKillError(err)
 	}
@@ -103,7 +128,7 @@ func (c *compose) Up(ctx context.Context, setters ...SetComposeUpOption) error {
 	if err != nil {
 		return NewComposeUpError(err)
 	}
-	cmd, err := c.command(ctx, opt.Writer, flags, opt.Profiles...)
+	cmd, err := c.command(ctx, opt.Writer, flags, opt.Profiles, nil)
 	if err != nil {
 		return NewComposeUpError(err)
 	}
@@ -125,7 +150,7 @@ func (c *compose) Down(ctx context.Context, setters ...SetComposeDownOption) err
 		return NewComposeDownError(err)
 	}
 
-	cmd, err := c.command(ctx, opt.Writer, flags)
+	cmd, err := c.command(ctx, opt.Writer, flags, opt.Profiles, nil)
 	if err != nil {
 		return NewComposeDownError(err)
 	}
@@ -150,14 +175,166 @@ func (c *compose) Logs(ctx context.Context, setters ...SetComposeLogsOption) err
 		return NewComposeLogsError(err)
 	}
 
-	cmd, err := c.command(ctx, opt.Writer, flags, opt.Profiles...)
+	cmd, err := c.command(ctx, opt.Writer, flags, opt.Profiles, nil)
 	if err != nil {
 		return NewComposeLogsError(err)
 	}
 
 	return handleContextCancellation(ctx, cmd.Run())
 }
-func (c *compose) command(ctx context.Context, writer io.Writer, args []string, profiles ...string) (*exec.Cmd, error) {
+
+// Ps runs the docker compose ps command.
+func (c *compose) Ps(ctx context.Context, setters ...SetComposePsOption) error {
+	opt := &ComposePsOptions{Writer: os.Stdout}
+	for _, setter := range setters {
+		if err := setter(opt); err != nil {
+			return NewComposePsError(err)
+		}
+	}
+	flags, err := opt.GenerateFlags()
+	if err != nil {
+		return NewComposePsError(err)
+	}
+	flags = append(flags, opt.ServiceNames...)
+	cmd, err := c.command(ctx, opt.Writer, flags, opt.Profiles, nil)
+	if err != nil {
+		return NewComposePsError(err)
+	}
+	return handleContextCancellation(ctx, cmd.Run())
+}
+
+// Start runs the docker compose start command.
+func (c *compose) Start(ctx context.Context, setters ...SetComposeStartOption) error {
+	opt := &ComposeStartOptions{Writer: os.Stdout}
+	for _, setter := range setters {
+		if err := setter(opt); err != nil {
+			return NewComposeStartError(err)
+		}
+	}
+	flags, err := opt.GenerateFlags()
+	if err != nil {
+		return NewComposeStartError(err)
+	}
+	flags = append(flags, opt.ServiceNames...)
+	cmd, err := c.command(ctx, opt.Writer, flags, opt.Profiles, nil)
+	if err != nil {
+		return NewComposeStartError(err)
+	}
+	return handleContextCancellation(ctx, cmd.Run())
+}
+
+// Stop runs the docker compose stop command.
+func (c *compose) Stop(ctx context.Context, setters ...SetComposeStopOption) error {
+	opt := &ComposeStopOptions{Writer: os.Stdout}
+	for _, setter := range setters {
+		if err := setter(opt); err != nil {
+			return NewComposeStopError(err)
+		}
+	}
+	flags, err := opt.GenerateFlags()
+	if err != nil {
+		return NewComposeStopError(err)
+	}
+	flags = append(flags, opt.ServiceNames...)
+	cmd, err := c.command(ctx, opt.Writer, flags, opt.Profiles, nil)
+	if err != nil {
+		return NewComposeStopError(err)
+	}
+	return handleContextCancellation(ctx, cmd.Run())
+}
+
+// Restart runs the docker compose restart command.
+func (c *compose) Restart(ctx context.Context, setters ...SetComposeRestartOption) error {
+	opt := &ComposeRestartOptions{Writer: os.Stdout}
+	for _, setter := range setters {
+		if err := setter(opt); err != nil {
+			return NewComposeRestartError(err)
+		}
+	}
+	flags, err := opt.GenerateFlags()
+	if err != nil {
+		return NewComposeRestartError(err)
+	}
+	flags = append(flags, opt.ServiceNames...)
+	cmd, err := c.command(ctx, opt.Writer, flags, opt.Profiles, nil)
+	if err != nil {
+		return NewComposeRestartError(err)
+	}
+	return handleContextCancellation(ctx, cmd.Run())
+}
+
+// Build runs the docker compose build command.
+func (c *compose) Build(ctx context.Context, setters ...SetComposeBuildOption) error {
+	opt := &ComposeBuildOptions{Writer: os.Stdout}
+	for _, setter := range setters {
+		if err := setter(opt); err != nil {
+			return NewComposeBuildError(err)
+		}
+	}
+	flags, err := opt.GenerateFlags()
+	if err != nil {
+		return NewComposeBuildError(err)
+	}
+	flags = append(flags, opt.Flags...)
+	flags = append(flags, opt.ServiceNames...)
+	cmd, err := c.command(ctx, opt.Writer, flags, opt.Profiles, nil)
+	if err != nil {
+		return NewComposeBuildError(err)
+	}
+	return handleContextCancellation(ctx, cmd.Run())
+}
+
+// Pull runs the docker compose pull command.
+func (c *compose) Pull(ctx context.Context, setters ...SetComposePullOption) error {
+	opt := &ComposePullOptions{Writer: os.Stdout}
+	for _, setter := range setters {
+		if err := setter(opt); err != nil {
+			return NewComposePullError(err)
+		}
+	}
+	flags, err := opt.GenerateFlags()
+	if err != nil {
+		return NewComposePullError(err)
+	}
+	flags = append(flags, opt.Flags...)
+	flags = append(flags, opt.ServiceNames...)
+	cmd, err := c.command(ctx, opt.Writer, flags, opt.Profiles, nil)
+	if err != nil {
+		return NewComposePullError(err)
+	}
+	return handleContextCancellation(ctx, cmd.Run())
+}
+
+// Exec runs the docker compose exec command.
+// Service and Command must be set (e.g. WithService("web"), WithCommand("sh", "-c", "echo hi")).
+// Use WithStdin(reader) to forward stdin to the container (e.g. os.Stdin for interactive).
+func (c *compose) Exec(ctx context.Context, setters ...SetComposeExecOption) error {
+	opt := &ComposeExecOptions{Writer: os.Stdout}
+	for _, setter := range setters {
+		if err := setter(opt); err != nil {
+			return NewComposeExecError(err)
+		}
+	}
+	if opt.Service == "" {
+		return NewComposeExecError(fmt.Errorf("service is required"))
+	}
+	if len(opt.Command) == 0 {
+		return NewComposeExecError(fmt.Errorf("command is required"))
+	}
+	flags, err := opt.GenerateFlags()
+	if err != nil {
+		return NewComposeExecError(err)
+	}
+	flags = append(flags, opt.Service)
+	flags = append(flags, opt.Command...)
+	cmd, err := c.command(ctx, opt.Writer, flags, opt.Profiles, opt.Stdin)
+	if err != nil {
+		return NewComposeExecError(err)
+	}
+	return handleContextCancellation(ctx, cmd.Run())
+}
+
+func (c *compose) command(ctx context.Context, writer io.Writer, args []string, profiles []string, stdin io.Reader) (*exec.Cmd, error) {
 	file, err := c.project.Marshal()
 	if err != nil {
 		return nil, NewComposeError(err)
@@ -212,7 +389,12 @@ func (c *compose) command(ctx context.Context, writer io.Writer, args []string, 
 	base = append(base, "-f", "-")
 	cmd := exec.CommandContext(ctx, "docker", base...)
 	cmd.Args = append(cmd.Args, args...)
-	cmd.Stdin = strings.NewReader(string(file))
+	fileReader := strings.NewReader(string(file))
+	if stdin != nil {
+		cmd.Stdin = io.MultiReader(fileReader, stdin)
+	} else {
+		cmd.Stdin = fileReader
+	}
 	cmd.Stdout = writer
 	cmd.Stderr = writer
 	return cmd, nil

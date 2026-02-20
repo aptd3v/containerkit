@@ -27,6 +27,7 @@ go.work.sum
 # env file
 .env
 
+
 # Editor/IDE
 # .idea/
 # .vscode/
@@ -39,8 +40,18 @@ examples/wordpress/docker-compose.yaml
 examples/wordpress/haproxy.cfg
 
 examples/mongo_replica/docker-compose.yaml
-
+examples/supabase/docker-compose.yaml
 examples/structs/docker-compose.yml
+docker-compose.yaml
+volumes/
 
 # IDE
 .vscode/
+
+# macOS
+.DS_Store
+
+# codegen testdata
+!internal/codegen/testdata/docker-compose.yaml
+!internal/codegen/testdata/.env
+internal/codegen/COVERAGE.md

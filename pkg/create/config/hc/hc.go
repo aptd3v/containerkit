@@ -188,9 +188,11 @@ func WithAddedGroups(group ...string) create.SetHostConfig {
 	}
 }
 
-// WithBind appends a volume binding to the host configuration for the container.
+// WithVolumeBinds appends a volume binding to the host configuration for the container.
 // parameters:
-//   - binds: the volume binding to add e.g. "/host/path:/container/path:ro"
+//   - binds: the volume binding to add. Format is "source:target:mode". Paths may contain colons (e.g. Windows).
+//     Mode may be single or comma-separated: ro, rw, readonly, z, Z; consistent, cached, delegated (macOS);
+//     rshared, shared, rslave, slave, rprivate, private (propagation). E.g. "/etc/vector/vector.yml:/etc/vector/vector.yml:ro,z".
 func WithVolumeBinds(binds ...string) create.SetHostConfig {
 	return func(opt *container.HostConfig) error {
 		if opt.Binds == nil {
@@ -204,8 +206,60 @@ func WithVolumeBinds(binds ...string) create.SetHostConfig {
 	}
 }
 
+// validBindModeOptions is the set of bind mount mode tokens accepted by Docker/Compose.
+// - ro, rw, readonly: read-only / read-write (readonly is alias for ro)
+// - z, Z: SELinux labeling (shared / private)
+// - consistent, cached, delegated: consistency (e.g. Docker Desktop macOS)
+// - rshared, shared, rslave, slave, rprivate, private: bind propagation
+var validBindModeOptions = map[string]struct{}{
+	"ro": {}, "rw": {}, "readonly": {},
+	"z": {}, "Z": {},
+	"consistent": {}, "cached": {}, "delegated": {},
+	"rshared": {}, "shared": {}, "rslave": {}, "slave": {}, "rprivate": {}, "private": {},
+}
+
+func validBindMode(mode string) bool {
+	mode = strings.TrimSpace(mode)
+	if mode == "" {
+		return false
+	}
+	for _, part := range strings.Split(mode, ",") {
+		part = strings.TrimSpace(part)
+		if _, ok := validBindModeOptions[part]; !ok {
+			return false
+		}
+	}
+	return true
+}
+
+// parseBindSpec parses one bind spec "source:target:mode", supporting paths that contain colons
+// (e.g. Windows "C:\data:/app:ro") by using the segment after the last ":" as mode and
+// splitting source and target on ":/" so container paths (starting with /) are unambiguous.
+func parseBindSpec(spec string) (source, target, mode string, ok bool) {
+	spec = strings.TrimSpace(spec)
+	if spec == "" {
+		return "", "", "", false
+	}
+	last := strings.LastIndex(spec, ":")
+	if last == -1 {
+		return "", "", "", false
+	}
+	mode = strings.TrimSpace(spec[last+1:])
+	rest := spec[:last]
+	// Container path starts with /; split on ":/" so Windows host paths (e.g. C:\data) stay intact.
+	sep := ":/"
+	idx := strings.Index(rest, sep)
+	if idx == -1 {
+		return "", "", "", false
+	}
+	source = strings.TrimSpace(rest[:idx])
+	target = strings.TrimSpace(rest[idx+len(sep):])
+	return source, target, mode, true
+}
+
 // ValidateMounts validates mount specifications in the format "/source/path:/target/path:mode"
-// Whitespace is trimmed from all parts of the specification.
+// or "source:target:mode" (paths may contain colons, e.g. Windows "C:\\data:/app:ro").
+// Mode may be a single option or comma-separated (e.g. "ro", "rw,z", "ro,cached", "delegated").
 func validateMounts(mounts []string) error {
 	var errMsgs []string
 	seenTargets := make(map[string]bool)
@@ -216,39 +270,26 @@ func validateMounts(mounts []string) error {
 			continue
 		}
 
-		parts := strings.Split(mount, ":")
-		if len(parts) != 3 {
-			errMsgs = append(errMsgs, fmt.Sprintf("binds[%d]: invalid format '%s' (must be '/source/path:/target/path:mode')", i, mount))
+		sourcePath, targetPath, mode, ok := parseBindSpec(mount)
+		if !ok {
+			errMsgs = append(errMsgs, fmt.Sprintf("binds[%d]: invalid format '%s' (must be 'source:target:mode')", i, mount))
 			continue
 		}
-
-		// Trim whitespace from all parts
-		sourcePath := strings.TrimSpace(parts[0])
-		targetPath := strings.TrimSpace(parts[1])
-		mode := strings.TrimSpace(parts[2])
-
-		// Validate source path
 		if sourcePath == "" {
 			errMsgs = append(errMsgs, fmt.Sprintf("binds[%d]: empty source path", i))
 			continue
 		}
-
-		// Validate target path
 		if targetPath == "" {
 			errMsgs = append(errMsgs, fmt.Sprintf("binds[%d]: empty target path", i))
 			continue
 		}
-
-		// Check for duplicate target paths
 		if seenTargets[targetPath] {
 			errMsgs = append(errMsgs, fmt.Sprintf("binds[%d]: duplicate target path '%s'", i, targetPath))
 			continue
 		}
 		seenTargets[targetPath] = true
-
-		// Validate mode
-		if mode = strings.TrimSpace(mode); mode != "ro" && mode != "rw" {
-			errMsgs = append(errMsgs, fmt.Sprintf("binds[%d]: invalid mode '%s' (must be 'ro' or 'rw')", i, mode))
+		if !validBindMode(mode) {
+			errMsgs = append(errMsgs, fmt.Sprintf("binds[%d]: invalid mode '%s' (e.g. 'ro', 'rw', 'z', 'Z', 'ro,z', 'ro,cached')", i, mode))
 			continue
 		}
 	}

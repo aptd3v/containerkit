@@ -43,3 +43,14 @@ func WithWriter(writer io.Writer) compose.SetComposeLogsOption {
 		return nil
 	}
 }
+
+// WithProfiles sets the profiles for the compose logs command.
+func WithProfiles(profiles ...string) compose.SetComposeLogsOption {
+	return func(opt *compose.ComposeLogsOptions) error {
+		if opt.Profiles == nil {
+			opt.Profiles = make([]string, 0, len(profiles))
+		}
+		opt.Profiles = append(opt.Profiles, profiles...)
+		return nil
+	}
+}
