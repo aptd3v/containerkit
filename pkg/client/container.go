@@ -6,34 +6,14 @@ import (
 	"io"
 	"os"
 
-	"github.com/aptd3v/go-contain/pkg/client/options/container/attach"
-	"github.com/aptd3v/go-contain/pkg/client/options/container/checkpointcreate"
-	"github.com/aptd3v/go-contain/pkg/client/options/container/checkpointdelete"
-	"github.com/aptd3v/go-contain/pkg/client/options/container/checkpointlist"
-	"github.com/aptd3v/go-contain/pkg/client/options/container/commit"
-	"github.com/aptd3v/go-contain/pkg/client/options/container/copyto"
-	"github.com/aptd3v/go-contain/pkg/client/options/container/execattach"
-	"github.com/aptd3v/go-contain/pkg/client/options/container/execopt"
-	"github.com/aptd3v/go-contain/pkg/client/options/container/execresize"
-	"github.com/aptd3v/go-contain/pkg/client/options/container/execstart"
-	"github.com/aptd3v/go-contain/pkg/client/options/container/list"
-	"github.com/aptd3v/go-contain/pkg/client/options/container/logs"
-	"github.com/aptd3v/go-contain/pkg/client/options/container/prune"
-	"github.com/aptd3v/go-contain/pkg/client/options/container/remove"
-	"github.com/aptd3v/go-contain/pkg/client/options/container/start"
-	"github.com/aptd3v/go-contain/pkg/client/options/container/stop"
-	"github.com/aptd3v/go-contain/pkg/client/options/container/update"
-	"github.com/aptd3v/go-contain/pkg/client/options/container/wait"
-	"github.com/aptd3v/go-contain/pkg/client/response"
-	"github.com/aptd3v/go-contain/pkg/create"
-	"github.com/aptd3v/go-contain/pkg/terminal"
-	"github.com/docker/docker/api/types/checkpoint"
+	"github.com/aptd3v/containerkit/pkg/client/response"
+	"github.com/aptd3v/containerkit/pkg/client/terminal"
+	"github.com/aptd3v/containerkit/pkg/containerkit"
 	"github.com/docker/docker/api/types/container"
-	"github.com/docker/docker/api/types/filters"
 )
 
 // ContainerCreate creates a new container based on the given configuration. It can be associated with a name, but it's not mandatory.
-func (c *Client) ContainerCreate(ctx context.Context, created *create.Container) (*response.ContainerCreate, error) {
+func (c *Client) ContainerCreate(ctx context.Context, created *containerkit.Container) (*response.ContainerCreate, error) {
 	if err := created.Validate(); err != nil {
 		return nil, err
 	}
@@ -55,17 +35,8 @@ func (c *Client) ContainerCreate(ctx context.Context, created *create.Container)
 }
 
 // ContainerList returns the list of containers in the docker host.
-func (c *Client) ContainerList(ctx context.Context, setters ...list.SetContainerListOption) ([]response.ContainerSummary, error) {
-	op := container.ListOptions{
-		Filters: filters.NewArgs(),
-	}
-	for _, setter := range setters {
-		if setter != nil {
-			if err := setter(&op); err != nil {
-				return nil, err
-			}
-		}
-	}
+func (c *Client) ContainerList(ctx context.Context, opt *List) ([]response.ContainerSummary, error) {
+	op := opt.apply()
 	sum, err := c.wrapped.ContainerList(ctx, op)
 	if err != nil {
 		return nil, err
@@ -80,42 +51,21 @@ func (c *Client) ContainerList(ctx context.Context, setters ...list.SetContainer
 }
 
 // ContainerStart sends a request to the docker daemon to start a container.
-func (c *Client) ContainerStart(ctx context.Context, id string, setters ...start.SetContainerStartOption) error {
-	op := container.StartOptions{}
-	for _, setter := range setters {
-		if setter != nil {
-			if err := setter(&op); err != nil {
-				return err
-			}
-		}
-	}
+func (c *Client) ContainerStart(ctx context.Context, id string, opt *Start) error {
+	op := opt.apply()
 	return c.wrapped.ContainerStart(ctx, id, op)
 }
 
 // ContainerStop stops a container. In case the container fails to stop
 // gracefully within a time frame specified by the timeout argument, it is forcefully terminated (killed).
-func (c *Client) ContainerStop(ctx context.Context, id string, setters ...stop.SetContainerStopOption) error {
-	op := container.StopOptions{}
-	for _, setter := range setters {
-		if setter != nil {
-			if err := setter(&op); err != nil {
-				return err
-			}
-		}
-	}
+func (c *Client) ContainerStop(ctx context.Context, id string, opt *Stop) error {
+	op := opt.apply()
 	return c.wrapped.ContainerStop(ctx, id, op)
 }
 
 // ContainerRemove kills and removes a container from the docker host.
-func (c *Client) ContainerRemove(ctx context.Context, id string, setters ...remove.SetContainerRemoveOption) error {
-	op := container.RemoveOptions{}
-	for _, setter := range setters {
-		if setter != nil {
-			if err := setter(&op); err != nil {
-				return err
-			}
-		}
-	}
+func (c *Client) ContainerRemove(ctx context.Context, id string, opt *Remove) error {
+	op := opt.apply()
 	return c.wrapped.ContainerRemove(ctx, id, op)
 }
 
@@ -141,15 +91,8 @@ SIZE1, SIZE2, SIZE3, and SIZE4 are four bytes of uint32 encoded as big endian. T
 
 You can use github.com/docker/docker/pkg/stdcopy.StdCopy to demultiplex this stream.
 */
-func (c *Client) ContainerLogs(ctx context.Context, id string, setters ...logs.SetContainerLogsOption) (io.ReadCloser, error) {
-	op := container.LogsOptions{}
-	for _, setter := range setters {
-		if setter != nil {
-			if err := setter(&op); err != nil {
-				return nil, err
-			}
-		}
-	}
+func (c *Client) ContainerLogs(ctx context.Context, id string, opt *Logs) (io.ReadCloser, error) {
+	op := opt.apply()
 	return c.wrapped.ContainerLogs(ctx, id, op)
 }
 
@@ -176,7 +119,7 @@ status of the container or an error if there was a problem either beginning the 
 the response. This allows the caller to synchronize ContainerWait with other calls, such as specifying a
 "next-exit" condition before issuing a ContainerStart request.
 */
-func (c *Client) ContainerWait(ctx context.Context, id string, condition wait.WaitCondition) (<-chan response.ContainerWait, <-chan error) {
+func (c *Client) ContainerWait(ctx context.Context, id string, condition WaitCondition) (<-chan response.ContainerWait, <-chan error) {
 	waitCh, errCh := c.wrapped.ContainerWait(ctx, id, container.WaitCondition(condition))
 
 	outWait := make(chan response.ContainerWait, 1)
@@ -208,7 +151,7 @@ func (c *Client) ContainerWait(ctx context.Context, id string, condition wait.Wa
 //
 // Returns nil if the container completes successfully or if the context is cancelled,
 // and returns a non-nil error only if the container fails or Docker reports an error.
-func (c *Client) ContainerWaitSync(ctx context.Context, id string, condition wait.WaitCondition) error {
+func (c *Client) ContainerWaitSync(ctx context.Context, id string, condition WaitCondition) error {
 	waitCh, errCh := c.ContainerWait(ctx, id, condition)
 
 	select {
@@ -234,15 +177,8 @@ func (c *Client) ContainerStats(ctx context.Context, id string, stream bool) (*r
 }
 
 // ContainerExecCreate creates a new exec configuration to run an exec process.
-func (c *Client) ContainerExecCreate(ctx context.Context, containerID string, setters ...execopt.SetContainerExecOption) (*response.ContainerExecCreate, error) {
-	op := container.ExecOptions{}
-	for _, setter := range setters {
-		if setter != nil {
-			if err := setter(&op); err != nil {
-				return nil, err
-			}
-		}
-	}
+func (c *Client) ContainerExecCreate(ctx context.Context, containerID string, opt *Exec) (*response.ContainerExecCreate, error) {
+	op := opt.apply()
 	exec, err := c.wrapped.ContainerExecCreate(ctx, containerID, op)
 	if err != nil {
 		return nil, err
@@ -253,43 +189,22 @@ func (c *Client) ContainerExecCreate(ctx context.Context, containerID string, se
 }
 
 // ContainerExecStart starts an exec process already created in the docker host.
-func (c *Client) ContainerExecStart(ctx context.Context, execID string, setters ...execstart.SetContainerExecStartOption) error {
-	op := container.ExecStartOptions{}
-	for _, setter := range setters {
-		if setter != nil {
-			if err := setter(&op); err != nil {
-				return err
-			}
-		}
-	}
+func (c *Client) ContainerExecStart(ctx context.Context, execID string, opt *ExecStart) error {
+	op := opt.apply()
 	return c.wrapped.ContainerExecStart(ctx, execID, op)
 }
 
 // ContainerExecResize changes the size of the tty for an exec process running inside a container.
-func (c *Client) ContainerExecResize(ctx context.Context, execID string, setters ...execresize.SetContainerExecResizeOption) error {
-	op := container.ResizeOptions{}
-	for _, setter := range setters {
-		if setter != nil {
-			if err := setter(&op); err != nil {
-				return err
-			}
-		}
-	}
+func (c *Client) ContainerExecResize(ctx context.Context, execID string, opt *Resize) error {
+	op := opt.apply()
 	return c.wrapped.ContainerExecResize(ctx, execID, op)
 }
 
 // ContainerExecAttach attaches a connection to an exec process in the server.
 // It returns a types.HijackedConnection with the hijacked connection and the a reader to get output.
 // It's up to the called to close the hijacked connection by calling types.HijackedResponse.Close.
-func (c *Client) ContainerExecAttach(ctx context.Context, execID string, setters ...execattach.SetContainerExecAttachOption) (*response.ContainerHijackedResponse, error) {
-	op := container.ExecAttachOptions{}
-	for _, setter := range setters {
-		if setter != nil {
-			if err := setter(&op); err != nil {
-				return nil, err
-			}
-		}
-	}
+func (c *Client) ContainerExecAttach(ctx context.Context, execID string, opt *ExecAttach) (*response.ContainerHijackedResponse, error) {
+	op := opt.apply()
 	hijacked, err := c.wrapped.ContainerExecAttach(ctx, execID, op)
 	if err != nil {
 		return nil, err
@@ -300,15 +215,8 @@ func (c *Client) ContainerExecAttach(ctx context.Context, execID string, setters
 }
 
 // ContainerRestart stops and starts a container again. It makes the daemon wait for the container to be up again for a specific amount of time, given the timeout.
-func (c *Client) ContainerRestart(ctx context.Context, id string, setters ...stop.SetContainerStopOption) error {
-	op := container.StopOptions{}
-	for _, setter := range setters {
-		if setter != nil {
-			if err := setter(&op); err != nil {
-				return err
-			}
-		}
-	}
+func (c *Client) ContainerRestart(ctx context.Context, id string, opt *Stop) error {
+	op := opt.apply()
 	return c.wrapped.ContainerRestart(ctx, id, op)
 }
 
@@ -323,16 +231,8 @@ func (c *Client) ContainerUnpause(ctx context.Context, id string) error {
 }
 
 // ContainersPrune requests the daemon to delete unused data
-func (c *Client) ContainerPrune(ctx context.Context, setters ...prune.SetContainerPruneOption) (*response.ContainerPruneReport, error) {
-	filters := filters.NewArgs()
-	for _, setter := range setters {
-		if setter != nil {
-			if err := setter(filters); err != nil {
-				return nil, err
-			}
-		}
-	}
-	prune, err := c.wrapped.ContainersPrune(ctx, filters)
+func (c *Client) ContainerPrune(ctx context.Context, opt *Prune) (*response.ContainerPruneReport, error) {
+	prune, err := c.wrapped.ContainersPrune(ctx, opt.apply())
 	if err != nil {
 		return nil, err
 	}
@@ -342,15 +242,8 @@ func (c *Client) ContainerPrune(ctx context.Context, setters ...prune.SetContain
 }
 
 // ContainerCommit applies changes to a container and creates a new tagged image.
-func (c *Client) ContainerCommit(ctx context.Context, id string, setters ...commit.SetContainerCommitOption) (*response.ContainerCommitResponse, error) {
-	op := container.CommitOptions{}
-	for _, setter := range setters {
-		if setter != nil {
-			if err := setter(&op); err != nil {
-				return nil, err
-			}
-		}
-	}
+func (c *Client) ContainerCommit(ctx context.Context, id string, opt *Commit) (*response.ContainerCommitResponse, error) {
+	op := opt.apply()
 	commit, err := c.wrapped.ContainerCommit(ctx, id, op)
 	if err != nil {
 		return nil, err
@@ -382,15 +275,8 @@ func (c *Client) ContainerDiff(ctx context.Context, id string) ([]response.Conta
 }
 
 // ContainerUpdate updates resources of a container.
-func (c *Client) ContainerUpdate(ctx context.Context, id string, setters ...update.SetContainerUpdateOption) (*response.ContainerUpdateResponse, error) {
-	op := container.UpdateConfig{}
-	for _, setter := range setters {
-		if setter != nil {
-			if err := setter(&op); err != nil {
-				return nil, err
-			}
-		}
-	}
+func (c *Client) ContainerUpdate(ctx context.Context, id string, opt *Update) (*response.ContainerUpdateResponse, error) {
+	op := opt.apply()
 	update, err := c.wrapped.ContainerUpdate(ctx, id, op)
 	if err != nil {
 		return nil, err
@@ -440,41 +326,20 @@ func (c *Client) ContainerStatsOneShot(ctx context.Context, id string) (*respons
 }
 
 // ContainerResize changes the size of the tty for a container.
-func (c *Client) ContainerResize(ctx context.Context, id string, setters ...execresize.SetContainerExecResizeOption) error {
-	op := container.ResizeOptions{}
-	for _, setter := range setters {
-		if setter != nil {
-			if err := setter(&op); err != nil {
-				return err
-			}
-		}
-	}
+func (c *Client) ContainerResize(ctx context.Context, id string, opt *Resize) error {
+	op := opt.apply()
 	return c.wrapped.ContainerResize(ctx, id, op)
 }
 
 // ContainerCheckpointCreate creates a checkpoint of a running container.
-func (c *Client) ContainerCheckpointCreate(ctx context.Context, id string, setters ...checkpointcreate.SetContainerCheckpointCreateOption) error {
-	op := checkpoint.CreateOptions{}
-	for _, setter := range setters {
-		if setter != nil {
-			if err := setter(&op); err != nil {
-				return err
-			}
-		}
-	}
+func (c *Client) ContainerCheckpointCreate(ctx context.Context, id string, opt *CheckpointCreate) error {
+	op := opt.apply()
 	return c.wrapped.CheckpointCreate(ctx, id, op)
 }
 
 // CheckpointList returns the checkpoints of the given container in the docker host
-func (c *Client) ContainerCheckpointList(ctx context.Context, id string, setters ...checkpointlist.SetContainerCheckpointListOption) ([]response.ContainerCheckpointSummary, error) {
-	op := checkpoint.ListOptions{}
-	for _, setter := range setters {
-		if setter != nil {
-			if err := setter(&op); err != nil {
-				return nil, err
-			}
-		}
-	}
+func (c *Client) ContainerCheckpointList(ctx context.Context, id string, opt *CheckpointList) ([]response.ContainerCheckpointSummary, error) {
+	op := opt.apply()
 	sum, err := c.wrapped.CheckpointList(ctx, id, op)
 	if err != nil {
 		return nil, err
@@ -489,29 +354,19 @@ func (c *Client) ContainerCheckpointList(ctx context.Context, id string, setters
 }
 
 // CheckpointDelete deletes the checkpoint with the given name from the given container
-func (c *Client) ContainerCheckpointDelete(ctx context.Context, id string, setters ...checkpointdelete.SetContainerCheckpointDeleteOption) error {
-	op := checkpoint.DeleteOptions{}
-	for _, setter := range setters {
-		if setter != nil {
-			if err := setter(&op); err != nil {
-				return err
-			}
-		}
-	}
+func (c *Client) ContainerCheckpointDelete(ctx context.Context, id string, opt *CheckpointDelete) error {
+	op := opt.apply()
 	return c.wrapped.CheckpointDelete(ctx, id, op)
 }
 
 // CopyToContainer copies content into the container filesystem. Note that `content` must be a Reader for a TAR archive
-func (c *Client) ContainerCopyToContainer(ctx context.Context, id string, dstPath string, setters ...copyto.SetContainerCopyToContainerOption) error {
-	op := container.CopyToContainerOptions{}
-	for _, setter := range setters {
-		if setter != nil {
-			if err := setter(&op); err != nil {
-				return err
-			}
-		}
+func (c *Client) ContainerCopyToContainer(ctx context.Context, id string, dstPath string, opt *CopyTo) error {
+	op := opt.apply()
+	var content io.Reader
+	if opt != nil {
+		content = opt.Content
 	}
-	return c.wrapped.CopyToContainer(ctx, id, dstPath, nil, op)
+	return c.wrapped.CopyToContainer(ctx, id, dstPath, content, op)
 }
 
 // CopyFromContainer gets the content from the container and returns it as a Reader for a
@@ -543,15 +398,8 @@ SIZE1, SIZE2, SIZE3, and SIZE4 are four bytes of uint32 encoded as big endian. T
 
 You can use github.com/docker/docker/pkg/stdcopy.StdCopy to demultiplex this stream.
 */
-func (c *Client) ContainerAttach(ctx context.Context, id string, setters ...attach.SetContainerAttachOption) (*response.ContainerHijackedResponse, error) {
-	op := container.AttachOptions{}
-	for _, setter := range setters {
-		if setter != nil {
-			if err := setter(&op); err != nil {
-				return nil, err
-			}
-		}
-	}
+func (c *Client) ContainerAttach(ctx context.Context, id string, opt *Attach) (*response.ContainerHijackedResponse, error) {
+	op := opt.apply()
 	hijacked, err := c.wrapped.ContainerAttach(ctx, id, op)
 	if err != nil {
 		return nil, err
@@ -564,8 +412,8 @@ func (c *Client) ContainerAttach(ctx context.Context, id string, setters ...atta
 // ContainerExecAttachTerminal attaches to a container exec command and returns a terminal session
 // that can be used to interact with the command. The session handles terminal setup,
 // raw mode, and cleanup automatically.
-func (c *Client) ContainerExecAttachTerminal(ctx context.Context, execID string, setters ...execattach.SetContainerExecAttachOption) (*terminal.Session, error) {
-	hijack, err := c.ContainerExecAttach(ctx, execID, setters...)
+func (c *Client) ContainerExecAttachTerminal(ctx context.Context, execID string, opt *ExecAttach) (*terminal.Session, error) {
+	hijack, err := c.ContainerExecAttach(ctx, execID, opt)
 	if err != nil {
 		return nil, fmt.Errorf("failed to attach to container exec: %w", err)
 	}

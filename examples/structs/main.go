@@ -6,10 +6,7 @@ import (
 	"runtime"
 	"time"
 
-	"github.com/aptd3v/go-contain/pkg/create"
-	"github.com/aptd3v/go-contain/pkg/create/config/cc"
-	"github.com/aptd3v/go-contain/pkg/create/config/cc/health"
-	"github.com/aptd3v/go-contain/pkg/tools"
+	"github.com/aptd3v/containerkit/pkg/containerkit"
 	"github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/api/types/network"
 	"github.com/docker/go-connections/nat"
@@ -21,12 +18,13 @@ var (
 )
 
 func main() {
-	project := create.NewProject("my-project")
-	// Service created entirely using Docker SDK native structs and then mutated using go-contain option setters
+	project := containerkit.NewProject("my-project")
+	// Service created entirely using Docker SDK native structs and then mutated using containerkit methods
 	alpine := MyAlpineBaseService(architecture)
-	alpine.WithContainerConfig(
-		WithConfigOverride("http://localhost:8080", "8080"),
-	)
+	alpine.ExposedPort("tcp", "8080")
+	if alpine.Config != nil && alpine.Config.Container != nil && alpine.Config.Container.Healthcheck != nil {
+		alpine.Config.Container.Healthcheck.Test = append(alpine.Config.Container.Healthcheck.Test, "http://localhost:8080")
+	}
 	project.WithService("my-alpine-service", alpine)
 	err := project.Export("./examples/structs/docker-compose.yml", 0644)
 	if err != nil {
@@ -35,19 +33,9 @@ func main() {
 
 }
 
-func WithConfigOverride(healthCheck string, port string) create.SetContainerConfig {
-	return tools.Group(
-		cc.WithHealthCheck(
-			// append to the health check test
-			health.WithTest(healthCheck),
-		),
-		cc.WithExposedPort("tcp", port),
-	)
-}
-
-func MyAlpineBaseService(architecture string) *create.Container {
-	return &create.Container{
-		Config: &create.MergedConfig{
+func MyAlpineBaseService(architecture string) *containerkit.Container {
+	return &containerkit.Container{
+		Config: &containerkit.MergedConfig{
 			Container: &container.Config{
 				Image: "alpine",
 				Cmd:   []string{"tail", "-f", "/dev/null"},

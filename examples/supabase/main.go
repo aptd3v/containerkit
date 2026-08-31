@@ -1,11 +1,12 @@
-// Supabase bootstrap example: one-execute install of the Supabase stack using go-contain.
+// Supabase bootstrap example: one-execute install of the Supabase stack using containerkit.
 // Required volume files are auto-downloaded from the Supabase repo when missing.
 // Streams compose events (start/stop/health) alongside logs; Ctrl+C kills containers and brings the stack down.
 //
 // Flags:
-//   -profile: minimal (default) or full. Full adds vector, realtime, storage, imgproxy, meta, functions, supavisor.
-//   -resource-limits: apply memory/CPU limits to db, kong, and studio.
-//   -volumes-path: directory for volume files (default: ./volumes or SUPABASE_VOLUMES_PATH).
+//
+//	-profile: minimal (default) or full. Full adds vector, realtime, storage, imgproxy, meta, functions, supavisor.
+//	-resource-limits: apply memory/CPU limits to db, kong, and studio.
+//	-volumes-path: directory for volume files (default: ./volumes or SUPABASE_VOLUMES_PATH).
 package main
 
 import (
@@ -17,11 +18,7 @@ import (
 	"os/signal"
 	"strings"
 
-	"github.com/aptd3v/go-contain/pkg/compose"
-	"github.com/aptd3v/go-contain/pkg/compose/options/down"
-	"github.com/aptd3v/go-contain/pkg/compose/options/kill"
-	"github.com/aptd3v/go-contain/pkg/compose/options/logs"
-	"github.com/aptd3v/go-contain/pkg/compose/options/up"
+	"github.com/aptd3v/containerkit/pkg/containerkit"
 )
 
 func main() {
@@ -50,26 +47,26 @@ func main() {
 	if err := project.Validate(); err != nil {
 		log.Fatalf("project validate: %v", err)
 	}
-	exportPath := "./docker-compose.yaml" // write to repo root (run from repo root)
+	exportPath := "./docker-compose.yaml"
 	if err := project.Export(exportPath, 0644); err != nil {
 		log.Printf("warning: export to %s: %v", exportPath, err)
 	}
 
-	supabase := compose.NewCompose(project)
+	supabase := containerkit.NewCompose(project)
 	ctx := context.Background()
-	// Compose requires at least one profile when any service has a profile. Use same profiles for Up, Logs, and Down.
 	profiles := []string{"minimal"}
 	if profile == "full" {
 		profiles = append(profiles, "full")
 	}
-	upOpts := []compose.SetComposeUpOption{
-		up.WithRemoveOrphans(),
-		up.WithDetach(),
-		up.WithTimeout(5),
-		up.WithWaitTimeout(300), // db init can take 1–2 min on first run; wait up to 5 min for healthy deps
-		up.WithProfiles(profiles...),
-	}
-	if err := supabase.Up(ctx, upOpts...); err != nil {
+	timeout := 5
+	waitTimeout := 300
+	if err := supabase.Up(ctx, &containerkit.Up{
+		RemoveOrphans: true,
+		Detach:        true,
+		Timeout:       &timeout,
+		WaitTimeout:   &waitTimeout,
+		Profiles:      profiles,
+	}); err != nil {
 		log.Fatalf("up: %v", err)
 	}
 
@@ -81,7 +78,6 @@ func main() {
 		cancel()
 	}()
 
-	// Stream real-time compose events (start, stop, health, etc.) for all services.
 	eventsCh, eventsErrCh, err := supabase.Events(ctx, "", profiles...)
 	if err != nil {
 		log.Printf("events: %v", err)
@@ -102,18 +98,16 @@ func main() {
 		}()
 	}
 
-	logOpts := []compose.SetComposeLogsOption{logs.WithFollow(), logs.WithNoLogPrefix(), logs.WithProfiles(profiles...)}
-	if err := supabase.Logs(ctx, logOpts...); err != nil && err != context.Canceled {
+	if err := supabase.Logs(ctx, &containerkit.Logs{Follow: true, NoLogPrefix: true, Profiles: profiles}); err != nil && err != context.Canceled {
 		log.Printf("logs: %v", err)
 	}
 
-	// On Ctrl+C, kill all containers (SIGKILL) then down so nothing is left running.
 	killCtx := context.Background()
-	if err := supabase.Kill(killCtx, kill.WithSignal("SIGKILL"), kill.WithRemoveOrphans(), kill.WithProfiles(profiles...)); err != nil {
+	sig := "SIGKILL"
+	if err := supabase.Kill(killCtx, &containerkit.Kill{Signal: &sig, RemoveOrphans: true, Profiles: profiles}); err != nil {
 		log.Printf("kill: %v", err)
 	}
-	downOpts := []compose.SetComposeDownOption{down.WithRemoveOrphans(), down.WithRemoveVolumes(), down.WithProfiles(profiles...)}
-	if err := supabase.Down(killCtx, downOpts...); err != nil {
+	if err := supabase.Down(killCtx, &containerkit.Down{RemoveOrphans: true, RemoveVolumes: true, Profiles: profiles}); err != nil {
 		log.Fatalf("down: %v", err)
 	}
 }

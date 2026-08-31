@@ -7,17 +7,11 @@ import (
 	"log"
 	"strings"
 
-	"github.com/aptd3v/go-contain/pkg/compose"
-	"github.com/aptd3v/go-contain/pkg/compose/options/kill"
-	"github.com/aptd3v/go-contain/pkg/compose/options/up"
-	"github.com/aptd3v/go-contain/pkg/create"
-	"github.com/aptd3v/go-contain/pkg/create/config/cc"
-	"github.com/aptd3v/go-contain/pkg/create/config/sc"
-	"github.com/aptd3v/go-contain/pkg/tools"
+	"github.com/aptd3v/containerkit/pkg/containerkit"
 )
 
 var (
-	paragraph = `go-contain
+	paragraph = `containerkit
 is a Go library that provides a programmatic and composable interface
 for defining, running, and managing Docker containers and Compose projects.
 It abstracts both the Docker SDK and Docker Compose into a unified API.
@@ -29,75 +23,73 @@ with a specific profile.
 )
 
 func main() {
-	project := create.NewProject("my-project")
+	project := containerkit.NewProject("my-project")
 	project.WithService("never-service",
-		create.NewContainer().
-			WithContainerConfig(
-				cc.WithImage("alpine:latest"),
-				cc.WithCommand("echo", "you wont see me"),
-			),
-		sc.WithProfiles("never"),
+		containerkit.NewContainer().
+			Image("alpine:latest").
+			Command("echo", "you wont see me"),
+		containerkit.Profiles("never"),
 	)
 	project.WithService("never-ever-service",
-		create.NewContainer().
-			WithContainerConfig(
-				cc.WithImage("alpine:latest"),
-				cc.WithCommand("echo", "you wont see me part II"),
-			),
-		sc.WithProfiles("never-ever"),
+		containerkit.NewContainer().
+			Image("alpine:latest").
+			Command("echo", "you wont see me part II"),
+		containerkit.Profiles("never-ever"),
 	)
 	project.WithService("kill-me-service",
-		create.NewContainer().
-			WithContainerConfig(
-				cc.WithImage("alpine:latest"),
-				cc.WithCommand("tail", "-f", "/dev/null"),
-			),
-		sc.WithProfiles("kill-me"),
+		containerkit.NewContainer().
+			Image("alpine:latest").
+			Command("tail", "-f", "/dev/null"),
+		containerkit.Profiles("kill-me"),
 	)
 
 	for i, word := range strings.Split(paragraph, "\n") {
 		serviceName := fmt.Sprintf("service%d", i)
+		extras := []any{containerkit.Profiles(selectedProfile)}
+		if i > 0 {
+			extras = append(extras, containerkit.DependsOn(fmt.Sprintf("service%d", i-1)))
+		}
 		project.WithService(serviceName,
-			create.NewContainer().
-				WithContainerConfig(
-					cc.WithImage("alpine:latest"),
-					cc.WithCommand("echo", word),
-				),
-			sc.WithProfiles(selectedProfile),
-			WithDependencyChain(i, "service%d", i-1),
+			containerkit.NewContainer().
+				Image("alpine:latest").
+				Command("echo", word),
+			extras...,
 		)
 	}
-	example := compose.NewCompose(project)
+	example := containerkit.NewCompose(project)
 	err := example.Up(
 		context.Background(),
-		up.WithProfiles(selectedProfile),
-		up.WithNoLogPrefix(),
-		up.WithRemoveOrphans(),
+		&containerkit.Up{
+			Profiles:      []string{selectedProfile},
+			NoLogPrefix:   true,
+			RemoveOrphans: true,
+		},
 	)
 
 	if err != nil {
 		log.Fatalf("error executing example 'up' with profile 'tail': %v", err)
 	}
 	err = example.Up(context.Background(),
-		up.WithProfiles("kill-me"),
-		up.WithNoLogPrefix(),
-		up.WithRemoveOrphans(),
-		up.WithDetach(),
+		&containerkit.Up{
+			Profiles:      []string{"kill-me"},
+			NoLogPrefix:   true,
+			RemoveOrphans: true,
+			Detach:        true,
+		},
 	)
 	if err != nil {
 		log.Fatalf("error executing example 'up' with profile 'kill-me': %v", err)
 	}
 
+	sig := "SIGKILL"
 	err = example.Kill(context.Background(),
-		kill.WithSignal("SIGKILL"),
-		kill.WithRemoveOrphans(),
-		kill.WithProfiles("kill-me"),
+		&containerkit.Kill{
+			Signal:        &sig,
+			RemoveOrphans: true,
+			Profiles:      []string{"kill-me"},
+		},
 	)
 	if err != nil {
 		log.Fatalf("error executing example 'kill' with profile 'kill-me': %v", err)
 	}
-}
-
-func WithDependencyChain(index int, format string, a ...any) create.SetServiceConfig {
-	return tools.WhenTrue(index > 0, sc.WithDependsOn(fmt.Sprintf(format, a...)))
 }

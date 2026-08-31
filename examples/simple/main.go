@@ -1,4 +1,4 @@
-// This is a simple example of how to use go-contain to create a simple project.
+// This is a simple example of how to use containerkit to create a simple project.
 //
 // this is the equivalent of the following docker-compose.yml file:
 //
@@ -20,10 +20,7 @@ import (
 	"log"
 	"os"
 
-	"github.com/aptd3v/go-contain/pkg/compose"
-	"github.com/aptd3v/go-contain/pkg/compose/options/up"
-	"github.com/aptd3v/go-contain/pkg/create"
-	"github.com/aptd3v/go-contain/pkg/create/config/cc"
+	"github.com/aptd3v/containerkit/pkg/containerkit"
 )
 
 const (
@@ -32,21 +29,18 @@ const (
 )
 
 func main() {
-	project := create.NewProject(ProjectName)
+	project := containerkit.NewProject(ProjectName)
 	project.WithService(ServiceName, AlpineContainer("latest"))
 
 	ctx := context.Background()
-	app := compose.NewCompose(project)
-	if err := app.Up(ctx, up.WithWriter(os.Stdout)); err != nil {
+	app := containerkit.NewCompose(project)
+	if err := app.Up(ctx, &containerkit.Up{Writer: os.Stdout}); err != nil {
 		log.Fatal(err)
 	}
 }
 
-func AlpineContainer(tag string) *create.Container {
-	simple := create.NewContainer()
-	simple.WithContainerConfig(
-		cc.WithImagef("alpine:%s", tag),
-		cc.WithCommand("echo", "hello, world"),
-	)
-	return simple
+func AlpineContainer(tag string) *containerkit.Container {
+	return containerkit.NewContainer().
+		Imagef("alpine:%s", tag).
+		Command("echo", "hello, world")
 }

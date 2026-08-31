@@ -8,13 +8,7 @@ import (
 	"log"
 	"time"
 
-	"github.com/aptd3v/go-contain/pkg/compose"
-	"github.com/aptd3v/go-contain/pkg/compose/options/down"
-	"github.com/aptd3v/go-contain/pkg/compose/options/up"
-	"github.com/aptd3v/go-contain/pkg/create"
-	"github.com/aptd3v/go-contain/pkg/create/config/cc"
-	"github.com/aptd3v/go-contain/pkg/create/config/cc/health"
-	"github.com/aptd3v/go-contain/pkg/create/config/hc"
+	"github.com/aptd3v/containerkit/pkg/containerkit"
 )
 
 const (
@@ -22,22 +16,20 @@ const (
 )
 
 func main() {
-	project := create.NewProject("events-project")
-	project.WithService(serviceName, create.NewContainer().
-		With(
-			cc.WithImage("nginx:latest"),
-			hc.WithPortBindings("tcp", "0.0.0.0", "8080", "80"),
-			cc.WithHealthCheck(
-				health.WithTest("CMD-SHELL", "curl -f http://localhost:80 || exit 1"),
-				health.WithInterval("2s"),
-				health.WithTimeout("5s"),
-				health.WithRetries(3),
-				health.WithStartPeriod("0s"),
-			),
-		),
+	project := containerkit.NewProject("events-project")
+	project.WithService(serviceName, containerkit.NewContainer().
+		Image("nginx:latest").
+		PortBindings("tcp", "0.0.0.0", "8080", "80").
+		HealthCheck(containerkit.Health{
+			Test:         []string{"CMD-SHELL", "curl -f http://localhost:80 || exit 1"},
+			IntervalD:    "2s",
+			TimeoutD:     "5s",
+			Retries:      3,
+			StartPeriodD: "0s",
+		}),
 	)
 
-	example := compose.NewCompose(project)
+	example := containerkit.NewCompose(project)
 	ctx, cancel := context.WithCancel(context.Background())
 	events, errCh, err := example.Events(ctx, serviceName)
 	if err != nil {
@@ -80,7 +72,7 @@ func main() {
 		log.Printf("Cycle %d: Starting container...\n", i+1)
 		time.Sleep(1 * time.Second)
 
-		err := example.Up(context.Background(), up.WithDetach(), up.WithWriter(io.Discard))
+		err := example.Up(context.Background(), &containerkit.Up{Detach: true, Writer: io.Discard})
 		if err != nil {
 			log.Fatalf("error executing 'up': %v", err)
 		}
@@ -89,7 +81,7 @@ func main() {
 		log.Printf("Cycle %d: Stopping container...\n", i+1)
 		time.Sleep(1 * time.Second)
 
-		err = example.Down(context.Background(), down.WithRemoveOrphans(), down.WithWriter(io.Discard))
+		err = example.Down(context.Background(), &containerkit.Down{RemoveOrphans: true, Writer: io.Discard})
 		if err != nil {
 			log.Fatalf("error executing 'down': %v", err)
 		}

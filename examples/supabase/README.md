@@ -1,6 +1,6 @@
 # Supabase example
 
-One-execute Supabase stack using [go-contain](https://github.com/aptd3v/go-contain): programmatic Compose with profiles, resource limits, embedded config, and real-time events.
+One-execute Supabase stack using [containerkit](https://github.com/aptd3v/containerkit): programmatic Compose with profiles, resource limits, embedded config, and real-time events.
 
 ## Requirements
 
@@ -45,11 +45,11 @@ rm -rf volumes #  if ran previously
 go run ./examples/supabase/ -profile minimal
 ```
 
-## go-contain features used
+## containerkit features used
 
-- **Profiles** — `sc.WithProfiles("minimal")` / `"full"` and `up.WithProfiles(...)` for run modes.
-- **Conditional resource limits** — `tools.WhenTrue(enableResourceLimits, sc.WithDeploy(deploy.WithResourceLimits(...)))` on db, kong, studio.
-- **Health and deploy** — `health.WithStartPeriod`, `resource.WithMemoryBytes`, `resource.WithNanoCPUs`.
-- **Compose API** — `Up`, `Logs`, `Events`, `Kill`, `Down` with profile and option setters.
+- **Profiles** — `containerkit.Profiles("minimal")` / `"full"` and `Up.Profiles` for run modes.
+- **Conditional resource limits** — ordinary `if` plus `containerkit.Deploy{Limits: &containerkit.Resources{...}}` on db, kong, studio.
+- **Health and deploy** — `containerkit.Health{StartPeriod: 120}` and `Resources.MemoryBytes` / `NanoCPUs`.
+- **Compose API** — `Up`, `Logs`, `Events`, `Kill`, `Down` with profile fields on option structs.
 - **Validation** — `project.Validate()` before up.
 

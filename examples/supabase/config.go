@@ -361,7 +361,7 @@ func (c *SupabaseConfig) envSupavisor() map[string]string {
 	}
 }
 
-// envMapNonEmpty returns a copy of m with empty values omitted so cc.WithEnvMap accepts it.
+// envMapNonEmpty returns a copy of m with empty values omitted so EnvMap accepts it.
 func envMapNonEmpty(m map[string]string) map[string]string {
 	out := make(map[string]string, len(m))
 	for k, v := range m {

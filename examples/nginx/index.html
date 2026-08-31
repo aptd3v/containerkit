@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>go-contain - Docker Container Management in Go</title>
+    <title>containerkit - Docker Container Management in Go</title>
     <style>
         * {
             box-sizing: border-box;
@@ -250,41 +250,47 @@
 
 <body>
     <div class="container">
-        <h1>go-contain</h1>
+        <h1>containerkit</h1>
         <p class="subtitle">Docker Container Management in Go</p>
 
         <div class="status">
-            nginx server running successfully with go-contain
+            nginx server running successfully with containerkit
         </div>
 
         <div class="code-example">
             <h3>This Example</h3>
-            <p>This nginx server was built and deployed using go-contain:</p>
+            <p>This nginx server was built and deployed using containerkit:</p>
             <div class="code-block">
                 <pre><code><span class="comment">// 1. Create build context with Dockerfile</span>
 dctx, err := <span class="function">WithDockerContext</span>(<span class="string">"./examples/nginx"</span>)
 
 <span class="comment">// 2. Build custom nginx image</span>
-cli, err := client.<span class="function">NewClient</span>(client.<span class="function">FromEnv</span>())
-resp, err := cli.<span class="function">ImageBuild</span>(ctx, dctx, build.<span class="function">WithTags</span>(<span class="string">"nginx-example:latest"</span>))
+cli, err := client.<span class="function">NewClient</span>(client.<span class="function">FromEnv</span>(), client.<span class="function">WithAPIVersionNegotiation</span>())
+resp, err := cli.<span class="function">ImageBuild</span>(ctx, dctx, &amp;client.<span class="type">ImageBuild</span>{Tags: []<span class="type">string</span>{<span class="string">"nginx-example:latest"</span>}})
 
 <span class="comment">// 3. Create compose project</span>
-project := create.<span class="function">NewProject</span>(<span class="string">"nginx-example"</span>)
-project.<span class="function">WithService</span>(<span class="string">"nginx"</span>, create.<span class="function">NewContainer</span>().
-    <span class="function">With</span>(
-        cc.<span class="function">WithImage</span>(<span class="string">"nginx-example:latest"</span>),
-        cc.<span class="function">WithCommand</span>(<span class="string">"nginx"</span>, <span class="string">"-g"</span>, <span class="string">"daemon off;"</span>),
-        hc.<span class="function">WithPortBindings</span>(<span class="string">"tcp"</span>, <span class="string">"0.0.0.0"</span>, <span class="string">"8080"</span>, <span class="string">"80"</span>),
-    ),
+project := containerkit.<span class="function">NewProject</span>(<span class="string">"nginx-example"</span>)
+project.<span class="function">WithService</span>(<span class="string">"nginx"</span>, containerkit.<span class="function">NewContainer</span>().
+    <span class="function">Image</span>(<span class="string">"nginx-example:latest"</span>).
+    <span class="function">Command</span>(<span class="string">"nginx"</span>, <span class="string">"-g"</span>, <span class="string">"daemon off;"</span>).
+    <span class="function">PortBindings</span>(<span class="string">"tcp"</span>, <span class="string">"0.0.0.0"</span>, <span class="string">"8080"</span>, <span class="string">"80"</span>).
+    <span class="function">HealthCheck</span>(containerkit.<span class="type">Health</span>{
+        Test:         []<span class="type">string</span>{<span class="string">"CMD-SHELL"</span>, <span class="string">"curl -f http://localhost:80 || exit 1"</span>},
+        IntervalD:    <span class="string">"10s"</span>,
+        TimeoutD:     <span class="string">"5s"</span>,
+        StartPeriodD: <span class="string">"0s"</span>,
+        Retries:      <span class="number">3</span>,
+    }).
+    <span class="function">MemoryLimitString</span>(<span class="string">"100MiB"</span>),
 )
 
 <span class="comment">// 4. Deploy with compose</span>
-app := compose.<span class="function">NewCompose</span>(project)
-err = app.<span class="function">Up</span>(ctx, up.<span class="function">WithDetach</span>(), up.<span class="function">WithRemoveOrphans</span>())
+app := containerkit.<span class="function">NewCompose</span>(project)
+err = app.<span class="function">Up</span>(ctx, &amp;containerkit.<span class="type">Up</span>{Detach: <span class="keyword">true</span>, RemoveOrphans: <span class="keyword">true</span>})
 
-<span class="comment">// Helper function that creates the Dockerfile</span>
+<span class="comment">// Helper that writes the Dockerfile into the build context</span>
 <span class="keyword">func</span> <span class="function">WithDockerContext</span>(path <span class="type">string</span>) (<span class="type">io.Reader</span>, <span class="type">error</span>) {
-    df := create.<span class="function">NewDockerFile</span>()
+    df := containerkit.<span class="function">NewDockerFile</span>()
     df.<span class="function">From</span>(<span class="string">"nginx"</span>, <span class="string">"latest"</span>)
     df.<span class="function">Copy</span>(<span class="string">"nginx.conf"</span>, <span class="string">"/etc/nginx/nginx.conf"</span>)
     df.<span class="function">Copy</span>(<span class="string">"index.html"</span>, <span class="string">"/usr/share/nginx/html/index.html"</span>)

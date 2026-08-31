@@ -3,38 +3,17 @@ package client
 import (
 	"context"
 
-	"github.com/aptd3v/go-contain/pkg/client/options/swarm/swarminit"
-	"github.com/aptd3v/go-contain/pkg/client/options/swarm/swarmjoin"
-	"github.com/aptd3v/go-contain/pkg/client/response"
-	"github.com/docker/docker/api/types/swarm"
+	"github.com/aptd3v/containerkit/pkg/client/response"
 )
 
 // SwarmInit initializes the swarm.
-func (c *Client) SwarmInit(ctx context.Context, setters ...swarminit.SetSwarmInitOption) (token string, err error) {
-	o := swarm.InitRequest{}
-	for _, setter := range setters {
-		if setter == nil {
-			continue
-		}
-		if err := setter(&o); err != nil {
-			return "", err
-		}
-	}
-	return c.wrapped.SwarmInit(ctx, o)
+func (c *Client) SwarmInit(ctx context.Context, opt *SwarmInit) (token string, err error) {
+	return c.wrapped.SwarmInit(ctx, opt.apply())
 }
 
 // SwarmJoin joins a node to the swarm.
-func (c *Client) SwarmJoin(ctx context.Context, setters ...swarmjoin.SetSwarmJoinOption) error {
-	o := swarm.JoinRequest{}
-	for _, setter := range setters {
-		if setter == nil {
-			continue
-		}
-		if err := setter(&o); err != nil {
-			return err
-		}
-	}
-	return c.wrapped.SwarmJoin(ctx, o)
+func (c *Client) SwarmJoin(ctx context.Context, opt *SwarmJoin) error {
+	return c.wrapped.SwarmJoin(ctx, opt.apply())
 }
 
 // SwarmLeave leaves the swarm

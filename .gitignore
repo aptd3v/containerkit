@@ -51,7 +51,8 @@ volumes/
 # macOS
 .DS_Store
 
-# codegen testdata
-!internal/codegen/testdata/docker-compose.yaml
-!internal/codegen/testdata/.env
-internal/codegen/COVERAGE.md
+# e2e run logs
+e2e/logs/
+e2e/**/logs/
+
+.cursor/

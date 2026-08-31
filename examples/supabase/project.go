@@ -1,103 +1,85 @@
 // Package main: compose project assembly and service dependencies.
-// Core services use sc.WithProfiles("minimal"); optional services use sc.WithProfiles("full").
-// Up/Down/Logs must pass at least one profile (e.g. up.WithProfiles("minimal") or "minimal","full" for full stack).
+// Core services use containerkit.Profiles("minimal"); optional services use containerkit.Profiles("full").
+// Up/Down/Logs must pass at least one profile (e.g. Up.Profiles = []string{"minimal"} or "minimal","full" for full stack).
 // Resource limits are applied when enableResourceLimits is true.
 package main
 
 import (
 	"path/filepath"
 
-	"github.com/aptd3v/go-contain/pkg/create"
-	"github.com/aptd3v/go-contain/pkg/create/config/sc"
-	"github.com/aptd3v/go-contain/pkg/create/config/sc/deploy"
-	"github.com/aptd3v/go-contain/pkg/create/config/sc/deploy/resource"
-	"github.com/aptd3v/go-contain/pkg/tools"
+	"github.com/aptd3v/containerkit/pkg/containerkit"
 )
 
-// SetupProject builds the Supabase compose project with all services and dependencies.
-// When enableResourceLimits is true, memory/CPU limits are applied to db, kong, and studio via deploy setters.
-func SetupProject(cfg *SupabaseConfig, baseVolumesPath string, enableResourceLimits bool) *create.Project {
-	project := create.NewProject("supabase")
+func SetupProject(cfg *SupabaseConfig, baseVolumesPath string, enableResourceLimits bool) *containerkit.Project {
+	project := containerkit.NewProject("supabase")
 	vol := func(p string) string { return filepath.Join(baseVolumesPath, p) }
 
-	// Profiles: "minimal" = core services only; "full" = adds optional services. Compose requires at least one profile when any service has a profile.
 	const profileMinimal = "minimal"
 	const profileFull = "full"
 
-	// vector: full profile only (no deps on other optional services)
+	limits := func(mem uint64, cpus int64) containerkit.Deploy {
+		return containerkit.Deploy{Limits: &containerkit.Resources{MemoryBytes: mem, NanoCPUs: cpus}}
+	}
+
 	project.WithService("vector", vectorContainer(cfg, vol),
-		sc.WithProfiles(profileFull))
+		containerkit.Profiles(profileFull))
 
-	// db: core (minimal profile). Conditional resource limits.
-	project.WithService("db", dbContainer(cfg, vol),
-		sc.WithProfiles(profileMinimal),
-		tools.WhenTrue(enableResourceLimits, sc.WithDeploy(deploy.WithResourceLimits(
-			resource.WithMemoryBytes(2*1024*1024*1024), // 2GiB
-			resource.WithNanoCPUs(2),                    // 2 CPUs (compose-go cpus is decimal, 0.01–10)
-		))))
+	dbExtras := []any{containerkit.Profiles(profileMinimal)}
+	if enableResourceLimits {
+		dbExtras = append(dbExtras, limits(2*1024*1024*1024, 2))
+	}
+	project.WithService("db", dbContainer(cfg, vol), dbExtras...)
 
-	// analytics: core (minimal)
 	project.WithService("analytics", analyticsContainer(cfg),
-		sc.WithProfiles(profileMinimal),
-		sc.WithDependsOnHealthy("db"))
+		containerkit.Profiles(profileMinimal),
+		containerkit.DependsOnHealthy("db"))
 
-	// auth, rest: core (minimal)
 	project.WithService("auth", authContainer(cfg),
-		sc.WithProfiles(profileMinimal),
-		sc.WithDependsOnHealthy("db"),
-		sc.WithDependsOnHealthy("analytics"))
+		containerkit.Profiles(profileMinimal),
+		containerkit.DependsOnHealthy("db"),
+		containerkit.DependsOnHealthy("analytics"))
 	project.WithService("rest", restContainer(cfg),
-		sc.WithProfiles(profileMinimal),
-		sc.WithDependsOnHealthy("db"),
-		sc.WithDependsOnHealthy("analytics"))
+		containerkit.Profiles(profileMinimal),
+		containerkit.DependsOnHealthy("db"),
+		containerkit.DependsOnHealthy("analytics"))
 
-	// realtime, meta, supavisor: full profile only
 	project.WithService("realtime", realtimeContainer(cfg),
-		sc.WithProfiles(profileFull),
-		sc.WithDependsOnHealthy("db"),
-		sc.WithDependsOnHealthy("analytics"))
+		containerkit.Profiles(profileFull),
+		containerkit.DependsOnHealthy("db"),
+		containerkit.DependsOnHealthy("analytics"))
 	project.WithService("meta", metaContainer(cfg),
-		sc.WithProfiles(profileFull),
-		sc.WithDependsOnHealthy("db"),
-		sc.WithDependsOnHealthy("analytics"))
+		containerkit.Profiles(profileFull),
+		containerkit.DependsOnHealthy("db"),
+		containerkit.DependsOnHealthy("analytics"))
 	project.WithService("supavisor", supavisorContainer(cfg, vol),
-		sc.WithProfiles(profileFull),
-		sc.WithDependsOnHealthy("db"),
-		sc.WithDependsOnHealthy("analytics"))
+		containerkit.Profiles(profileFull),
+		containerkit.DependsOnHealthy("db"),
+		containerkit.DependsOnHealthy("analytics"))
 
-	// imgproxy: full profile only
 	project.WithService("imgproxy", imgproxyContainer(cfg, vol),
-		sc.WithProfiles(profileFull))
+		containerkit.Profiles(profileFull))
 
-	// storage: full profile only
 	project.WithService("storage", storageContainer(cfg, vol),
-		sc.WithProfiles(profileFull),
-		sc.WithDependsOnHealthy("db"),
-		sc.WithDependsOn("rest"),
-		sc.WithDependsOn("imgproxy"))
+		containerkit.Profiles(profileFull),
+		containerkit.DependsOnHealthy("db"),
+		containerkit.DependsOn("rest"),
+		containerkit.DependsOn("imgproxy"))
 
-	// functions: full profile only
 	project.WithService("functions", functionsContainer(cfg, vol),
-		sc.WithProfiles(profileFull),
-		sc.WithDependsOnHealthy("analytics"))
+		containerkit.Profiles(profileFull),
+		containerkit.DependsOnHealthy("analytics"))
 
-	// kong: core (minimal). Conditional resource limits.
-	project.WithService("kong", kongContainer(cfg, vol),
-		sc.WithProfiles(profileMinimal),
-		sc.WithDependsOnHealthy("analytics"),
-		tools.WhenTrue(enableResourceLimits, sc.WithDeploy(deploy.WithResourceLimits(
-			resource.WithMemoryBytes(512*1024*1024), // 512MiB
-			resource.WithNanoCPUs(1),                // 1 CPU (compose-go cpus is decimal, 0.01–10)
-		))))
+	kongExtras := []any{containerkit.Profiles(profileMinimal), containerkit.DependsOnHealthy("analytics")}
+	if enableResourceLimits {
+		kongExtras = append(kongExtras, limits(512*1024*1024, 1))
+	}
+	project.WithService("kong", kongContainer(cfg, vol), kongExtras...)
 
-	// studio: core (minimal). Conditional resource limits.
-	project.WithService("studio", studioContainer(cfg, vol),
-		sc.WithProfiles(profileMinimal),
-		sc.WithDependsOnHealthy("analytics"),
-		tools.WhenTrue(enableResourceLimits, sc.WithDeploy(deploy.WithResourceLimits(
-			resource.WithMemoryBytes(512*1024*1024), // 512MiB
-			resource.WithNanoCPUs(1),                // 1 CPU (compose-go cpus is decimal, 0.01–10)
-		))))
+	studioExtras := []any{containerkit.Profiles(profileMinimal), containerkit.DependsOnHealthy("analytics")}
+	if enableResourceLimits {
+		studioExtras = append(studioExtras, limits(512*1024*1024, 1))
+	}
+	project.WithService("studio", studioContainer(cfg, vol), studioExtras...)
 
 	project.WithVolume("db-config").WithVolume("deno-cache").WithNetwork("supabase-network")
 	return project

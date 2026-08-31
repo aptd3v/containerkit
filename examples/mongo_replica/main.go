@@ -12,17 +12,8 @@ import (
 	"os/signal"
 	"strings"
 
-	"github.com/aptd3v/go-contain/pkg/client"
-	"github.com/aptd3v/go-contain/pkg/client/options/container/execopt"
-	"github.com/aptd3v/go-contain/pkg/compose"
-	"github.com/aptd3v/go-contain/pkg/compose/options/up"
-	"github.com/aptd3v/go-contain/pkg/create"
-	"github.com/aptd3v/go-contain/pkg/create/config/cc"
-	"github.com/aptd3v/go-contain/pkg/create/config/cc/health"
-	"github.com/aptd3v/go-contain/pkg/create/config/hc"
-	"github.com/aptd3v/go-contain/pkg/create/config/nc"
-	"github.com/aptd3v/go-contain/pkg/create/config/sc"
-	"github.com/aptd3v/go-contain/pkg/tools"
+	"github.com/aptd3v/containerkit/pkg/client"
+	"github.com/aptd3v/containerkit/pkg/containerkit"
 )
 
 const NumReplicas = 3 // Number of MongoDB replicas in the replica set
@@ -39,20 +30,18 @@ type RSMember struct {
 
 func main() {
 
-	project := create.NewProject("mongo-db-cluster")
+	project := containerkit.NewProject("mongo-db-cluster")
 
 	members := []RSMember{}
 	urlParts := make([]string, 0, NumReplicas)
 	for i := range NumReplicas {
 		serviceName := fmt.Sprintf("db-%d", i)
 
-		project.WithService(serviceName,
-			WithMongoReplica(i),
-			// depends on the previous  db-0 <- db-1 <- db-2
-			tools.WhenTrue(i > 0,
-				sc.WithDependsOn(fmt.Sprintf("db-%d", i-1)),
-			),
-		)
+		extras := []any{}
+		if i > 0 {
+			extras = append(extras, containerkit.DependsOn(fmt.Sprintf("db-%d", i-1)))
+		}
+		project.WithService(serviceName, WithMongoReplica(i), extras...)
 		members = append(members, RSMember{
 			Host: serviceName,
 			ID:   i,
@@ -65,13 +54,15 @@ func main() {
 
 	project.WithNetwork("mongo-cluster").WithVolume("mongo-data")
 
-	database := compose.NewCompose(project)
+	database := containerkit.NewCompose(project)
 
 	if err := database.Up(
 		context.Background(),
-		up.WithForceRecreate(),
-		up.WithRemoveOrphans(),
-		up.WithWait(), // Wait for the containers to be healthy before initializing the replica set
+		&containerkit.Up{
+			ForceRecreate: true,
+			RemoveOrphans: true,
+			Wait:          true,
+		},
 	); err != nil {
 		log.Fatal(err)
 	}
@@ -88,7 +79,7 @@ func main() {
 		<-signalsChan
 		defer cancel()
 		fmt.Println("Received interrupt signal, shutting down...")
-		if err := database.Down(context.Background()); err != nil {
+		if err := database.Down(context.Background(), nil); err != nil {
 			log.Fatal(err)
 		}
 		os.Exit(0)
@@ -104,45 +95,35 @@ func main() {
 	<-ctx.Done()
 }
 
-func WithMongoReplica(index int) *create.Container {
+func WithMongoReplica(index int) *containerkit.Container {
 	containerName := fmt.Sprintf("mongodb-%d", index)
-	return create.NewContainer(containerName).
-		WithContainerConfig(
-			cc.WithImage("mongo:latest"),
-			cc.WithCommand("mongod", "--replSet", "rs0", "--bind_ip_all"),
-			cc.WithHealthCheck(
-				health.WithTest("CMD", "mongosh", "--eval", `db.adminCommand("ping")`),
-				health.WithInterval("1s"),
-				health.WithTimeout("10s"),
-				health.WithStartPeriod("0s"),
-				health.WithRetries(5),
-			),
-			cc.WithExposedPort("tcp", "27017"),
-		).
-		WithHostConfig(
-			hc.WithRestartPolicyUnlessStopped(),
-		).
-		WithNetworkConfig(
-			nc.WithEndpoint("mongo-cluster"),
-		)
+	return containerkit.NewContainer(containerName).
+		Image("mongo:latest").
+		Command("mongod", "--replSet", "rs0", "--bind_ip_all").
+		HealthCheck(containerkit.Health{
+			Test:         []string{"CMD", "mongosh", "--eval", `db.adminCommand("ping")`},
+			IntervalD:    "1s",
+			TimeoutD:     "10s",
+			StartPeriodD: "0s",
+			Retries:      5,
+		}).
+		ExposedPort("tcp", "27017").
+		RestartUnlessStopped().
+		Endpoint("mongo-cluster")
 }
 
-// Initialize initializes the MongoDB replica set with the provided members.
-// It runs the `rs.initiate` command in the specified container.
 func Initialize(ctx context.Context, initContainer string, members []RSMember) error {
-	cli, err := client.NewClient(
-		tools.WhenTrue(os.Getenv("DOCKER_HOST") != "",
-			client.FromEnv(),
-		),
-		client.WithAPIVersionNegotiation(),
-	)
+	opts := []client.SetClientOption{client.WithAPIVersionNegotiation()}
+	if os.Getenv("DOCKER_HOST") != "" {
+		opts = append([]client.SetClientOption{client.FromEnv()}, opts...)
+	}
+	cli, err := client.NewClient(opts...)
 	if err != nil {
 		return fmt.Errorf("failed to create Docker client: %w", err)
 	}
 	if len(members) == 0 {
 		return fmt.Errorf("no members provided for replica set initialization")
 	}
-	// Prepare the members for the rs.initiate command
 	initiate := RSet{
 		ID:      "rs0",
 		Members: members,
@@ -155,17 +136,15 @@ func Initialize(ctx context.Context, initContainer string, members []RSMember) e
 	command := []string{"mongosh", "--eval", fmt.Sprintf("rs.initiate(%s)", string(init))}
 
 	fmt.Println(strings.Join(command, " "))
-	res, err := cli.ContainerExecCreate(
-		ctx,
-		initContainer,
-		execopt.WithCommand(command...),
-		execopt.WithAttachStdout(),
-		execopt.WithAttachStderr(),
-	)
+	res, err := cli.ContainerExecCreate(ctx, initContainer, &client.Exec{
+		Command:      command,
+		AttachStdout: true,
+		AttachStderr: true,
+	})
 	if err != nil {
 		return fmt.Errorf("failed to create exec command: %w", err)
 	}
-	attached, err := cli.ContainerExecAttach(ctx, res.ID)
+	attached, err := cli.ContainerExecAttach(ctx, res.ID, nil)
 	if err != nil {
 		return fmt.Errorf("failed to start exec command: %w", err)
 	}
@@ -174,19 +153,13 @@ func Initialize(ctx context.Context, initContainer string, members []RSMember) e
 	return nil
 }
 
-func WithMongoExpress(url string) *create.Container {
-	return create.NewContainer("mongo-express").
-		WithContainerConfig(
-			cc.WithImage("mongo-express:latest"),
-			cc.WithEnv("ME_CONFIG_MONGODB_URL", url),
-			cc.WithEnv("ME_CONFIG_MONGODB_AUTH_USERNAME", "admin"),
-			cc.WithEnv("ME_CONFIG_MONGODB_AUTH_PASSWORD", "password"),
-		).
-		WithHostConfig(
-			hc.WithPortBindings("tcp", "0.0.0.0", "8081", "8081"),
-			hc.WithRestartPolicyAlways(),
-		).
-		WithNetworkConfig(
-			nc.WithEndpoint("mongo-cluster"),
-		)
+func WithMongoExpress(url string) *containerkit.Container {
+	return containerkit.NewContainer("mongo-express").
+		Image("mongo-express:latest").
+		Env("ME_CONFIG_MONGODB_URL", url).
+		Env("ME_CONFIG_MONGODB_AUTH_USERNAME", "admin").
+		Env("ME_CONFIG_MONGODB_AUTH_PASSWORD", "password").
+		PortBindings("tcp", "0.0.0.0", "8081", "8081").
+		RestartAlways().
+		Endpoint("mongo-cluster")
 }

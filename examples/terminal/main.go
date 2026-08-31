@@ -10,24 +10,15 @@ import (
 	"os/signal"
 	"syscall"
 
-	"github.com/aptd3v/go-contain/pkg/client"
-	"github.com/aptd3v/go-contain/pkg/client/options/container/execattach"
-	"github.com/aptd3v/go-contain/pkg/client/options/container/execopt"
-	"github.com/aptd3v/go-contain/pkg/client/options/container/execresize"
-	"github.com/aptd3v/go-contain/pkg/client/options/container/remove"
-	"github.com/aptd3v/go-contain/pkg/client/options/image/pull"
-	"github.com/aptd3v/go-contain/pkg/create"
-	"github.com/aptd3v/go-contain/pkg/create/config/cc"
-	"github.com/aptd3v/go-contain/pkg/tools"
+	"github.com/aptd3v/containerkit/pkg/client"
+	"github.com/aptd3v/containerkit/pkg/containerkit"
 )
 
 func main() {
 	ctx := context.Background()
-	alpineContainer := create.NewContainer("exec", "example")
-	alpineContainer.With(
-		cc.WithImage("alpine:latest"),
-		cc.WithCommand("tail", "-f", "/dev/null"),
-	)
+	alpineContainer := containerkit.NewContainer("exec", "example").
+		Image("alpine:latest").
+		Command("tail", "-f", "/dev/null")
 
 	cli, err := client.NewClient(client.FromEnv(), client.WithAPIVersionNegotiation())
 	if err != nil {
@@ -41,8 +32,7 @@ func main() {
 		cleanup(cli, alpineContainer.Name)
 	}()
 
-	// Pull Ubuntu image
-	if res, err := cli.ImagePull(ctx, "alpine:latest", pull.WithCurrentPlatform()); err != nil {
+	if res, err := cli.ImagePull(ctx, "alpine:latest", &client.ImagePull{CurrentPlatform: true}); err != nil {
 		log.Fatal(err)
 	} else if _, err = io.Copy(os.Stdout, res); err != nil {
 		log.Fatal(err)
@@ -51,26 +41,31 @@ func main() {
 	}
 	defer cleanup(cli, alpineContainer.Name)
 
-	// Create and start the container
 	if _, err := cli.ContainerCreate(ctx, alpineContainer); err != nil {
 		log.Fatalf("Failed to create container: %v", err)
 	}
-	if err := cli.ContainerStart(ctx, alpineContainer.Name); err != nil {
+	if err := cli.ContainerStart(ctx, alpineContainer.Name, nil); err != nil {
 		log.Fatalf("Failed to start container: %v", err)
 	}
-	execCreate, err := cli.ContainerExecCreate(ctx, alpineContainer.Name, WithExecOptions())
+	execCreate, err := cli.ContainerExecCreate(ctx, alpineContainer.Name, &client.Exec{
+		AttachStderr: true,
+		AttachStdin:  true,
+		AttachStdout: true,
+		Tty:          true,
+		Command:      []string{"/bin/sh"},
+	})
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	session, err := cli.ContainerExecAttachTerminal(ctx, execCreate.ID, execattach.WithTty())
+	session, err := cli.ContainerExecAttachTerminal(ctx, execCreate.ID, &client.ExecAttach{Tty: true})
 	if err != nil {
 		log.Fatal(err)
 	}
 	monitor := session.MonitorSize()
 	go func() {
 		for size := range monitor {
-			err := cli.ContainerExecResize(ctx, execCreate.ID, execresize.WithSize(size.Width, size.Height))
+			err := cli.ContainerExecResize(ctx, execCreate.ID, &client.Resize{Width: size.Width, Height: size.Height})
 			if err != nil {
 				log.Fatal(err)
 			}
@@ -84,24 +79,15 @@ func main() {
 	defer session.Close()
 
 }
-func WithExecOptions() execopt.SetContainerExecOption {
-	return tools.Group(
-		execopt.WithAttachStderr(),
-		execopt.WithAttachStdin(),
-		execopt.WithAttachStdout(),
-		execopt.WithTty(),
-		execopt.WithCommand("/bin/sh"),
-	)
-}
 
-func cleanup(client *client.Client, cName string) {
+func cleanup(cli *client.Client, cName string) {
 	ctx := context.Background()
 
-	if err := client.ContainerStop(ctx, cName); err != nil {
+	if err := cli.ContainerStop(ctx, cName, nil); err != nil {
 		log.Printf("Failed to stop container: %v", err)
 	}
 
-	if err := client.ContainerRemove(ctx, cName, remove.WithForce()); err != nil {
+	if err := cli.ContainerRemove(ctx, cName, &client.Remove{Force: true}); err != nil {
 		log.Printf("Failed to remove container: %v", err)
 	}
 

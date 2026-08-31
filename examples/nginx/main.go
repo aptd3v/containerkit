@@ -7,14 +7,8 @@ import (
 	"log"
 	"os"
 
-	"github.com/aptd3v/go-contain/pkg/client"
-	"github.com/aptd3v/go-contain/pkg/client/options/image/build"
-	"github.com/aptd3v/go-contain/pkg/compose"
-	"github.com/aptd3v/go-contain/pkg/compose/options/up"
-	"github.com/aptd3v/go-contain/pkg/create"
-	"github.com/aptd3v/go-contain/pkg/create/config/cc"
-	"github.com/aptd3v/go-contain/pkg/create/config/cc/health"
-	"github.com/aptd3v/go-contain/pkg/create/config/hc"
+	"github.com/aptd3v/containerkit/pkg/client"
+	"github.com/aptd3v/containerkit/pkg/containerkit"
 )
 
 func main() {
@@ -26,7 +20,9 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	resp, err := cli.ImageBuild(context.Background(), df, build.WithTags("nginx-example:latest"))
+	buildOpt := &client.ImageBuild{}
+	buildOpt.Tags = []string{"nginx-example:latest"}
+	resp, err := cli.ImageBuild(context.Background(), df, buildOpt)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -34,31 +30,29 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	project := create.NewProject("nginx-example")
-	project.WithService("nginx", create.NewContainer().
-		With(
-			cc.WithImage("nginx-example:latest"),
-			cc.WithCommand("nginx", "-g", "daemon off;"),
-			hc.WithPortBindings("tcp", "0.0.0.0", "8080", "80"),
-			cc.WithHealthCheck(
-				health.WithTest("CMD-SHELL", "curl -f http://localhost:80 || exit 1"),
-				health.WithInterval("10s"),
-				health.WithTimeout("5s"),
-				health.WithStartPeriod("0s"),
-				health.WithRetries(3),
-			),
-			hc.WithMemoryLimit("100MiB"),
-		),
+	project := containerkit.NewProject("nginx-example")
+	project.WithService("nginx", containerkit.NewContainer().
+		Image("nginx-example:latest").
+		Command("nginx", "-g", "daemon off;").
+		PortBindings("tcp", "0.0.0.0", "8080", "80").
+		HealthCheck(containerkit.Health{
+			Test:         []string{"CMD-SHELL", "curl -f http://localhost:80 || exit 1"},
+			IntervalD:    "10s",
+			TimeoutD:     "5s",
+			StartPeriodD: "0s",
+			Retries:      3,
+		}).
+		MemoryLimitString("100MiB"),
 	)
-	app := compose.NewCompose(project)
-	err = app.Up(context.Background(), up.WithDetach(), up.WithRemoveOrphans())
+	app := containerkit.NewCompose(project)
+	err = app.Up(context.Background(), &containerkit.Up{Detach: true, RemoveOrphans: true})
 	if err != nil {
 		log.Fatal(err)
 	}
 	fmt.Println("app started at http://localhost:8080")
 }
 func WithDockerContext(path string) (io.Reader, error) {
-	df := create.NewDockerFile()
+	df := containerkit.NewDockerFile()
 	df.From("nginx", "latest")
 	df.Copy("nginx.conf", "/etc/nginx/nginx.conf")
 	df.Copy("index.html", "/usr/share/nginx/html/index.html")

@@ -4,44 +4,32 @@ package main
 import (
 	"fmt"
 
-	"github.com/aptd3v/go-contain/pkg/create"
-	"github.com/aptd3v/go-contain/pkg/create/config/cc"
-	"github.com/aptd3v/go-contain/pkg/create/config/cc/health"
-	"github.com/aptd3v/go-contain/pkg/create/config/hc"
-	"github.com/aptd3v/go-contain/pkg/create/config/hc/mount"
-	"github.com/aptd3v/go-contain/pkg/create/config/nc"
+	"github.com/aptd3v/containerkit/pkg/containerkit"
 )
 
-func vectorContainer(cfg *SupabaseConfig, vol func(string) string) *create.Container {
-	dockerSocket := "/var/run/docker.sock"
-	return create.NewContainer("supabase-vector").
-		WithContainerConfig(
-			cc.WithImage("timberio/vector:0.53.0-alpine"),
-			cc.WithEnvMap(envMapNonEmpty(cfg.envVector())),
-			cc.WithCommand("--config", "/etc/vector/vector.yml"),
-			cc.WithHealthCheck(
-				health.WithTest("CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://127.0.0.1:9001/health"),
-				health.WithTimeout(5),
-				health.WithInterval(5),
-				health.WithRetries(3),
-				health.WithStartPeriod(10),
-			),
-		).
-		WithHostConfig(
-			hc.WithRestartPolicyUnlessStopped(),
-			hc.WithVolumeBinds(vol("logs/vector.yml")+":/etc/vector/vector.yml:ro,z"),
-			hc.WithMountPoint(
-				mount.WithSource(dockerSocket),
-				mount.WithTarget("/var/run/docker.sock"),
-				mount.WithType("bind"),
-				mount.WithReadOnly(),
-			),
-			hc.WithSecurityOpts("label=disable"),
-		).
-		WithNetworkConfig(nc.WithEndpoint("supabase-network"))
+func vectorContainer(cfg *SupabaseConfig, vol func(string) string) *containerkit.Container {
+	return containerkit.NewContainer("supabase-vector").
+		Image("timberio/vector:0.53.0-alpine").
+		EnvMap(envMapNonEmpty(cfg.envVector())).
+		Command("--config", "/etc/vector/vector.yml").
+		HealthCheck(containerkit.Health{
+			Test:        []string{"CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://127.0.0.1:9001/health"},
+			Timeout:     5,
+			Interval:    5,
+			Retries:     3,
+			StartPeriod: 10,
+		}).
+		RestartUnlessStopped().
+		VolumeBinds(vol("logs/vector.yml") + ":/etc/vector/vector.yml:ro,z").
+		Mount(containerkit.Mount{
+			Source: "/var/run/docker.sock", Target: "/var/run/docker.sock",
+			Type: containerkit.MountBind, ReadOnly: true,
+		}).
+		SecurityOpts("label=disable").
+		Endpoint("supabase-network")
 }
 
-func dbContainer(cfg *SupabaseConfig, vol func(string) string) *create.Container {
+func dbContainer(cfg *SupabaseConfig, vol func(string) string) *containerkit.Container {
 	env := cfg.envDB()
 	binds := []string{
 		vol("db/realtime.sql") + ":/docker-entrypoint-initdb.d/migrations/99-realtime.sql:ro,Z",
@@ -53,212 +41,174 @@ func dbContainer(cfg *SupabaseConfig, vol func(string) string) *create.Container
 		vol("db/logs.sql") + ":/docker-entrypoint-initdb.d/migrations/99-logs.sql:ro,Z",
 		vol("db/pooler.sql") + ":/docker-entrypoint-initdb.d/migrations/99-pooler.sql:ro,Z",
 	}
-	return create.NewContainer("supabase-db").
-		WithContainerConfig(
-			cc.WithImage("supabase/postgres:15.8.1.085"),
-			cc.WithEnvMap(envMapNonEmpty(env)),
-			cc.WithCommand("postgres", "-c", "config_file=/etc/postgresql/postgresql.conf", "-c", "log_min_messages=fatal"),
-			cc.WithHealthCheck(
-				health.WithTest("CMD", "pg_isready", "-U", "postgres", "-h", "localhost"),
-				health.WithInterval(5),
-				health.WithTimeout(5),
-				health.WithRetries(10),
-				health.WithStartPeriod(120), // initdb runs many SQL scripts; allow time before health checks count
-			),
-		).
-		WithHostConfig(
-			hc.WithRestartPolicyUnlessStopped(),
-			hc.WithVolumeBinds(binds...),
-			hc.WithRWNamedVolumeMount("db-config", "/etc/postgresql-custom"),
-		).
-		WithNetworkConfig(nc.WithEndpoint("supabase-network"))
+	return containerkit.NewContainer("supabase-db").
+		Image("supabase/postgres:15.8.1.085").
+		EnvMap(envMapNonEmpty(env)).
+		Command("postgres", "-c", "config_file=/etc/postgresql/postgresql.conf", "-c", "log_min_messages=fatal").
+		HealthCheck(containerkit.Health{
+			Test:        []string{"CMD", "pg_isready", "-U", "postgres", "-h", "localhost"},
+			Interval:    5,
+			Timeout:     5,
+			Retries:     10,
+			StartPeriod: 120,
+		}).
+		RestartUnlessStopped().
+		VolumeBinds(binds...).
+		RWNamedVolumeMount("db-config", "/etc/postgresql-custom").
+		Endpoint("supabase-network")
 }
 
-func analyticsContainer(cfg *SupabaseConfig) *create.Container {
-	return create.NewContainer("supabase-analytics").
-		WithContainerConfig(
-			cc.WithImage("supabase/logflare:1.31.2"),
-			cc.WithEnvMap(envMapNonEmpty(cfg.envAnalytics())),
-			cc.WithHealthCheck(
-				health.WithTest("CMD", "curl", "http://localhost:4000/health"),
-				health.WithTimeout(5),
-				health.WithInterval(5),
-				health.WithRetries(10),
-			),
-		).
-		WithHostConfig(hc.WithRestartPolicyUnlessStopped()).
-		WithNetworkConfig(nc.WithEndpoint("supabase-network"))
+func analyticsContainer(cfg *SupabaseConfig) *containerkit.Container {
+	return containerkit.NewContainer("supabase-analytics").
+		Image("supabase/logflare:1.31.2").
+		EnvMap(envMapNonEmpty(cfg.envAnalytics())).
+		HealthCheck(containerkit.Health{
+			Test:     []string{"CMD", "curl", "http://localhost:4000/health"},
+			Timeout:  5,
+			Interval: 5,
+			Retries:  10,
+		}).
+		RestartUnlessStopped().
+		Endpoint("supabase-network")
 }
 
-func authContainer(cfg *SupabaseConfig) *create.Container {
-	return create.NewContainer("supabase-auth").
-		WithContainerConfig(
-			cc.WithImage("supabase/gotrue:v2.186.0"),
-			cc.WithEnvMap(envMapNonEmpty(cfg.envAuth())),
-			cc.WithHealthCheck(
-				health.WithTest("CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:9999/health"),
-				health.WithTimeout(5),
-				health.WithInterval(5),
-				health.WithRetries(3),
-			),
-		).
-		WithHostConfig(hc.WithRestartPolicyUnlessStopped()).
-		WithNetworkConfig(nc.WithEndpoint("supabase-network"))
+func authContainer(cfg *SupabaseConfig) *containerkit.Container {
+	return containerkit.NewContainer("supabase-auth").
+		Image("supabase/gotrue:v2.186.0").
+		EnvMap(envMapNonEmpty(cfg.envAuth())).
+		HealthCheck(containerkit.Health{
+			Test:     []string{"CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:9999/health"},
+			Timeout:  5,
+			Interval: 5,
+			Retries:  3,
+		}).
+		RestartUnlessStopped().
+		Endpoint("supabase-network")
 }
 
-func restContainer(cfg *SupabaseConfig) *create.Container {
-	return create.NewContainer("supabase-rest").
-		WithContainerConfig(
-			cc.WithImage("postgrest/postgrest:v14.5"),
-			cc.WithEnvMap(envMapNonEmpty(cfg.envRest())),
-			cc.WithCommand("postgrest"),
-		).
-		WithHostConfig(hc.WithRestartPolicyUnlessStopped()).
-		WithNetworkConfig(nc.WithEndpoint("supabase-network"))
+func restContainer(cfg *SupabaseConfig) *containerkit.Container {
+	return containerkit.NewContainer("supabase-rest").
+		Image("postgrest/postgrest:v14.5").
+		EnvMap(envMapNonEmpty(cfg.envRest())).
+		Command("postgrest").
+		RestartUnlessStopped().
+		Endpoint("supabase-network")
 }
 
-func realtimeContainer(cfg *SupabaseConfig) *create.Container {
+func realtimeContainer(cfg *SupabaseConfig) *containerkit.Container {
 	healthTest := fmt.Sprintf("curl -sSfL --head -o /dev/null -H \"Authorization: Bearer %s\" http://localhost:4000/api/tenants/realtime-dev/health", cfg.AnonKey)
-	return create.NewContainer("realtime-dev.supabase-realtime").
-		WithContainerConfig(
-			cc.WithImage("supabase/realtime:v2.76.5"),
-			cc.WithEnvMap(envMapNonEmpty(cfg.envRealtime())),
-			cc.WithHealthCheck(
-				health.WithTest("CMD-SHELL", healthTest),
-				health.WithTimeout(5),
-				health.WithInterval(30),
-				health.WithRetries(3),
-				health.WithStartPeriod(10),
-			),
-		).
-		WithHostConfig(hc.WithRestartPolicyUnlessStopped()).
-		WithNetworkConfig(nc.WithEndpoint("supabase-network"))
+	return containerkit.NewContainer("realtime-dev.supabase-realtime").
+		Image("supabase/realtime:v2.76.5").
+		EnvMap(envMapNonEmpty(cfg.envRealtime())).
+		HealthCheck(containerkit.Health{
+			Test:        []string{"CMD-SHELL", healthTest},
+			Timeout:     5,
+			Interval:    30,
+			Retries:     3,
+			StartPeriod: 10,
+		}).
+		RestartUnlessStopped().
+		Endpoint("supabase-network")
 }
 
-func storageContainer(cfg *SupabaseConfig, vol func(string) string) *create.Container {
-	return create.NewContainer("supabase-storage").
-		WithContainerConfig(
-			cc.WithImage("supabase/storage-api:v1.37.8"),
-			cc.WithEnvMap(envMapNonEmpty(cfg.envStorage())),
-			cc.WithHealthCheck(
-				health.WithTest("CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://storage:5000/status"),
-				health.WithTimeout(5),
-				health.WithInterval(5),
-				health.WithRetries(3),
-			),
-		).
-		WithHostConfig(
-			hc.WithRestartPolicyUnlessStopped(),
-			hc.WithVolumeBinds(vol("storage")+":/var/lib/storage:z"),
-		).
-		WithNetworkConfig(nc.WithEndpoint("supabase-network"))
+func storageContainer(cfg *SupabaseConfig, vol func(string) string) *containerkit.Container {
+	return containerkit.NewContainer("supabase-storage").
+		Image("supabase/storage-api:v1.37.8").
+		EnvMap(envMapNonEmpty(cfg.envStorage())).
+		HealthCheck(containerkit.Health{
+			Test:     []string{"CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://storage:5000/status"},
+			Timeout:  5,
+			Interval: 5,
+			Retries:  3,
+		}).
+		RestartUnlessStopped().
+		VolumeBinds(vol("storage") + ":/var/lib/storage:z").
+		Endpoint("supabase-network")
 }
 
-func imgproxyContainer(cfg *SupabaseConfig, vol func(string) string) *create.Container {
-	return create.NewContainer("supabase-imgproxy").
-		WithContainerConfig(
-			cc.WithImage("darthsim/imgproxy:v3.30.1"),
-			cc.WithEnvMap(envMapNonEmpty(cfg.envImgproxy())),
-			cc.WithHealthCheck(
-				health.WithTest("CMD", "imgproxy", "health"),
-				health.WithTimeout(5),
-				health.WithInterval(5),
-				health.WithRetries(3),
-			),
-		).
-		WithHostConfig(
-			hc.WithRestartPolicyUnlessStopped(),
-			hc.WithVolumeBinds(vol("storage")+":/var/lib/storage:z"),
-		).
-		WithNetworkConfig(nc.WithEndpoint("supabase-network"))
+func imgproxyContainer(cfg *SupabaseConfig, vol func(string) string) *containerkit.Container {
+	return containerkit.NewContainer("supabase-imgproxy").
+		Image("darthsim/imgproxy:v3.30.1").
+		EnvMap(envMapNonEmpty(cfg.envImgproxy())).
+		HealthCheck(containerkit.Health{
+			Test:     []string{"CMD", "imgproxy", "health"},
+			Timeout:  5,
+			Interval: 5,
+			Retries:  3,
+		}).
+		RestartUnlessStopped().
+		VolumeBinds(vol("storage") + ":/var/lib/storage:z").
+		Endpoint("supabase-network")
 }
 
-func metaContainer(cfg *SupabaseConfig) *create.Container {
-	return create.NewContainer("supabase-meta").
-		WithContainerConfig(
-			cc.WithImage("supabase/postgres-meta:v0.95.2"),
-			cc.WithEnvMap(envMapNonEmpty(cfg.envMeta())),
-		).
-		WithHostConfig(hc.WithRestartPolicyUnlessStopped()).
-		WithNetworkConfig(nc.WithEndpoint("supabase-network"))
+func metaContainer(cfg *SupabaseConfig) *containerkit.Container {
+	return containerkit.NewContainer("supabase-meta").
+		Image("supabase/postgres-meta:v0.95.2").
+		EnvMap(envMapNonEmpty(cfg.envMeta())).
+		RestartUnlessStopped().
+		Endpoint("supabase-network")
 }
 
-func functionsContainer(cfg *SupabaseConfig, vol func(string) string) *create.Container {
-	return create.NewContainer("supabase-edge-functions").
-		WithContainerConfig(
-			cc.WithImage("supabase/edge-runtime:v1.70.3"),
-			cc.WithEnvMap(envMapNonEmpty(cfg.envFunctions())),
-			cc.WithCommand("start", "--main-service", "/home/deno/functions/main"),
-		).
-		WithHostConfig(
-			hc.WithRestartPolicyUnlessStopped(),
-			hc.WithVolumeBinds(vol("functions")+":/home/deno/functions:Z"),
-			hc.WithRWNamedVolumeMount("deno-cache", "/root/.cache/deno"),
-		).
-		WithNetworkConfig(nc.WithEndpoint("supabase-network"))
+func functionsContainer(cfg *SupabaseConfig, vol func(string) string) *containerkit.Container {
+	return containerkit.NewContainer("supabase-edge-functions").
+		Image("supabase/edge-runtime:v1.70.3").
+		EnvMap(envMapNonEmpty(cfg.envFunctions())).
+		Command("start", "--main-service", "/home/deno/functions/main").
+		RestartUnlessStopped().
+		VolumeBinds(vol("functions")+":/home/deno/functions:Z").
+		RWNamedVolumeMount("deno-cache", "/root/.cache/deno").
+		Endpoint("supabase-network")
 }
 
-func kongContainer(cfg *SupabaseConfig, vol func(string) string) *create.Container {
+func kongContainer(cfg *SupabaseConfig, vol func(string) string) *containerkit.Container {
 	entrypointScript := `eval "echo \"$(cat ~/temp.yml)\"" > ~/kong.yml && /docker-entrypoint.sh kong docker-start`
-	return create.NewContainer("supabase-kong").
-		WithContainerConfig(
-			cc.WithImage("kong:2.8.1"),
-			cc.WithEnvMap(envMapNonEmpty(cfg.envKong())),
-			cc.WithEntrypoint("bash", "-c", entrypointScript),
-			cc.WithExposedPort("tcp", "8000"),
-			cc.WithExposedPort("tcp", "8443"),
-		).
-		WithHostConfig(
-			hc.WithRestartPolicyUnlessStopped(),
-			hc.WithPortBindings("tcp", "0.0.0.0", cfg.KongHTTPPort, "8000"),
-			hc.WithPortBindings("tcp", "0.0.0.0", cfg.KongHTTPSPort, "8443"),
-			hc.WithVolumeBinds(vol("api/kong.yml")+":/home/kong/temp.yml:ro,z"),
-		).
-		WithNetworkConfig(nc.WithEndpoint("supabase-network"))
+	return containerkit.NewContainer("supabase-kong").
+		Image("kong:2.8.1").
+		EnvMap(envMapNonEmpty(cfg.envKong())).
+		Entrypoint("bash", "-c", entrypointScript).
+		ExposedPort("tcp", "8000").
+		ExposedPort("tcp", "8443").
+		RestartUnlessStopped().
+		PortBindings("tcp", "0.0.0.0", cfg.KongHTTPPort, "8000").
+		PortBindings("tcp", "0.0.0.0", cfg.KongHTTPSPort, "8443").
+		VolumeBinds(vol("api/kong.yml") + ":/home/kong/temp.yml:ro,z").
+		Endpoint("supabase-network")
 }
 
-func studioContainer(cfg *SupabaseConfig, vol func(string) string) *create.Container {
-	return create.NewContainer("supabase-studio").
-		WithContainerConfig(
-			cc.WithImage("supabase/studio:2026.02.16-sha-26c615c"),
-			cc.WithEnvMap(envMapNonEmpty(cfg.envStudio())),
-			cc.WithExposedPort("tcp", "3000"),
-			cc.WithHealthCheck(
-				health.WithTest("CMD", "node", "-e", "fetch('http://studio:3000/api/platform/profile').then((r) => {if (r.status !== 200) throw new Error(r.status)})"),
-				health.WithTimeout(10),
-				health.WithInterval(5),
-				health.WithRetries(3),
-			),
-		).
-		WithHostConfig(
-			hc.WithRestartPolicyUnlessStopped(),
-			hc.WithPortBindings("tcp", "0.0.0.0", cfg.StudioPort, "3000"),
-			hc.WithVolumeBinds(vol("snippets")+":/app/snippets:Z", vol("functions")+":/app/edge-functions:Z"),
-		).
-		WithNetworkConfig(nc.WithEndpoint("supabase-network"))
+func studioContainer(cfg *SupabaseConfig, vol func(string) string) *containerkit.Container {
+	return containerkit.NewContainer("supabase-studio").
+		Image("supabase/studio:2026.02.16-sha-26c615c").
+		EnvMap(envMapNonEmpty(cfg.envStudio())).
+		ExposedPort("tcp", "3000").
+		HealthCheck(containerkit.Health{
+			Test:     []string{"CMD", "node", "-e", "fetch('http://studio:3000/api/platform/profile').then((r) => {if (r.status !== 200) throw new Error(r.status)})"},
+			Timeout:  10,
+			Interval: 5,
+			Retries:  3,
+		}).
+		RestartUnlessStopped().
+		PortBindings("tcp", "0.0.0.0", cfg.StudioPort, "3000").
+		VolumeBinds(vol("snippets")+":/app/snippets:Z", vol("functions")+":/app/edge-functions:Z").
+		Endpoint("supabase-network")
 }
 
-func supavisorContainer(cfg *SupabaseConfig, vol func(string) string) *create.Container {
+func supavisorContainer(cfg *SupabaseConfig, vol func(string) string) *containerkit.Container {
 	script := `/app/bin/migrate && /app/bin/supavisor eval "$(cat /etc/pooler/pooler.exs)" && /app/bin/server`
-	return create.NewContainer("supabase-pooler").
-		WithContainerConfig(
-			cc.WithImage("supabase/supavisor:2.7.4"),
-			cc.WithEnvMap(envMapNonEmpty(cfg.envSupavisor())),
-			cc.WithEntrypoint("/bin/sh", "-c", script),
-			cc.WithHealthCheck(
-				health.WithTest("CMD", "curl", "-sSfL", "--head", "-o", "/dev/null", "http://127.0.0.1:4000/api/health"),
-				health.WithInterval(10),
-				health.WithTimeout(5),
-				health.WithRetries(5),
-			),
-			cc.WithExposedPort("tcp", "5432"),
-			cc.WithExposedPort("tcp", "6543"),
-		).
-		WithHostConfig(
-			hc.WithRestartPolicyUnlessStopped(),
-			hc.WithPortBindings("tcp", "0.0.0.0", cfg.PostgresPort, "5432"),
-			hc.WithPortBindings("tcp", "0.0.0.0", cfg.PoolerProxyPortTx, "6543"),
-			hc.WithVolumeBinds(vol("pooler/pooler.exs")+":/etc/pooler/pooler.exs:ro,z"),
-		).
-		WithNetworkConfig(nc.WithEndpoint("supabase-network"))
+	return containerkit.NewContainer("supabase-pooler").
+		Image("supabase/supavisor:2.7.4").
+		EnvMap(envMapNonEmpty(cfg.envSupavisor())).
+		Entrypoint("/bin/sh", "-c", script).
+		HealthCheck(containerkit.Health{
+			Test:     []string{"CMD", "curl", "-sSfL", "--head", "-o", "/dev/null", "http://127.0.0.1:4000/api/health"},
+			Interval: 10,
+			Timeout:  5,
+			Retries:  5,
+		}).
+		ExposedPort("tcp", "5432").
+		ExposedPort("tcp", "6543").
+		RestartUnlessStopped().
+		PortBindings("tcp", "0.0.0.0", cfg.PostgresPort, "5432").
+		PortBindings("tcp", "0.0.0.0", cfg.PoolerProxyPortTx, "6543").
+		VolumeBinds(vol("pooler/pooler.exs") + ":/etc/pooler/pooler.exs:ro,z").
+		Endpoint("supabase-network")
 }
