@@ -58,6 +58,7 @@ func TestProjectMarshalFullConfig(t *testing.T) {
 		DNSLookups("8.8.8.8").
 		DNSSearches("test").
 		DNSOptions("ndots:2").
+		ExtraHost("host.docker.internal:host-gateway").
 		OomScoreAdj(50).
 		OomKillDisable().
 		AddedDevice("/dev/null", "/dev/null", "rwm").
@@ -160,12 +161,14 @@ func TestProjectMarshalFullConfig(t *testing.T) {
 	raw, err := p.Marshal()
 	require.NoError(t, err)
 	require.Contains(t, string(raw), "image:")
+	require.Contains(t, string(raw), "host.docker.internal=host-gateway")
 	require.NotNil(t, p.Unwrap())
 
 	svc, err := p.GetService("web")
 	require.NoError(t, err)
 	require.Equal(t, "web", svc.Name)
 	require.Empty(t, svc.ContainerName, "deploy set should clear container name")
+	require.Equal(t, []string{"host-gateway"}, svc.ExtraHosts["host.docker.internal"])
 
 	n := 0
 	require.NoError(t, p.ForEachService(func(name string, service *types.ServiceConfig) error {
@@ -211,6 +214,10 @@ func TestProjectValidationAndErrors(t *testing.T) {
 	p4.WithService("a", NewContainer().Image("alpine"), 42)
 	require.Error(t, p4.Validate())
 
+	pHosts := NewProject("hosts")
+	pHosts.WithService("web", NewContainer().Image("alpine").ExtraHost("no-ip"))
+	require.Error(t, pHosts.Validate())
+
 	require.Error(t, p4.ForEachService(nil))
 	_, err = p4.GetService("missing")
 	require.Error(t, err)
@@ -241,6 +248,19 @@ func TestConvertersNilAndEdge(t *testing.T) {
 	require.Nil(t, convertLogging(&container.LogConfig{}))
 	require.Empty(t, convertDevices(nil))
 	require.Empty(t, convertVolumesFrom(nil))
+
+	hosts, err := convertExtraHosts(nil)
+	require.NoError(t, err)
+	require.Nil(t, hosts)
+	hosts, err = convertExtraHosts([]string{})
+	require.NoError(t, err)
+	require.Nil(t, hosts)
+	hosts, err = convertExtraHosts([]string{"host.docker.internal:host-gateway", "foo=127.0.0.1"})
+	require.NoError(t, err)
+	require.Equal(t, []string{"host-gateway"}, hosts["host.docker.internal"])
+	require.Equal(t, []string{"127.0.0.1"}, hosts["foo"])
+	_, err = convertExtraHosts([]string{"missing-ip"})
+	require.Error(t, err)
 
 	hc := &container.HostConfig{}
 	require.Nil(t, convertBlkioConfig(hc))

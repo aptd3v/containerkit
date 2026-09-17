@@ -207,6 +207,13 @@ func (p *Project) WithService(name string, service *Container, extras ...any) *P
 		Uts:         string(config.Host.UTSMode),
 	}
 
+	extraHosts, err := convertExtraHosts(config.Host.ExtraHosts)
+	if err != nil {
+		p.errs = append(p.errs, errdefs.NewServiceConfigError(name, err.Error()))
+	} else {
+		serv.ExtraHosts = extraHosts
+	}
+
 	// the following is nil if not set and needs to stay that way so docker cant determine if it is set or not
 	memSwappines := config.Host.MemorySwappiness
 	pidsLimit := config.Host.PidsLimit
@@ -604,6 +611,18 @@ func convertTmpfs(tmpfs map[string]string) types.StringList {
 		tmpfsRules = append(tmpfsRules, fmt.Sprintf("%s:%s", path, size))
 	}
 	return tmpfsRules
+}
+
+// convertExtraHosts converts Docker HostConfig ExtraHosts into compose extra_hosts.
+func convertExtraHosts(hosts []string) (types.HostsList, error) {
+	if len(hosts) == 0 {
+		return nil, nil
+	}
+	list, err := types.NewHostsList(hosts)
+	if err != nil {
+		return nil, fmt.Errorf("extra hosts: %w", err)
+	}
+	return list, nil
 }
 
 // convertUlimits converts the ulimits from the container config to the compose config
