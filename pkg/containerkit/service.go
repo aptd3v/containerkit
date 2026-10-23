@@ -590,9 +590,9 @@ func convertNetworks(networks *dockerNet.NetworkingConfig) map[string]*types.Ser
 	networkRules := make(map[string]*types.ServiceNetworkConfig, len(networks.EndpointsConfig))
 	for name, endpointConfig := range networks.EndpointsConfig {
 		config := &types.ServiceNetworkConfig{
-			Priority:   endpointConfig.Copy().GwPriority,
-			Aliases:    endpointConfig.Aliases,
-			MacAddress: endpointConfig.MacAddress,
+			GatewayPriority: endpointConfig.GwPriority,
+			Aliases:         endpointConfig.Aliases,
+			MacAddress:      endpointConfig.MacAddress,
 		}
 		if endpointConfig.IPAMConfig != nil {
 			config.Ipv4Address = endpointConfig.IPAMConfig.IPv4Address
