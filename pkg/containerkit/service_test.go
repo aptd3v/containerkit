@@ -4,11 +4,13 @@ import (
 	"os"
 	"path/filepath"
 	"testing"
+	"time"
 
 	"github.com/aptd3v/containerkit/pkg/containerkit/errdefs"
 	"github.com/compose-spec/compose-go/v2/types"
 	"github.com/docker/docker/api/types/blkiodev"
 	"github.com/docker/docker/api/types/container"
+	"github.com/docker/docker/api/types/mount"
 	"github.com/docker/docker/api/types/network"
 	"github.com/docker/go-connections/nat"
 	"github.com/stretchr/testify/require"
@@ -265,10 +267,11 @@ func TestConvertersNilAndEdge(t *testing.T) {
 	hc := &container.HostConfig{}
 	require.Nil(t, convertBlkioConfig(hc))
 
-	vols := convertVolumes(&container.HostConfig{
+	vols, tmpfsFromMounts := convertVolumes(nil, &container.HostConfig{
 		Binds: []string{"no-colon", "src:notslash"},
 	})
 	require.Empty(t, vols)
+	require.Empty(t, tmpfsFromMounts)
 
 	ports := convertPortsBindings(map[nat.Port][]nat.PortBinding{
 		nat.Port("80/tcp"): {{HostIP: "0.0.0.0", HostPort: "8080"}},
@@ -291,6 +294,100 @@ func TestConvertersNilAndEdge(t *testing.T) {
 
 	hc.BlkioWeightDevice = []*blkiodev.WeightDevice{{Path: "/dev/zero", Weight: 10}}
 	require.NotNil(t, convertBlkioConfig(hc))
+}
+
+func TestWithServiceMapsContainerFields(t *testing.T) {
+	c := NewContainer("api").
+		Image("alpine").
+		Volume("/cache").
+		Volume("/data").
+		DisabledNetwork().
+		StorageOpt("size", "20G").
+		VolumeDriver("local").
+		DeviceRequest("nvidia", -1, []string{"0"}, [][]string{{"gpu", "compute"}, {"utility"}}).
+		RestartPolicy(RestartPolicyOnFailure, 3).
+		OS("linux").
+		Architecture("arm64").
+		Variant("v8").
+		DisabledHealthCheck().
+		RWNamedVolumeMountWithLabel("data", "/var/lib/data", "foo", "bar").
+		RWNamedVolumeSubPath("data", "/var/lib/sub", "nested").
+		NonRecursiveBindMount("/host", "/mnt", true).
+		HostBindMountRecursiveRO("/host/ro", "/mnt/ro").
+		TmpfsMountUIDGID("/run", 4096, "1000", "1000").
+		Endpoint("back", EndpointOpts{DriverOptions: map[string]string{"com.docker.network.endpoint.ifname": "eth1"}, MacAddress: "02:42:ac:11:00:02"})
+	c.Config.Host.NanoCPUs = 1_500_000_000
+	c.Config.Host.Links = []string{"db:database"}
+	c.Config.Host.DeviceRequests[0].Options = map[string]string{"opt": "1"}
+
+	p := NewProject("mapped")
+	p.WithService("api", c)
+	require.NoError(t, p.Validate())
+	svc, err := p.GetService("api")
+	require.NoError(t, err)
+
+	require.Equal(t, float32(1.5), svc.CPUS)
+	require.Equal(t, "on-failure:3", svc.Restart)
+	require.Equal(t, "local", svc.VolumeDriver)
+	require.Equal(t, map[string]string{"size": "20G"}, svc.StorageOpt)
+	require.Equal(t, []string{"db:database"}, svc.Links)
+	require.Equal(t, "none", svc.NetworkMode)
+	require.Equal(t, "linux/arm64/v8", svc.Platform)
+	require.True(t, svc.HealthCheck.Disable)
+	require.Empty(t, svc.HealthCheck.Test)
+	require.Equal(t, []types.DeviceRequest{{
+		Driver:       "nvidia",
+		Count:        -1,
+		IDs:          []string{"0"},
+		Capabilities: []string{"gpu", "compute", "utility"},
+		Options:      types.Mapping{"opt": "1"},
+	}}, svc.Gpus)
+	require.Equal(t, "eth1", svc.Networks["back"].DriverOpts["com.docker.network.endpoint.ifname"])
+
+	require.Equal(t, "/run:size=4096,uid=1000,gid=1000", string(svc.Tmpfs[0]))
+
+	byTarget := map[string]types.ServiceVolumeConfig{}
+	for _, vol := range svc.Volumes {
+		byTarget[vol.Target] = vol
+	}
+	require.Equal(t, types.VolumeTypeVolume, byTarget["/cache"].Type)
+	require.Empty(t, byTarget["/cache"].Source)
+	require.Equal(t, types.VolumeTypeVolume, byTarget["/data"].Type)
+	require.Equal(t, "bar", byTarget["/var/lib/data"].Volume.Labels["foo"])
+	require.Equal(t, "nested", byTarget["/var/lib/sub"].Volume.Subpath)
+	require.True(t, byTarget["/mnt"].ReadOnly)
+	require.Equal(t, "disabled", byTarget["/mnt"].Bind.Recursive)
+	require.Equal(t, "readonly", byTarget["/mnt/ro"].Bind.Recursive)
+
+	healthy := NewContainer().Image("alpine").HealthCheck(Health{
+		Test: []string{"CMD", "true"}, Timeout: 1, Interval: 1, Retries: 1,
+	})
+	healthy.Config.Container.Healthcheck.StartInterval = 2 * time.Second
+	p.WithService("healthy", healthy)
+	got, err := p.GetService("healthy")
+	require.NoError(t, err)
+	require.NotNil(t, got.HealthCheck.StartInterval)
+	require.Equal(t, types.Duration(2*time.Second), *got.HealthCheck.StartInterval)
+
+	imageVols, extra := convertVolumes(nil, &container.HostConfig{
+		Mounts: []mount.Mount{{
+			Type:         mount.TypeImage,
+			Source:       "alpine",
+			Target:       "/img",
+			ImageOptions: &mount.ImageOptions{Subpath: "bin"},
+		}, {
+			Type:     mount.TypeBind,
+			Source:   "/src",
+			Target:   "/dst",
+			ReadOnly: true,
+			BindOptions: &mount.BindOptions{
+				ReadOnlyNonRecursive: true,
+			},
+		}},
+	})
+	require.Empty(t, extra)
+	require.Equal(t, "bin", imageVols[0].Image.SubPath)
+	require.Equal(t, "writable", imageVols[1].Bind.Recursive)
 }
 
 func TestFirstNonEmptyAndApplySpecs(t *testing.T) {

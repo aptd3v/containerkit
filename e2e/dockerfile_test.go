@@ -59,6 +59,7 @@ func TestDockerFileWriterRealBuild(t *testing.T) {
 			Retries:  1,
 		}).
 		User("nobody").
+		Shell("/bin/echo", "from-shell").
 		CommandExec("sleep", "infinity")
 	if err := df.Validate(); err != nil {
 		t.Fatalf("Validate: %v", err)
@@ -125,6 +126,9 @@ func TestDockerFileWriterRealBuild(t *testing.T) {
 	}
 	if len(cfg.OnBuild) == 0 {
 		t.Fatalf("onbuild %v", cfg.OnBuild)
+	}
+	if len(cfg.Shell) != 2 || cfg.Shell[0] != "/bin/echo" || cfg.Shell[1] != "from-shell" {
+		t.Fatalf("shell %v", cfg.Shell)
 	}
 
 	name := ident(t, "c")

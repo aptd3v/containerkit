@@ -140,12 +140,19 @@ func applyServiceExtra(serv *types.ServiceConfig, extra any) error {
 	case SetServiceConfig:
 		return e(serv)
 	case BuildSpec:
+		if e.err != nil {
+			return e.err
+		}
 		e.apply(serv)
 		return nil
 	case *BuildSpec:
-		if e != nil {
-			e.apply(serv)
+		if e == nil {
+			return nil
 		}
+		if e.err != nil {
+			return e.err
+		}
+		e.apply(serv)
 		return nil
 	case Deploy:
 		e.apply(serv)

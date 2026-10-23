@@ -4,12 +4,14 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"slices"
 	"strings"
 	"time"
 
 	"github.com/aptd3v/containerkit/pkg/containerkit/errdefs"
 	"github.com/compose-spec/compose-go/v2/types"
 	"github.com/docker/docker/api/types/container"
+	"github.com/docker/docker/api/types/mount"
 	dockerNet "github.com/docker/docker/api/types/network"
 	"github.com/docker/go-connections/nat"
 	ocispec "github.com/opencontainers/image-spec/specs-go/v1"
@@ -108,6 +110,10 @@ func (p *Project) WithService(name string, service *Container, extras ...any) *P
 		config.Platform = &ocispec.Platform{}
 	}
 
+	volumes, tmpfsMounts := convertVolumes(config.Container.Volumes, config.Host)
+	// Compose-only keys that have no container field are still unset:
+	// configs, credential_spec, extends, external_links, provider, pull_policy,
+	// label_file, use_api_socket, post_start, pre_stop, and scale.
 	serv := types.ServiceConfig{
 		Name: name,
 		//container
@@ -145,6 +151,7 @@ func (p *Project) WithService(name string, service *Container, extras ...any) *P
 		CPUQuota:     int64(config.Host.CPUQuota),
 		CPUShares:    int64(config.Host.CPUShares),
 		CPUSet:       string(config.Host.CpusetCpus),
+		CPUS:         nanoCPUsToCPUS(config.Host.NanoCPUs),
 		CPURTRuntime: int64(config.Host.CPURealtimeRuntime),
 		CPURTPeriod:  int64(config.Host.CPURealtimePeriod),
 
@@ -166,9 +173,11 @@ func (p *Project) WithService(name string, service *Container, extras ...any) *P
 		OomScoreAdj: int64(config.Host.OomScoreAdj),
 		//Devices
 		Devices: convertDevices(config.Host.Devices),
+		Gpus:    convertDeviceRequests(config.Host.DeviceRequests),
 
 		//groups
 		GroupAdd: config.Host.GroupAdd,
+		Links:    config.Host.Links,
 
 		//init
 		Init: config.Host.Init,
@@ -190,21 +199,26 @@ func (p *Project) WithService(name string, service *Container, extras ...any) *P
 		Logging: convertLogging(&config.Host.LogConfig),
 
 		//volumes
-		VolumesFrom: convertVolumesFrom(config.Host.VolumesFrom),
-		Volumes:     convertVolumes(config.Host),
+		VolumesFrom:  convertVolumesFrom(config.Host.VolumesFrom),
+		Volumes:      volumes,
+		VolumeDriver: config.Host.VolumeDriver,
 
 		Ports:       convertPortsBindings(config.Host.PortBindings),
-		Platform:    config.Platform.Architecture,
+		Platform:    formatPlatform(config.Platform),
 		Privileged:  config.Host.Privileged,
 		ReadOnly:    config.Host.ReadonlyRootfs,
-		Restart:     string(config.Host.RestartPolicy.Name),
+		Restart:     convertRestart(config.Host.RestartPolicy),
 		Runtime:     string(config.Host.Runtime),
 		SecurityOpt: config.Host.SecurityOpt,
+		StorageOpt:  config.Host.StorageOpt,
 		Sysctls:     config.Host.Sysctls,
-		Tmpfs:       convertTmpfs(config.Host.Tmpfs),
+		Tmpfs:       append(convertTmpfs(config.Host.Tmpfs), tmpfsMounts...),
 		Ulimits:     convertUlimits(config.Host.Ulimits),
 		UserNSMode:  string(config.Host.UsernsMode),
 		Uts:         string(config.Host.UTSMode),
+	}
+	if config.Container.NetworkDisabled && serv.NetworkMode == "" {
+		serv.NetworkMode = "none"
 	}
 
 	extraHosts, err := convertExtraHosts(config.Host.ExtraHosts)
@@ -409,6 +423,9 @@ func convertHealthCheck(healthcheck *container.HealthConfig) *types.HealthCheckC
 	if healthcheck == nil {
 		return nil
 	}
+	if len(healthcheck.Test) == 1 && healthcheck.Test[0] == "NONE" {
+		return &types.HealthCheckConfig{Disable: true}
+	}
 	test := types.HealthCheckTest{}
 	if len(healthcheck.Test) > 0 {
 		test = append(test, healthcheck.Test...)
@@ -417,13 +434,18 @@ func convertHealthCheck(healthcheck *container.HealthConfig) *types.HealthCheckC
 	interval := types.Duration(healthcheck.Interval)
 	retries := uint64(healthcheck.Retries)
 	startPeriod := types.Duration(healthcheck.StartPeriod)
-	return &types.HealthCheckConfig{
+	cfg := &types.HealthCheckConfig{
 		Test:        test,
 		Timeout:     &timeout,
 		Interval:    &interval,
 		Retries:     &retries,
 		StartPeriod: &startPeriod,
 	}
+	if healthcheck.StartInterval > 0 {
+		startInterval := types.Duration(healthcheck.StartInterval)
+		cfg.StartInterval = &startInterval
+	}
+	return cfg
 }
 
 // convertBlkioConfig converts the blkio config from the container config to the compose config
@@ -494,9 +516,28 @@ func convertLogging(logConfig *container.LogConfig) *types.LoggingConfig {
 	}
 }
 
-// convertVolumes converts the volumes and binds from the container config to the compose config
-func convertVolumes(hostConfig *container.HostConfig) []types.ServiceVolumeConfig {
+// convertVolumes converts anonymous container volumes, binds, and mounts into compose service volumes.
+// Tmpfs mounts that carry engine options Compose's long form cannot store are returned as short tmpfs strings.
+func convertVolumes(anonymous map[string]struct{}, hostConfig *container.HostConfig) ([]types.ServiceVolumeConfig, types.StringList) {
 	volumeRules := make([]types.ServiceVolumeConfig, 0)
+	var tmpfsMounts types.StringList
+
+	if len(anonymous) > 0 {
+		targets := make([]string, 0, len(anonymous))
+		for target := range anonymous {
+			if target == "" {
+				continue
+			}
+			targets = append(targets, target)
+		}
+		slices.Sort(targets)
+		for _, target := range targets {
+			volumeRules = append(volumeRules, types.ServiceVolumeConfig{
+				Type:   types.VolumeTypeVolume,
+				Target: target,
+			})
+		}
+	}
 
 	binds := hostConfig.Binds
 	// binds are validated in the hc package and we can assume they are valid
@@ -537,36 +578,52 @@ func convertVolumes(hostConfig *container.HostConfig) []types.ServiceVolumeConfi
 		volumeRules = append(volumeRules, config)
 	}
 
-	mounts := hostConfig.Mounts
-	for _, mount := range mounts {
+	for _, mnt := range hostConfig.Mounts {
+		if mnt.Type == "tmpfs" && mnt.TmpfsOptions != nil && len(mnt.TmpfsOptions.Options) > 0 {
+			tmpfsMounts = append(tmpfsMounts, formatTmpfsMount(mnt.Target, mnt.ReadOnly, mnt.TmpfsOptions))
+			continue
+		}
 		config := types.ServiceVolumeConfig{
-			Source:      mount.Source,
-			Target:      mount.Target,
-			Type:        string(mount.Type),
-			ReadOnly:    mount.ReadOnly,
-			Consistency: string(mount.Consistency),
+			Source:      mnt.Source,
+			Target:      mnt.Target,
+			Type:        string(mnt.Type),
+			ReadOnly:    mnt.ReadOnly,
+			Consistency: string(mnt.Consistency),
 		}
-		if mount.BindOptions != nil {
+		if mnt.BindOptions != nil {
 			config.Bind = &types.ServiceVolumeBind{
-				Propagation:    string(mount.BindOptions.Propagation),
-				CreateHostPath: mount.BindOptions.CreateMountpoint,
+				Propagation:    string(mnt.BindOptions.Propagation),
+				CreateHostPath: mnt.BindOptions.CreateMountpoint,
+				Recursive: bindRecursiveMode(
+					mnt.BindOptions.NonRecursive,
+					mnt.BindOptions.ReadOnlyForceRecursive,
+					mnt.BindOptions.ReadOnlyNonRecursive,
+				),
 			}
 		}
-		if mount.VolumeOptions != nil {
-			config.Volume = &types.ServiceVolumeVolume{
-				NoCopy: mount.VolumeOptions.NoCopy,
+		if mnt.VolumeOptions != nil {
+			vol := &types.ServiceVolumeVolume{
+				NoCopy:  mnt.VolumeOptions.NoCopy,
+				Subpath: mnt.VolumeOptions.Subpath,
 			}
+			if len(mnt.VolumeOptions.Labels) > 0 {
+				vol.Labels = mnt.VolumeOptions.Labels
+			}
+			config.Volume = vol
 		}
-		if mount.TmpfsOptions != nil {
+		if mnt.ImageOptions != nil && mnt.ImageOptions.Subpath != "" {
+			config.Image = &types.ServiceVolumeImage{SubPath: mnt.ImageOptions.Subpath}
+		}
+		if mnt.TmpfsOptions != nil {
 			config.Tmpfs = &types.ServiceVolumeTmpfs{
-				Size: types.UnitBytes(mount.TmpfsOptions.SizeBytes),
-				Mode: uint32(mount.TmpfsOptions.Mode),
+				Size: types.UnitBytes(mnt.TmpfsOptions.SizeBytes),
+				Mode: uint32(mnt.TmpfsOptions.Mode),
 			}
 		}
 
 		volumeRules = append(volumeRules, config)
 	}
-	return volumeRules
+	return volumeRules, tmpfsMounts
 }
 
 // convertPortsBindings converts the ports and bindings from the container config to the compose config
@@ -599,6 +656,9 @@ func convertNetworks(networks *dockerNet.NetworkingConfig) map[string]*types.Ser
 			config.Ipv6Address = endpointConfig.IPAMConfig.IPv6Address
 			config.LinkLocalIPs = endpointConfig.IPAMConfig.LinkLocalIPs
 		}
+		if len(endpointConfig.DriverOpts) > 0 {
+			config.DriverOpts = endpointConfig.DriverOpts
+		}
 		networkRules[name] = config
 	}
 	return networkRules
@@ -623,6 +683,108 @@ func convertExtraHosts(hosts []string) (types.HostsList, error) {
 		return nil, fmt.Errorf("extra hosts: %w", err)
 	}
 	return list, nil
+}
+
+func nanoCPUsToCPUS(nano int64) float32 {
+	if nano == 0 {
+		return 0
+	}
+	return float32(nano) / 1e9
+}
+
+func convertRestart(policy container.RestartPolicy) string {
+	name := string(policy.Name)
+	if policy.Name == container.RestartPolicyOnFailure && policy.MaximumRetryCount > 0 {
+		return fmt.Sprintf("%s:%d", name, policy.MaximumRetryCount)
+	}
+	return name
+}
+
+func formatPlatform(p *ocispec.Platform) string {
+	if p == nil {
+		return ""
+	}
+	switch {
+	case p.OS != "" && p.Architecture != "" && p.Variant != "":
+		return p.OS + "/" + p.Architecture + "/" + p.Variant
+	case p.OS != "" && p.Architecture != "":
+		return p.OS + "/" + p.Architecture
+	case p.Architecture != "" && p.Variant != "":
+		return p.Architecture + "/" + p.Variant
+	case p.OS != "":
+		return p.OS
+	case p.Architecture != "":
+		return p.Architecture
+	default:
+		return p.Variant
+	}
+}
+
+func convertDeviceRequests(reqs []container.DeviceRequest) []types.DeviceRequest {
+	if len(reqs) == 0 {
+		return nil
+	}
+	out := make([]types.DeviceRequest, 0, len(reqs))
+	for _, req := range reqs {
+		gpu := types.DeviceRequest{
+			Driver: req.Driver,
+			Count:  types.DeviceCount(req.Count),
+			IDs:    req.DeviceIDs,
+		}
+		if len(req.Options) > 0 {
+			gpu.Options = req.Options
+		}
+		for _, caps := range req.Capabilities {
+			gpu.Capabilities = append(gpu.Capabilities, caps...)
+		}
+		out = append(out, gpu)
+	}
+	return out
+}
+
+func bindRecursiveMode(nonRecursive, forceReadOnly, writableSubmounts bool) string {
+	switch {
+	case nonRecursive:
+		return "disabled"
+	case forceReadOnly:
+		return "readonly"
+	case writableSubmounts:
+		return "writable"
+	default:
+		return ""
+	}
+}
+
+func formatTmpfsMount(target string, readOnly bool, opts *mount.TmpfsOptions) string {
+	if opts == nil {
+		return target
+	}
+	parts := make([]string, 0, 2+len(opts.Options))
+	if opts.SizeBytes > 0 {
+		parts = append(parts, fmt.Sprintf("size=%d", opts.SizeBytes))
+	}
+	if opts.Mode != 0 {
+		parts = append(parts, fmt.Sprintf("mode=%o", opts.Mode))
+	}
+	for _, opt := range opts.Options {
+		switch len(opt) {
+		case 0:
+			continue
+		case 1:
+			if opt[0] != "" {
+				parts = append(parts, opt[0])
+			}
+		default:
+			parts = append(parts, opt[0]+"="+opt[1])
+		}
+	}
+	if readOnly {
+		parts = append(parts, "ro")
+	}
+	if len(parts) == 0 {
+		return target
+	}
+	return target + ":" + strings.Join(parts, ",")
 }
 
 // convertUlimits converts the ulimits from the container config to the compose config
