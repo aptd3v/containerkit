@@ -1,5 +1,7 @@
-// this program runs and builds the image if it does not exist and then tags it with a label
-// and then uses the image for a container the second time it runs
+// Build a tagged image from an inline Dockerfile, then run it.
+//
+// The Engine client inspects the tag first. A second run reuses the image
+// and Compose skips the build.
 package main
 
 import (
@@ -7,73 +9,64 @@ import (
 	"fmt"
 	"log"
 	"os"
-	"strings"
 
 	"github.com/aptd3v/containerkit/pkg/client"
 	"github.com/aptd3v/containerkit/pkg/containerkit"
 )
 
+const imageRef = "hello-inline:example"
+
 func main() {
+	if err := run(); err != nil {
+		log.Fatal(err)
+	}
+}
+
+func run() error {
 	ctx := context.Background()
-	exists, err := ImageExists(ctx, "my-image", "thats-tagged")
+	cli, err := client.NewClient(client.FromEnv(), client.WithAPIVersionFromEnv())
 	if err != nil {
-		log.Fatalf("Error checking if image exists: %v", err)
+		return err
+	}
+	defer cli.Close()
+
+	img, err := cli.ImageInspect(ctx, imageRef, nil)
+	if err != nil && !client.IsErrNotFound(err) {
+		return err
 	}
 
-	project := containerkit.NewProject("my-image-project")
-	project.WithService(
-		"my-image-service",
-		MyContainer("my-image", "thats-tagged"),
-		inlineDockerfile("alpine", "latest", !exists),
+	df := containerkit.NewDockerFile().
+		From("alpine", "latest").
+		Label("example", "image-inline").
+		Workdir("/app").
+		Run(`printf 'Hello, World!\n' > hello.txt`).
+		CommandExec("cat", "hello.txt")
+
+	project := containerkit.NewProject("image-inline")
+	project.WithService("hello",
+		containerkit.NewContainer().Image(imageRef),
+		df.WithInline(),
 	)
-
-	example := containerkit.NewCompose(project)
-
-	err = example.Up(ctx, &containerkit.Up{Build: !exists, Detach: true})
-	if err != nil {
-		log.Fatalf("Error upping project: %v", err)
+	if err := project.Validate(); err != nil {
+		return fmt.Errorf("validate: %w", err)
 	}
-	err = example.Logs(ctx, &containerkit.Logs{NoLogPrefix: true, Tail: intPtr(1)})
-	if err != nil {
-		log.Fatalf("Error getting logs: %v", err)
+
+	app := containerkit.NewCompose(project)
+	defer func() {
+		if err := app.Down(context.Background(), &containerkit.Down{RemoveOrphans: true}); err != nil {
+			log.Printf("down: %v", err)
+		}
+	}()
+
+	if img == nil {
+		fmt.Print(df.String())
+	} else {
+		fmt.Printf("reusing %s\n", imageRef)
 	}
+
+	return app.Up(ctx, &containerkit.Up{
+		Build:         img == nil,
+		RemoveOrphans: true,
+		Writer:        os.Stdout,
+	})
 }
-
-func inlineDockerfile(image, tag string, addLabel bool) containerkit.BuildSpec {
-	df := containerkit.NewDockerFile()
-	df.From(image, tag)
-	df.Workdir("/app")
-	df.Run("echo \"Saving Hello, World!\"")
-	df.Run("echo \"saved: Hello, World!\" > /app/hello.txt")
-	df.CommandExec("cat", "/app/hello.txt")
-	spec := df.WithInline()
-	if addLabel {
-		spec.Labels = map[string]string{"my-image": "thats-tagged"}
-	}
-	return spec
-}
-
-func ImageExists(ctx context.Context, imageName, tag string) (bool, error) {
-	host := os.Getenv("DOCKER_HOST")
-	var opts []client.SetClientOption
-	if host != "" {
-		opts = append(opts, client.WithHost(host))
-	}
-	cli, err := client.NewClient(opts...)
-	if err != nil {
-		return false, err
-	}
-
-	res, err := cli.ImageInspect(ctx, fmt.Sprintf("%s:%s", imageName, tag))
-	if err != nil {
-		return false, nil
-	}
-	fmt.Println("Found image", strings.Join(res.RepoTags, ","))
-	return true, nil
-}
-
-func MyContainer(imageName, tag string) *containerkit.Container {
-	return containerkit.NewContainer().Imagef("%s:%s", imageName, tag)
-}
-
-func intPtr(i int) *int { return &i }

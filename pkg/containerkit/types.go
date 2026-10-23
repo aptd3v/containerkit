@@ -1,67 +1,11 @@
 package containerkit
 
 import (
-	"github.com/aptd3v/containerkit/pkg/containerkit/internal/config/hc"
-	"github.com/aptd3v/containerkit/pkg/containerkit/internal/config/hc/mount"
+	"maps"
+	"os"
+
 	"github.com/compose-spec/compose-go/v2/types"
-)
-
-// Capability is a Linux capability granted or dropped on a container.
-type Capability = hc.Capability
-
-const (
-	AUDIT_WRITE        = hc.AUDIT_WRITE
-	CHOWN              = hc.CHOWN
-	DAC_OVERRIDE       = hc.DAC_OVERRIDE
-	FOWNER             = hc.FOWNER
-	FSETID             = hc.FSETID
-	KILL               = hc.KILL
-	MKNOD              = hc.MKNOD
-	NET_BIND_SERVICE   = hc.NET_BIND_SERVICE
-	NET_RAW            = hc.NET_RAW
-	SETFCAP            = hc.SETFCAP
-	SETGID             = hc.SETGID
-	SETPCAP            = hc.SETPCAP
-	SETUID             = hc.SETUID
-	SYS_CHROOT         = hc.SYS_CHROOT
-	AUDIT_CONTROL      = hc.AUDIT_CONTROL
-	AUDIT_READ         = hc.AUDIT_READ
-	BLOCK_SUSPEND      = hc.BLOCK_SUSPEND
-	BPF                = hc.BPF
-	CHECKPOINT_RESTORE = hc.CHECKPOINT_RESTORE
-	DAC_READ_SEARCH    = hc.DAC_READ_SEARCH
-	SYS_ADMIN          = hc.SYS_ADMIN
-	SYS_BOOT           = hc.SYS_BOOT
-	SYS_MODULE         = hc.SYS_MODULE
-	SYS_PACCT          = hc.SYS_PACCT
-	SYS_RAWIO          = hc.SYS_RAWIO
-	SYS_TIME           = hc.SYS_TIME
-	SYS_TTY_CONFIG     = hc.SYS_TTY_CONFIG
-	SYSLOG             = hc.SYSLOG
-	IPC_LOCK           = hc.IPC_LOCK
-	IPC_OWNER          = hc.IPC_OWNER
-	LEASE              = hc.LEASE
-	LINUX_IMMUTABLE    = hc.LINUX_IMMUTABLE
-	SYS_NICE           = hc.SYS_NICE
-	SYS_PTRACE         = hc.SYS_PTRACE
-	SYS_RESOURCE       = hc.SYS_RESOURCE
-	WAKE_ALARM         = hc.WAKE_ALARM
-	NET_ADMIN          = hc.NET_ADMIN
-	NET_BROADCAST      = hc.NET_BROADCAST
-	MAC_ADMIN          = hc.MAC_ADMIN
-	MAC_OVERRIDE       = hc.MAC_OVERRIDE
-	PERFMON            = hc.PERFMON
-	ALL                = hc.ALL
-)
-
-// RestartPolicy is a Docker restart policy name.
-type RestartPolicy = hc.RestartPolicy
-
-const (
-	RestartPolicyNo            = hc.RestartPolicyNo
-	RestartPolicyOnFailure     = hc.RestartPolicyOnFailure
-	RestartPolicyAlways        = hc.RestartPolicyAlways
-	RestartPolicyUnlessStopped = hc.RestartPolicyUnlessStopped
+	"github.com/docker/docker/api/types/mount"
 )
 
 // MountPropagation is a bind-mount propagation mode.
@@ -77,13 +21,31 @@ const (
 )
 
 // MountType is a volume/bind/tmpfs mount type.
-type MountType = mount.MountType
+type MountType = mount.Type
 
 const (
-	MountBind      = mount.MountTypeBind
-	MountVolume    = mount.MountTypeVolume
-	MountTmpfs     = mount.MountTypeTmpfs
-	MountNamedPipe = mount.MountTypeNamedPipe
+	MountBind      = mount.TypeBind
+	MountVolume    = mount.TypeVolume
+	MountTmpfs     = mount.TypeTmpfs
+	MountNamedPipe = mount.TypeNamedPipe
+	MountImage     = mount.TypeImage
+	MountCluster   = mount.TypeCluster
+)
+
+// MountConsistency is a bind-mount consistency mode.
+type MountConsistency = mount.Consistency
+
+const (
+	ConsistencyFull      = mount.ConsistencyFull
+	ConsistencyCached    = mount.ConsistencyCached
+	ConsistencyDelegated = mount.ConsistencyDelegated
+	ConsistencyDefault   = mount.ConsistencyDefault
+)
+
+// SELinux relabel modes for a bind mount.
+const (
+	SELinuxShared  = "z"
+	SELinuxPrivate = "Z"
 )
 
 // Health is a container healthcheck. Timeout/Interval/StartPeriod are seconds
@@ -99,12 +61,101 @@ type Health struct {
 	StartPeriodD string
 }
 
-// Mount describes a single host mount point.
+// Mount describes one mount. Empty Type is bind, unless Volume, Tmpfs, or Image is set.
 type Mount struct {
-	Source   string
-	Target   string
-	Type     MountType
-	ReadOnly bool
+	Source      string
+	Target      string
+	Type        MountType
+	ReadOnly    bool
+	Consistency MountConsistency
+
+	Bind   *BindOptions
+	Volume *VolumeOptions
+	Tmpfs  *TmpfsOptions
+	Image  *ImageOptions
+}
+
+// BindOptions are options for a bind mount.
+type BindOptions struct {
+	Propagation            MountPropagation
+	SELinux                string // z or Z
+	NonRecursive           bool
+	CreateHostPath         *bool
+	ReadOnlyNonRecursive   bool
+	ReadOnlyForceRecursive bool
+}
+
+// VolumeOptions are options for a named volume mount.
+type VolumeOptions struct {
+	NoCopy        bool
+	Labels        map[string]string
+	Subpath       string
+	Driver        string
+	DriverOptions map[string]string
+}
+
+// TmpfsOptions are options for a tmpfs mount.
+type TmpfsOptions struct {
+	SizeBytes int64
+	Mode      os.FileMode
+	Options   [][]string
+}
+
+// ImageOptions are options for an image mount.
+type ImageOptions struct {
+	Subpath string
+}
+
+// Protocol is a published port protocol.
+type Protocol string
+
+const (
+	TCP  Protocol = "tcp"
+	UDP  Protocol = "udp"
+	SCTP Protocol = "sctp"
+)
+
+// PortBinding publishes one container port on the host.
+type PortBinding struct {
+	Protocol      Protocol
+	HostIP        string
+	HostPort      string
+	ContainerPort string
+}
+
+// Device maps a host device into the container.
+// Read, Write, and Mknod are the cgroup permissions.
+type Device struct {
+	HostPath      string
+	ContainerPath string
+	Read          bool
+	Write         bool
+	Mknod         bool
+}
+
+// Ulimit is one soft and hard resource limit.
+type Ulimit struct {
+	Name string
+	Soft int64
+	Hard int64
+}
+
+// ConsoleSize is the container console height and width in characters.
+type ConsoleSize struct {
+	Height uint
+	Width  uint
+}
+
+// DeviceRequest asks a device driver for devices such as GPUs.
+// Count -1 requests every device the driver offers.
+// Capabilities is one required set, for example "gpu" or "gpu" and "compute".
+// Leave DeviceIDs empty to let Count choose the devices.
+type DeviceRequest struct {
+	Driver       string
+	Count        int
+	DeviceIDs    []string
+	Capabilities []string
+	Options      map[string]string
 }
 
 // EndpointOpts are optional settings for a network endpoint.
@@ -120,29 +171,61 @@ type EndpointOpts struct {
 
 // BuildSpec is Compose service build configuration.
 type BuildSpec struct {
-	Context          string
-	Dockerfile       string
-	DockerfileInline string
-	Args             map[string]string
-	Labels           map[string]string
-	Tags             []string
-	Target           string
-	Network          string
-	NoCache          bool
-	Pull             bool
-	Privileged       bool
-	Platforms        []string
-	CacheFrom        []string
-	CacheTo          []string
+	Context            string
+	Dockerfile         string
+	DockerfileInline   string
+	Args               map[string]string
+	Labels             map[string]string
+	Tags               []string
+	Target             string
+	Network            string
+	NoCache            bool
+	Pull               bool
+	Privileged         bool
+	Platforms          []string
+	CacheFrom          []string
+	CacheTo            []string
+	SSH                []BuildSSH
+	AdditionalContexts map[string]string
+	ExtraHosts         []string
+	Isolation          string
+	ShmSize            int64
+	Entitlements       []string
+	Ulimits            map[string]BuildUlimit
+	Secrets            []BuildSecret
+	Provenance         string
+	SBOM               string
+	NoCacheFilter      []string
 
 	// err is set by dockerFile.WithInline when the dockerfile failed validation.
 	// WithService reports it and does not apply the spec.
 	err error
 }
 
-func (b BuildSpec) apply(cfg *types.ServiceConfig) {
+// BuildSSH is one SSH agent socket or key for a service build.
+type BuildSSH struct {
+	ID   string
+	Path string
+}
+
+// BuildUlimit is a soft/hard ulimit for a service build.
+type BuildUlimit struct {
+	Soft int
+	Hard int
+}
+
+// BuildSecret is a build-time secret reference.
+type BuildSecret struct {
+	Source string
+	Target string
+	UID    string
+	GID    string
+	Mode   *int64
+}
+
+func (b BuildSpec) apply(cfg *types.ServiceConfig) error {
 	if b.err != nil {
-		return
+		return b.err
 	}
 	if cfg.Build == nil {
 		cfg.Build = &types.BuildConfig{}
@@ -179,9 +262,15 @@ func (b BuildSpec) apply(cfg *types.ServiceConfig) {
 	}
 	bc.Target = firstNonEmpty(bc.Target, b.Target)
 	bc.Network = firstNonEmpty(bc.Network, b.Network)
+	bc.Isolation = firstNonEmpty(bc.Isolation, b.Isolation)
+	bc.Provenance = firstNonEmpty(bc.Provenance, b.Provenance)
+	bc.SBOM = firstNonEmpty(bc.SBOM, b.SBOM)
 	bc.NoCache = bc.NoCache || b.NoCache
 	bc.Pull = bc.Pull || b.Pull
 	bc.Privileged = bc.Privileged || b.Privileged
+	if b.ShmSize > 0 {
+		bc.ShmSize = types.UnitBytes(b.ShmSize)
+	}
 	if len(b.Platforms) > 0 {
 		bc.Platforms = append(bc.Platforms, b.Platforms...)
 	}
@@ -191,6 +280,58 @@ func (b BuildSpec) apply(cfg *types.ServiceConfig) {
 	if len(b.CacheTo) > 0 {
 		bc.CacheTo = append(bc.CacheTo, b.CacheTo...)
 	}
+	if len(b.NoCacheFilter) > 0 {
+		bc.NoCacheFilter = append(bc.NoCacheFilter, b.NoCacheFilter...)
+	}
+	if len(b.Entitlements) > 0 {
+		bc.Entitlements = append(bc.Entitlements, b.Entitlements...)
+	}
+	for _, key := range b.SSH {
+		bc.SSH = append(bc.SSH, types.SSHKey{ID: key.ID, Path: key.Path})
+	}
+	if len(b.AdditionalContexts) > 0 {
+		if bc.AdditionalContexts == nil {
+			bc.AdditionalContexts = make(types.Mapping)
+		}
+		for k, v := range b.AdditionalContexts {
+			bc.AdditionalContexts[k] = v
+		}
+	}
+	if len(b.ExtraHosts) > 0 {
+		hosts, err := convertExtraHosts(b.ExtraHosts)
+		if err != nil {
+			return err
+		}
+		if bc.ExtraHosts == nil {
+			bc.ExtraHosts = hosts
+		} else {
+			for k, v := range hosts {
+				bc.ExtraHosts[k] = append(bc.ExtraHosts[k], v...)
+			}
+		}
+	}
+	if len(b.Ulimits) > 0 {
+		if bc.Ulimits == nil {
+			bc.Ulimits = make(map[string]*types.UlimitsConfig)
+		}
+		for name, limit := range b.Ulimits {
+			bc.Ulimits[name] = &types.UlimitsConfig{Soft: limit.Soft, Hard: limit.Hard}
+		}
+	}
+	for _, secret := range b.Secrets {
+		ref := types.ServiceSecretConfig{
+			Source: secret.Source,
+			Target: secret.Target,
+			UID:    secret.UID,
+			GID:    secret.GID,
+		}
+		if secret.Mode != nil {
+			mode := types.FileMode(*secret.Mode)
+			ref.Mode = &mode
+		}
+		bc.Secrets = append(bc.Secrets, ref)
+	}
+	return nil
 }
 
 func firstNonEmpty(a, b string) string {
@@ -240,11 +381,9 @@ func (d Deploy) apply(cfg *types.ServiceConfig) {
 	}
 	if len(d.Labels) > 0 {
 		if cfg.Deploy.Labels == nil {
-			cfg.Deploy.Labels = make(map[string]string)
+			cfg.Deploy.Labels = make(map[string]string, len(d.Labels))
 		}
-		for k, v := range d.Labels {
-			cfg.Deploy.Labels[k] = v
-		}
+		maps.Copy(cfg.Deploy.Labels, d.Labels)
 	}
 	if d.Limits != nil {
 		if cfg.Deploy.Resources.Limits == nil {
@@ -320,6 +459,64 @@ type ProjectSecret struct {
 	Driver         string
 	DriverOptions  map[string]string
 	TemplateDriver string
+}
+
+func (n ProjectNetwork) apply(cfg *types.NetworkConfig) {
+	cfg.Driver = n.Driver
+	if len(n.DriverOptions) > 0 {
+		cfg.DriverOpts = types.Options(maps.Clone(n.DriverOptions))
+	}
+	cfg.Internal = n.Internal
+	cfg.Attachable = n.Attachable
+	if n.EnableIPv6 {
+		enable := true
+		cfg.EnableIPv6 = &enable
+	}
+	if len(n.Labels) > 0 {
+		cfg.Labels = types.Labels(maps.Clone(n.Labels))
+	}
+	if n.IPAMDriver != "" || len(n.IPAMPools) > 0 {
+		cfg.Ipam.Driver = n.IPAMDriver
+		for _, pool := range n.IPAMPools {
+			if pool.Subnet == "" && pool.Gateway == "" && pool.IPRange == "" && len(pool.AuxiliaryAddresses) == 0 {
+				continue
+			}
+			item := &types.IPAMPool{
+				Subnet:  pool.Subnet,
+				Gateway: pool.Gateway,
+				IPRange: pool.IPRange,
+			}
+			if len(pool.AuxiliaryAddresses) > 0 {
+				item.AuxiliaryAddresses = types.Mapping(maps.Clone(pool.AuxiliaryAddresses))
+			}
+			cfg.Ipam.Config = append(cfg.Ipam.Config, item)
+		}
+	}
+}
+
+func (v ProjectVolume) apply(cfg *types.VolumeConfig) {
+	cfg.Driver = v.Driver
+	if len(v.DriverOptions) > 0 {
+		cfg.DriverOpts = types.Options(maps.Clone(v.DriverOptions))
+	}
+	if len(v.Labels) > 0 {
+		cfg.Labels = types.Labels(maps.Clone(v.Labels))
+	}
+}
+
+func (s ProjectSecret) apply(cfg *types.SecretConfig) {
+	cfg.Name = s.Name
+	cfg.File = s.File
+	cfg.Content = s.Content
+	cfg.Environment = s.Environment
+	if s.External {
+		cfg.External = true
+	}
+	cfg.Driver = s.Driver
+	if len(s.DriverOptions) > 0 {
+		cfg.DriverOpts = maps.Clone(s.DriverOptions)
+	}
+	cfg.TemplateDriver = s.TemplateDriver
 }
 
 // WatchAction is a Compose develop watch action.

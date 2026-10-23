@@ -3,6 +3,7 @@ package containerkit
 import (
 	"errors"
 	"fmt"
+	"maps"
 	"os"
 	"slices"
 	"strings"
@@ -86,7 +87,7 @@ func (p *Project) GetService(name string) (*types.ServiceConfig, error) {
 //   - setters: the setters to apply to the service
 func (p *Project) WithService(name string, service *Container, extras ...any) *Project {
 	if err := service.Validate(); err != nil {
-		p.errs = append(p.errs, errdefs.NewServiceConfigError(name, err.Error()))
+		p.errs = append(p.errs, fmt.Errorf("service %s: %w", name, err))
 		return p
 	}
 
@@ -95,8 +96,36 @@ func (p *Project) WithService(name string, service *Container, extras ...any) *P
 		return p
 	}
 
+	serv, specErr := serviceSpec(name, service)
+	if specErr != nil {
+		p.errs = append(p.errs, fmt.Errorf("service %s: %w", name, specErr))
+	}
+
+	for _, extra := range extras {
+		if extra == nil {
+			continue
+		}
+		if err := applyServiceExtra(&serv, extra); err != nil {
+			p.errs = append(p.errs, fmt.Errorf("service %s: %w", name, err))
+			continue
+		}
+	}
+	//swarm mode wants unique container names so we need to only set container name if deploy is not set
+	if serv.Deploy != nil {
+		serv.ContainerName = ""
+	} else {
+		serv.ContainerName = service.Name
+	}
+	if p.wrapped.Services == nil {
+		p.wrapped.Services = make(types.Services, 0)
+	}
+	p.wrapped.Services[name] = serv
+	registerMountVolumeDrivers(p, service)
+	return p
+}
+
+func serviceSpec(name string, service *Container) (types.ServiceConfig, error) {
 	config := service.Config
-	//if the container, host, or network config is nil, we need to set it to an empty object to avoid nil pointer dereference
 	if config.Container == nil {
 		config.Container = &container.Config{}
 	}
@@ -111,124 +140,108 @@ func (p *Project) WithService(name string, service *Container, extras ...any) *P
 	}
 
 	volumes, tmpfsMounts := convertVolumes(config.Container.Volumes, config.Host)
-	// Compose-only keys that have no container field are still unset:
-	// configs, credential_spec, extends, external_links, provider, pull_policy,
-	// label_file, use_api_socket, post_start, pre_stop, and scale.
+	volumes = applyMountNotes(volumes, service.mountNotes)
 	serv := types.ServiceConfig{
-		Name: name,
-		//container
-		Image:       config.Container.Image,
-		Command:     types.ShellCommand(config.Container.Cmd),
-		Environment: types.NewMappingWithEquals(config.Container.Env),
-		Tty:         config.Container.Tty,
-		Expose:      convertExposedPorts(config.Container.ExposedPorts),
-		HealthCheck: convertHealthCheck(config.Container.Healthcheck),
-		Entrypoint:  types.ShellCommand(config.Container.Entrypoint),
-		StdinOpen:   config.Container.OpenStdin,
-		StopSignal:  config.Container.StopSignal,
-		WorkingDir:  config.Container.WorkingDir,
-		Labels:      config.Container.Labels,
-		DomainName:  config.Container.Domainname,
-		Hostname:    config.Container.Hostname,
-		User:        config.Container.User,
+		Name:    name,
+		Links:   config.Host.Links,
+		Restart: convertRestart(config.Host.RestartPolicy),
+		ContainerSpec: types.ContainerSpec{
+			Image:       config.Container.Image,
+			Command:     types.ShellCommand(config.Container.Cmd),
+			Environment: types.NewMappingWithEquals(config.Container.Env),
+			Entrypoint:  types.ShellCommand(config.Container.Entrypoint),
+			StopSignal:  config.Container.StopSignal,
+			WorkingDir:  config.Container.WorkingDir,
+			Labels:      config.Container.Labels,
+			DomainName:  config.Container.Domainname,
+			Hostname:    config.Container.Hostname,
+			User:        config.Container.User,
 
-		//blkio
-		BlkioConfig: convertBlkioConfig(config.Host),
+			BlkioConfig: convertBlkioConfig(config.Host),
 
-		//cap
-		CapAdd:  config.Host.CapAdd,
-		CapDrop: config.Host.CapDrop,
+			CapAdd:  config.Host.CapAdd,
+			CapDrop: config.Host.CapDrop,
 
-		//cgroup
-		Cgroup:            string(config.Host.Cgroup),
-		CgroupParent:      string(config.Host.CgroupParent),
-		DeviceCgroupRules: config.Host.DeviceCgroupRules,
+			Cgroup:            string(config.Host.Cgroup),
+			CgroupParent:      string(config.Host.CgroupParent),
+			DeviceCgroupRules: config.Host.DeviceCgroupRules,
 
-		//cpu
-		CPUCount:     int64(config.Host.CPUCount),
-		CPUPercent:   float32(config.Host.CPUPercent),
-		CPUPeriod:    int64(config.Host.CPUPeriod),
-		CPUQuota:     int64(config.Host.CPUQuota),
-		CPUShares:    int64(config.Host.CPUShares),
-		CPUSet:       string(config.Host.CpusetCpus),
-		CPUS:         nanoCPUsToCPUS(config.Host.NanoCPUs),
-		CPURTRuntime: int64(config.Host.CPURealtimeRuntime),
-		CPURTPeriod:  int64(config.Host.CPURealtimePeriod),
+			CPUCount:     int64(config.Host.CPUCount),
+			CPUPercent:   float32(config.Host.CPUPercent),
+			CPUPeriod:    int64(config.Host.CPUPeriod),
+			CPUQuota:     int64(config.Host.CPUQuota),
+			CPUShares:    int64(config.Host.CPUShares),
+			CPUSet:       string(config.Host.CpusetCpus),
+			CPUS:         nanoCPUsToCPUS(config.Host.NanoCPUs),
+			CPURTRuntime: int64(config.Host.CPURealtimeRuntime),
+			CPURTPeriod:  int64(config.Host.CPURealtimePeriod),
 
-		//pids
-		Pid: string(config.Host.PidMode),
+			Pid: string(config.Host.PidMode),
 
-		//memory
-		MemReservation: types.UnitBytes(config.Host.MemoryReservation),
-		MemSwapLimit:   types.UnitBytes(config.Host.MemorySwap),
-		MemLimit:       types.UnitBytes(config.Host.Memory),
-		ShmSize:        types.UnitBytes(config.Host.ShmSize),
+			MemReservation: types.UnitBytes(config.Host.MemoryReservation),
+			MemSwapLimit:   types.UnitBytes(config.Host.MemorySwap),
+			MemLimit:       types.UnitBytes(config.Host.Memory),
+			ShmSize:        types.UnitBytes(config.Host.ShmSize),
 
-		//dns
-		DNS:       config.Host.DNS,
-		DNSSearch: config.Host.DNSSearch,
-		DNSOpts:   config.Host.DNSOptions,
+			DNS:       config.Host.DNS,
+			DNSSearch: config.Host.DNSSearch,
+			DNSOpts:   config.Host.DNSOptions,
 
-		//oom
-		OomScoreAdj: int64(config.Host.OomScoreAdj),
-		//Devices
-		Devices: convertDevices(config.Host.Devices),
-		Gpus:    convertDeviceRequests(config.Host.DeviceRequests),
+			OomScoreAdj: int64(config.Host.OomScoreAdj),
+			Devices:     convertDevices(config.Host.Devices),
+			Gpus:        convertDeviceRequests(config.Host.DeviceRequests),
 
-		//groups
-		GroupAdd: config.Host.GroupAdd,
-		Links:    config.Host.Links,
+			GroupAdd: config.Host.GroupAdd,
 
-		//init
-		Init: config.Host.Init,
+			Init: config.Host.Init,
 
-		//ipc
-		Ipc: string(config.Host.IpcMode),
+			Ipc: string(config.Host.IpcMode),
 
-		//isolation
-		Isolation: string(config.Host.Isolation),
+			Isolation: string(config.Host.Isolation),
 
-		//mac address
-		MacAddress: config.Container.MacAddress,
+			MacAddress: macAddressFromEndpoints(config.Network),
 
-		//network
-		NetworkMode: string(config.Host.NetworkMode),
-		Networks:    convertNetworks(config.Network),
+			NetworkMode: string(config.Host.NetworkMode),
+			Networks:    convertNetworks(config.Network),
 
-		//logging
-		Logging: convertLogging(&config.Host.LogConfig),
+			Logging: convertLogging(&config.Host.LogConfig),
 
-		//volumes
-		VolumesFrom:  convertVolumesFrom(config.Host.VolumesFrom),
-		Volumes:      volumes,
-		VolumeDriver: config.Host.VolumeDriver,
+			VolumesFrom:  convertVolumesFrom(config.Host.VolumesFrom),
+			Volumes:      volumes,
+			VolumeDriver: config.Host.VolumeDriver,
 
-		Ports:       convertPortsBindings(config.Host.PortBindings),
-		Platform:    formatPlatform(config.Platform),
-		Privileged:  config.Host.Privileged,
-		ReadOnly:    config.Host.ReadonlyRootfs,
-		Restart:     convertRestart(config.Host.RestartPolicy),
-		Runtime:     string(config.Host.Runtime),
-		SecurityOpt: config.Host.SecurityOpt,
-		StorageOpt:  config.Host.StorageOpt,
-		Sysctls:     config.Host.Sysctls,
-		Tmpfs:       append(convertTmpfs(config.Host.Tmpfs), tmpfsMounts...),
-		Ulimits:     convertUlimits(config.Host.Ulimits),
-		UserNSMode:  string(config.Host.UsernsMode),
-		Uts:         string(config.Host.UTSMode),
+			Platform:    formatPlatform(config.Platform),
+			Privileged:  config.Host.Privileged,
+			ReadOnly:    config.Host.ReadonlyRootfs,
+			Runtime:     string(config.Host.Runtime),
+			SecurityOpt: config.Host.SecurityOpt,
+			StorageOpt:  config.Host.StorageOpt,
+			Sysctls:     config.Host.Sysctls,
+			Tmpfs:       append(convertTmpfs(config.Host.Tmpfs), tmpfsMounts...),
+			Ulimits:     convertUlimits(config.Host.Ulimits),
+			UserNSMode:  string(config.Host.UsernsMode),
+			Uts:         string(config.Host.UTSMode),
+		},
+		WorkloadSpec: types.WorkloadSpec{
+			Tty:         config.Container.Tty,
+			Expose:      convertExposedPorts(config.Container.ExposedPorts),
+			HealthCheck: convertHealthCheck(config.Container.Healthcheck),
+			StdinOpen:   config.Container.OpenStdin,
+			Ports:       convertPortsBindings(config.Host.PortBindings),
+		},
 	}
 	if config.Container.NetworkDisabled && serv.NetworkMode == "" {
 		serv.NetworkMode = "none"
 	}
 
+	var specErr error
 	extraHosts, err := convertExtraHosts(config.Host.ExtraHosts)
 	if err != nil {
-		p.errs = append(p.errs, errdefs.NewServiceConfigError(name, err.Error()))
+		specErr = err
 	} else {
 		serv.ExtraHosts = extraHosts
 	}
 
-	// the following is nil if not set and needs to stay that way so docker cant determine if it is set or not
 	memSwappines := config.Host.MemorySwappiness
 	pidsLimit := config.Host.PidsLimit
 	oomKillDisable := config.Host.OomKillDisable
@@ -245,27 +258,114 @@ func (p *Project) WithService(name string, service *Container, extras ...any) *P
 		t := types.Duration(time.Second * time.Duration(*config.Container.StopTimeout))
 		serv.StopGracePeriod = &t
 	}
+	return serv, specErr
+}
 
-	for _, extra := range extras {
-		if extra == nil {
-			continue
-		}
-		if err := applyServiceExtra(&serv, extra); err != nil {
-			p.errs = append(p.errs, errdefs.NewServiceConfigError(name, err.Error()))
-			continue
-		}
+// Model is a Compose model definition.
+type Model struct {
+	Model        string
+	ContextSize  int
+	RuntimeFlags []string
+}
+
+// WithModel defines a project-level model.
+func (p *Project) WithModel(name string, model Model) *Project {
+	if p.wrapped.Models == nil {
+		p.wrapped.Models = make(types.Models)
 	}
-	//swarm mode wants unique container names so we need to only set container name if deploy is not set
-	if serv.Deploy != nil {
-		serv.ContainerName = ""
-	} else {
-		serv.ContainerName = service.Name
+	if _, ok := p.wrapped.Models[name]; ok {
+		p.errs = append(p.errs, errdefs.NewProjectConfigError(name, "model already exists"))
+		return p
 	}
-	if p.wrapped.Services == nil {
-		p.wrapped.Services = make(types.Services, 0)
+	p.wrapped.Models[name] = types.ModelConfig{
+		Name:         name,
+		Model:        model.Model,
+		ContextSize:  model.ContextSize,
+		RuntimeFlags: model.RuntimeFlags,
 	}
-	p.wrapped.Services[name] = serv
 	return p
+}
+
+// JobSchedule is one cron trigger for a Compose job.
+type JobSchedule struct {
+	Cron        string
+	Timezone    string
+	Concurrency string
+	MissedFires string
+}
+
+// Job is the trigger and profile configuration for a Compose job.
+type Job struct {
+	Profiles []string
+	Manual   *bool
+	Schedule []JobSchedule
+}
+
+// WithJob defines a Compose job from a container spec. Deploy and develop extras are service-only.
+func (p *Project) WithJob(name string, service *Container, job Job) *Project {
+	if service == nil {
+		p.errs = append(p.errs, errdefs.NewProjectConfigError(name, "job container is nil"))
+		return p
+	}
+	if err := service.Validate(); err != nil {
+		p.errs = append(p.errs, fmt.Errorf("job %s: %w", name, err))
+		return p
+	}
+	if p.wrapped.Jobs == nil {
+		p.wrapped.Jobs = make(types.Jobs)
+	}
+	if _, ok := p.wrapped.Jobs[name]; ok {
+		p.errs = append(p.errs, errdefs.NewProjectConfigError(name, "job already exists"))
+		return p
+	}
+	spec, specErr := serviceSpec(name, service)
+	if specErr != nil {
+		p.errs = append(p.errs, errdefs.NewProjectConfigError(name, specErr.Error()))
+	}
+	cfg := types.JobConfig{
+		Name:          name,
+		Profiles:      job.Profiles,
+		ContainerSpec: spec.ContainerSpec,
+		WorkloadSpec:  spec.WorkloadSpec,
+	}
+	if job.Manual != nil || len(job.Schedule) > 0 {
+		trigger := &types.TriggerConfig{Manual: job.Manual}
+		for _, schedule := range job.Schedule {
+			trigger.Schedule = append(trigger.Schedule, types.ScheduleConfig{
+				Cron:        schedule.Cron,
+				Timezone:    schedule.Timezone,
+				Concurrency: schedule.Concurrency,
+				MissedFires: schedule.MissedFires,
+			})
+		}
+		cfg.Triggers = trigger
+	}
+	p.wrapped.Jobs[name] = cfg
+	return p
+}
+
+func (p *Project) declaredProfiles() []string {
+	if p == nil || p.wrapped == nil {
+		return nil
+	}
+	seen := map[string]struct{}{}
+	var names []string
+	add := func(profiles []string) {
+		for _, profile := range profiles {
+			if _, ok := seen[profile]; ok {
+				continue
+			}
+			seen[profile] = struct{}{}
+			names = append(names, profile)
+		}
+	}
+	for _, service := range p.wrapped.Services {
+		add(service.Profiles)
+	}
+	for _, job := range p.wrapped.Jobs {
+		add(job.Profiles)
+	}
+	return names
 }
 
 // WithVolume defines a new volume in the project
@@ -279,15 +379,11 @@ func (p *Project) WithVolume(name string, spec ...ProjectVolume) *Project {
 	vol := types.VolumeConfig{
 		Name: name,
 	}
-	if len(spec) > 0 {
-		for _, setter := range applyProjectVolume(spec[0]) {
-			if setter == nil {
-				continue
-			}
-			if err := setter(&vol); err != nil {
-				p.errs = append(p.errs, errdefs.NewProjectConfigError("volume", err.Error()))
-			}
-		}
+	s, err := oneOpt("volume spec", spec)
+	if err != nil {
+		p.errs = append(p.errs, errdefs.NewProjectConfigError(name, err.Error()))
+	} else if len(spec) == 1 {
+		s.apply(&vol)
 	}
 	p.wrapped.Volumes[name] = vol
 	return p
@@ -299,21 +395,17 @@ func (p *Project) WithSecret(key string, spec ...ProjectSecret) *Project {
 		p.wrapped.Secrets = make(types.Secrets, 0)
 	}
 	secret := types.SecretConfig{}
-	if len(spec) > 0 {
-		for _, setter := range applyProjectSecret(spec[0]) {
-			if setter == nil {
-				continue
-			}
-			if err := setter(&secret); err != nil {
-				p.errs = append(p.errs, errdefs.NewProjectConfigError("secret", err.Error()))
-			}
-		}
+	s, err := oneOpt("secret spec", spec)
+	if err != nil {
+		p.errs = append(p.errs, errdefs.NewProjectConfigError(key, err.Error()))
+	} else if len(spec) == 1 {
+		s.apply(&secret)
 	}
 	p.wrapped.Secrets[key] = secret
 	return p
 }
 
-// WithNetwork defines a new network in the project
+// WithNetwork defines a project network. spec is optional and at most one value.
 func (p *Project) WithNetwork(name string, spec ...ProjectNetwork) *Project {
 	if p.wrapped.Networks == nil {
 		p.wrapped.Networks = make(types.Networks, 0)
@@ -321,15 +413,11 @@ func (p *Project) WithNetwork(name string, spec ...ProjectNetwork) *Project {
 	net := types.NetworkConfig{
 		Name: name,
 	}
-	if len(spec) > 0 {
-		for _, setter := range applyProjectNetwork(name, spec[0]) {
-			if setter == nil {
-				continue
-			}
-			if err := setter(&net); err != nil {
-				p.errs = append(p.errs, errdefs.NewProjectConfigError("network", err.Error()))
-			}
-		}
+	s, err := oneOpt("network spec", spec)
+	if err != nil {
+		p.errs = append(p.errs, errdefs.NewProjectConfigError(name, err.Error()))
+	} else if len(spec) == 1 {
+		s.apply(&net)
 	}
 	p.wrapped.Networks[name] = net
 	return p
@@ -340,7 +428,7 @@ func (p *Project) WithNetwork(name string, spec ...ProjectNetwork) *Project {
 func (p *Project) Validate() error {
 	errs := []error{}
 	// a basic project must have either a image or a build context
-	if len(p.wrapped.Services) == 0 {
+	if len(p.wrapped.Services) == 0 && len(p.wrapped.Jobs) == 0 {
 		errs = append(errs, errdefs.NewProjectConfigError("project", "project must have at least one service"))
 	}
 	for _, service := range p.wrapped.Services {
@@ -350,12 +438,70 @@ func (p *Project) Validate() error {
 		}
 	}
 	if len(p.errs) > 0 {
-		errs = append(errs, errdefs.NewProjectConfigError("project", errors.Join(p.errs...).Error()))
+		errs = append(errs, p.errs...)
 	}
 	if len(errs) > 0 {
 		return errors.Join(errs...)
 	}
+	p.applyImplicitDefaultNetwork()
 	return nil
+}
+
+// applyImplicitDefaultNetwork mirrors compose-go loader normalizeNetworks.
+// In-memory projects skip YAML load, so without this the Compose SDK sees
+// an empty Networks map and creates containers with network_mode=none,
+// which cannot publish PortBinding mappings.
+func (p *Project) applyImplicitDefaultNetwork() {
+	if p == nil || p.wrapped == nil {
+		return
+	}
+	usesDefault := false
+	for name, svc := range p.wrapped.Services {
+		if svc.Provider != nil {
+			continue
+		}
+		nets, used := attachImplicitDefaultNetwork(svc.NetworkMode, svc.Networks)
+		if used {
+			usesDefault = true
+		}
+		if len(nets) != len(svc.Networks) {
+			svc.Networks = nets
+			p.wrapped.Services[name] = svc
+		}
+	}
+	for name, job := range p.wrapped.Jobs {
+		nets, used := attachImplicitDefaultNetwork(job.NetworkMode, job.Networks)
+		if used {
+			usesDefault = true
+		}
+		if len(nets) != len(job.Networks) {
+			job.Networks = nets
+			p.wrapped.Jobs[name] = job
+		}
+	}
+	if !usesDefault {
+		return
+	}
+	if p.wrapped.Networks == nil {
+		p.wrapped.Networks = make(types.Networks)
+	}
+	if _, ok := p.wrapped.Networks["default"]; ok {
+		return
+	}
+	p.wrapped.Networks["default"] = types.NetworkConfig{
+		Name: p.wrapped.Name + "_default",
+	}
+}
+
+func attachImplicitDefaultNetwork(networkMode string, networks map[string]*types.ServiceNetworkConfig) (map[string]*types.ServiceNetworkConfig, bool) {
+	if networkMode != "" {
+		return networks, false
+	}
+	if len(networks) == 0 {
+		return map[string]*types.ServiceNetworkConfig{"default": nil}, true
+	}
+	_, used := networks["default"]
+	return networks, used
 }
 
 // Marshal marshals the project to a yaml bytes slice
@@ -539,43 +685,12 @@ func convertVolumes(anonymous map[string]struct{}, hostConfig *container.HostCon
 		}
 	}
 
-	binds := hostConfig.Binds
-	// binds are validated in the hc package and we can assume they are valid
-	for _, bind := range binds {
-		// Parse "source:target:mode" (mode may be comma-separated e.g. ro,z)
-		last := strings.LastIndex(bind, ":")
-		if last == -1 {
+	for _, bind := range hostConfig.Binds {
+		parsed, err := parseVolumeBind(bind)
+		if err != nil {
 			continue
 		}
-		mode := strings.TrimSpace(bind[last+1:])
-		rest := strings.TrimSpace(bind[:last])
-		sep := ":/"
-		idx := strings.Index(rest, sep)
-		if idx == -1 {
-			continue
-		}
-		sourcePath := strings.TrimSpace(rest[:idx])
-		targetPath := strings.TrimSpace(rest[idx+len(sep):])
-		if targetPath != "" && targetPath[0] != '/' {
-			targetPath = "/" + targetPath
-		}
-
-		readOnly := strings.Contains(mode, "ro") || strings.Contains(mode, "readonly")
-		config := types.ServiceVolumeConfig{
-			Type:     "bind",
-			Source:   sourcePath,
-			Target:   targetPath,
-			ReadOnly: readOnly,
-		}
-		// SELinux labels z (shared) or Z (private) for bind mounts
-		for _, part := range strings.Split(mode, ",") {
-			part = strings.TrimSpace(part)
-			if part == "z" || part == "Z" {
-				config.Bind = &types.ServiceVolumeBind{SELinux: part}
-				break
-			}
-		}
-		volumeRules = append(volumeRules, config)
+		volumeRules = append(volumeRules, serviceVolumeFromMount(parsed))
 	}
 
 	for _, mnt := range hostConfig.Mounts {
@@ -593,7 +708,7 @@ func convertVolumes(anonymous map[string]struct{}, hostConfig *container.HostCon
 		if mnt.BindOptions != nil {
 			config.Bind = &types.ServiceVolumeBind{
 				Propagation:    string(mnt.BindOptions.Propagation),
-				CreateHostPath: mnt.BindOptions.CreateMountpoint,
+				CreateHostPath: types.OptOut(true),
 				Recursive: bindRecursiveMode(
 					mnt.BindOptions.NonRecursive,
 					mnt.BindOptions.ReadOnlyForceRecursive,
@@ -626,6 +741,83 @@ func convertVolumes(anonymous map[string]struct{}, hostConfig *container.HostCon
 	return volumeRules, tmpfsMounts
 }
 
+func serviceVolumeFromMount(m Mount) types.ServiceVolumeConfig {
+	cfg := types.ServiceVolumeConfig{
+		Source:      m.Source,
+		Target:      m.Target,
+		Type:        string(m.Type),
+		ReadOnly:    m.ReadOnly,
+		Consistency: string(m.Consistency),
+	}
+	if m.Bind != nil {
+		cfg.Bind = &types.ServiceVolumeBind{
+			Propagation:    string(m.Bind.Propagation),
+			SELinux:        m.Bind.SELinux,
+			CreateHostPath: types.OptOut(true),
+			Recursive: bindRecursiveMode(
+				m.Bind.NonRecursive,
+				m.Bind.ReadOnlyForceRecursive,
+				m.Bind.ReadOnlyNonRecursive,
+			),
+		}
+	}
+	return cfg
+}
+
+func applyMountNotes(volumes []types.ServiceVolumeConfig, notes map[string]mountNote) []types.ServiceVolumeConfig {
+	if len(notes) == 0 {
+		return volumes
+	}
+	for i := range volumes {
+		note, ok := notes[volumes[i].Target]
+		if !ok {
+			continue
+		}
+		if note.selinux == "" && note.createHostPath == nil {
+			continue
+		}
+		if volumes[i].Bind == nil {
+			volumes[i].Bind = &types.ServiceVolumeBind{CreateHostPath: types.OptOut(true)}
+		}
+		if note.selinux != "" {
+			volumes[i].Bind.SELinux = note.selinux
+		}
+		if note.createHostPath != nil {
+			volumes[i].Bind.CreateHostPath = types.OptOut(*note.createHostPath)
+		}
+	}
+	return volumes
+}
+
+func registerMountVolumeDrivers(p *Project, c *Container) {
+	if p == nil || p.wrapped == nil || c == nil || c.Config == nil || c.Config.Host == nil {
+		return
+	}
+	for _, mnt := range c.Config.Host.Mounts {
+		if mnt.Type != mount.TypeVolume || mnt.Source == "" || mnt.VolumeOptions == nil || mnt.VolumeOptions.DriverConfig == nil {
+			continue
+		}
+		driver := mnt.VolumeOptions.DriverConfig
+		if driver.Name == "" && len(driver.Options) == 0 {
+			continue
+		}
+		if p.wrapped.Volumes == nil {
+			p.wrapped.Volumes = types.Volumes{}
+		}
+		if _, exists := p.wrapped.Volumes[mnt.Source]; exists {
+			continue
+		}
+		vol := types.VolumeConfig{Name: mnt.Source, Driver: driver.Name}
+		if len(driver.Options) > 0 {
+			vol.DriverOpts = types.Options(maps.Clone(driver.Options))
+		}
+		if len(mnt.VolumeOptions.Labels) > 0 {
+			vol.Labels = types.Labels(maps.Clone(mnt.VolumeOptions.Labels))
+		}
+		p.wrapped.Volumes[mnt.Source] = vol
+	}
+}
+
 // convertPortsBindings converts the ports and bindings from the container config to the compose config
 func convertPortsBindings(portBindings map[nat.Port][]nat.PortBinding) []types.ServicePortConfig {
 	ports := make([]types.ServicePortConfig, 0, len(portBindings))
@@ -640,6 +832,23 @@ func convertPortsBindings(portBindings map[nat.Port][]nat.PortBinding) []types.S
 		}
 	}
 	return ports
+}
+
+func macAddressFromEndpoints(networks *dockerNet.NetworkingConfig) string {
+	if networks == nil {
+		return ""
+	}
+	var mac string
+	for _, ep := range networks.EndpointsConfig {
+		if ep == nil || ep.MacAddress == "" {
+			continue
+		}
+		if mac != "" && mac != ep.MacAddress {
+			return ""
+		}
+		mac = ep.MacAddress
+	}
+	return mac
 }
 
 // convertNetworks converts the networks from the container config to the compose config

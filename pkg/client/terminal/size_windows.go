@@ -3,40 +3,37 @@
 package terminal
 
 import (
+	"context"
 	"time"
-
-	"golang.org/x/term"
 )
 
-// GetSize returns the current terminal size
-func (s *Session) GetSize() (width, height int, err error) {
-	return term.GetSize(int(s.stdin.Fd()))
-}
+// watchResize polls for window changes until ctx is canceled.
+// A failed size read is skipped so a transient error does not end the session.
+func (s *Session) watchResize(ctx context.Context, resize func(Size) error) error {
+	ticker := time.NewTicker(200 * time.Millisecond)
+	defer ticker.Stop()
 
-// MonitorSize polls for terminal size changes on Windows
-func (s *Session) MonitorSize() chan MonitorSize {
-	go func() {
-		defer close(s.resizeCh)
+	prev, err := s.Size()
+	if err != nil {
+		prev = Size{}
+	}
 
-		oldW, oldH, err := s.GetSize()
-		if err != nil {
-			return
-		}
-
-		for {
-			time.Sleep(200 * time.Millisecond)
-
-			newW, newH, err := s.GetSize()
+	for {
+		select {
+		case <-ctx.Done():
+			return nil
+		case <-ticker.C:
+			sz, err := s.Size()
 			if err != nil {
-				return
+				continue
 			}
-
-			if newW != oldW || newH != oldH {
-				s.resizeCh <- MonitorSize{Width: uint(newW), Height: uint(newH)}
-				oldW, oldH = newW, newH
+			if sz == prev {
+				continue
+			}
+			prev = sz
+			if err := resize(sz); err != nil {
+				return err
 			}
 		}
-	}()
-
-	return s.resizeCh
+	}
 }

@@ -19,75 +19,7 @@ import (
 func TestProjectMarshalFullConfig(t *testing.T) {
 	mode := int64(0444)
 	replicas := 2
-	c := NewContainer("web-1").
-		Image("nginx:latest").
-		Command("nginx", "-g", "daemon off;").
-		Env("FOO", "bar").
-		Tty().
-		ExposedPort("tcp", "80").
-		HealthCheck(Health{Test: []string{"CMD", "true"}, Timeout: 1, Interval: 1, Retries: 1}).
-		Entrypoint("/docker-entrypoint.sh").
-		StdinOpen().
-		StopSignal("SIGQUIT").
-		WorkingDir("/usr/share/nginx/html").
-		Label("app", "web").
-		DomainName("web.test").
-		HostName("web").
-		User("nginx").
-		StopTimeout(5).
-		BlkioWeight(200).
-		BlkioDeviceReadBps("/dev/zero", 1000).
-		BlkioDeviceWriteBps("/dev/zero", 1000).
-		BlkioDeviceReadIOps("/dev/zero", 10).
-		BlkioDeviceWriteIOps("/dev/zero", 10).
-		AddedCapabilities(NET_BIND_SERVICE).
-		DroppedCapabilities(MKNOD).
-		CgroupParent("system.slice").
-		DeviceCgroupRules("c 1:3 rwm").
-		CPUCount(1).
-		CPUPercent(20).
-		CPUPeriod(100000).
-		CPUQuota(50000).
-		CPUShares(256).
-		CpusetCpus("0").
-		CPURealtimeRuntime(0).
-		CPURealtimePeriod(0).
-		PidMode("host").
-		MemoryReservation(8*1024*1024).
-		MemorySwap(64*1024*1024).
-		MemoryLimit(32*1024*1024).
-		ShmSize(1024*1024).
-		DNSLookups("8.8.8.8").
-		DNSSearches("test").
-		DNSOptions("ndots:2").
-		ExtraHost("host.docker.internal:host-gateway").
-		OomScoreAdj(50).
-		OomKillDisable().
-		AddedDevice("/dev/null", "/dev/null", "rwm").
-		AddedGroups("www-data").
-		Init().
-		IpcMode("shareable").
-		Isolation("default").
-		LogDriver("json-file", map[string]string{"max-size": "1m"}).
-		VolumesFrom("other:rw").
-		VolumeBinds("/tmp:/opt/bind:ro,z").
-		RWNamedVolumeMount("data", "/var/lib/data").
-		TmpfsMount("/tmpfs", 1024, 0755).
-		PortBindings("tcp", "127.0.0.1", "8080", "80").
-		Privileged().
-		ReadOnlyRootfs().
-		RestartPolicyUnlessStopped().
-		Runtime("runc").
-		SecurityOpts("no-new-privileges:true").
-		Sysctls("net.ipv4.ip_forward", "0").
-		Tmpfs("/run", "rw").
-		Ulimits("nofile", 1024, 2048).
-		UserNSMode("host").
-		UTSMode("host").
-		MemorySwappiness(40).
-		PidsLimit(50).
-		Architecture("amd64").
-		Endpoint("front", EndpointOpts{Aliases: []string{"web"}, IPv4: "10.1.0.10"})
+	c := NewContainer("web-1").Image("nginx:latest").Command("nginx", "-g", "daemon off;").Env("FOO", "bar").Tty().ExposedPort("tcp", "80").HealthCheck(Health{Test: []string{"CMD", "true"}, Timeout: 1, Interval: 1, Retries: 1}).Entrypoint("/docker-entrypoint.sh").StdinOpen().StopSignal("SIGQUIT").WorkingDir("/usr/share/nginx/html").Label("app", "web").DomainName("web.test").HostName("web").User("nginx").StopTimeout(5).BlkioWeight(200).BlkioDeviceReadBps("/dev/zero", 1000*B).BlkioDeviceWriteBps("/dev/zero", 1000*B).BlkioDeviceReadIOps("/dev/zero", 10).BlkioDeviceWriteIOps("/dev/zero", 10).AddedCapabilities(NET_BIND_SERVICE).DroppedCapabilities(MKNOD).CgroupParent("system.slice").DeviceCgroupRules("c 1:3 rwm").CPUCount(1).CPUPercent(20).CPUPeriod(100*time.Millisecond).CPUQuota(50*time.Millisecond).CPUShares(256).CpusetCpus(mustCpuset("0")).CPURealtimeRuntime(0).CPURealtimePeriod(0).PidMode(PidHost).MemoryReservation(8*MiB).MemorySwap(64*MiB).MemoryLimit(32*MiB).ShmSize(MiB).DNSLookups("8.8.8.8").DNSSearches("test").DNSOptions("ndots:2").ExtraHost("host.docker.internal", "host-gateway").OomScoreAdj(50).OomKillDisable().AddedDevice(Device{HostPath: "/dev/null", ContainerPath: "/dev/null", Read: true, Write: true, Mknod: true}).AddedGroups("www-data").Init().IpcMode(IpcShareable).Isolation(IsolationDefault).LogDriver("json-file", map[string]string{"max-size": "1m"}).VolumesFrom("other", false).VolumeBinds("/tmp:/opt/bind:ro,z").RWNamedVolumeMount("data", "/var/lib/data").TmpfsMount("/tmpfs", 1024, 0755).PortBinding(PortBinding{Protocol: TCP, HostIP: "127.0.0.1", HostPort: "8080", ContainerPort: "80"}).Privileged().ReadOnlyRootfs().RestartPolicyUnlessStopped().Runtime("runc").SecurityOpts("no-new-privileges:true").Sysctls("net.ipv4.ip_forward", "0").Tmpfs("/run", "rw").Ulimits(Ulimit{Name: "nofile", Soft: 1024, Hard: 2048}).UserNSMode(UserNSHost).UTSMode(UTSHost).MemorySwappiness(40).PidsLimit(50).Architecture("amd64").Endpoint("front", EndpointOpts{Aliases: []string{"web"}, IPv4: "10.1.0.10"})
 
 	p := NewProject("full")
 	p.WithNetwork("front", ProjectNetwork{
@@ -207,9 +139,9 @@ func TestProjectValidationAndErrors(t *testing.T) {
 	require.Error(t, p2.Validate())
 
 	p3 := NewProject("p3")
-	p3.WithService("a", NewContainer().Image("alpine").WithContainerConfig(func(*container.Config) error {
-		return errorsNew("cc")
-	}))
+	bad := NewContainer().Image("alpine")
+	bad.Errors = append(bad.Errors, errorsNew("cc"))
+	p3.WithService("a", bad)
 	require.Error(t, p3.Validate())
 
 	p4 := NewProject("p4")
@@ -217,7 +149,7 @@ func TestProjectValidationAndErrors(t *testing.T) {
 	require.Error(t, p4.Validate())
 
 	pHosts := NewProject("hosts")
-	pHosts.WithService("web", NewContainer().Image("alpine").ExtraHost("no-ip"))
+	pHosts.WithService("web", NewContainer().Image("alpine").ExtraHost("no-ip", ""))
 	require.Error(t, pHosts.Validate())
 
 	require.Error(t, p4.ForEachService(nil))
@@ -239,6 +171,77 @@ func TestProjectValidationAndErrors(t *testing.T) {
 	p6.WithSecret("s")
 	p6.WithNetwork("n")
 	require.Contains(t, p6.wrapped.Volumes, "v")
+}
+
+func TestWithNetworkOneSpec(t *testing.T) {
+	ok := NewProject("n")
+	ok.WithService("web", NewContainer().Image("alpine"))
+	ok.WithNetwork("front", ProjectNetwork{Driver: "bridge", Internal: true})
+	require.NoError(t, ok.Validate())
+	require.Equal(t, "bridge", ok.Unwrap().Networks["front"].Driver)
+	require.True(t, ok.Unwrap().Networks["front"].Internal)
+
+	bad := NewProject("n")
+	bad.WithService("web", NewContainer().Image("alpine"))
+	bad.WithNetwork("front", ProjectNetwork{Driver: "bridge"}, ProjectNetwork{Internal: true})
+	require.Error(t, bad.Validate())
+}
+
+func TestImplicitDefaultNetwork(t *testing.T) {
+	t.Run("service without networks uses project default", func(t *testing.T) {
+		p := NewProject("nginx-example")
+		p.WithService("nginx", NewContainer().
+			Image("nginx:latest").
+			PortBinding(PortBinding{Protocol: TCP, HostIP: "0.0.0.0", HostPort: "8080", ContainerPort: "80"}),
+		)
+		require.NoError(t, p.Validate())
+
+		svc, err := p.GetService("nginx")
+		require.NoError(t, err)
+		require.Contains(t, svc.Networks, "default")
+		require.Contains(t, p.Unwrap().Networks, "default")
+		require.Equal(t, "nginx-example_default", p.Unwrap().Networks["default"].Name)
+		require.Len(t, svc.Ports, 1)
+		require.Equal(t, uint32(80), svc.Ports[0].Target)
+		require.Equal(t, "8080", svc.Ports[0].Published)
+	})
+
+	t.Run("network mode skips default", func(t *testing.T) {
+		p := NewProject("isolated")
+		p.WithService("none", NewContainer().Image("alpine").DisabledNetwork())
+		require.NoError(t, p.Validate())
+
+		svc, err := p.GetService("none")
+		require.NoError(t, err)
+		require.Equal(t, "none", svc.NetworkMode)
+		require.NotContains(t, svc.Networks, "default")
+		require.NotContains(t, p.Unwrap().Networks, "default")
+	})
+
+	t.Run("explicit networks skip implicit default", func(t *testing.T) {
+		p := NewProject("custom")
+		p.WithNetwork("front")
+		p.WithService("web", NewContainer().Image("nginx").Endpoint("front"))
+		require.NoError(t, p.Validate())
+
+		svc, err := p.GetService("web")
+		require.NoError(t, err)
+		require.Contains(t, svc.Networks, "front")
+		require.NotContains(t, svc.Networks, "default")
+		require.NotContains(t, p.Unwrap().Networks, "default")
+	})
+
+	t.Run("existing default network is kept", func(t *testing.T) {
+		p := NewProject("named")
+		p.WithNetwork("default")
+		p.WithService("web", NewContainer().Image("nginx"))
+		require.NoError(t, p.Validate())
+
+		require.Equal(t, "default", p.Unwrap().Networks["default"].Name)
+		svc, err := p.GetService("web")
+		require.NoError(t, err)
+		require.Contains(t, svc.Networks, "default")
+	})
 }
 
 func errorsNew(s string) error { return errdefs.NewContainerConfigError("x", s) }
@@ -268,10 +271,22 @@ func TestConvertersNilAndEdge(t *testing.T) {
 	require.Nil(t, convertBlkioConfig(hc))
 
 	vols, tmpfsFromMounts := convertVolumes(nil, &container.HostConfig{
-		Binds: []string{"no-colon", "src:notslash"},
+		Binds: []string{"no-colon", "src:notslash", "data:/var/lib:rw", "/src:/dst:ro,rshared,cached", "/src:/other:rshared", "/tmp:/opt:z"},
 	})
-	require.Empty(t, vols)
 	require.Empty(t, tmpfsFromMounts)
+	require.Len(t, vols, 4)
+	require.Equal(t, "volume", vols[0].Type)
+	require.Equal(t, "data", vols[0].Source)
+	require.Equal(t, "/var/lib", vols[0].Target)
+	require.False(t, vols[0].ReadOnly)
+	require.Equal(t, "bind", vols[1].Type)
+	require.True(t, vols[1].ReadOnly)
+	require.Equal(t, "cached", vols[1].Consistency)
+	require.Equal(t, "rshared", vols[1].Bind.Propagation)
+	require.Equal(t, "/dst", vols[1].Target)
+	require.False(t, vols[2].ReadOnly)
+	require.Equal(t, "rshared", vols[2].Bind.Propagation)
+	require.Equal(t, "z", vols[3].Bind.SELinux)
 
 	ports := convertPortsBindings(map[nat.Port][]nat.PortBinding{
 		nat.Port("80/tcp"): {{HostIP: "0.0.0.0", HostPort: "8080"}},
@@ -296,29 +311,28 @@ func TestConvertersNilAndEdge(t *testing.T) {
 	require.NotNil(t, convertBlkioConfig(hc))
 }
 
+func TestMacAddressFromEndpoints(t *testing.T) {
+	require.Empty(t, macAddressFromEndpoints(nil))
+	require.Empty(t, macAddressFromEndpoints(&network.NetworkingConfig{}))
+	require.Equal(t, "02:42:ac:11:00:02", macAddressFromEndpoints(&network.NetworkingConfig{
+		EndpointsConfig: map[string]*network.EndpointSettings{
+			"a": {MacAddress: "02:42:ac:11:00:02"},
+			"b": nil,
+			"c": {},
+		},
+	}))
+	require.Empty(t, macAddressFromEndpoints(&network.NetworkingConfig{
+		EndpointsConfig: map[string]*network.EndpointSettings{
+			"a": {MacAddress: "02:42:ac:11:00:02"},
+			"b": {MacAddress: "02:42:ac:11:00:03"},
+		},
+	}))
+}
+
 func TestWithServiceMapsContainerFields(t *testing.T) {
-	c := NewContainer("api").
-		Image("alpine").
-		Volume("/cache").
-		Volume("/data").
-		DisabledNetwork().
-		StorageOpt("size", "20G").
-		VolumeDriver("local").
-		DeviceRequest("nvidia", -1, []string{"0"}, [][]string{{"gpu", "compute"}, {"utility"}}).
-		RestartPolicy(RestartPolicyOnFailure, 3).
-		OS("linux").
-		Architecture("arm64").
-		Variant("v8").
-		DisabledHealthCheck().
-		RWNamedVolumeMountWithLabel("data", "/var/lib/data", "foo", "bar").
-		RWNamedVolumeSubPath("data", "/var/lib/sub", "nested").
-		NonRecursiveBindMount("/host", "/mnt", true).
-		HostBindMountRecursiveRO("/host/ro", "/mnt/ro").
-		TmpfsMountUIDGID("/run", 4096, "1000", "1000").
-		Endpoint("back", EndpointOpts{DriverOptions: map[string]string{"com.docker.network.endpoint.ifname": "eth1"}, MacAddress: "02:42:ac:11:00:02"})
+	c := NewContainer("api").Image("alpine").Volume("/cache").Volume("/data").DisabledNetwork().StorageOpt("size", "20G").VolumeDriver("local").DeviceRequest(DeviceRequest{Driver: "nvidia", Count: -1, DeviceIDs: []string{"0"}, Capabilities: []string{"gpu", "compute", "utility"}, Options: map[string]string{"opt": "1"}}).RestartPolicy(RestartPolicyOnFailure, 3).OS("linux").Architecture("arm64").Variant("v8").DisabledHealthCheck().RWNamedVolumeMountWithLabel("data", "/var/lib/data", "foo", "bar").RWNamedVolumeSubPath("data", "/var/lib/sub", "nested").NonRecursiveBindMount("/host", "/mnt", true).HostBindMountRecursiveRO("/host/ro", "/mnt/ro").TmpfsMountUIDGID("/run", 4096, "1000", "1000").Endpoint("back", EndpointOpts{DriverOptions: map[string]string{"com.docker.network.endpoint.ifname": "eth1"}, MacAddress: "02:42:ac:11:00:02"})
 	c.Config.Host.NanoCPUs = 1_500_000_000
 	c.Config.Host.Links = []string{"db:database"}
-	c.Config.Host.DeviceRequests[0].Options = map[string]string{"opt": "1"}
 
 	p := NewProject("mapped")
 	p.WithService("api", c)
@@ -343,6 +357,8 @@ func TestWithServiceMapsContainerFields(t *testing.T) {
 		Options:      types.Mapping{"opt": "1"},
 	}}, svc.Gpus)
 	require.Equal(t, "eth1", svc.Networks["back"].DriverOpts["com.docker.network.endpoint.ifname"])
+	require.Equal(t, "02:42:ac:11:00:02", svc.Networks["back"].MacAddress)
+	require.Equal(t, "02:42:ac:11:00:02", svc.MacAddress)
 
 	require.Equal(t, "/run:size=4096,uid=1000,gid=1000", string(svc.Tmpfs[0]))
 
@@ -395,7 +411,7 @@ func TestFirstNonEmptyAndApplySpecs(t *testing.T) {
 	require.Equal(t, "b", firstNonEmpty("", "b"))
 
 	cfg := &types.ServiceConfig{}
-	BuildSpec{}.apply(cfg)
+	require.NoError(t, BuildSpec{}.apply(cfg))
 	require.NotNil(t, cfg.Build)
 
 	Deploy{}.apply(cfg)
@@ -406,4 +422,42 @@ func TestFirstNonEmptyAndApplySpecs(t *testing.T) {
 	require.NoError(t, applyServiceExtra(cfg, nilBuild))
 	require.NoError(t, applyServiceExtra(cfg, nilDeploy))
 	require.NoError(t, applyServiceExtra(cfg, nil))
+
+	mode := int64(0644)
+	manual := true
+	p := NewProject("spec")
+	p.WithModel("chat", Model{Model: "ai/llama", ContextSize: 4096, RuntimeFlags: []string{"--verbose"}})
+	p.WithJob("nightly", NewContainer().Image("alpine").Command("true"), Job{
+		Profiles: []string{"batch"},
+		Manual:   &manual,
+		Schedule: []JobSchedule{{Cron: "0 2 * * *", Timezone: "UTC"}},
+	})
+	p.WithService("api", NewContainer().Image("alpine"),
+		PreStart(NewContainer("init").Image("alpine").Command("true"), true),
+		ServiceModel("chat", "MODEL_URL", "MODEL_NAME"),
+		BuildSpec{
+			SSH:                []BuildSSH{{ID: "default", Path: "/tmp/sock"}},
+			AdditionalContexts: map[string]string{"src": "https://example.test"},
+			ExtraHosts:         []string{"db:10.0.0.1"},
+			Isolation:          "default",
+			ShmSize:            1024,
+			Entitlements:       []string{"network.host"},
+			Ulimits:            map[string]BuildUlimit{"nofile": {Soft: 10, Hard: 20}},
+			Secrets:            []BuildSecret{{Source: "token", Target: "token", Mode: &mode}},
+			Provenance:         "mode=min",
+			SBOM:               "true",
+			NoCacheFilter:      []string{"apk"},
+		},
+	)
+	require.NoError(t, p.Validate())
+	raw, err := p.Marshal()
+	require.NoError(t, err)
+	text := string(raw)
+	require.Contains(t, text, "ai/llama")
+	require.Contains(t, text, "nightly")
+	require.Contains(t, text, "0 2 * * *")
+	require.Contains(t, text, "per_replica: true")
+	require.Contains(t, text, "endpoint_var: MODEL_URL")
+	require.Contains(t, text, "provenance: mode=min")
+	require.Contains(t, text, "no_cache_filter")
 }

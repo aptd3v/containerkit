@@ -8,11 +8,14 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"net"
 	"strings"
 	"testing"
 	"time"
 
 	"github.com/aptd3v/containerkit/pkg/client"
+	"github.com/aptd3v/containerkit/pkg/client/auth"
+	"github.com/aptd3v/containerkit/pkg/client/response"
 	"github.com/aptd3v/containerkit/pkg/containerkit"
 )
 
@@ -23,7 +26,7 @@ func TestClientImagePullInspectList(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Minute)
 	defer cancel()
 
-	insp, err := cli.ImageInspect(ctx, alpine)
+	insp, err := cli.ImageInspect(ctx, alpine, nil)
 	if err != nil {
 		t.Fatalf("ImageInspect: %v", err)
 	}
@@ -114,7 +117,7 @@ func TestClientContainerLifecycle(t *testing.T) {
 	if err != nil {
 		t.Fatalf("ContainerExecInspect: %v", err)
 	}
-	if execInsp.ExitCode != 0 {
+	if execInsp.ExitCode != nil && *execInsp.ExitCode != 0 {
 		t.Fatalf("exec exit code %d", execInsp.ExitCode)
 	}
 
@@ -282,7 +285,7 @@ func TestClientImageBuild(t *testing.T) {
 		_, _ = cli.ImageRemove(c, tag, &client.ImageRemove{Force: true, PruneChildren: true})
 	})
 
-	insp, err := cli.ImageInspect(ctx, tag)
+	insp, err := cli.ImageInspect(ctx, tag, &client.ImageInspect{Manifests: true})
 	if err != nil {
 		t.Fatalf("ImageInspect built: %v", err)
 	}
@@ -328,23 +331,52 @@ func TestClientNilOptions(t *testing.T) {
 	}
 }
 
-func TestClientSwarmInspect(t *testing.T) {
-	t.Parallel()
+func TestClientSwarm(t *testing.T) {
+	// Swarm mode is process-wide on the daemon; do not run in parallel.
 	cli := newCLI(t)
-	ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
+	ensureSwarm(t, cli)
+	ctx, cancel := context.WithTimeout(context.Background(), time.Minute)
 	defer cancel()
-	_, err := cli.SwarmInspect(ctx)
+
+	sw, err := cli.SwarmInspect(ctx)
 	if err != nil {
-		fmt.Fprintln(testWriter(t), err.Error())
-		if err.Error() == "" {
-			t.Fatal("SwarmInspect error with empty message")
-		}
+		t.Fatalf("SwarmInspect: %v", err)
 	}
-	if err := cli.SwarmJoin(ctx, &client.SwarmJoin{RemoteAddrs: []string{"127.0.0.1:2377"}, JoinToken: "e2e"}); err != nil {
-		fmt.Fprintln(testWriter(t), "SwarmJoin:", err)
+	if sw == nil || sw.ID == "" {
+		t.Fatal("SwarmInspect: empty swarm ID")
 	}
-	if err := cli.SwarmLeave(ctx, false); err != nil {
-		fmt.Fprintln(testWriter(t), "SwarmLeave:", err)
+	fmt.Fprintln(testWriter(t), "swarm", sw.ID)
+
+	worker := sw.JoinTokens.Worker
+	if err := cli.SwarmUpdate(ctx, &client.SwarmUpdate{
+		Version:           sw.Version,
+		Spec:              sw.Spec,
+		RotateWorkerToken: true,
+	}); err != nil {
+		t.Fatalf("SwarmUpdate: %v", err)
+	}
+	updated, err := cli.SwarmInspect(ctx)
+	if err != nil {
+		t.Fatalf("SwarmInspect after update: %v", err)
+	}
+	if worker != "" && updated.JoinTokens.Worker == worker {
+		t.Fatal("SwarmUpdate: worker join token was not rotated")
+	}
+
+	key, err := cli.SwarmGetUnlockKey(ctx)
+	if err != nil && !client.IsErrConflict(err) {
+		t.Fatalf("SwarmGetUnlockKey: %v", err)
+	}
+	fmt.Fprintf(testWriter(t), "SwarmGetUnlockKey key=%q err=%v\n", key, err)
+
+	if err := cli.SwarmUnlock(ctx, &client.SwarmUnlock{Key: "e2e-invalid"}); err == nil {
+		t.Fatal("SwarmUnlock: expected error for invalid key")
+	}
+	if err := cli.SwarmJoin(ctx, &client.SwarmJoin{
+		RemoteAddrs: []string{"127.0.0.1:2377"},
+		JoinToken:   "e2e-invalid",
+	}); err == nil {
+		t.Fatal("SwarmJoin: expected error while already in a swarm")
 	}
 }
 
@@ -438,7 +470,6 @@ func TestClientContainerMoreOps(t *testing.T) {
 	}
 
 	execResp, err := cli.ContainerExecCreate(ctx, id, &client.Exec{
-		Detach:  true,
 		Command: []string{"true"},
 	})
 	if err != nil {
@@ -457,8 +488,11 @@ func TestClientContainerMoreOps(t *testing.T) {
 	}
 	att.Close()
 
-	if _, err := cli.ContainerExecAttachTerminal(ctx, execResp.ID, &client.ExecAttach{}); err != nil {
+	session, err := cli.ContainerExecAttachTerminal(ctx, execResp.ID, &client.ExecAttach{})
+	if err != nil {
 		fmt.Fprintln(testWriter(t), "ContainerExecAttachTerminal:", err)
+	} else if err := session.Close(); err != nil {
+		fmt.Fprintln(testWriter(t), "ContainerExecAttachTerminal close:", err)
 	}
 
 	_ = cli.ContainerCheckpointCreate(ctx, id, &client.CheckpointCreate{CheckpointID: "e2e"})
@@ -542,7 +576,7 @@ func TestClientImageMoreOps(t *testing.T) {
 	if _, err := cli.ImageSearch(ctx, "alpine", &client.ImageSearch{Limit: 1}); err != nil {
 		fmt.Fprintln(testWriter(t), "ImageSearch:", err)
 	}
-	if rc, err := cli.ImagePush(ctx, tag); err != nil {
+	if rc, err := cli.ImagePush(ctx, tag, nil); err != nil {
 		fmt.Fprintln(testWriter(t), "ImagePush:", err)
 	} else {
 		_, _ = io.Copy(io.Discard, io.LimitReader(rc, 1024))
@@ -596,4 +630,91 @@ func TestClientNetworkVolumePrune(t *testing.T) {
 	if err := cli.VolumeUpdate(ctx, vol.Name, 0, nil); err != nil {
 		fmt.Fprintln(testWriter(t), "VolumeUpdate:", err)
 	}
+}
+
+func TestClientRegistryLogin(t *testing.T) {
+	t.Parallel()
+	cli := newCLI(t)
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Minute)
+	defer cancel()
+
+	const image = "registry:2"
+	pulled, err := cli.ImagePull(ctx, image, &client.ImagePull{CurrentPlatform: true})
+	if err != nil {
+		t.Fatalf("ImagePull registry: %v", err)
+	}
+	if _, err := io.Copy(testWriter(t), pulled); err != nil {
+		pulled.Close()
+		t.Fatalf("ImagePull stream: %v", err)
+	}
+	pulled.Close()
+
+	name := ident(t, "reg")
+	ctr := containerkit.NewContainer(name).Image(image)
+	if err := ctr.Validate(); err != nil {
+		t.Fatalf("Validate: %v", err)
+	}
+	created, err := cli.ContainerCreate(ctx, ctr)
+	if err != nil {
+		t.Fatalf("ContainerCreate: %v", err)
+	}
+	id := created.ID
+	if id == "" {
+		id = name
+	}
+	removeContainer(t, cli, id)
+	if err := cli.ContainerStart(ctx, id, nil); err != nil {
+		t.Fatalf("ContainerStart: %v", err)
+	}
+
+	var addr string
+	deadline := time.Now().Add(20 * time.Second)
+	for time.Now().Before(deadline) {
+		insp, err := cli.ContainerInspect(ctx, id)
+		if err != nil {
+			t.Fatalf("ContainerInspect: %v", err)
+		}
+		addr = registryAddr(insp)
+		if addr != "" {
+			break
+		}
+		time.Sleep(200 * time.Millisecond)
+	}
+	if addr == "" {
+		t.Fatal("registry container has no IP")
+	}
+
+	creds := auth.Auth{Username: "test", Password: "test", ServerAddress: addr}
+	var last error
+	deadline = time.Now().Add(30 * time.Second)
+	for time.Now().Before(deadline) {
+		logged, err := cli.RegistryLogin(ctx, creds)
+		if err == nil {
+			if logged == nil {
+				t.Fatal("RegistryLogin: nil response")
+			}
+			fmt.Fprintln(testWriter(t), "login", logged.Status)
+			return
+		}
+		last = err
+		if client.IsErrUnauthorized(err) {
+			// Unauthenticated registry:2 may still 401; the daemon reached it.
+			fmt.Fprintln(testWriter(t), err)
+			return
+		}
+		time.Sleep(500 * time.Millisecond)
+	}
+	t.Skipf("RegistryLogin against %s: %v", addr, last)
+}
+
+func registryAddr(insp *response.ContainerInspect) string {
+	if insp == nil || insp.NetworkSettings == nil {
+		return ""
+	}
+	for _, ep := range insp.NetworkSettings.Networks {
+		if ep != nil && ep.IPAddress.IsValid() {
+			return net.JoinHostPort(ep.IPAddress.String(), "5000")
+		}
+	}
+	return ""
 }

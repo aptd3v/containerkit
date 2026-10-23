@@ -48,7 +48,7 @@ func SetupProject(cfg *SupabaseConfig, baseVolumesPath string, enableResourceLim
 		containerkit.DependsOnHealthy("db"),
 		containerkit.DependsOnHealthy("analytics"))
 	project.WithService("meta", metaContainer(cfg),
-		containerkit.Profiles(profileFull),
+		containerkit.Profiles(profileMinimal),
 		containerkit.DependsOnHealthy("db"),
 		containerkit.DependsOnHealthy("analytics"))
 	project.WithService("supavisor", supavisorContainer(cfg, vol),
@@ -75,7 +75,11 @@ func SetupProject(cfg *SupabaseConfig, baseVolumesPath string, enableResourceLim
 	}
 	project.WithService("kong", kongContainer(cfg, vol), kongExtras...)
 
-	studioExtras := []any{containerkit.Profiles(profileMinimal), containerkit.DependsOnHealthy("analytics")}
+	studioExtras := []any{
+		containerkit.Profiles(profileMinimal),
+		containerkit.DependsOnHealthy("analytics"),
+		containerkit.DependsOn("meta"),
+	}
 	if enableResourceLimits {
 		studioExtras = append(studioExtras, limits(512*1024*1024, 1))
 	}

@@ -16,7 +16,12 @@ import (
 	"github.com/aptd3v/containerkit/pkg/containerkit"
 )
 
-const NumReplicas = 3 // Number of MongoDB replicas in the replica set
+const (
+	NumReplicas = 8 // Number of MongoDB replicas in the replica set
+
+	mongoExpressUser = "admin"
+	mongoExpressPass = "password"
+)
 
 type RSet struct {
 	ID      string     `json:"_id"`
@@ -24,8 +29,10 @@ type RSet struct {
 }
 
 type RSMember struct {
-	ID   int    `json:"_id"`
-	Host string `json:"host"`
+	ID       int      `json:"_id"`
+	Host     string   `json:"host"`
+	Votes    *int     `json:"votes,omitempty"`
+	Priority *float64 `json:"priority,omitempty"`
 }
 
 func main() {
@@ -42,33 +49,53 @@ func main() {
 			extras = append(extras, containerkit.DependsOn(fmt.Sprintf("db-%d", i-1)))
 		}
 		project.WithService(serviceName, WithMongoReplica(i), extras...)
-		members = append(members, RSMember{
-			Host: serviceName,
+		member := RSMember{
+			Host: serviceName + ":27017",
 			ID:   i,
-		})
+		}
+		// MongoDB allows at most 7 voting members.
+		if i >= 7 {
+			votes, priority := 0, 0.0
+			member.Votes = &votes
+			member.Priority = &priority
+		}
+		members = append(members, member)
 		urlParts = append(urlParts, fmt.Sprintf("%s:27017", serviceName))
 	}
 	url := fmt.Sprintf("mongodb://%s/?replicaSet=rs0", strings.Join(urlParts, ","))
 
-	project.WithService("mongo-express", WithMongoExpress(url))
+	expressExtras := make([]any, 0, NumReplicas)
+	for i := range NumReplicas {
+		expressExtras = append(expressExtras, containerkit.DependsOnHealthy(fmt.Sprintf("db-%d", i)))
+	}
+	project.WithService("mongo-express", WithMongoExpress(url), expressExtras...)
 
 	project.WithNetwork("mongo-cluster").WithVolume("mongo-data")
 
 	database := containerkit.NewCompose(project)
+	ctx := context.Background()
 
-	if err := database.Up(
-		context.Background(),
-		&containerkit.Up{
-			ForceRecreate: true,
-			RemoveOrphans: true,
-			Wait:          true,
-		},
-	); err != nil {
+	replicaServices := make([]string, 0, NumReplicas)
+	for i := range NumReplicas {
+		replicaServices = append(replicaServices, fmt.Sprintf("db-%d", i))
+	}
+	if err := database.Up(ctx, &containerkit.Up{
+		ForceRecreate: true,
+		RemoveOrphans: true,
+		Wait:          true,
+		ServiceNames:  replicaServices,
+	}); err != nil {
 		log.Fatal(err)
 	}
 
-	err := Initialize(context.Background(), "mongodb-0", members)
+	err := Initialize(ctx, "mongodb-0", members)
 	if err != nil {
+		log.Fatal(err)
+	}
+	if err := database.Up(ctx, &containerkit.Up{
+		Wait:         true,
+		ServiceNames: []string{"mongo-express"},
+	}); err != nil {
 		log.Fatal(err)
 	}
 	signalsChan := make(chan os.Signal, 1)
@@ -91,6 +118,7 @@ func main() {
 	fmt.Println("MongoDB replica set", "rs0", "url", url)
 	fmt.Println("MongoDB replica set initialized and running.")
 	fmt.Println("You can access Mongo Express at http://localhost:8081")
+	fmt.Printf("Mongo Express login: %s / %s\n", mongoExpressUser, mongoExpressPass)
 	fmt.Println("Press Ctrl+C to stop the containers.")
 	<-ctx.Done()
 }
@@ -99,6 +127,7 @@ func WithMongoReplica(index int) *containerkit.Container {
 	containerName := fmt.Sprintf("mongodb-%d", index)
 	return containerkit.NewContainer(containerName).
 		Image("mongo:latest").
+		HostName(fmt.Sprintf("db-%d", index)).
 		Command("mongod", "--replSet", "rs0", "--bind_ip_all").
 		HealthCheck(containerkit.Health{
 			Test:         []string{"CMD", "mongosh", "--eval", `db.adminCommand("ping")`},
@@ -113,11 +142,7 @@ func WithMongoReplica(index int) *containerkit.Container {
 }
 
 func Initialize(ctx context.Context, initContainer string, members []RSMember) error {
-	opts := []client.SetClientOption{client.WithAPIVersionNegotiation()}
-	if os.Getenv("DOCKER_HOST") != "" {
-		opts = append([]client.SetClientOption{client.FromEnv()}, opts...)
-	}
-	cli, err := client.NewClient(opts...)
+	cli, err := client.NewClient(client.FromEnv(), client.WithAPIVersionFromEnv())
 	if err != nil {
 		return fmt.Errorf("failed to create Docker client: %w", err)
 	}
@@ -133,9 +158,12 @@ func Initialize(ctx context.Context, initContainer string, members []RSMember) e
 	if err != nil {
 		return fmt.Errorf("failed to marshal members: %w", err)
 	}
-	command := []string{"mongosh", "--eval", fmt.Sprintf("rs.initiate(%s)", string(init))}
+	command := []string{"mongosh", "--eval", fmt.Sprintf(
+		`rs.initiate(%s); const deadline = Date.now() + 30000; while (Date.now() < deadline) { try { if (rs.hello().isWritablePrimary) { quit(0); } } catch (e) {} sleep(500); } throw new Error("replica set did not elect a primary");`,
+		string(init),
+	)}
 
-	fmt.Println(strings.Join(command, " "))
+	fmt.Println("mongosh --eval rs.initiate(...)")
 	res, err := cli.ContainerExecCreate(ctx, initContainer, &client.Exec{
 		Command:      command,
 		AttachStdout: true,
@@ -150,6 +178,13 @@ func Initialize(ctx context.Context, initContainer string, members []RSMember) e
 	}
 	defer attached.Close()
 	_, _ = io.Copy(os.Stdout, attached.Reader)
+	inspect, err := cli.ContainerExecInspect(ctx, res.ID)
+	if err != nil {
+		return fmt.Errorf("failed to inspect exec command: %w", err)
+	}
+	if inspect.ExitCode != nil && *inspect.ExitCode != 0 {
+		return fmt.Errorf("rs.initiate failed: exit %d", *inspect.ExitCode)
+	}
 	return nil
 }
 
@@ -157,9 +192,14 @@ func WithMongoExpress(url string) *containerkit.Container {
 	return containerkit.NewContainer("mongo-express").
 		Image("mongo-express:latest").
 		Env("ME_CONFIG_MONGODB_URL", url).
-		Env("ME_CONFIG_MONGODB_AUTH_USERNAME", "admin").
-		Env("ME_CONFIG_MONGODB_AUTH_PASSWORD", "password").
-		PortBindings("tcp", "0.0.0.0", "8081", "8081").
+		Env("ME_CONFIG_MONGODB_ENABLE_ADMIN", "true").
+		Env("VCAP_APP_HOST", "0.0.0.0").
+		Env("ME_CONFIG_BASICAUTH_ENABLED", "true").
+		Env("ME_CONFIG_BASICAUTH_USERNAME", mongoExpressUser).
+		Env("ME_CONFIG_BASICAUTH_PASSWORD", mongoExpressPass).
+		Env("ME_CONFIG_SITE_COOKIESECRET", "containerkit-mongo-express").
+		Env("ME_CONFIG_SITE_SESSIONSECRET", "containerkit-mongo-express").
+		PortBinding(containerkit.PortBinding{Protocol: containerkit.TCP, HostIP: "0.0.0.0", HostPort: "8081", ContainerPort: "8081"}).
 		RestartAlways().
 		Endpoint("mongo-cluster")
 }

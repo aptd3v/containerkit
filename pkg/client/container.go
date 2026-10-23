@@ -9,7 +9,9 @@ import (
 	"github.com/aptd3v/containerkit/pkg/client/response"
 	"github.com/aptd3v/containerkit/pkg/client/terminal"
 	"github.com/aptd3v/containerkit/pkg/containerkit"
-	"github.com/docker/docker/api/types/container"
+	"github.com/moby/moby/api/types/container"
+	"github.com/moby/moby/api/types/network"
+	sdk "github.com/moby/moby/client"
 )
 
 // ContainerCreate creates a new container based on the given configuration. It can be associated with a name, but it's not mandatory.
@@ -18,60 +20,69 @@ func (c *Client) ContainerCreate(ctx context.Context, created *containerkit.Cont
 		return nil, err
 	}
 	config := created.Config
-	res, err := c.wrapped.ContainerCreate(
-		ctx,
-		config.Container,
-		config.Host,
-		config.Network,
-		config.Platform,
-		created.Name,
-	)
+	cfg, err := convert[container.Config](config.Container)
+	if err != nil {
+		return nil, err
+	}
+	host, err := convert[container.HostConfig](config.Host)
+	if err != nil {
+		return nil, err
+	}
+	networkConfig, err := convert[network.NetworkingConfig](config.Network)
+	if err != nil {
+		return nil, err
+	}
+	res, err := c.wrapped.ContainerCreate(ctx, sdk.ContainerCreateOptions{
+		Config:           cfg,
+		HostConfig:       host,
+		NetworkingConfig: networkConfig,
+		Platform:         config.Platform,
+		Name:             created.Name,
+	})
 	if err != nil {
 		return nil, err
 	}
 	return &response.ContainerCreate{
-		CreateResponse: res,
+		CreateResponse: container.CreateResponse{ID: res.ID, Warnings: res.Warnings},
 	}, nil
 }
 
 // ContainerList returns the list of containers in the docker host.
 func (c *Client) ContainerList(ctx context.Context, opt *List) ([]response.ContainerSummary, error) {
-	op := opt.apply()
-	sum, err := c.wrapped.ContainerList(ctx, op)
+	sum, err := c.wrapped.ContainerList(ctx, opt.apply())
 	if err != nil {
 		return nil, err
 	}
-	summaries := make([]response.ContainerSummary, len(sum))
-	for i, s := range sum {
-		summaries[i] = response.ContainerSummary{
-			Summary: s,
-		}
+	summaries := make([]response.ContainerSummary, len(sum.Items))
+	for i, s := range sum.Items {
+		summaries[i] = response.ContainerSummary{Summary: s}
 	}
 	return summaries, nil
 }
 
 // ContainerStart sends a request to the docker daemon to start a container.
 func (c *Client) ContainerStart(ctx context.Context, id string, opt *Start) error {
-	op := opt.apply()
-	return c.wrapped.ContainerStart(ctx, id, op)
+	_, err := c.wrapped.ContainerStart(ctx, id, opt.apply())
+	return err
 }
 
 // ContainerStop stops a container. In case the container fails to stop
 // gracefully within a time frame specified by the timeout argument, it is forcefully terminated (killed).
 func (c *Client) ContainerStop(ctx context.Context, id string, opt *Stop) error {
-	op := opt.apply()
-	return c.wrapped.ContainerStop(ctx, id, op)
+	_, err := c.wrapped.ContainerStop(ctx, id, opt.apply())
+	return err
 }
 
 // ContainerRemove kills and removes a container from the docker host.
 func (c *Client) ContainerRemove(ctx context.Context, id string, opt *Remove) error {
-	op := opt.apply()
-	return c.wrapped.ContainerRemove(ctx, id, op)
+	_, err := c.wrapped.ContainerRemove(ctx, id, opt.apply())
+	return err
 }
 
 // ContainerKill terminates the container process but does not remove the container from the docker host.
 func (c *Client) ContainerKill(ctx context.Context, id string, signal string) error {
-	return c.wrapped.ContainerKill(ctx, id, signal)
+	_, err := c.wrapped.ContainerKill(ctx, id, sdk.ContainerKillOptions{Signal: signal})
+	return err
 }
 
 /*
@@ -89,38 +100,36 @@ STREAM_TYPE can be 1 for stdout and 2 for stderr
 
 SIZE1, SIZE2, SIZE3, and SIZE4 are four bytes of uint32 encoded as big endian. This is the size of OUTPUT.
 
-You can use github.com/docker/docker/pkg/stdcopy.StdCopy to demultiplex this stream.
+You can use github.com/moby/moby/api/pkg/stdcopy.StdCopy to demultiplex this stream.
 */
 func (c *Client) ContainerLogs(ctx context.Context, id string, opt *Logs) (io.ReadCloser, error) {
-	op := opt.apply()
-	return c.wrapped.ContainerLogs(ctx, id, op)
+	return c.wrapped.ContainerLogs(ctx, id, opt.apply())
 }
 
 // ContainerInspect returns the container information.
 func (c *Client) ContainerInspect(ctx context.Context, id string) (*response.ContainerInspect, error) {
-	inspect, err := c.wrapped.ContainerInspect(ctx, id)
+	inspect, err := c.wrapped.ContainerInspect(ctx, id, sdk.ContainerInspectOptions{})
 	if err != nil {
 		return nil, err
 	}
-	return &response.ContainerInspect{
-		InspectResponse: inspect,
-	}, nil
+	return &response.ContainerInspect{InspectResponse: inspect.Container}, nil
 }
 
 /*
 ContainerWait waits until the specified container is in a certain state indicated by the given condition,
-either "not-running" (default), "next-exit", or "removed". If this client's API version is before 1.30,
-condition is ignored and ContainerWait will return immediately with the two channels, as the server will
-wait as if the condition were "not-running".
+either "not-running" (default), "next-exit", or "removed".
 
-If this client's API version is at least 1.30, ContainerWait blocks until the request has been acknowledged
-by the server (with a response header), then returns two channels on which the caller can wait for the exit
-status of the container or an error if there was a problem either beginning the wait request or in getting
-the response. This allows the caller to synchronize ContainerWait with other calls, such as specifying a
-"next-exit" condition before issuing a ContainerStart request.
+ContainerWait blocks until the request has been acknowledged by the server (with a response header), then
+returns two channels on which the caller can wait for the exit status of the container or an error if there
+was a problem either beginning the wait request or in getting the response. This allows the caller to
+synchronize ContainerWait with other calls, such as specifying a "next-exit" condition before issuing a
+ContainerStart request.
 */
 func (c *Client) ContainerWait(ctx context.Context, id string, condition WaitCondition) (<-chan response.ContainerWait, <-chan error) {
-	waitCh, errCh := c.wrapped.ContainerWait(ctx, id, container.WaitCondition(condition))
+	waited := c.wrapped.ContainerWait(ctx, id, sdk.ContainerWaitOptions{
+		Condition: container.WaitCondition(condition),
+	})
+	waitCh, errCh := waited.Result, waited.Error
 
 	outWait := make(chan response.ContainerWait, 1)
 	outErr := make(chan error, 1)
@@ -167,222 +176,223 @@ func (c *Client) ContainerWaitSync(ctx context.Context, id string, condition Wai
 // ContainerStats returns near realtime stats for a given container.
 // It's up to the caller to close the io.ReadCloser returned.
 func (c *Client) ContainerStats(ctx context.Context, id string, stream bool) (*response.ContainerStatsReader, error) {
-	stats, err := c.wrapped.ContainerStats(ctx, id, stream)
+	stats, err := c.wrapped.ContainerStats(ctx, id, sdk.ContainerStatsOptions{
+		Stream:                stream,
+		IncludePreviousSample: stream,
+	})
 	if err != nil {
 		return nil, err
 	}
-	return &response.ContainerStatsReader{
-		StatsResponseReader: stats,
-	}, nil
+	return &response.ContainerStatsReader{Body: stats.Body}, nil
 }
 
 // ContainerExecCreate creates a new exec configuration to run an exec process.
 func (c *Client) ContainerExecCreate(ctx context.Context, containerID string, opt *Exec) (*response.ContainerExecCreate, error) {
-	op := opt.apply()
-	exec, err := c.wrapped.ContainerExecCreate(ctx, containerID, op)
+	exec, err := c.wrapped.ExecCreate(ctx, containerID, opt.apply())
 	if err != nil {
 		return nil, err
 	}
 	return &response.ContainerExecCreate{
-		ExecCreateResponse: exec,
+		ExecCreateResponse: container.ExecCreateResponse{ID: exec.ID},
 	}, nil
 }
 
 // ContainerExecStart starts an exec process already created in the docker host.
 func (c *Client) ContainerExecStart(ctx context.Context, execID string, opt *ExecStart) error {
-	op := opt.apply()
-	return c.wrapped.ContainerExecStart(ctx, execID, op)
+	_, err := c.wrapped.ExecStart(ctx, execID, opt.apply())
+	return err
 }
 
 // ContainerExecResize changes the size of the tty for an exec process running inside a container.
 func (c *Client) ContainerExecResize(ctx context.Context, execID string, opt *Resize) error {
-	op := opt.apply()
-	return c.wrapped.ContainerExecResize(ctx, execID, op)
+	size := opt.apply()
+	_, err := c.wrapped.ExecResize(ctx, execID, sdk.ExecResizeOptions{Height: size.Height, Width: size.Width})
+	return err
 }
 
 // ContainerExecAttach attaches a connection to an exec process in the server.
-// It returns a types.HijackedConnection with the hijacked connection and the a reader to get output.
-// It's up to the called to close the hijacked connection by calling types.HijackedResponse.Close.
+// It returns a hijacked connection and a reader to get output.
+// It's up to the caller to close the hijacked connection.
 func (c *Client) ContainerExecAttach(ctx context.Context, execID string, opt *ExecAttach) (*response.ContainerHijackedResponse, error) {
-	op := opt.apply()
-	hijacked, err := c.wrapped.ContainerExecAttach(ctx, execID, op)
+	hijacked, err := c.wrapped.ExecAttach(ctx, execID, opt.apply())
 	if err != nil {
 		return nil, err
 	}
-	return &response.ContainerHijackedResponse{
-		HijackedResponse: hijacked,
-	}, nil
+	return &response.ContainerHijackedResponse{Conn: hijacked.Conn, Reader: hijacked.Reader}, nil
 }
 
 // ContainerRestart stops and starts a container again. It makes the daemon wait for the container to be up again for a specific amount of time, given the timeout.
 func (c *Client) ContainerRestart(ctx context.Context, id string, opt *Stop) error {
-	op := opt.apply()
-	return c.wrapped.ContainerRestart(ctx, id, op)
+	stop := opt.apply()
+	_, err := c.wrapped.ContainerRestart(ctx, id, sdk.ContainerRestartOptions{Signal: stop.Signal, Timeout: stop.Timeout})
+	return err
 }
 
 // ContainerPause pauses the main process of a given container without terminating it
 func (c *Client) ContainerPause(ctx context.Context, id string) error {
-	return c.wrapped.ContainerPause(ctx, id)
+	_, err := c.wrapped.ContainerPause(ctx, id, sdk.ContainerPauseOptions{})
+	return err
 }
 
 // ContainerUnpause resumes the process execution within a container
 func (c *Client) ContainerUnpause(ctx context.Context, id string) error {
-	return c.wrapped.ContainerUnpause(ctx, id)
+	_, err := c.wrapped.ContainerUnpause(ctx, id, sdk.ContainerUnpauseOptions{})
+	return err
 }
 
-// ContainersPrune requests the daemon to delete unused data
+// ContainerPrune requests the daemon to delete unused data
 func (c *Client) ContainerPrune(ctx context.Context, opt *Prune) (*response.ContainerPruneReport, error) {
-	prune, err := c.wrapped.ContainersPrune(ctx, opt.apply())
+	prune, err := c.wrapped.ContainerPrune(ctx, sdk.ContainerPruneOptions{Filters: opt.apply()})
 	if err != nil {
 		return nil, err
 	}
-	return &response.ContainerPruneReport{
-		PruneReport: prune,
-	}, nil
+	return &response.ContainerPruneReport{PruneReport: prune.Report}, nil
 }
 
 // ContainerCommit applies changes to a container and creates a new tagged image.
 func (c *Client) ContainerCommit(ctx context.Context, id string, opt *Commit) (*response.ContainerCommitResponse, error) {
-	op := opt.apply()
+	op, err := opt.apply()
+	if err != nil {
+		return nil, err
+	}
 	commit, err := c.wrapped.ContainerCommit(ctx, id, op)
 	if err != nil {
 		return nil, err
 	}
-	return &response.ContainerCommitResponse{
-		CommitResponse: commit,
-	}, nil
+	return &response.ContainerCommitResponse{CommitResponse: container.CommitResponse{ID: commit.ID}}, nil
 }
 
 // ContainerExport retrieves the raw contents of a container and returns them as an io.ReadCloser.
 // It's up to the caller to close the stream.
 func (c *Client) ContainerExport(ctx context.Context, id string) (io.ReadCloser, error) {
-	return c.wrapped.ContainerExport(ctx, id)
+	return c.wrapped.ContainerExport(ctx, id, sdk.ContainerExportOptions{})
 }
 
 // ContainerDiff returns the changes on a container's filesystem.
 func (c *Client) ContainerDiff(ctx context.Context, id string) ([]response.ContainerFilesystemChange, error) {
-	diff, err := c.wrapped.ContainerDiff(ctx, id)
+	diff, err := c.wrapped.ContainerDiff(ctx, id, sdk.ContainerDiffOptions{})
 	if err != nil {
 		return nil, err
 	}
-	changes := make([]response.ContainerFilesystemChange, len(diff))
-	for i, d := range diff {
-		changes[i] = response.ContainerFilesystemChange{
-			FilesystemChange: d,
-		}
+	changes := make([]response.ContainerFilesystemChange, len(diff.Changes))
+	for i, d := range diff.Changes {
+		changes[i] = response.ContainerFilesystemChange{FilesystemChange: d}
 	}
 	return changes, nil
 }
 
 // ContainerUpdate updates resources of a container.
 func (c *Client) ContainerUpdate(ctx context.Context, id string, opt *Update) (*response.ContainerUpdateResponse, error) {
-	op := opt.apply()
-	update, err := c.wrapped.ContainerUpdate(ctx, id, op)
+	update, err := c.wrapped.ContainerUpdate(ctx, id, opt.apply())
 	if err != nil {
 		return nil, err
 	}
-	return &response.ContainerUpdateResponse{
-		UpdateResponse: update,
-	}, nil
+	return &response.ContainerUpdateResponse{UpdateResponse: container.UpdateResponse{Warnings: update.Warnings}}, nil
 }
 
 // ContainerRename changes the name or nickname of a container.
 func (c *Client) ContainerRename(ctx context.Context, id string, name string) error {
-	return c.wrapped.ContainerRename(ctx, id, name)
+	_, err := c.wrapped.ContainerRename(ctx, id, sdk.ContainerRenameOptions{NewName: name})
+	return err
 }
 
 // ContainerTop shows process information from within a container.
 func (c *Client) ContainerTop(ctx context.Context, id string, args ...string) (*response.ContainerTopResponse, error) {
-	top, err := c.wrapped.ContainerTop(ctx, id, append([]string{}, args...))
+	top, err := c.wrapped.ContainerTop(ctx, id, sdk.ContainerTopOptions{Arguments: append([]string{}, args...)})
 	if err != nil {
 		return nil, err
 	}
-	return &response.ContainerTopResponse{
-		TopResponse: top,
-	}, nil
+	return &response.ContainerTopResponse{TopResponse: container.TopResponse{Processes: top.Processes, Titles: top.Titles}}, nil
 }
 
 // ContainerExecInspect returns information about a specific exec process on the docker host.
 func (c *Client) ContainerExecInspect(ctx context.Context, id string) (*response.ContainerExecInspect, error) {
-	inspect, err := c.wrapped.ContainerExecInspect(ctx, id)
+	inspect, err := c.wrapped.ExecInspect(ctx, id, sdk.ExecInspectOptions{})
 	if err != nil {
 		return nil, err
 	}
+	exit := inspect.ExitCode
 	return &response.ContainerExecInspect{
-		ExecInspect: inspect,
+		ExecInspectResponse: container.ExecInspectResponse{
+			ID:          inspect.ID,
+			Running:     inspect.Running,
+			ExitCode:    &exit,
+			ContainerID: inspect.ContainerID,
+			Pid:         inspect.PID,
+		},
 	}, nil
 }
 
 // ContainerStatsOneShot gets a single stat entry from a container. It differs from
-// `ContainerStats` in that the API should not wait to prime the stats
+// ContainerStats in that the API does not wait to prime the stats.
 func (c *Client) ContainerStatsOneShot(ctx context.Context, id string) (*response.ContainerStatsOneShot, error) {
-	stats, err := c.wrapped.ContainerStatsOneShot(ctx, id)
+	stats, err := c.wrapped.ContainerStats(ctx, id, sdk.ContainerStatsOptions{})
 	if err != nil {
 		return nil, err
 	}
-	return &response.ContainerStatsOneShot{
-		StatsResponseReader: stats,
-	}, nil
+	return &response.ContainerStatsOneShot{Body: stats.Body}, nil
 }
 
 // ContainerResize changes the size of the tty for a container.
 func (c *Client) ContainerResize(ctx context.Context, id string, opt *Resize) error {
-	op := opt.apply()
-	return c.wrapped.ContainerResize(ctx, id, op)
+	_, err := c.wrapped.ContainerResize(ctx, id, opt.apply())
+	return err
 }
 
 // ContainerCheckpointCreate creates a checkpoint of a running container.
 func (c *Client) ContainerCheckpointCreate(ctx context.Context, id string, opt *CheckpointCreate) error {
-	op := opt.apply()
-	return c.wrapped.CheckpointCreate(ctx, id, op)
+	_, err := c.wrapped.CheckpointCreate(ctx, id, opt.apply())
+	return err
 }
 
-// CheckpointList returns the checkpoints of the given container in the docker host
+// ContainerCheckpointList returns the checkpoints of the given container in the docker host
 func (c *Client) ContainerCheckpointList(ctx context.Context, id string, opt *CheckpointList) ([]response.ContainerCheckpointSummary, error) {
-	op := opt.apply()
-	sum, err := c.wrapped.CheckpointList(ctx, id, op)
+	sum, err := c.wrapped.CheckpointList(ctx, id, opt.apply())
 	if err != nil {
 		return nil, err
 	}
-	summaries := make([]response.ContainerCheckpointSummary, len(sum))
-	for i, s := range sum {
-		summaries[i] = response.ContainerCheckpointSummary{
-			Summary: s,
-		}
+	summaries := make([]response.ContainerCheckpointSummary, len(sum.Items))
+	for i, s := range sum.Items {
+		summaries[i] = response.ContainerCheckpointSummary{Summary: s}
 	}
 	return summaries, nil
 }
 
-// CheckpointDelete deletes the checkpoint with the given name from the given container
+// ContainerCheckpointDelete deletes the checkpoint with the given name from the given container
 func (c *Client) ContainerCheckpointDelete(ctx context.Context, id string, opt *CheckpointDelete) error {
-	op := opt.apply()
-	return c.wrapped.CheckpointDelete(ctx, id, op)
+	_, err := c.wrapped.CheckpointRemove(ctx, id, opt.apply())
+	return err
 }
 
-// CopyToContainer copies content into the container filesystem. Note that `content` must be a Reader for a TAR archive
+// ContainerCopyToContainer copies content into the container filesystem. Note that content must be a Reader for a TAR archive
 func (c *Client) ContainerCopyToContainer(ctx context.Context, id string, dstPath string, opt *CopyTo) error {
 	op := opt.apply()
-	var content io.Reader
-	if opt != nil {
-		content = opt.Content
-	}
-	return c.wrapped.CopyToContainer(ctx, id, dstPath, content, op)
+	op.DestinationPath = dstPath
+	_, err := c.wrapped.CopyToContainer(ctx, id, op)
+	return err
 }
 
-// CopyFromContainer gets the content from the container and returns it as a Reader for a
+// ContainerStatPath returns filesystem metadata for one path inside the container.
+func (c *Client) ContainerStatPath(ctx context.Context, id string, path string) (*response.ContainerPathStat, error) {
+	stat, err := c.wrapped.ContainerStatPath(ctx, id, sdk.ContainerStatPathOptions{Path: path})
+	if err != nil {
+		return nil, err
+	}
+	return &response.ContainerPathStat{PathStat: stat.Stat}, nil
+}
+
+// ContainerCopyFromContainer gets the content from the container and returns it as a Reader for a
 // TAR archive to manipulate it in the host. It's up to the caller to close the reader.
 func (c *Client) ContainerCopyFromContainer(ctx context.Context, id string, srcPath string) (io.ReadCloser, *response.ContainerPathStat, error) {
-	rc, stat, err := c.wrapped.CopyFromContainer(ctx, id, srcPath)
+	copied, err := c.wrapped.CopyFromContainer(ctx, id, sdk.CopyFromContainerOptions{SourcePath: srcPath})
 	if err != nil {
 		return nil, nil, err
 	}
-	return rc, &response.ContainerPathStat{
-		PathStat: stat,
-	}, nil
+	return copied.Content, &response.ContainerPathStat{PathStat: copied.Stat}, nil
 }
 
 /*
-ContainerAttach attaches a connection to a container in the server. It returns a types.HijackedConnection with the hijacked connection and the a reader to get output. It's up to the called to close the hijacked connection by calling types.HijackedResponse.Close.
+ContainerAttach attaches a connection to a container in the server. It returns a hijacked connection and a reader to get output. It's up to the caller to close the hijacked connection.
 
 The stream format on the response will be in one of two formats:
 
@@ -396,34 +406,32 @@ STREAM_TYPE can be 1 for stdout and 2 for stderr
 
 SIZE1, SIZE2, SIZE3, and SIZE4 are four bytes of uint32 encoded as big endian. This is the size of OUTPUT.
 
-You can use github.com/docker/docker/pkg/stdcopy.StdCopy to demultiplex this stream.
+You can use github.com/moby/moby/api/pkg/stdcopy.StdCopy to demultiplex this stream.
 */
 func (c *Client) ContainerAttach(ctx context.Context, id string, opt *Attach) (*response.ContainerHijackedResponse, error) {
-	op := opt.apply()
-	hijacked, err := c.wrapped.ContainerAttach(ctx, id, op)
+	hijacked, err := c.wrapped.ContainerAttach(ctx, id, opt.apply())
 	if err != nil {
 		return nil, err
 	}
-	return &response.ContainerHijackedResponse{
-		HijackedResponse: hijacked,
-	}, nil
+	return &response.ContainerHijackedResponse{Conn: hijacked.Conn, Reader: hijacked.Reader}, nil
 }
 
-// ContainerExecAttachTerminal attaches to a container exec command and returns a terminal session
-// that can be used to interact with the command. The session handles terminal setup,
-// raw mode, and cleanup automatically.
+// ContainerExecAttachTerminal attaches to an exec session and returns a terminal
+// session bound to os.Stdin and os.Stdout.
+//
+// Call Session.Start to copy I/O. Session.Close restores the terminal and
+// closes the hijacked connection. Close is safe when Start never runs, and
+// Start closes the session before it returns.
 func (c *Client) ContainerExecAttachTerminal(ctx context.Context, execID string, opt *ExecAttach) (*terminal.Session, error) {
 	hijack, err := c.ContainerExecAttach(ctx, execID, opt)
 	if err != nil {
 		return nil, fmt.Errorf("failed to attach to container exec: %w", err)
 	}
 
-	// Create and return a new terminal session
-	session, err := terminal.NewSession(os.Stdin, hijack.Conn, hijack.Reader)
+	session, err := terminal.NewSession(os.Stdin, os.Stdout, hijack.Conn, hijack.Reader)
 	if err != nil {
 		hijack.Close()
 		return nil, fmt.Errorf("failed to create terminal session: %w", err)
 	}
-
 	return session, nil
 }

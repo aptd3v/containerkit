@@ -12,30 +12,7 @@ import (
 )
 
 func TestDockerFileBuilder(t *testing.T) {
-	df := NewDockerFile().
-		From("alpine", "latest").
-		FromAs("golang:1.22", "build").
-		Arg("VERSION").
-		ArgKV("APP", "web").
-		Env("FOO", "bar").
-		Copy("a.txt", "b.txt").
-		Copy("file with space.txt", "/dest with space").
-		Add("src", "dest").
-		Add("src file", "dest dir").
-		Entrypoint("/bin/sh", "-c").
-		Expose("80").
-		Label("k", "v").
-		Onbuild("RUN echo hi").
-		Workdir("/app").
-		StopSignal("SIGTERM").
-		User("root").
-		Comment("note").
-		Volumes("/data", "/logs").
-		Healthcheck(Health{Test: []string{"CMD", "true"}, Timeout: 1, Interval: 1, Retries: 1}).
-		Run("apk add --no-cache curl").
-		Run("echo still-run").
-		RunArgs("--no-cache", "ok").
-		CommandExec("sleep", "infinity")
+	df := NewDockerFile().From("alpine", "latest").FromAs("golang:1.22", "build").Arg("VERSION").ArgKV("APP", "web").Env("FOO", "bar").Copy("a.txt", "b.txt").Copy("file with space.txt", "/dest with space").Add("src", "dest").Add("src file", "dest dir").Entrypoint("/bin/sh", "-c").Expose("80").Label("k", "v").Onbuild("RUN echo hi").Workdir("/app").StopSignal("SIGTERM").User("root").Comment("note").Volumes("/data", "/logs").Healthcheck(Health{Test: []string{"CMD", "true"}, Timeout: 1, Interval: 1, Retries: 1}).Run("apk add --no-cache curl").Run("echo still-run").RunArgs("--no-cache", "ok").CommandExec("sleep", "infinity")
 
 	require.NoError(t, df.Validate())
 	s := df.String()
@@ -98,37 +75,22 @@ func TestDockerFileErrors(t *testing.T) {
 }
 
 func TestDockerFileInstructions(t *testing.T) {
-	df := NewDockerFile().
-		Syntax("docker/dockerfile:1").
-		Escape(`\`).
-		Check("error=true").
-		From("scratch", "").
-		FromPlatform("linux/amd64", "alpine", "3.20").
-		FromAsPlatform("linux/arm64", "golang:1.22", "build").
-		Copy("out", "/bin/app", CopyOpts{
-			From:    "build",
-			Chown:   "nobody:nobody",
-			Chmod:   "755",
-			Parents: true,
-			Link:    true,
-			Exclude: []string{"*.md"},
-		}).
-		Add("repo", "/src", AddOpts{
-			Checksum:   "sha256:abc",
-			KeepGitDir: true,
-			Link:       true,
-		}).
-		Shell("/bin/bash", "-c").
-		EntrypointShell("nginx", "-g", "daemon off;").
-		HealthcheckNone().
-		Run("echo a").
-		RunLayer("echo b").
-		Run("echo c", RunOpts{
-			Mount:    []string{"type=cache,target=/cache"},
-			Network:  "none",
-			Security: "sandbox",
-		}).
-		CommandExec("true")
+	df := NewDockerFile().Syntax("docker/dockerfile:1").Escape(`\`).Check("error=true").From("scratch", "").FromPlatform("linux/amd64", "alpine", "3.20").FromAsPlatform("linux/arm64", "golang:1.22", "build").Copy("out", "/bin/app", CopyOpts{
+		From:    "build",
+		Chown:   "nobody:nobody",
+		Chmod:   "755",
+		Parents: true,
+		Link:    true,
+		Exclude: []string{"*.md"},
+	}).Add("repo", "/src", AddOpts{
+		Checksum:   "sha256:abc",
+		KeepGitDir: true,
+		Link:       true,
+	}).Shell("/bin/bash", "-c").EntrypointShell("nginx", "-g", "daemon off;").HealthcheckNone().Run("echo a").RunLayer("echo b").Run("echo c", RunOpts{
+		Mount:    []string{"type=cache,target=/cache"},
+		Network:  "none",
+		Security: "sandbox",
+	}).CommandExec("true")
 
 	require.NoError(t, df.Validate())
 	s := df.String()

@@ -16,7 +16,7 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	cli, err := client.NewClient(client.FromEnv(), client.WithAPIVersionNegotiation())
+	cli, err := client.NewClient(client.FromEnv(), client.WithAPIVersionFromEnv())
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -34,7 +34,7 @@ func main() {
 	project.WithService("nginx", containerkit.NewContainer().
 		Image("nginx-example:latest").
 		Command("nginx", "-g", "daemon off;").
-		PortBindings("tcp", "0.0.0.0", "8080", "80").
+		PortBinding(containerkit.PortBinding{Protocol: containerkit.TCP, HostIP: "0.0.0.0", HostPort: "8080", ContainerPort: "80"}).
 		HealthCheck(containerkit.Health{
 			Test:         []string{"CMD-SHELL", "curl -f http://localhost:80 || exit 1"},
 			IntervalD:    "10s",
@@ -42,7 +42,7 @@ func main() {
 			StartPeriodD: "0s",
 			Retries:      3,
 		}).
-		MemoryLimitString("100MiB"),
+		MemoryLimit(100*containerkit.MiB),
 	)
 	app := containerkit.NewCompose(project)
 	err = app.Up(context.Background(), &containerkit.Up{Detach: true, RemoveOrphans: true})

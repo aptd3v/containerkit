@@ -92,7 +92,7 @@ func TestDockerFileWriterRealBuild(t *testing.T) {
 		_, _ = cli.ImageRemove(c, tag, &client.ImageRemove{Force: true, PruneChildren: true})
 	})
 
-	img, err := cli.ImageInspect(ctx, tag)
+	img, err := cli.ImageInspect(ctx, tag, nil)
 	if err != nil {
 		t.Fatalf("ImageInspect: %v", err)
 	}

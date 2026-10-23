@@ -19,7 +19,7 @@ func main() {
 	project := containerkit.NewProject("events-project")
 	project.WithService(serviceName, containerkit.NewContainer().
 		Image("nginx:latest").
-		PortBindings("tcp", "0.0.0.0", "8080", "80").
+		PortBinding(containerkit.PortBinding{Protocol: containerkit.TCP, HostIP: "0.0.0.0", HostPort: "8080", ContainerPort: "80"}).
 		HealthCheck(containerkit.Health{
 			Test:         []string{"CMD-SHELL", "curl -f http://localhost:80 || exit 1"},
 			IntervalD:    "2s",
@@ -31,7 +31,7 @@ func main() {
 
 	example := containerkit.NewCompose(project)
 	ctx, cancel := context.WithCancel(context.Background())
-	events, errCh, err := example.Events(ctx, serviceName)
+	events, errCh, err := example.Events(ctx, &containerkit.EventsOpt{Service: serviceName})
 	if err != nil {
 		log.Fatalf("error starting events: %v", err)
 	}

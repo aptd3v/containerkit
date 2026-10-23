@@ -44,7 +44,7 @@ func main() {
 	project.WithService(webService, containerkit.NewContainer(webService).
 		Image("nginx:alpine").
 		Command("nginx", "-g", "daemon off;").
-		PortBindings("tcp", "0.0.0.0", "9080", "80").
+		PortBinding(containerkit.PortBinding{Protocol: containerkit.TCP, HostIP: "0.0.0.0", HostPort: "9080", ContainerPort: "80"}).
 		Endpoint("backend"),
 	)
 	project.WithService(redisService, containerkit.NewContainer(redisService).

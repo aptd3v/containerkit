@@ -1,8 +1,8 @@
 package client
 
 import (
-	"github.com/docker/docker/api/types/filters"
-	"github.com/docker/docker/api/types/volume"
+	"github.com/moby/moby/api/types/volume"
+	sdk "github.com/moby/moby/client"
 )
 
 // VolumeCreate is options for VolumeCreate.
@@ -14,11 +14,11 @@ type VolumeCreate struct {
 	ClusterVolumeSpec *volume.ClusterVolumeSpec
 }
 
-func (o *VolumeCreate) apply() volume.CreateOptions {
+func (o *VolumeCreate) apply() sdk.VolumeCreateOptions {
 	if o == nil {
-		return volume.CreateOptions{}
+		return sdk.VolumeCreateOptions{}
 	}
-	return volume.CreateOptions{
+	return sdk.VolumeCreateOptions{
 		Name:              o.Name,
 		Driver:            o.Driver,
 		DriverOpts:        o.DriverOpts,
@@ -32,8 +32,8 @@ type VolumeList struct {
 	Filters []Filter
 }
 
-func (o *VolumeList) apply() volume.ListOptions {
-	op := volume.ListOptions{Filters: argsFromFilters(nil)}
+func (o *VolumeList) apply() sdk.VolumeListOptions {
+	op := sdk.VolumeListOptions{Filters: argsFromFilters(nil)}
 	if o == nil {
 		return op
 	}
@@ -46,21 +46,22 @@ type VolumeUpdate struct {
 	ClusterVolumeSpec *volume.ClusterVolumeSpec
 }
 
-func (o *VolumeUpdate) apply() volume.UpdateOptions {
+func (o *VolumeUpdate) apply() sdk.VolumeUpdateOptions {
 	if o == nil {
-		return volume.UpdateOptions{}
+		return sdk.VolumeUpdateOptions{}
 	}
-	return volume.UpdateOptions{Spec: o.ClusterVolumeSpec}
+	return sdk.VolumeUpdateOptions{Spec: o.ClusterVolumeSpec}
 }
 
 // VolumePrune is options for VolumesPrune.
 type VolumePrune struct {
+	All     bool
 	Filters []Filter
 }
 
-func (o *VolumePrune) apply() filters.Args {
+func (o *VolumePrune) apply() sdk.VolumePruneOptions {
 	if o == nil {
-		return argsFromFilters(nil)
+		return sdk.VolumePruneOptions{Filters: argsFromFilters(nil)}
 	}
-	return argsFromFilters(o.Filters)
+	return sdk.VolumePruneOptions{All: o.All, Filters: argsFromFilters(o.Filters)}
 }
