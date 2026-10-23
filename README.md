@@ -5,20 +5,9 @@
 [![Go Version](https://img.shields.io/github/go-mod/go-version/aptd3v/containerkit)](https://go.dev/dl/)
 [![License](https://img.shields.io/github/license/aptd3v/containerkit)](./LICENSE)
 
-Define Docker stacks in Go. The same `*containerkit.Container` feeds either the in-process Compose SDK or the Docker Engine SDK. Compose does not shell out to `docker compose`.
+Define Docker stacks in Go. The same `*containerkit.Container` is a Compose service or an Engine create config. Compose runs in-process through `github.com/docker/compose/v5` and does not need a `docker compose` binary.
 
-```bash
-go get github.com/aptd3v/containerkit@latest
-```
-
-## Two packages
-
-| Package | Import | Role |
-|---|---|---|
-| Compose + fluent config | `github.com/aptd3v/containerkit/pkg/containerkit` | `Project`, `Container`, `NewCompose`, option structs (`Up`, `Down`, …) |
-| Engine client | `github.com/aptd3v/containerkit/pkg/client` | Thin Docker SDK wrapper; per-op structs (`Remove`, `Exec`, `ImageBuild`, …) |
-
-## Quick start
+## Demo
 
 ```go
 package main
@@ -39,6 +28,10 @@ func main() {
 			Command("echo", "Hello from containerkit!"),
 	)
 
+	if err := project.Validate(); err != nil {
+		log.Fatal(err)
+	}
+
 	app := containerkit.NewCompose(project)
 	if err := app.Up(context.Background(), &containerkit.Up{Writer: os.Stdout}); err != nil {
 		log.Fatal(err)
@@ -46,9 +39,31 @@ func main() {
 }
 ```
 
-Nil compose options mean defaults (writer is `os.Stdout`).
+The `echo` container exits when the command finishes.
 
-## Compose stack
+## Getting started
+
+```bash
+go get github.com/aptd3v/containerkit@latest
+```
+
+- **Go** 1.26.8+
+- **Docker Engine**
+- Linux, macOS, or Windows
+
+## Features
+
+### Two ways to run the same container
+
+| Piece | Import | Role |
+|---|---|---|
+| `Project`, `*Container` | `github.com/aptd3v/containerkit/pkg/containerkit` | Stack and container config. Fluent methods set image, env, ports, mounts, and the rest. |
+| `NewCompose`, `Up`, `Down`, … | same package | In-process Compose runner. Each command takes an option struct. |
+| Engine client | `github.com/aptd3v/containerkit/pkg/client` | Docker Engine SDK wrapper. Each call takes a per-op struct (`Remove`, `Exec`, `ImageBuild`, …). |
+
+Compose fits a multi-service stack: networks, volumes, profiles, and `Up` / `Down` / `Logs`. The Engine client fits one container, image builds, and an interactive TTY. A hybrid program uses the client to build or exec, then Compose to run the stack. See [examples/nginx](./examples/nginx), [examples/image_inline](./examples/image_inline), and [examples/mongo_replica](./examples/mongo_replica).
+
+### Compose stack
 
 ```go
 project := containerkit.NewProject("my-app")
@@ -80,7 +95,7 @@ if err := app.Up(ctx, &containerkit.Up{
 defer app.Down(ctx, &containerkit.Down{RemoveVolumes: true, Writer: os.Stdout})
 ```
 
-Export YAML when you want a file:
+`Export` writes the project as Compose YAML:
 
 ```go
 if err := project.Export("./docker-compose.yaml", 0644); err != nil {
@@ -88,9 +103,9 @@ if err := project.Export("./docker-compose.yaml", 0644); err != nil {
 }
 ```
 
-## Engine client
+### Engine client
 
-A container name is optional for a Compose service and required for `ContainerCreate`. Construction options stay funcs on `client`.
+`NewContainer` joins every name part with a hyphen (`"my", "api"` becomes `my-api`). Pass a name for `ContainerCreate`. A Compose service can omit it. Construction options stay funcs on `client`.
 
 ```go
 cli, err := client.NewClient(client.FromEnv(), client.WithAPIVersionNegotiation())
@@ -108,11 +123,11 @@ if err != nil {
 _ = cli.ContainerRemove(ctx, resp.ID, &client.Remove{Force: true, Volumes: true})
 ```
 
-The same `*containerkit.Container` can be passed to the Engine client or added as a Compose service.
+Pass that same `*containerkit.Container` to `WithService` when the stack should run under Compose.
 
-## Dockerfile
+### Dockerfile
 
-`NewDockerFile` writes a Dockerfile in Go. `WithInline` attaches it as a Compose build. `Export` writes the file for the Engine client.
+`NewDockerFile` builds a Dockerfile in Go. `Export` writes the file. `WithInline` returns a `BuildSpec` for `WithService`.
 
 ```go
 df := containerkit.NewDockerFile().
@@ -131,28 +146,25 @@ project.WithService("app",
 )
 ```
 
-## Fluent configuration
+`NewLocalBuildContext` packs that Dockerfile into a tar for `client.ImageBuild` and honors `.dockerignore`. See [examples/dockerfile](./examples/dockerfile) and [examples/image_inline](./examples/image_inline).
 
-Methods live on `*containerkit.Container`. Nested objects (health, mount, build) and Compose command options are structs. Service extras (`DependsOn`, `Profiles`, `BuildSpec`) are extra args to `WithService`.
+### Rules
+
+- Setters append to `Container.Errors` and to the project. Call `Validate` before `Up`, `Export`, or `ContainerCreate`. Those three calls run `Validate` themselves.
+- A nil `Up` or `Down` uses defaults. The writer is `os.Stdout`.
+- `Profiles` on a service is Compose’s `profiles:` key. If the project has any profiled service, set `Profiles` on the command (`Up.Profiles`, `Down.Profiles`, and the rest). Compose returns an error when that list is empty.
 
 ```go
-project.WithService("api",
-	containerkit.NewContainer("my-api").
-		Imagef("ubuntu:%s", tag).
-		PortBinding(containerkit.PortBinding{Protocol: containerkit.TCP, HostIP: "0.0.0.0", HostPort: "8080", ContainerPort: "80"}).
-		Endpoint("my-network").
-		Architecture("amd64"),
-	containerkit.DependsOn("db"),
+project.WithService("worker",
+	containerkit.NewContainer().Image("alpine:latest"),
 	containerkit.Profiles("full"),
-	containerkit.BuildSpec{Context: ".", Dockerfile: "Dockerfile"},
 )
+_ = app.Up(ctx, &containerkit.Up{Profiles: []string{"full"}, Writer: os.Stdout})
 ```
 
-You can also mix in Docker SDK structs. See [examples/structs](./examples/structs).
-
-## Conditionals
-
-Use an ordinary Go `if` inside the factory.
+- Pass `DependsOn`, `Profiles`, and `BuildSpec` as extra arguments to `WithService`. They configure the Compose service.
+- Sizes are a `ByteSize`: `MemoryLimit(100 * containerkit.MiB)`.
+- Branch with an ordinary `if`.
 
 ```go
 c := containerkit.NewContainer().Image("node:latest")
@@ -163,19 +175,25 @@ if runtime.GOOS == "linux" {
 }
 ```
 
-## Profiles
+### API surface
 
-`containerkit.Profiles` on a service is Compose’s `profiles:` key. To start those services, pass the same names on the command (`Up.Profiles`, `Down.Profiles`, `Kill.Profiles`, …). If the project has profiled services and the command omits `Profiles`, compose returns an error.
+Full signatures are on [pkg.go.dev](https://pkg.go.dev/github.com/aptd3v/containerkit/pkg/containerkit).
 
-```go
-project.WithService("worker",
-	containerkit.NewContainer().Image("alpine:latest"),
-	containerkit.Profiles("full"),
-)
-_ = app.Up(ctx, &containerkit.Up{Profiles: []string{"full"}, Writer: os.Stdout})
-```
+**Container.** Image, env, command, ports, mounts, health, restart, resources, capabilities, logging, and platform. You can also mix in Docker SDK structs. See [examples/structs](./examples/structs).
 
-## Examples
+**Project.** `WithService`, `WithNetwork`, `WithVolume`, `WithSecret`, `WithJob`, and `WithModel`.
+
+**Compose commands.**
+
+| Group | Commands |
+|---|---|
+| Lifecycle | `Up`, `Down`, `Start`, `Stop`, `Restart`, `Kill`, `Rm`, `Run`, `Scale` |
+| Observe | `Logs`, `Ps`, `Events`, `Top`, `Stats`, `Wait` |
+| Files and build | `Build`, `Pull`, `Push`, `Config`, `Export`, `Watch` |
+
+**Engine client.** Containers, images, networks, volumes, swarm, and plugins, plus interactive TTY in `pkg/client/terminal`. See [pkg.go.dev/pkg/client](https://pkg.go.dev/github.com/aptd3v/containerkit/pkg/client).
+
+### Examples
 
 Run from the repo root.
 
@@ -201,17 +219,9 @@ go run ./examples/supabase/ -profile full
 go run ./examples/supabase/ -resource-limits
 ```
 
-## Prerequisites
-
-- **Go** 1.26.8+
-- **Docker Engine**
-- Linux, macOS, or Windows
-
-Compose is linked in-process. A `docker compose` binary is not required.
-
 ## Migrating from go-contain
 
-This project was renamed from `go-contain`. The public API is two packages; the old option-func packages are gone.
+This project was renamed from `go-contain`.
 
 | Old | New |
 |---|---|
@@ -220,10 +230,10 @@ This project was renamed from `go-contain`. The public API is two packages; the 
 | `pkg/compose`, `up.WithRemoveOrphans()` | `containerkit.NewCompose` + `&containerkit.Up{…}` |
 | `pkg/client/options/**` | per-op structs on `pkg/client` (`Remove`, `Exec`, …) |
 
-## License
-
-MIT. See [LICENSE](./LICENSE).
-
 ## Contributing
 
 Issues and pull requests are welcome: [issues](https://github.com/aptd3v/containerkit/issues) · [discussions](https://github.com/aptd3v/containerkit/discussions)
+
+## License
+
+MIT. See [LICENSE](./LICENSE).
