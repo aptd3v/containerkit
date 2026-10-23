@@ -192,8 +192,8 @@ func WithEscapedArgs() func(*container.Config) error {
 // Parameter:
 //   - volume: path where the volume should be mounted
 //
-// note: will not work within service config for compose file
-// use hc.WithRWHostBindMount or other mount setter functions instead
+// note: Compose maps this to an anonymous volume at the container path.
+// Named volumes use a mount setter such as hc.WithRWNamedVolumeMount.
 func WithVolume(volume string) func(*container.Config) error {
 	return func(config *container.Config) error {
 		if volume == "" {

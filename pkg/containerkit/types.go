@@ -134,9 +134,16 @@ type BuildSpec struct {
 	Platforms        []string
 	CacheFrom        []string
 	CacheTo          []string
+
+	// err is set by dockerFile.WithInline when the dockerfile failed validation.
+	// WithService reports it and does not apply the spec.
+	err error
 }
 
 func (b BuildSpec) apply(cfg *types.ServiceConfig) {
+	if b.err != nil {
+		return
+	}
 	if cfg.Build == nil {
 		cfg.Build = &types.BuildConfig{}
 	}

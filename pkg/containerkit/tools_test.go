@@ -51,7 +51,7 @@ func TestApplyAndConditionals(t *testing.T) {
 	require.NoError(t, ok2.Validate())
 	require.Equal(t, "y", ok2.Config.Container.User)
 
-	ok2.Apply(Each[string](nil, func(i int, s string) Mutator { return func(c *Container) { c.Env(s, "1") } }))
+	ok2.Apply(Each(nil, func(i int, s string) Mutator { return func(c *Container) { c.Env(s, "1") } }))
 	ok2.Apply(Each([]string{"K1", "K2"}, nil))
 	ok2.Apply(Each([]string{"K1", "K2"}, func(i int, s string) Mutator {
 		if i == 0 {
