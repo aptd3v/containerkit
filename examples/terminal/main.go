@@ -3,6 +3,7 @@ package main
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"io"
 	"log"
@@ -11,42 +12,55 @@ import (
 	"syscall"
 
 	"github.com/aptd3v/containerkit/pkg/client"
+	"github.com/aptd3v/containerkit/pkg/client/terminal"
 	"github.com/aptd3v/containerkit/pkg/containerkit"
 )
 
 func main() {
-	ctx := context.Background()
+	if err := run(); err != nil {
+		log.Fatal(err)
+	}
+}
+
+func run() error {
+	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
+	defer stop()
+
 	alpineContainer := containerkit.NewContainer("exec", "example").
 		Image("alpine:latest").
 		Command("tail", "-f", "/dev/null")
 
-	cli, err := client.NewClient(client.FromEnv(), client.WithAPIVersionNegotiation())
+	cli, err := client.NewClient(client.FromEnv(), client.WithAPIVersionFromEnv())
 	if err != nil {
-		log.Fatal(err)
-	}
-	// Set up cleanup on interrupt
-	c := make(chan os.Signal, 1)
-	signal.Notify(c, os.Interrupt, syscall.SIGTERM)
-	go func() {
-		<-c
-		cleanup(cli, alpineContainer.Name)
-	}()
-
-	if res, err := cli.ImagePull(ctx, "alpine:latest", &client.ImagePull{CurrentPlatform: true}); err != nil {
-		log.Fatal(err)
-	} else if _, err = io.Copy(os.Stdout, res); err != nil {
-		log.Fatal(err)
-	} else {
-		defer res.Close()
+		return err
 	}
 	defer cleanup(cli, alpineContainer.Name)
 
+	if _, err := cli.ImageInspect(ctx, "alpine:latest", nil); err != nil {
+		if !client.IsErrNotFound(err) {
+			return err
+		}
+		fmt.Fprintln(os.Stderr, "pulling alpine:latest")
+		pulled, err := cli.ImagePull(ctx, "alpine:latest", &client.ImagePull{CurrentPlatform: true})
+		if err != nil {
+			return err
+		}
+		if _, err := io.Copy(os.Stdout, pulled); err != nil {
+			pulled.Close()
+			return err
+		}
+		if err := pulled.Close(); err != nil {
+			return err
+		}
+	}
+
 	if _, err := cli.ContainerCreate(ctx, alpineContainer); err != nil {
-		log.Fatalf("Failed to create container: %v", err)
+		return fmt.Errorf("create container: %w", err)
 	}
 	if err := cli.ContainerStart(ctx, alpineContainer.Name, nil); err != nil {
-		log.Fatalf("Failed to start container: %v", err)
+		return fmt.Errorf("start container: %w", err)
 	}
+
 	execCreate, err := cli.ContainerExecCreate(ctx, alpineContainer.Name, &client.Exec{
 		AttachStderr: true,
 		AttachStdin:  true,
@@ -55,29 +69,26 @@ func main() {
 		Command:      []string{"/bin/sh"},
 	})
 	if err != nil {
-		log.Fatal(err)
+		return err
 	}
 
 	session, err := cli.ContainerExecAttachTerminal(ctx, execCreate.ID, &client.ExecAttach{Tty: true})
 	if err != nil {
-		log.Fatal(err)
+		return err
 	}
-	monitor := session.MonitorSize()
-	go func() {
-		for size := range monitor {
-			err := cli.ContainerExecResize(ctx, execCreate.ID, &client.Resize{Width: size.Width, Height: size.Height})
-			if err != nil {
-				log.Fatal(err)
-			}
-		}
-	}()
-	err = session.Start()
-	if err != nil {
-		log.Fatal(err)
-	}
-	fmt.Println("session closed running cleanup")
 	defer session.Close()
 
+	err = session.Start(ctx, func(sz terminal.Size) error {
+		return cli.ContainerExecResize(ctx, execCreate.ID, &client.Resize{
+			Width:  sz.Width,
+			Height: sz.Height,
+		})
+	})
+	if err != nil && !errors.Is(err, context.Canceled) {
+		return err
+	}
+	fmt.Println("session closed running cleanup")
+	return nil
 }
 
 func cleanup(cli *client.Client, cName string) {
@@ -92,5 +103,4 @@ func cleanup(cli *client.Client, cName string) {
 	}
 
 	fmt.Println("Cleanup completed")
-	os.Exit(0)
 }

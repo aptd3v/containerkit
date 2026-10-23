@@ -5,6 +5,8 @@ import (
 	"context"
 	"encoding/json"
 	"io"
+
+	"github.com/aptd3v/containerkit/pkg/containerkit/errdefs"
 )
 
 type Events struct {
@@ -59,7 +61,7 @@ func (w *eventsWriter) Write(p []byte) (n int, err error) {
 			case <-w.ctx.Done():
 				w.buffer.Reset()
 				return n, w.ctx.Err()
-			case w.errCh <- NewComposeEventsError(err):
+			case w.errCh <- errdefs.NewComposeEventsError(err):
 
 			}
 		}

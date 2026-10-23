@@ -169,8 +169,8 @@ func kongContainer(cfg *SupabaseConfig, vol func(string) string) *containerkit.C
 		ExposedPort("tcp", "8000").
 		ExposedPort("tcp", "8443").
 		RestartUnlessStopped().
-		PortBindings("tcp", "0.0.0.0", cfg.KongHTTPPort, "8000").
-		PortBindings("tcp", "0.0.0.0", cfg.KongHTTPSPort, "8443").
+		PortBinding(containerkit.PortBinding{Protocol: containerkit.TCP, HostIP: "0.0.0.0", HostPort: cfg.KongHTTPPort, ContainerPort: "8000"}).
+		PortBinding(containerkit.PortBinding{Protocol: containerkit.TCP, HostIP: "0.0.0.0", HostPort: cfg.KongHTTPSPort, ContainerPort: "8443"}).
 		VolumeBinds(vol("api/kong.yml") + ":/home/kong/temp.yml:ro,z").
 		Endpoint("supabase-network")
 }
@@ -187,7 +187,7 @@ func studioContainer(cfg *SupabaseConfig, vol func(string) string) *containerkit
 			Retries:  3,
 		}).
 		RestartUnlessStopped().
-		PortBindings("tcp", "0.0.0.0", cfg.StudioPort, "3000").
+		PortBinding(containerkit.PortBinding{Protocol: containerkit.TCP, HostIP: "0.0.0.0", HostPort: cfg.StudioPort, ContainerPort: "3000"}).
 		VolumeBinds(vol("snippets")+":/app/snippets:Z", vol("functions")+":/app/edge-functions:Z").
 		Endpoint("supabase-network")
 }
@@ -207,8 +207,8 @@ func supavisorContainer(cfg *SupabaseConfig, vol func(string) string) *container
 		ExposedPort("tcp", "5432").
 		ExposedPort("tcp", "6543").
 		RestartUnlessStopped().
-		PortBindings("tcp", "0.0.0.0", cfg.PostgresPort, "5432").
-		PortBindings("tcp", "0.0.0.0", cfg.PoolerProxyPortTx, "6543").
+		PortBinding(containerkit.PortBinding{Protocol: containerkit.TCP, HostIP: "0.0.0.0", HostPort: cfg.PostgresPort, ContainerPort: "5432"}).
+		PortBinding(containerkit.PortBinding{Protocol: containerkit.TCP, HostIP: "0.0.0.0", HostPort: cfg.PoolerProxyPortTx, ContainerPort: "6543"}).
 		VolumeBinds(vol("pooler/pooler.exs") + ":/etc/pooler/pooler.exs:ro,z").
 		Endpoint("supabase-network")
 }

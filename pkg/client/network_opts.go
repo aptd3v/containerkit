@@ -1,8 +1,10 @@
 package client
 
 import (
-	"github.com/docker/docker/api/types/filters"
-	"github.com/docker/docker/api/types/network"
+	"net/netip"
+
+	"github.com/moby/moby/api/types/network"
+	sdk "github.com/moby/moby/client"
 )
 
 // NetworkCreate is options for NetworkCreate.
@@ -35,11 +37,11 @@ type NetworkIPAMConfig struct {
 	Auxiliary map[string]string
 }
 
-func (o *NetworkCreate) apply() network.CreateOptions {
+func (o *NetworkCreate) apply() (sdk.NetworkCreateOptions, error) {
 	if o == nil {
-		return network.CreateOptions{}
+		return sdk.NetworkCreateOptions{}, nil
 	}
-	op := network.CreateOptions{
+	op := sdk.NetworkCreateOptions{
 		Driver:     o.Driver,
 		Scope:      o.Scope,
 		EnableIPv4: o.EnableIPv4,
@@ -51,23 +53,51 @@ func (o *NetworkCreate) apply() network.CreateOptions {
 		Options:    o.Options,
 		Labels:     o.Labels,
 	}
-	if o.IPAM != nil {
-		cfg := make([]network.IPAMConfig, 0, len(o.IPAM.Config))
-		for _, c := range o.IPAM.Config {
-			cfg = append(cfg, network.IPAMConfig{
-				Subnet:     c.Subnet,
-				IPRange:    c.IPRange,
-				Gateway:    c.Gateway,
-				AuxAddress: c.Auxiliary,
-			})
-		}
-		op.IPAM = &network.IPAM{
-			Driver:  o.IPAM.Driver,
-			Options: o.IPAM.Options,
-			Config:  cfg,
-		}
+	if o.IPAM == nil {
+		return op, nil
 	}
-	return op
+	cfg := make([]network.IPAMConfig, 0, len(o.IPAM.Config))
+	for _, c := range o.IPAM.Config {
+		item := network.IPAMConfig{}
+		if c.Subnet != "" {
+			prefix, err := netip.ParsePrefix(c.Subnet)
+			if err != nil {
+				return sdk.NetworkCreateOptions{}, err
+			}
+			item.Subnet = prefix
+		}
+		if c.IPRange != "" {
+			prefix, err := netip.ParsePrefix(c.IPRange)
+			if err != nil {
+				return sdk.NetworkCreateOptions{}, err
+			}
+			item.IPRange = prefix
+		}
+		if c.Gateway != "" {
+			addr, err := netip.ParseAddr(c.Gateway)
+			if err != nil {
+				return sdk.NetworkCreateOptions{}, err
+			}
+			item.Gateway = addr
+		}
+		if len(c.Auxiliary) > 0 {
+			item.AuxAddress = make(map[string]netip.Addr, len(c.Auxiliary))
+			for name, addr := range c.Auxiliary {
+				parsed, err := netip.ParseAddr(addr)
+				if err != nil {
+					return sdk.NetworkCreateOptions{}, err
+				}
+				item.AuxAddress[name] = parsed
+			}
+		}
+		cfg = append(cfg, item)
+	}
+	op.IPAM = &network.IPAM{
+		Driver:  o.IPAM.Driver,
+		Options: o.IPAM.Options,
+		Config:  cfg,
+	}
+	return op, nil
 }
 
 // NetworkConnect is options for NetworkConnect.
@@ -76,11 +106,11 @@ type NetworkConnect struct {
 	Endpoint  *network.EndpointSettings
 }
 
-func (o *NetworkConnect) apply() network.ConnectOptions {
+func (o *NetworkConnect) apply() sdk.NetworkConnectOptions {
 	if o == nil {
-		return network.ConnectOptions{}
+		return sdk.NetworkConnectOptions{}
 	}
-	return network.ConnectOptions{
+	return sdk.NetworkConnectOptions{
 		Container:      o.Container,
 		EndpointConfig: o.Endpoint,
 	}
@@ -92,11 +122,11 @@ type NetworkInspect struct {
 	Verbose bool
 }
 
-func (o *NetworkInspect) apply() network.InspectOptions {
+func (o *NetworkInspect) apply() sdk.NetworkInspectOptions {
 	if o == nil {
-		return network.InspectOptions{}
+		return sdk.NetworkInspectOptions{}
 	}
-	return network.InspectOptions{
+	return sdk.NetworkInspectOptions{
 		Scope:   o.Scope,
 		Verbose: o.Verbose,
 	}
@@ -107,8 +137,8 @@ type NetworkList struct {
 	Filters []Filter
 }
 
-func (o *NetworkList) apply() network.ListOptions {
-	op := network.ListOptions{Filters: argsFromFilters(nil)}
+func (o *NetworkList) apply() sdk.NetworkListOptions {
+	op := sdk.NetworkListOptions{Filters: argsFromFilters(nil)}
 	if o == nil {
 		return op
 	}
@@ -121,7 +151,7 @@ type NetworkPrune struct {
 	Filters []Filter
 }
 
-func (o *NetworkPrune) apply() filters.Args {
+func (o *NetworkPrune) apply() sdk.Filters {
 	if o == nil {
 		return argsFromFilters(nil)
 	}

@@ -4,133 +4,134 @@ import (
 	"fmt"
 
 	"github.com/aptd3v/containerkit/pkg/containerkit/errdefs"
-	"github.com/aptd3v/containerkit/pkg/containerkit/internal/config/sc"
-	"github.com/aptd3v/containerkit/pkg/containerkit/internal/config/sc/network"
-	"github.com/aptd3v/containerkit/pkg/containerkit/internal/config/sc/network/pool"
-	"github.com/aptd3v/containerkit/pkg/containerkit/internal/config/sc/secrets/projectsecret"
-	"github.com/aptd3v/containerkit/pkg/containerkit/internal/config/sc/volume"
 	"github.com/compose-spec/compose-go/v2/types"
 )
 
 // DependsOn marks a service as depending on another (condition: started).
 func DependsOn(service string) SetServiceConfig {
-	return sc.WithDependsOn(service)
+	return func(config *types.ServiceConfig) error {
+		if config.DependsOn == nil {
+			config.DependsOn = make(types.DependsOnConfig, 0)
+		}
+		config.DependsOn[service] = types.ServiceDependency{
+			Condition: "service_started",
+			Restart:   true,
+			Required:  true,
+		}
+		return nil
+	}
 }
 
 // DependsOnHealthy marks a service as depending on another becoming healthy.
 func DependsOnHealthy(service string) SetServiceConfig {
-	return sc.WithDependsOnHealthy(service)
+	return func(config *types.ServiceConfig) error {
+		if config.DependsOn == nil {
+			config.DependsOn = make(types.DependsOnConfig, 0)
+		}
+		config.DependsOn[service] = types.ServiceDependency{
+			Condition: "service_healthy",
+			Restart:   true,
+			Required:  true,
+		}
+		return nil
+	}
 }
 
 // Profiles assigns Compose profiles to a service.
 func Profiles(profiles ...string) SetServiceConfig {
-	return sc.WithProfiles(profiles...)
+	return func(config *types.ServiceConfig) error {
+		if config.Profiles == nil {
+			config.Profiles = make([]string, 0)
+		}
+		config.Profiles = append(config.Profiles, profiles...)
+		return nil
+	}
 }
 
 // EnvFile adds a required env file to a service.
 func EnvFile(path string) SetServiceConfig {
-	return sc.WithEnvFile(path)
+	return func(config *types.ServiceConfig) error {
+		config.EnvFiles = append(config.EnvFiles, types.EnvFile{
+			Path:     path,
+			Required: true,
+		})
+		return nil
+	}
 }
 
 // NoAttach sets attach to false for a service.
 func NoAttach() SetServiceConfig {
-	return sc.WithNoAttach()
+	attach := false
+	return func(config *types.ServiceConfig) error {
+		config.Attach = &attach
+		return nil
+	}
 }
 
 // Annotation sets a service annotation.
 func Annotation(key, value string) SetServiceConfig {
-	return sc.WithAnnotation(key, value)
+	return func(config *types.ServiceConfig) error {
+		if config.Annotations == nil {
+			config.Annotations = make(types.Mapping)
+		}
+		config.Annotations[key] = value
+		return nil
+	}
 }
 
 // Develop sets Compose watch/develop config.
 func Develop(action WatchAction, watchPath, target string, ignorePaths ...string) SetServiceConfig {
-	return sc.WithDevelop(sc.WatchAction(action), watchPath, target, ignorePaths...)
+	return func(config *types.ServiceConfig) error {
+		config.Develop = &types.DevelopConfig{
+			Watch: []types.Trigger{
+				{
+					Path:   watchPath,
+					Action: types.WatchAction(action),
+					Target: target,
+					Ignore: ignorePaths,
+				},
+			},
+		}
+		return nil
+	}
 }
 
-func applyProjectNetwork(name string, spec ProjectNetwork) []network.SetNetworkProjectConfig {
-	var setters []network.SetNetworkProjectConfig
-	if spec.Driver != "" {
-		setters = append(setters, network.WithDriver(spec.Driver))
-	}
-	for k, v := range spec.DriverOptions {
-		setters = append(setters, network.WithDriverOptions(k, v))
-	}
-	if spec.Internal {
-		setters = append(setters, network.WithInternal())
-	}
-	if spec.Attachable {
-		setters = append(setters, network.WithAttachable())
-	}
-	if spec.EnableIPv6 {
-		setters = append(setters, network.WithEnableIPv6())
-	}
-	for k, v := range spec.Labels {
-		setters = append(setters, network.WithLabel(k, v))
-	}
-	if spec.IPAMDriver != "" {
-		setters = append(setters, network.WithIpamDriver(spec.IPAMDriver))
-	}
-	for _, p := range spec.IPAMPools {
-		var ps []pool.SetIpamPoolProjectConfig
-		if p.Subnet != "" {
-			ps = append(ps, pool.WithSubnet(p.Subnet))
+// PreStart adds a run-to-completion hook that runs before the service starts.
+func PreStart(ctr *Container, perReplica bool) SetServiceConfig {
+	return func(service *types.ServiceConfig) error {
+		if ctr == nil {
+			return errdefs.NewServiceConfigError("pre_start", "container is nil")
 		}
-		if p.Gateway != "" {
-			ps = append(ps, pool.WithGateway(p.Gateway))
+		if err := ctr.Validate(); err != nil {
+			return err
 		}
-		if p.IPRange != "" {
-			ps = append(ps, pool.WithIpRange(p.IPRange))
+		spec, specErr := serviceSpec(ctr.Name, ctr)
+		if specErr != nil {
+			return specErr
 		}
-		for k, v := range p.AuxiliaryAddresses {
-			ps = append(ps, pool.WithAuxiliaryAddresses(k, v))
-		}
-		setters = append(setters, network.WithIpamPool(ps...))
+		service.PreStart = append(service.PreStart, types.PreStartHook{
+			ContainerSpec: spec.ContainerSpec,
+			PerReplica:    perReplica,
+		})
+		return nil
 	}
-	_ = name
-	return setters
 }
 
-func applyProjectVolume(spec ProjectVolume) []volume.SetVolumeProjectConfig {
-	var setters []volume.SetVolumeProjectConfig
-	if spec.Driver != "" {
-		setters = append(setters, volume.WithDriver(spec.Driver))
+// ServiceModel binds a project model to a service.
+func ServiceModel(name, endpointVar, modelVar string) SetServiceConfig {
+	return func(service *types.ServiceConfig) error {
+		if name == "" {
+			return errdefs.NewServiceConfigError("model", "model name is empty")
+		}
+		if service.Models == nil {
+			service.Models = map[string]*types.ServiceModelConfig{}
+		}
+		service.Models[name] = &types.ServiceModelConfig{
+			EndpointVariable: endpointVar,
+			ModelVariable:    modelVar,
+		}
+		return nil
 	}
-	for k, v := range spec.DriverOptions {
-		setters = append(setters, volume.WithDriverOptions(k, v))
-	}
-	for k, v := range spec.Labels {
-		setters = append(setters, volume.WithLabel(k, v))
-	}
-	return setters
-}
-
-func applyProjectSecret(spec ProjectSecret) []projectsecret.SetProjectSecretConfig {
-	var setters []projectsecret.SetProjectSecretConfig
-	if spec.Name != "" {
-		setters = append(setters, projectsecret.WithName(spec.Name))
-	}
-	if spec.File != "" {
-		setters = append(setters, projectsecret.WithFile(spec.File))
-	}
-	if spec.Content != "" {
-		setters = append(setters, projectsecret.WithContent(spec.Content))
-	}
-	if spec.Environment != "" {
-		setters = append(setters, projectsecret.WithEnvironment(spec.Environment))
-	}
-	if spec.External {
-		setters = append(setters, projectsecret.WithExternal())
-	}
-	if spec.Driver != "" {
-		setters = append(setters, projectsecret.WithDriver(spec.Driver))
-	}
-	for k, v := range spec.DriverOptions {
-		setters = append(setters, projectsecret.WithDriverOptions(k, v))
-	}
-	if spec.TemplateDriver != "" {
-		setters = append(setters, projectsecret.WithTemplateDriver(spec.TemplateDriver))
-	}
-	return setters
 }
 
 func applyServiceExtra(serv *types.ServiceConfig, extra any) error {
@@ -143,8 +144,7 @@ func applyServiceExtra(serv *types.ServiceConfig, extra any) error {
 		if e.err != nil {
 			return e.err
 		}
-		e.apply(serv)
-		return nil
+		return e.apply(serv)
 	case *BuildSpec:
 		if e == nil {
 			return nil
@@ -152,8 +152,7 @@ func applyServiceExtra(serv *types.ServiceConfig, extra any) error {
 		if e.err != nil {
 			return e.err
 		}
-		e.apply(serv)
-		return nil
+		return e.apply(serv)
 	case Deploy:
 		e.apply(serv)
 		return nil

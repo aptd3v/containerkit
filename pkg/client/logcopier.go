@@ -3,7 +3,7 @@ package client
 import (
 	"io"
 
-	"github.com/docker/docker/pkg/stdcopy"
+	"github.com/moby/moby/api/pkg/stdcopy"
 )
 
 // LogCopier provides methods to copy Docker container logs

@@ -29,10 +29,6 @@ func TestMain(m *testing.M) {
 		fmt.Println("skipping e2e: docker not available:", err)
 		os.Exit(0)
 	}
-	if err := exec.Command("docker", "compose", "version").Run(); err != nil {
-		fmt.Println("skipping e2e: docker compose v2 not available:", err)
-		os.Exit(0)
-	}
 	os.Exit(m.Run())
 }
 
@@ -179,5 +175,44 @@ func removeContainer(t *testing.T, cli *client.Client, id string) {
 		ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 		defer cancel()
 		_ = cli.ContainerRemove(ctx, id, &client.Remove{Force: true, Volumes: true})
+	})
+}
+
+func removeImage(t *testing.T, cli *client.Client, ref string) {
+	t.Helper()
+	t.Cleanup(func() {
+		ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+		defer cancel()
+		_, _ = cli.ImageRemove(ctx, ref, &client.ImageRemove{Force: true, PruneChildren: true})
+	})
+}
+
+// ensureSwarm makes sure the daemon is in swarm mode. It is not safe to call
+// from a parallel test. If this test initialized the swarm, Leave runs on cleanup.
+func ensureSwarm(t *testing.T, cli *client.Client) {
+	t.Helper()
+	ctx, cancel := context.WithTimeout(context.Background(), time.Minute)
+	defer cancel()
+	_, inspectErr := cli.SwarmInspect(ctx)
+	if inspectErr == nil {
+		return
+	}
+	nodeID, initErr := cli.SwarmInit(ctx, &client.SwarmInit{
+		ListenAddr:    "0.0.0.0:2377",
+		AdvertiseAddr: "127.0.0.1:2377",
+	})
+	if initErr != nil {
+		nodeID, initErr = cli.SwarmInit(ctx, &client.SwarmInit{ListenAddr: "0.0.0.0:2377"})
+	}
+	if initErr != nil {
+		t.Skipf("swarm unavailable: inspect=%v init=%v", inspectErr, initErr)
+	}
+	fmt.Fprintln(testWriter(t), "SwarmInit", nodeID)
+	t.Cleanup(func() {
+		c, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+		defer cancel()
+		if err := cli.SwarmLeave(c, true); err != nil {
+			t.Logf("SwarmLeave: %v", err)
+		}
 	})
 }

@@ -4,14 +4,14 @@ import (
 	"io"
 
 	"github.com/aptd3v/containerkit/pkg/containerkit"
-	"github.com/docker/docker/api/types/blkiodev"
-	"github.com/docker/docker/api/types/checkpoint"
-	"github.com/docker/docker/api/types/container"
-	"github.com/docker/docker/api/types/filters"
 	"github.com/docker/go-units"
+	"github.com/moby/moby/api/types/blkiodev"
+	"github.com/moby/moby/api/types/container"
+	sdk "github.com/moby/moby/client"
 )
 
 // List is options for ContainerList.
+// Latest sets Limit to 1 when Limit is 0. Since and Before are sent as filters.
 type List struct {
 	Size    bool
 	All     bool
@@ -22,18 +22,25 @@ type List struct {
 	Filters []Filter
 }
 
-func (o *List) apply() container.ListOptions {
-	op := container.ListOptions{Filters: argsFromFilters(nil)}
+func (o *List) apply() sdk.ContainerListOptions {
+	op := sdk.ContainerListOptions{Filters: argsFromFilters(nil)}
 	if o == nil {
 		return op
 	}
 	op.Size = o.Size
 	op.All = o.All
-	op.Latest = o.Latest
-	op.Since = o.Since
-	op.Before = o.Before
 	op.Limit = o.Limit
-	op.Filters = argsFromFilters(o.Filters)
+	if o.Latest && op.Limit == 0 {
+		op.Limit = 1
+	}
+	filters := append([]Filter(nil), o.Filters...)
+	if o.Since != "" {
+		filters = append(filters, Filter{Key: "since", Value: o.Since})
+	}
+	if o.Before != "" {
+		filters = append(filters, Filter{Key: "before", Value: o.Before})
+	}
+	op.Filters = argsFromFilters(filters)
 	return op
 }
 
@@ -43,11 +50,11 @@ type Start struct {
 	CheckpointDir string
 }
 
-func (o *Start) apply() container.StartOptions {
+func (o *Start) apply() sdk.ContainerStartOptions {
 	if o == nil {
-		return container.StartOptions{}
+		return sdk.ContainerStartOptions{}
 	}
-	return container.StartOptions{
+	return sdk.ContainerStartOptions{
 		CheckpointID:  o.CheckpointID,
 		CheckpointDir: o.CheckpointDir,
 	}
@@ -59,11 +66,11 @@ type Stop struct {
 	Signal  string
 }
 
-func (o *Stop) apply() container.StopOptions {
+func (o *Stop) apply() sdk.ContainerStopOptions {
 	if o == nil {
-		return container.StopOptions{}
+		return sdk.ContainerStopOptions{}
 	}
-	return container.StopOptions{
+	return sdk.ContainerStopOptions{
 		Timeout: o.Timeout,
 		Signal:  o.Signal,
 	}
@@ -76,11 +83,11 @@ type Remove struct {
 	Links   bool
 }
 
-func (o *Remove) apply() container.RemoveOptions {
+func (o *Remove) apply() sdk.ContainerRemoveOptions {
 	if o == nil {
-		return container.RemoveOptions{}
+		return sdk.ContainerRemoveOptions{}
 	}
-	return container.RemoveOptions{
+	return sdk.ContainerRemoveOptions{
 		Force:         o.Force,
 		RemoveVolumes: o.Volumes,
 		RemoveLinks:   o.Links,
@@ -99,11 +106,11 @@ type Logs struct {
 	Details    bool
 }
 
-func (o *Logs) apply() container.LogsOptions {
+func (o *Logs) apply() sdk.ContainerLogsOptions {
 	if o == nil {
-		return container.LogsOptions{}
+		return sdk.ContainerLogsOptions{}
 	}
-	return container.LogsOptions{
+	return sdk.ContainerLogsOptions{
 		ShowStdout: o.ShowStdout,
 		ShowStderr: o.ShowStderr,
 		Since:      o.Since,
@@ -125,34 +132,29 @@ type Exec struct {
 	AttachStdin   bool
 	AttachStderr  bool
 	AttachStdout  bool
-	Detach        bool
 	DetachKeys    string
 	Env           []string
 	WorkingDir    string
 	Command       []string
 }
 
-func (o *Exec) apply() container.ExecOptions {
+func (o *Exec) apply() sdk.ExecCreateOptions {
 	if o == nil {
-		return container.ExecOptions{}
+		return sdk.ExecCreateOptions{}
 	}
-	op := container.ExecOptions{
+	return sdk.ExecCreateOptions{
 		User:         o.User,
 		Privileged:   o.Privileged,
-		Tty:          o.Tty,
+		TTY:          o.Tty,
+		ConsoleSize:  sdk.ConsoleSize{Width: o.ConsoleWidth, Height: o.ConsoleHeight},
 		AttachStdin:  o.AttachStdin,
 		AttachStderr: o.AttachStderr,
 		AttachStdout: o.AttachStdout,
-		Detach:       o.Detach,
 		DetachKeys:   o.DetachKeys,
 		Env:          o.Env,
 		WorkingDir:   o.WorkingDir,
 		Cmd:          o.Command,
 	}
-	if o.ConsoleWidth != 0 || o.ConsoleHeight != 0 {
-		op.ConsoleSize = &[2]uint{o.ConsoleWidth, o.ConsoleHeight}
-	}
-	return op
 }
 
 // ExecStart is options for ContainerExecStart.
@@ -163,18 +165,15 @@ type ExecStart struct {
 	ConsoleHeight uint
 }
 
-func (o *ExecStart) apply() container.ExecStartOptions {
+func (o *ExecStart) apply() sdk.ExecStartOptions {
 	if o == nil {
-		return container.ExecStartOptions{}
+		return sdk.ExecStartOptions{}
 	}
-	op := container.ExecStartOptions{
-		Detach: o.Detach,
-		Tty:    o.Tty,
+	return sdk.ExecStartOptions{
+		Detach:      o.Detach,
+		TTY:         o.Tty,
+		ConsoleSize: sdk.ConsoleSize{Width: o.ConsoleWidth, Height: o.ConsoleHeight},
 	}
-	if o.ConsoleWidth != 0 || o.ConsoleHeight != 0 {
-		op.ConsoleSize = &[2]uint{o.ConsoleWidth, o.ConsoleHeight}
-	}
-	return op
 }
 
 // Resize is options for ContainerExecResize and ContainerResize.
@@ -183,11 +182,11 @@ type Resize struct {
 	Height uint
 }
 
-func (o *Resize) apply() container.ResizeOptions {
+func (o *Resize) apply() sdk.ContainerResizeOptions {
 	if o == nil {
-		return container.ResizeOptions{}
+		return sdk.ContainerResizeOptions{}
 	}
-	return container.ResizeOptions{
+	return sdk.ContainerResizeOptions{
 		Width:  o.Width,
 		Height: o.Height,
 	}
@@ -201,18 +200,14 @@ type ExecAttach struct {
 	ConsoleHeight uint
 }
 
-func (o *ExecAttach) apply() container.ExecAttachOptions {
+func (o *ExecAttach) apply() sdk.ExecAttachOptions {
 	if o == nil {
-		return container.ExecAttachOptions{}
+		return sdk.ExecAttachOptions{}
 	}
-	op := container.ExecAttachOptions{
-		Detach: o.Detach,
-		Tty:    o.Tty,
+	return sdk.ExecAttachOptions{
+		TTY:         o.Tty,
+		ConsoleSize: sdk.ConsoleSize{Width: o.ConsoleWidth, Height: o.ConsoleHeight},
 	}
-	if o.ConsoleWidth != 0 || o.ConsoleHeight != 0 {
-		op.ConsoleSize = &[2]uint{o.ConsoleWidth, o.ConsoleHeight}
-	}
-	return op
 }
 
 // Attach is options for ContainerAttach.
@@ -225,11 +220,11 @@ type Attach struct {
 	Logs       bool
 }
 
-func (o *Attach) apply() container.AttachOptions {
+func (o *Attach) apply() sdk.ContainerAttachOptions {
 	if o == nil {
-		return container.AttachOptions{}
+		return sdk.ContainerAttachOptions{}
 	}
-	return container.AttachOptions{
+	return sdk.ContainerAttachOptions{
 		Stream:     o.Stream,
 		Stdin:      o.Stdin,
 		Stdout:     o.Stdout,
@@ -244,7 +239,7 @@ type Prune struct {
 	Filters []Filter
 }
 
-func (o *Prune) apply() filters.Args {
+func (o *Prune) apply() sdk.Filters {
 	if o == nil {
 		return argsFromFilters(nil)
 	}
@@ -261,24 +256,28 @@ type Commit struct {
 	Config    *containerkit.Container
 }
 
-func (o *Commit) apply() container.CommitOptions {
+func (o *Commit) apply() (sdk.ContainerCommitOptions, error) {
 	if o == nil {
-		return container.CommitOptions{}
+		return sdk.ContainerCommitOptions{}, nil
 	}
-	op := container.CommitOptions{
+	op := sdk.ContainerCommitOptions{
 		Reference: o.Reference,
 		Comment:   o.Comment,
 		Author:    o.Author,
 		Changes:   o.Changes,
-		Pause:     o.Pause,
+		NoPause:   !o.Pause,
 	}
 	if o.Config != nil && o.Config.Config != nil {
-		op.Config = o.Config.Config.Container
+		cfg, err := convert[container.Config](o.Config.Config.Container)
+		if err != nil {
+			return sdk.ContainerCommitOptions{}, err
+		}
+		op.Config = cfg
 	}
-	return op
+	return op, nil
 }
 
-// Update is options for ContainerUpdate. Resource fields match Docker's UpdateConfig.
+// Update is options for ContainerUpdate. Resource fields match Docker's update config.
 type Update struct {
 	RestartPolicy        containerkit.RestartPolicy
 	RestartMaxRetry      int
@@ -313,12 +312,12 @@ type Update struct {
 	IOMaximumBandwidth   uint64
 }
 
-func (o *Update) apply() container.UpdateConfig {
+func (o *Update) apply() sdk.ContainerUpdateOptions {
 	if o == nil {
-		return container.UpdateConfig{}
+		return sdk.ContainerUpdateOptions{}
 	}
-	op := container.UpdateConfig{
-		Resources: container.Resources{
+	op := sdk.ContainerUpdateOptions{
+		Resources: &container.Resources{
 			CPUShares:            o.CPUShares,
 			Memory:               o.Memory,
 			NanoCPUs:             o.NanoCPUs,
@@ -350,9 +349,9 @@ func (o *Update) apply() container.UpdateConfig {
 			IOMaximumBandwidth:   o.IOMaximumBandwidth,
 		},
 	}
-	if o.RestartPolicy != "" {
-		op.RestartPolicy = container.RestartPolicy{
-			Name:              container.RestartPolicyMode(o.RestartPolicy),
+	if o.RestartPolicy.String() != "" {
+		op.RestartPolicy = &container.RestartPolicy{
+			Name:              container.RestartPolicyMode(o.RestartPolicy.String()),
 			MaximumRetryCount: o.RestartMaxRetry,
 		}
 	}
@@ -366,13 +365,14 @@ type CopyTo struct {
 	Content                   io.Reader
 }
 
-func (o *CopyTo) apply() container.CopyToContainerOptions {
+func (o *CopyTo) apply() sdk.CopyToContainerOptions {
 	if o == nil {
-		return container.CopyToContainerOptions{}
+		return sdk.CopyToContainerOptions{}
 	}
-	return container.CopyToContainerOptions{
+	return sdk.CopyToContainerOptions{
 		AllowOverwriteDirWithFile: o.AllowOverwriteDirWithFile,
 		CopyUIDGID:                o.CopyUIDGID,
+		Content:                   o.Content,
 	}
 }
 
@@ -383,11 +383,11 @@ type CheckpointCreate struct {
 	Exit          bool
 }
 
-func (o *CheckpointCreate) apply() checkpoint.CreateOptions {
+func (o *CheckpointCreate) apply() sdk.CheckpointCreateOptions {
 	if o == nil {
-		return checkpoint.CreateOptions{}
+		return sdk.CheckpointCreateOptions{}
 	}
-	return checkpoint.CreateOptions{
+	return sdk.CheckpointCreateOptions{
 		CheckpointID:  o.CheckpointID,
 		CheckpointDir: o.CheckpointDir,
 		Exit:          o.Exit,
@@ -399,11 +399,11 @@ type CheckpointList struct {
 	CheckpointDir string
 }
 
-func (o *CheckpointList) apply() checkpoint.ListOptions {
+func (o *CheckpointList) apply() sdk.CheckpointListOptions {
 	if o == nil {
-		return checkpoint.ListOptions{}
+		return sdk.CheckpointListOptions{}
 	}
-	return checkpoint.ListOptions{CheckpointDir: o.CheckpointDir}
+	return sdk.CheckpointListOptions{CheckpointDir: o.CheckpointDir}
 }
 
 // CheckpointDelete is options for ContainerCheckpointDelete.
@@ -412,11 +412,11 @@ type CheckpointDelete struct {
 	CheckpointDir string
 }
 
-func (o *CheckpointDelete) apply() checkpoint.DeleteOptions {
+func (o *CheckpointDelete) apply() sdk.CheckpointRemoveOptions {
 	if o == nil {
-		return checkpoint.DeleteOptions{}
+		return sdk.CheckpointRemoveOptions{}
 	}
-	return checkpoint.DeleteOptions{
+	return sdk.CheckpointRemoveOptions{
 		CheckpointID:  o.CheckpointID,
 		CheckpointDir: o.CheckpointDir,
 	}

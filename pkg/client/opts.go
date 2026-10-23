@@ -1,8 +1,6 @@
 package client
 
-import (
-	"github.com/docker/docker/api/types/filters"
-)
+import sdk "github.com/moby/moby/client"
 
 // Filter is a key/value filter passed to list and prune operations.
 type Filter struct {
@@ -10,12 +8,12 @@ type Filter struct {
 	Value string
 }
 
-func argsFromFilters(fs []Filter) filters.Args {
-	a := filters.NewArgs()
+func argsFromFilters(fs []Filter) sdk.Filters {
+	out := make(sdk.Filters)
 	for _, f := range fs {
-		a.Add(f.Key, f.Value)
+		out.Add(f.Key, f.Value)
 	}
-	return a
+	return out
 }
 
 // WaitCondition is a container state to wait for.

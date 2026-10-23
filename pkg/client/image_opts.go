@@ -4,12 +4,10 @@ import (
 	"context"
 	"io"
 	"runtime"
+	"strings"
 
 	"github.com/aptd3v/containerkit/pkg/client/auth"
-	dBuild "github.com/docker/docker/api/types/build"
-	"github.com/docker/docker/api/types/filters"
-	"github.com/docker/docker/api/types/image"
-	"github.com/docker/docker/api/types/registry"
+	sdk "github.com/moby/moby/client"
 	ocispec "github.com/opencontainers/image-spec/specs-go/v1"
 )
 
@@ -22,79 +20,83 @@ type ImagePull struct {
 	PrivilegeFunc   func(ctx context.Context) (string, error)
 }
 
-func (o *ImagePull) apply() (image.PullOptions, error) {
+func (o *ImagePull) apply() (sdk.ImagePullOptions, error) {
 	if o == nil {
-		return image.PullOptions{}, nil
+		return sdk.ImagePullOptions{}, nil
 	}
-	op := image.PullOptions{
+	op := sdk.ImagePullOptions{
 		All:           o.All,
-		Platform:      o.Platform,
 		PrivilegeFunc: o.PrivilegeFunc,
 	}
 	if o.CurrentPlatform {
-		op.Platform = runtime.GOARCH
-	}
-	if o.Auth.Username != "" || o.Auth.Password != "" || o.Auth.ServerAddress != "" {
-		encoded, err := auth.AuthToBase64(o.Auth)
-		if err != nil {
-			return image.PullOptions{}, err
+		osName := runtime.GOOS
+		if osName == "darwin" {
+			osName = "linux"
 		}
-		op.RegistryAuth = encoded
+		op.Platforms = []ocispec.Platform{{OS: osName, Architecture: runtime.GOARCH}}
+	} else if platform, ok := parsePlatform(o.Platform); ok {
+		op.Platforms = []ocispec.Platform{platform}
 	}
+	encoded, err := encodeAuth(o.Auth)
+	if err != nil {
+		return sdk.ImagePullOptions{}, err
+	}
+	op.RegistryAuth = encoded
 	return op, nil
 }
 
-// ImageCreate is options for ImageCreate.
+// ImageCreate is options for ImageCreate. The engine creates the image by pulling ref.
 type ImageCreate struct {
 	Auth     auth.Auth
 	Platform string
 }
 
-func (o *ImageCreate) apply() (image.CreateOptions, error) {
+func (o *ImageCreate) apply() (sdk.ImagePullOptions, error) {
 	if o == nil {
-		return image.CreateOptions{}, nil
+		return sdk.ImagePullOptions{}, nil
 	}
-	op := image.CreateOptions{Platform: o.Platform}
-	if o.Auth.Username != "" || o.Auth.Password != "" || o.Auth.ServerAddress != "" {
-		encoded, err := auth.AuthToBase64(o.Auth)
-		if err != nil {
-			return image.CreateOptions{}, err
-		}
-		op.RegistryAuth = encoded
+	op := sdk.ImagePullOptions{}
+	if platform, ok := parsePlatform(o.Platform); ok {
+		op.Platforms = []ocispec.Platform{platform}
 	}
+	encoded, err := encodeAuth(o.Auth)
+	if err != nil {
+		return sdk.ImagePullOptions{}, err
+	}
+	op.RegistryAuth = encoded
 	return op, nil
 }
 
 // ImageList is options for ImageList.
 type ImageList struct {
-	All            bool
-	SharedSize     bool
-	ContainerCount bool
-	Manifests      bool
-	Filters        []Filter
+	All        bool
+	SharedSize bool
+	Manifests  bool
+	Identity   bool
+	Filters    []Filter
 }
 
-func (o *ImageList) apply() image.ListOptions {
-	op := image.ListOptions{Filters: argsFromFilters(nil)}
+func (o *ImageList) apply() sdk.ImageListOptions {
+	op := sdk.ImageListOptions{Filters: argsFromFilters(nil)}
 	if o == nil {
 		return op
 	}
 	op.All = o.All
 	op.SharedSize = o.SharedSize
-	op.ContainerCount = o.ContainerCount
 	op.Manifests = o.Manifests
+	op.Identity = o.Identity
 	op.Filters = argsFromFilters(o.Filters)
 	return op
 }
 
-// ImageBuild is options for ImageBuild. Fields match Docker's ImageBuildOptions.
+// ImageBuild is options for ImageBuild. Fields match the engine image build options.
 type ImageBuild struct {
-	dBuild.ImageBuildOptions
+	sdk.ImageBuildOptions
 }
 
-func (o *ImageBuild) apply() dBuild.ImageBuildOptions {
+func (o *ImageBuild) apply() sdk.ImageBuildOptions {
 	if o == nil {
-		return dBuild.ImageBuildOptions{}
+		return sdk.ImageBuildOptions{}
 	}
 	return o.ImageBuildOptions
 }
@@ -112,11 +114,11 @@ type ImageRemove struct {
 	Platforms     []ocispec.Platform
 }
 
-func (o *ImageRemove) apply() image.RemoveOptions {
+func (o *ImageRemove) apply() sdk.ImageRemoveOptions {
 	if o == nil {
-		return image.RemoveOptions{}
+		return sdk.ImageRemoveOptions{}
 	}
-	return image.RemoveOptions{
+	return sdk.ImageRemoveOptions{
 		Force:         o.Force,
 		PruneChildren: o.PruneChildren,
 		Platforms:     o.Platforms,
@@ -131,21 +133,19 @@ type ImageSearch struct {
 	Limit         int
 }
 
-func (o *ImageSearch) apply() (registry.SearchOptions, error) {
-	op := registry.SearchOptions{Filters: argsFromFilters(nil)}
+func (o *ImageSearch) apply() (sdk.ImageSearchOptions, error) {
+	op := sdk.ImageSearchOptions{Filters: argsFromFilters(nil)}
 	if o == nil {
 		return op, nil
 	}
 	op.Filters = argsFromFilters(o.Filters)
 	op.Limit = o.Limit
 	op.PrivilegeFunc = o.PrivilegeFunc
-	if o.Auth.Username != "" || o.Auth.Password != "" || o.Auth.ServerAddress != "" {
-		encoded, err := auth.AuthToBase64(o.Auth)
-		if err != nil {
-			return registry.SearchOptions{}, err
-		}
-		op.RegistryAuth = encoded
+	encoded, err := encodeAuth(o.Auth)
+	if err != nil {
+		return sdk.ImageSearchOptions{}, err
 	}
+	op.RegistryAuth = encoded
 	return op, nil
 }
 
@@ -166,14 +166,124 @@ type ImageLoad struct {
 	Platforms []ocispec.Platform
 }
 
+// BuildCachePrune is options for BuildCachePrune. Space fields are byte counts.
+type BuildCachePrune struct {
+	All           bool
+	ReservedSpace int64
+	MaxUsedSpace  int64
+	MinFreeSpace  int64
+	Filters       []Filter
+}
+
+func (o *BuildCachePrune) apply() sdk.BuildCachePruneOptions {
+	if o == nil {
+		return sdk.BuildCachePruneOptions{Filters: argsFromFilters(nil)}
+	}
+	return sdk.BuildCachePruneOptions{
+		All:           o.All,
+		ReservedSpace: o.ReservedSpace,
+		MaxUsedSpace:  o.MaxUsedSpace,
+		MinFreeSpace:  o.MinFreeSpace,
+		Filters:       argsFromFilters(o.Filters),
+	}
+}
+
 // ImagePrune is options for ImagesPrune.
 type ImagePrune struct {
 	Filters []Filter
 }
 
-func (o *ImagePrune) apply() filters.Args {
+func (o *ImagePrune) apply() sdk.Filters {
 	if o == nil {
 		return argsFromFilters(nil)
 	}
 	return argsFromFilters(o.Filters)
+}
+
+// ImagePush is options for ImagePush. Nil options push without registry auth.
+type ImagePush struct {
+	Auth          auth.Auth
+	All           bool
+	Platform      *ocispec.Platform
+	PrivilegeFunc func(ctx context.Context) (string, error)
+}
+
+func (o *ImagePush) apply() (sdk.ImagePushOptions, error) {
+	if o == nil {
+		return sdk.ImagePushOptions{}, nil
+	}
+	op := sdk.ImagePushOptions{
+		All:           o.All,
+		Platform:      o.Platform,
+		PrivilegeFunc: o.PrivilegeFunc,
+	}
+	encoded, err := encodeAuth(o.Auth)
+	if err != nil {
+		return sdk.ImagePushOptions{}, err
+	}
+	op.RegistryAuth = encoded
+	return op, nil
+}
+
+// ImageInspect is options for ImageInspect. Nil options inspect the default platform manifest.
+type ImageInspect struct {
+	Manifests bool
+	Platform  *ocispec.Platform
+}
+
+func (o *ImageInspect) options() []sdk.ImageInspectOption {
+	if o == nil {
+		return nil
+	}
+	var opts []sdk.ImageInspectOption
+	if o.Manifests {
+		opts = append(opts, sdk.ImageInspectWithManifests(true))
+	}
+	if o.Platform != nil {
+		opts = append(opts, sdk.ImageInspectWithPlatform(o.Platform))
+	}
+	return opts
+}
+
+// ImageAttestations is options for ImageAttestations. The daemon must support API 1.55.
+type ImageAttestations struct {
+	Platform       *ocispec.Platform
+	PredicateTypes []string
+}
+
+func (o *ImageAttestations) options() []sdk.ImageAttestationsOption {
+	if o == nil {
+		return nil
+	}
+	var opts []sdk.ImageAttestationsOption
+	if o.Platform != nil {
+		opts = append(opts, sdk.ImageAttestationsWithPlatform(*o.Platform))
+	}
+	if len(o.PredicateTypes) > 0 {
+		opts = append(opts, sdk.ImageAttestationsWithPredicateTypes(o.PredicateTypes...))
+	}
+	return opts
+}
+
+func encodeAuth(a auth.Auth) (string, error) {
+	if a.Username == "" && a.Password == "" && a.ServerAddress == "" {
+		return "", nil
+	}
+	return auth.AuthToBase64(a)
+}
+
+func parsePlatform(value string) (ocispec.Platform, bool) {
+	value = strings.TrimSpace(value)
+	if value == "" {
+		return ocispec.Platform{}, false
+	}
+	parts := strings.Split(value, "/")
+	platform := ocispec.Platform{OS: parts[0]}
+	if len(parts) > 1 {
+		platform.Architecture = parts[1]
+	}
+	if len(parts) > 2 {
+		platform.Variant = strings.Join(parts[2:], "/")
+	}
+	return platform, true
 }

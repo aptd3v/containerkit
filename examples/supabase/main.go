@@ -4,7 +4,7 @@
 //
 // Flags:
 //
-//	-profile: minimal (default) or full. Full adds vector, realtime, storage, imgproxy, meta, functions, supavisor.
+//	-profile: minimal (default) or full. Full adds vector, realtime, storage, imgproxy, functions, supavisor.
 //	-resource-limits: apply memory/CPU limits to db, kong, and studio.
 //	-volumes-path: directory for volume files (default: ./volumes or SUPABASE_VOLUMES_PATH).
 package main
@@ -78,7 +78,7 @@ func main() {
 		cancel()
 	}()
 
-	eventsCh, eventsErrCh, err := supabase.Events(ctx, "", profiles...)
+	eventsCh, eventsErrCh, err := supabase.Events(ctx, &containerkit.EventsOpt{Profiles: profiles})
 	if err != nil {
 		log.Printf("events: %v", err)
 	} else {

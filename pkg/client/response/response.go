@@ -1,16 +1,23 @@
 // Package response provides thin wrappers around the docker client response types.
+// Inspect results that include daemon JSON expose it on Raw.
 package response
 
 import (
-	"github.com/docker/docker/api/types"
-	"github.com/docker/docker/api/types/build"
-	"github.com/docker/docker/api/types/checkpoint"
-	"github.com/docker/docker/api/types/container"
-	"github.com/docker/docker/api/types/image"
-	"github.com/docker/docker/api/types/network"
-	"github.com/docker/docker/api/types/registry"
-	"github.com/docker/docker/api/types/swarm"
-	"github.com/docker/docker/api/types/volume"
+	"bufio"
+	"io"
+	"net"
+
+	"github.com/moby/moby/api/types/build"
+	"github.com/moby/moby/api/types/checkpoint"
+	"github.com/moby/moby/api/types/container"
+	"github.com/moby/moby/api/types/events"
+	"github.com/moby/moby/api/types/image"
+	"github.com/moby/moby/api/types/network"
+	"github.com/moby/moby/api/types/plugin"
+	"github.com/moby/moby/api/types/registry"
+	"github.com/moby/moby/api/types/swarm"
+	"github.com/moby/moby/api/types/system"
+	"github.com/moby/moby/api/types/volume"
 )
 
 // ContainerCreate is a wrapper around the container.CreateResponse type.
@@ -33,9 +40,10 @@ type ContainerWait struct {
 	container.WaitResponse
 }
 
-// ContainerStatsReader is a wrapper around the container.StatsResponseReader type.
+// ContainerStatsReader is a single stats stream from the daemon.
 type ContainerStatsReader struct {
-	container.StatsResponseReader
+	Body   io.ReadCloser
+	OSType string
 }
 
 // ContainerExecCreate is a wrapper around the container.ExecCreateResponse type.
@@ -43,9 +51,18 @@ type ContainerExecCreate struct {
 	container.ExecCreateResponse
 }
 
-// ContainerHijackedResponse is a wrapper around the types.HijackedResponse type.
+// ContainerHijackedResponse is a hijacked connection to a container or exec stream.
 type ContainerHijackedResponse struct {
-	types.HijackedResponse
+	Conn   net.Conn
+	Reader *bufio.Reader
+}
+
+// Close closes the hijacked connection.
+func (h *ContainerHijackedResponse) Close() error {
+	if h == nil || h.Conn == nil {
+		return nil
+	}
+	return h.Conn.Close()
 }
 
 // ContainerPruneReport is a wrapper around the container.PruneReport type.
@@ -73,14 +90,15 @@ type ContainerTopResponse struct {
 	container.TopResponse
 }
 
-// ContainerExecInspect is a wrapper around the container.ExecInspect type.
+// ContainerExecInspect is a wrapper around the container.ExecInspectResponse type.
 type ContainerExecInspect struct {
-	container.ExecInspect
+	container.ExecInspectResponse
 }
 
-// ContainerStatsOneShot is a wrapper around the container.StatsResponseReader type.
+// ContainerStatsOneShot is one stats sample from a container.
 type ContainerStatsOneShot struct {
-	container.StatsResponseReader
+	Body   io.ReadCloser
+	OSType string
 }
 
 // ContainerCheckpointSummary is a wrapper around the checkpoint.Summary type.
@@ -108,9 +126,14 @@ type ImageHistoryItem struct {
 	image.HistoryResponseItem
 }
 
-// ImageBuild is a wrapper around the image.BuildResponse type.
+// BuildCachePrune is the result of pruning the build cache.
+type BuildCachePrune struct {
+	build.CachePruneReport
+}
+
+// ImageBuild is the body of an image build response.
 type ImageBuild struct {
-	build.ImageBuildResponse
+	Body io.ReadCloser
 }
 
 // ImageDelete is a wrapper around the image.DeleteResponse type.
@@ -123,9 +146,9 @@ type ImageSearchResult struct {
 	registry.SearchResult
 }
 
-// ImageLoad is a wrapper around the image.LoadResponse type.
+// ImageLoad is the body of an image load response.
 type ImageLoad struct {
-	image.LoadResponse
+	Body io.ReadCloser
 }
 
 // PruneReport is a wrapper around the image.PruneReport type.
@@ -169,7 +192,142 @@ type NetworkPruneReport struct {
 	network.PruneReport
 }
 
-// Swarm is a wrapper around the swarm type
+// Swarm is a wrapper around the swarm type.
 type Swarm struct {
 	swarm.Swarm
+}
+
+// Node is a swarm node.
+type Node struct {
+	swarm.Node
+	Raw []byte `json:"-"`
+}
+
+// Service is a swarm service.
+type Service struct {
+	swarm.Service
+	Raw []byte `json:"-"`
+}
+
+// ServiceCreate is the result of creating a swarm service.
+type ServiceCreate struct {
+	ID       string
+	Warnings []string
+}
+
+// ServiceUpdate is the result of updating a swarm service.
+type ServiceUpdate struct {
+	Warnings []string
+}
+
+// Task is a swarm task.
+type Task struct {
+	swarm.Task
+	Raw []byte `json:"-"`
+}
+
+// Secret is a swarm secret.
+type Secret struct {
+	swarm.Secret
+	Raw []byte `json:"-"`
+}
+
+// SwarmConfig is a swarm config object.
+type SwarmConfig struct {
+	swarm.Config
+	Raw []byte `json:"-"`
+}
+
+// ImageAttestation is one in-toto statement attached to an image.
+type ImageAttestation struct {
+	image.AttestationStatement
+}
+
+// Info is daemon information.
+type Info struct {
+	system.Info
+}
+
+// Ping is the result of a daemon ping.
+type Ping struct {
+	APIVersion     string
+	OSType         string
+	Experimental   bool
+	BuilderVersion string
+}
+
+// ServerVersion is the daemon version.
+type ServerVersion struct {
+	Platform      string
+	Version       string
+	APIVersion    string
+	MinAPIVersion string
+	Os            string
+	Arch          string
+	Experimental  bool
+}
+
+// DiskUsage is engine disk usage.
+type DiskUsage struct {
+	Containers ContainersDiskUsage
+	Images     ImagesDiskUsage
+	Volumes    VolumesDiskUsage
+	BuildCache BuildCacheDiskUsage
+}
+
+// ContainersDiskUsage is container disk usage.
+type ContainersDiskUsage struct {
+	ActiveCount int64
+	TotalCount  int64
+	Reclaimable int64
+	TotalSize   int64
+	Items       []container.Summary
+}
+
+// ImagesDiskUsage is image disk usage.
+type ImagesDiskUsage struct {
+	ActiveCount int64
+	TotalCount  int64
+	Reclaimable int64
+	TotalSize   int64
+	Items       []image.Summary
+}
+
+// VolumesDiskUsage is volume disk usage.
+type VolumesDiskUsage struct {
+	ActiveCount int64
+	TotalCount  int64
+	Reclaimable int64
+	TotalSize   int64
+	Items       []volume.Volume
+}
+
+// BuildCacheDiskUsage is build-cache disk usage.
+type BuildCacheDiskUsage struct {
+	ActiveCount int64
+	TotalCount  int64
+	Reclaimable int64
+	TotalSize   int64
+	Items       []build.CacheRecord
+}
+
+// EngineEvent is one engine event.
+type EngineEvent struct {
+	events.Message
+}
+
+// DistributionInspect is a registry distribution inspect response.
+type DistributionInspect struct {
+	registry.DistributionInspect
+}
+
+// RegistryLogin is a registry login response.
+type RegistryLogin struct {
+	registry.AuthResponse
+}
+
+// Plugin is an engine plugin. Raw is the daemon JSON from inspect.
+type Plugin struct {
+	plugin.Plugin
+	Raw []byte `json:"-"`
 }

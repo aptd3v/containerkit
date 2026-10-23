@@ -1,6 +1,11 @@
 package client
 
-import "github.com/docker/docker/api/types/swarm"
+import (
+	"net/netip"
+
+	"github.com/moby/moby/api/types/swarm"
+	sdk "github.com/moby/moby/client"
+)
 
 // SwarmInit is options for SwarmInit.
 type SwarmInit struct {
@@ -16,11 +21,19 @@ type SwarmInit struct {
 	SubnetSize       uint32
 }
 
-func (o *SwarmInit) apply() swarm.InitRequest {
+func (o *SwarmInit) apply() (sdk.SwarmInitOptions, error) {
 	if o == nil {
-		return swarm.InitRequest{}
+		return sdk.SwarmInitOptions{}, nil
 	}
-	return swarm.InitRequest{
+	pool := make([]netip.Prefix, 0, len(o.DefaultAddrPool))
+	for _, cidr := range o.DefaultAddrPool {
+		prefix, err := netip.ParsePrefix(cidr)
+		if err != nil {
+			return sdk.SwarmInitOptions{}, err
+		}
+		pool = append(pool, prefix)
+	}
+	return sdk.SwarmInitOptions{
 		ListenAddr:       o.ListenAddr,
 		AdvertiseAddr:    o.AdvertiseAddr,
 		DataPathAddr:     o.DataPathAddr,
@@ -29,9 +42,9 @@ func (o *SwarmInit) apply() swarm.InitRequest {
 		Spec:             o.Spec,
 		AutoLockManagers: o.AutoLockManagers,
 		Availability:     o.Availability,
-		DefaultAddrPool:  o.DefaultAddrPool,
+		DefaultAddrPool:  pool,
 		SubnetSize:       o.SubnetSize,
-	}
+	}, nil
 }
 
 // SwarmJoin is options for SwarmJoin.
@@ -44,11 +57,11 @@ type SwarmJoin struct {
 	Availability  swarm.NodeAvailability
 }
 
-func (o *SwarmJoin) apply() swarm.JoinRequest {
+func (o *SwarmJoin) apply() sdk.SwarmJoinOptions {
 	if o == nil {
-		return swarm.JoinRequest{}
+		return sdk.SwarmJoinOptions{}
 	}
-	return swarm.JoinRequest{
+	return sdk.SwarmJoinOptions{
 		ListenAddr:    o.ListenAddr,
 		AdvertiseAddr: o.AdvertiseAddr,
 		DataPathAddr:  o.DataPathAddr,
@@ -56,4 +69,38 @@ func (o *SwarmJoin) apply() swarm.JoinRequest {
 		JoinToken:     o.JoinToken,
 		Availability:  o.Availability,
 	}
+}
+
+// SwarmUpdate is options for SwarmUpdate.
+type SwarmUpdate struct {
+	Version                swarm.Version
+	Spec                   swarm.Spec
+	RotateWorkerToken      bool
+	RotateManagerToken     bool
+	RotateManagerUnlockKey bool
+}
+
+func (o *SwarmUpdate) apply() sdk.SwarmUpdateOptions {
+	if o == nil {
+		return sdk.SwarmUpdateOptions{}
+	}
+	return sdk.SwarmUpdateOptions{
+		Version:                o.Version,
+		Spec:                   o.Spec,
+		RotateWorkerToken:      o.RotateWorkerToken,
+		RotateManagerToken:     o.RotateManagerToken,
+		RotateManagerUnlockKey: o.RotateManagerUnlockKey,
+	}
+}
+
+// SwarmUnlock is options for SwarmUnlock.
+type SwarmUnlock struct {
+	Key string
+}
+
+func (o *SwarmUnlock) apply() sdk.SwarmUnlockOptions {
+	if o == nil {
+		return sdk.SwarmUnlockOptions{}
+	}
+	return sdk.SwarmUnlockOptions{Key: o.Key}
 }

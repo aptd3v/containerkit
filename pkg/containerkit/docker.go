@@ -86,7 +86,11 @@ func (d *dockerFile) directive(name, value string, seen *bool) *dockerFile {
 		return d.fail(fmt.Errorf("%s directive is empty", name))
 	}
 	*seen = true
-	d.builder.WriteString("# " + name + "=" + value + "\n")
+	d.builder.WriteString("# ")
+	d.builder.WriteString(name)
+	d.builder.WriteByte('=')
+	d.builder.WriteString(value)
+	d.builder.WriteByte('\n')
 	return d
 }
 

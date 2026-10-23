@@ -10,6 +10,7 @@ import (
 	"os/signal"
 	"runtime"
 	"strings"
+	"sync"
 	"syscall"
 
 	"github.com/aptd3v/containerkit/pkg/containerkit"
@@ -167,7 +168,7 @@ func PortainerContainer() *containerkit.Container {
 
 	return containerkit.NewContainer().
 		Image("portainer/portainer-ce:latest").
-		PortBindings("tcp", "0.0.0.0", "9000", "9000").
+		PortBinding(containerkit.PortBinding{Protocol: containerkit.TCP, HostIP: "0.0.0.0", HostPort: "9000", ContainerPort: "9000"}).
 		RWNamedVolumeMount("portainer-data", "/data").
 		Mount(containerkit.Mount{
 			Source: src, Target: "/var/run/docker.sock",
@@ -180,7 +181,7 @@ func ProxyContainer() *containerkit.Container {
 	return containerkit.NewContainer("proxy-container").
 		Image("haproxy:latest").
 		Command("-f", "/usr/local/etc/haproxy/haproxy.cfg").
-		PortBindings("tcp", "0.0.0.0", "80", "80").
+		PortBinding(containerkit.PortBinding{Protocol: containerkit.TCP, HostIP: "0.0.0.0", HostPort: "80", ContainerPort: "80"}).
 		VolumeBinds("./examples/wordpress/haproxy.cfg:/usr/local/etc/haproxy/haproxy.cfg:ro").
 		Endpoint("wordpress-network")
 }
@@ -215,29 +216,32 @@ func GenerateHAProxyConfig(services []string) error {
 type Logger struct {
 	Target io.Writer
 	action string
+
+	mu     sync.Mutex
 	buffer bytes.Buffer
 }
 
-func (l *Logger) Write(p []byte) (n int, err error) {
-	l.buffer.Write(p)
+func (l *Logger) Write(p []byte) (int, error) {
+	l.mu.Lock()
+	defer l.mu.Unlock()
 
+	if _, err := l.buffer.Write(p); err != nil {
+		return 0, err
+	}
 	for {
 		line, err := l.buffer.ReadString('\n')
 		if err != nil {
 			if err == io.EOF {
-				break
+				// ReadString consumed the incomplete line; keep it for the next Write.
+				_, _ = l.buffer.WriteString(line)
+				return len(p), nil
 			}
 			return 0, err
 		}
-
-		_, werr := fmt.Fprintf(l.Target, "[\x1b[32m%s\x1b[0m] %s", l.action, line)
-		if werr != nil {
-			return 0, werr
+		if _, err := fmt.Fprintf(l.Target, "[\x1b[32m%s\x1b[0m] %s", l.action, line); err != nil {
+			return 0, err
 		}
-
 	}
-
-	return len(p), nil
 }
 
 func NewLogger(action string) *Logger {

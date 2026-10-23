@@ -5,7 +5,7 @@
 [![Go Version](https://img.shields.io/github/go-mod/go-version/aptd3v/containerkit)](https://go.dev/dl/)
 [![License](https://img.shields.io/github/license/aptd3v/containerkit)](./LICENSE)
 
-Define Docker stacks in Go. The same `*containerkit.Container` feeds either the Compose CLI or the Docker Engine SDK.
+Define Docker stacks in Go. The same `*containerkit.Container` feeds either the in-process Compose SDK or the Docker Engine SDK. Compose does not shell out to `docker compose`.
 
 ```bash
 go get github.com/aptd3v/containerkit@latest
@@ -59,7 +59,7 @@ project.
 		containerkit.NewContainer().
 			Image("alpine:latest").
 			Command("sleep", "inf").
-			PortBindings("tcp", "0.0.0.0", "8080", "8080").
+			PortBinding(containerkit.PortBinding{Protocol: containerkit.TCP, HostIP: "0.0.0.0", HostPort: "8080", ContainerPort: "8080"}).
 			RWNamedVolumeMount("data", "/data").
 			Endpoint("backend"),
 		containerkit.DependsOn("db"),
@@ -90,7 +90,7 @@ if err := project.Export("./docker-compose.yaml", 0644); err != nil {
 
 ## Engine client
 
-A container name is required for `ContainerCreate`. Construction options stay funcs on `client`.
+A container name is optional for a Compose service and required for `ContainerCreate`. Construction options stay funcs on `client`.
 
 ```go
 cli, err := client.NewClient(client.FromEnv(), client.WithAPIVersionNegotiation())
@@ -110,15 +110,36 @@ _ = cli.ContainerRemove(ctx, resp.ID, &client.Remove{Force: true, Volumes: true}
 
 The same `*containerkit.Container` can be passed to the Engine client or added as a Compose service.
 
+## Dockerfile
+
+`NewDockerFile` writes a Dockerfile in Go. `WithInline` attaches it as a Compose build. `Export` writes the file for the Engine client.
+
+```go
+df := containerkit.NewDockerFile().
+	FromAs("alpine:latest", "build").
+	Run("echo ok > /out/app").
+	From("alpine", "latest").
+	Copy("/out/app", "/app", containerkit.CopyOpts{From: "build"})
+
+if err := df.Export("Dockerfile", 0644); err != nil {
+	log.Fatal(err)
+}
+
+project.WithService("app",
+	containerkit.NewContainer().Image("my-image:tag"),
+	df.WithInline(),
+)
+```
+
 ## Fluent configuration
 
-Methods live on `*containerkit.Container`. Nested objects (health, mount, build) and Compose CLI flags are structs. Service extras (`DependsOn`, `Profiles`, `BuildSpec`) are extra args to `WithService`.
+Methods live on `*containerkit.Container`. Nested objects (health, mount, build) and Compose command options are structs. Service extras (`DependsOn`, `Profiles`, `BuildSpec`) are extra args to `WithService`.
 
 ```go
 project.WithService("api",
 	containerkit.NewContainer("my-api").
 		Imagef("ubuntu:%s", tag).
-		PortBindings("tcp", "0.0.0.0", "8080", "80").
+		PortBinding(containerkit.PortBinding{Protocol: containerkit.TCP, HostIP: "0.0.0.0", HostPort: "8080", ContainerPort: "80"}).
 		Endpoint("my-network").
 		Architecture("amd64"),
 	containerkit.DependsOn("db"),
@@ -131,7 +152,7 @@ You can also mix in Docker SDK structs. See [examples/structs](./examples/struct
 
 ## Conditionals
 
-Prefer ordinary Go `if` inside factories. `WhenTrue` / `Group` / `Apply` / `OnlyIf` remain for first-class fragments.
+Use an ordinary Go `if` inside the factory.
 
 ```go
 c := containerkit.NewContainer().Image("node:latest")
@@ -164,13 +185,14 @@ Run from the repo root.
 | [examples/wordpress](./examples/wordpress) | Compose | Multi-service, OS-conditional mounts, logs, signal `Down` |
 | [examples/profiles](./examples/profiles) | Compose | `Profiles` mirrored on `Up` / `Kill` |
 | [examples/events](./examples/events) | Compose | Events channel + healthcheck |
-| [examples/compose_commands](./examples/compose_commands) | Compose | `Build`, `Ps`, `Start`, `Stop`, `Restart`, `Exec`, … |
+| [examples/compose_commands](./examples/compose_commands) | Compose | `Build`, `Ps`, `Start`, `Stop`, `Restart`, `Exec`, `Config`, `Images`, `Top`, `Pause`, `Run` |
 | [examples/nginx](./examples/nginx) | Hybrid | `client.ImageBuild` then compose `Up` |
-| [examples/image_inline](./examples/image_inline) | Hybrid | Inline Dockerfile `BuildSpec` |
-| [examples/mongo_replica](./examples/mongo_replica) | Hybrid | Compose `Up` + client exec to init a replica set |
+| [examples/image_inline](./examples/image_inline) | Hybrid | Inline Dockerfile; Engine inspect skips a rebuild when the tag exists |
+| [examples/dockerfile](./examples/dockerfile) | Client | Multi-stage `NewDockerFile`, `Export`, `ImageBuild`, `ContainerCreate` |
+| [examples/mongo_replica](./examples/mongo_replica) | Hybrid | Compose `Up` with `Wait`, then client exec to init a replica set |
 | [examples/terminal](./examples/terminal) | Client | Interactive TTY exec + resize |
 | [examples/structs](./examples/structs) | Config | Mix Docker SDK structs with fluent methods |
-| [examples/supabase](./examples/supabase) | Compose | Full multi-profile stack |
+| [examples/supabase](./examples/supabase) | Compose | Full multi-profile stack. See its [README](./examples/supabase/README.md) |
 
 ```bash
 go run ./examples/simple/
@@ -181,9 +203,11 @@ go run ./examples/supabase/ -resource-limits
 
 ## Prerequisites
 
-- **Go** 1.24+
-- **Docker** 28.2+ with Compose v2
+- **Go** 1.26.8+
+- **Docker Engine**
 - Linux, macOS, or Windows
+
+Compose is linked in-process. A `docker compose` binary is not required.
 
 ## Migrating from go-contain
 

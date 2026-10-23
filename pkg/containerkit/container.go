@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/aptd3v/containerkit/pkg/containerkit/errdefs"
 	"github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/api/types/network"
 	ocispec "github.com/opencontainers/image-spec/specs-go/v1"
@@ -21,9 +20,16 @@ type MergedConfig struct {
 }
 
 type Container struct {
-	Name   string        // the name of the container
-	Config *MergedConfig // merged docker sdk configuration for container creation
-	Errors []error
+	Name       string        // the name of the container
+	Config     *MergedConfig // merged docker sdk configuration for container creation
+	Errors     []error
+	mountNotes map[string]mountNote
+}
+
+// mountNote carries Compose mount fields the engine mount type does not store.
+type mountNote struct {
+	selinux        string
+	createHostPath *bool
 }
 
 // NewContainer creates a new container with the given name.
@@ -64,165 +70,7 @@ func (c *Container) Validate() error {
 		return fmt.Errorf("container is nil")
 	}
 	if len(c.Errors) > 0 {
-		return fmt.Errorf("container config has the following errors:\n%s", errors.Join(c.Errors...))
+		return fmt.Errorf("container config has the following errors:\n%w", errors.Join(c.Errors...))
 	}
 	return nil
-}
-
-// SetContainerConfig is a function that sets the container config
-type SetContainerConfig func(config *container.Config) error
-
-// SetHostConfig is a function that sets the host config
-type SetHostConfig func(config *container.HostConfig) error
-
-// SetNetworkConfig is a function that sets the network config
-type SetNetworkConfig func(config *network.NetworkingConfig) error
-
-// SetPlatformConfig is a function that sets the platform config
-type SetPlatformConfig func(config *ocispec.Platform) error
-
-// With sets the container config via the setter functions.
-// It will return a container with the container config set.
-// If any of the setters return an error, the error will
-// be appended to the container's error slice.
-//
-// parameters:
-//   - setters: the setters to set the container config
-//
-// note: setters can be any type that implements the
-// SetContainerConfig, SetHostConfig, SetNetworkConfig,
-// or SetPlatformConfig function type. If a setter is
-// nil, it will be skipped.
-func (c *Container) With(setters ...any) *Container {
-	var errs []error
-	for i, setter := range setters {
-		switch setter := any(setter).(type) {
-		case nil:
-			continue
-		case SetContainerConfig:
-			if setter == nil {
-				continue
-			}
-			if err := setter(c.Config.Container); err != nil {
-				errs = append(errs, fmt.Errorf("setter %d: %w", i, err))
-			}
-		case SetHostConfig:
-			if setter == nil {
-				continue
-			}
-			if err := setter(c.Config.Host); err != nil {
-				errs = append(errs, fmt.Errorf("setter %d: %w", i, err))
-			}
-		case SetNetworkConfig:
-			if setter == nil {
-				continue
-			}
-			if err := setter(c.Config.Network); err != nil {
-				errs = append(errs, fmt.Errorf("setter %d: %w", i, err))
-			}
-		case SetPlatformConfig:
-			if setter == nil {
-				continue
-			}
-			if err := setter(c.Config.Platform); err != nil {
-				errs = append(errs, fmt.Errorf("setter %d: %w", i, err))
-			}
-		default:
-			errs = append(errs, fmt.Errorf("setter %d: invalid setter type: %T", i, setter))
-		}
-
-	}
-	c.Errors = append(c.Errors, errs...)
-	return c
-}
-
-// WithContainerConfig sets the container config via the setter functions.
-// It will return a container with the container config set.
-// If any of the setters return an error, the error will be
-// appended to the container's error slice.
-// parameters:
-//   - setters: the setters to set the container config
-func (c *Container) WithContainerConfig(setters ...SetContainerConfig) *Container {
-	if len(setters) == 0 {
-		return c
-	}
-	for _, setter := range setters {
-		if setter == nil {
-			continue
-		}
-		if err := setter(c.Config.Container); err != nil {
-			c.Errors = append(c.Errors, errdefs.NewContainerConfigError("container", err.Error()))
-			continue
-		}
-	}
-
-	return c
-}
-
-// WithHostConfig sets the host config via the setter functions.
-// It will return a container with the host config set.
-// If any of the setters return an error, the error will be
-// appended to the container's error slice.
-//
-// parameters:
-//   - setters: the setters to set the host config
-func (c *Container) WithHostConfig(setters ...SetHostConfig) *Container {
-	if len(setters) == 0 {
-		return c
-	}
-	for _, setter := range setters {
-		if setter == nil {
-			continue
-		}
-		if err := setter(c.Config.Host); err != nil {
-			c.Errors = append(c.Errors, errdefs.NewHostConfigError("host", err.Error()))
-			continue
-		}
-	}
-	return c
-}
-
-// WithNetworkConfig sets the network config via the setter functions.
-// It will return a container with the network config set.
-// If any of the setters return an error, the error will be
-// appended to the container's error slice.
-//
-// parameters:
-//   - setters: the setters to set the network config
-func (c *Container) WithNetworkConfig(setters ...SetNetworkConfig) *Container {
-	if len(setters) == 0 {
-		return c
-	}
-	for _, setter := range setters {
-		if setter == nil {
-			continue
-		}
-		if err := setter(c.Config.Network); err != nil {
-			c.Errors = append(c.Errors, errdefs.NewNetworkConfigError("network", err.Error()))
-			continue
-		}
-	}
-	return c
-}
-
-// WithPlatformConfig sets the platform config via the setter functions.
-// It will return a container with the platform config set.
-// If any of the setters return an error, the error will be
-// appended to the container's error slice.
-// parameters:
-//   - setters: the setters to set the platform config
-func (c *Container) WithPlatformConfig(setters ...SetPlatformConfig) *Container {
-	if len(setters) == 0 {
-		return c
-	}
-	for _, setter := range setters {
-		if setter == nil {
-			continue
-		}
-		if err := setter(c.Config.Platform); err != nil {
-			c.Errors = append(c.Errors, errdefs.NewPlatformConfigError("platform", err.Error()))
-			continue
-		}
-	}
-	return c
 }

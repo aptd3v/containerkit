@@ -3,8 +3,9 @@ package auth
 import (
 	"encoding/base64"
 	"encoding/json"
+	"fmt"
 
-	"github.com/docker/docker/api/types/registry"
+	"github.com/moby/moby/api/types/registry"
 )
 
 // Auth represents registry authentication credentials
@@ -57,11 +58,13 @@ func WithAuth(creds Auth) SetRegistryAuthConfigOption {
 
 // WithEmail is an optional setter associated with the username.
 //
-// Deprecated: will be removed in a later version of docker.
+// Deprecated: the engine auth config no longer accepts an email address.
 func WithEmail(email string) SetRegistryAuthConfigOption {
 	return func(o *registry.AuthConfig) error {
-		o.Email = email
-		return nil
+		if email == "" {
+			return nil
+		}
+		return fmt.Errorf("email is not supported")
 	}
 }
 

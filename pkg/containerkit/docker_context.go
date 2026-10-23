@@ -149,7 +149,7 @@ func readDockerignore(dir string) (ignoreRules, error) {
 		return ignoreRules{}, fmt.Errorf("read .dockerignore: %w", err)
 	}
 	var rules ignoreRules
-	for _, line := range strings.Split(string(raw), "\n") {
+	for line := range strings.SplitSeq(string(raw), "\n") {
 		pattern, ok := parseIgnoreLine(line)
 		if !ok {
 			continue

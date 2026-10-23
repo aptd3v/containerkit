@@ -3,34 +3,34 @@
 package terminal
 
 import (
+	"context"
 	"os"
 	"os/signal"
 	"syscall"
-
-	"golang.org/x/term"
 )
 
-// GetSize returns the current terminal size
-func (s *Session) GetSize() (width, height int, err error) {
-	return term.GetSize(int(s.stdin.Fd()))
-}
+// watchResize reports window changes until ctx is canceled.
+// A failed size read is skipped so a transient error does not end the session.
+func (s *Session) watchResize(ctx context.Context, resize func(Size) error) error {
+	sigs := make(chan os.Signal, 1)
+	signal.Notify(sigs, syscall.SIGWINCH)
+	defer signal.Stop(sigs)
 
-// MonitorSize sends new terminal sizes over the channel when SIGWINCH is received.
-func (s *Session) MonitorSize() chan MonitorSize {
-	signals := make(chan os.Signal, 1)
-	signal.Notify(signals, syscall.SIGWINCH)
-
-	go func() {
-		defer close(s.resizeCh)
-
-		for range signals {
-			width, height, err := s.GetSize()
-			if err != nil {
-				return
+	for {
+		select {
+		case <-ctx.Done():
+			return nil
+		case <-sigs:
+			if ctx.Err() != nil {
+				return nil
 			}
-			s.resizeCh <- MonitorSize{Width: uint(width), Height: uint(height)}
+			sz, err := s.Size()
+			if err != nil {
+				continue
+			}
+			if err := resize(sz); err != nil {
+				return err
+			}
 		}
-	}()
-
-	return s.resizeCh
+	}
 }
