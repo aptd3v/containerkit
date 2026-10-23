@@ -276,9 +276,14 @@ func TestConvertersNilAndEdge(t *testing.T) {
 	require.Len(t, ports, 1)
 
 	nets := convertNetworks(&network.NetworkingConfig{EndpointsConfig: map[string]*network.EndpointSettings{
-		"n": {IPAMConfig: &network.EndpointIPAMConfig{IPv4Address: "10.0.0.2"}},
+		"n": {
+			GwPriority: 42,
+			IPAMConfig: &network.EndpointIPAMConfig{IPv4Address: "10.0.0.2"},
+		},
 	}})
 	require.Equal(t, "10.0.0.2", nets["n"].Ipv4Address)
+	require.Equal(t, 42, nets["n"].GatewayPriority)
+	require.Zero(t, nets["n"].Priority)
 
 	require.Equal(t, []string{"/run:rw"}, []string(convertTmpfs(map[string]string{"/run": "rw"})))
 	ul := convertUlimits([]*container.Ulimit{nil, {Name: "nofile", Soft: 1, Hard: 2}})
