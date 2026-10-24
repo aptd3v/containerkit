@@ -31,6 +31,7 @@ func (c *Container) AutoRemove() *Container {
 }
 
 // PortBinding publishes one container port on the host.
+// An empty Protocol defaults to TCP. An empty HostIP defaults to 0.0.0.0.
 func (c *Container) PortBinding(binding types.PortBinding) *Container {
 	if binding.ContainerPort == "" {
 		c.Errors = append(c.Errors, errdefs.NewHostConfigError("port_bindings", "empty container port"))
@@ -41,12 +42,10 @@ func (c *Container) PortBinding(binding types.PortBinding) *Container {
 		return c
 	}
 	if binding.HostIP == "" {
-		c.Errors = append(c.Errors, errdefs.NewHostConfigError("port_bindings", "empty host IP"))
-		return c
+		binding.HostIP = "0.0.0.0"
 	}
 	if binding.Protocol == "" {
-		c.Errors = append(c.Errors, errdefs.NewHostConfigError("port_bindings", "empty protocol"))
-		return c
+		binding.Protocol = types.TCP
 	}
 
 	cPort, err := nat.NewPort(string(binding.Protocol), binding.ContainerPort)

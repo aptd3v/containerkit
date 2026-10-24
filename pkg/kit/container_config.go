@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/aptd3v/containerkit/pkg/kit/errdefs"
+	"github.com/aptd3v/containerkit/pkg/kit/types"
 	"github.com/docker/go-connections/nat"
 )
 
@@ -44,11 +45,11 @@ func (c *Container) EnvMap(env map[string]string) *Container {
 // Parameter:
 //   - port: port number or port range to be exposed in the container (e.g., "80-1000" or "80")
 //   - protocol: protocol to be exposed from the container
-func (c *Container) ExposedPort(protocol string, port string) *Container {
+func (c *Container) ExposedPort(protocol types.Protocol, port string) *Container {
 	if c.Config.Container.ExposedPorts == nil {
 		c.Config.Container.ExposedPorts = make(nat.PortSet)
 	}
-	p, err := nat.NewPort(protocol, port)
+	p, err := nat.NewPort(string(protocol), port)
 	if err != nil {
 		c.Errors = append(c.Errors, errdefs.NewContainerConfigError("exposed_port", fmt.Sprintf("invalid exposed port: %s, %s", port, err)))
 		return c

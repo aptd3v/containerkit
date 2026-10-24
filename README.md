@@ -127,6 +127,27 @@ _ = cli.ContainerRemove(ctx, resp.ID, &client.Remove{Force: true, RemoveVolumes:
 
 Pass that same `*kit.Container` to `NewService` when the stack should run under Compose.
 
+### Task graph
+
+`pkg/taskflow` is optional. It orders the same `*kit.Container`, `kit.Build`, and `*kit.Compose` values as a DAG. Import it only when you want that; `pkg/kit` and `pkg/client` do not depend on it.
+
+```go
+flow := taskflow.New("ci", cli)
+build := flow.Build("build",
+	kit.NewBuild().Dockerfile(df),
+	&client.ImageBuild{Tags: []string{"app:ci"}},
+)
+up := flow.Compose("up-db", db, &kit.Up{Detach: true, Wait: true})
+test := flow.Container("test", kit.NewContainer().Image("app:ci"), nil)
+
+test.DependsOn(up.DependsOn(build))
+
+defer flow.Remove(ctx)
+err := flow.Run(ctx, &taskflow.Run{Writer: os.Stdout})
+```
+
+A failed step skips its successors. Full guide: [`pkg/taskflow`](./pkg/taskflow). Demo: [examples/taskflow](./examples/taskflow).
+
 ### Dockerfile
 
 `NewDockerFile` writes a Dockerfile in Go. `ParseDockerfile` wraps a string and `ReadDockerfile` loads a file. `Export` writes the file to disk. A `Build` carries the Dockerfile plus the build context: pass it to `Service.Build` for Compose, or call `Reader` for the tar `client.ImageBuild` accepts.
@@ -220,6 +241,7 @@ Run from the repo root.
 | [examples/mongo_replica](./examples/mongo_replica) | Hybrid | Compose `Up` with `Wait`, then client exec to init a replica set |
 | [examples/terminal](./examples/terminal) | Client | Interactive TTY exec + resize |
 | [examples/structs](./examples/structs) | Config | Mix Docker SDK structs with fluent methods |
+| [examples/taskflow](./examples/taskflow) | Task graph | `pkg/taskflow`: build, Compose `Up`, parallel test containers, retry, `Down` |
 | [examples/supabase](./examples/supabase) | Compose | Full multi-profile stack. See its [README](./examples/supabase/README.md) |
 
 ```bash

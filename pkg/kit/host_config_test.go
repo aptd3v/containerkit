@@ -650,12 +650,14 @@ func TestHostConfigSetters(t *testing.T) {
 		{
 			config: &container.HostConfig{},
 			setFn: func(c *Container) {
-				c.PortBinding(types.PortBinding{Protocol: types.TCP, HostIP: "", HostPort: "8080", ContainerPort: "8080"})
+				c.PortBinding(types.PortBinding{Protocol: types.TCP, HostPort: "8080", ContainerPort: "8080"})
 			},
-			field:    "PortBindings",
-			wantErr:  true,
-			message:  "PortBinding empty host IP",
-			expected: nil,
+			field:   "PortBindings",
+			wantErr: false,
+			message: "PortBinding empty host IP defaults to 0.0.0.0",
+			expected: nat.PortMap{
+				"8080/tcp": []nat.PortBinding{{HostIP: "0.0.0.0", HostPort: "8080"}},
+			},
 		},
 		{
 			config: &container.HostConfig{},
@@ -670,12 +672,14 @@ func TestHostConfigSetters(t *testing.T) {
 		{
 			config: &container.HostConfig{},
 			setFn: func(c *Container) {
-				c.PortBinding(types.PortBinding{Protocol: "", HostIP: "0.0.0.0", HostPort: "8080", ContainerPort: "8080"})
+				c.PortBinding(types.PortBinding{HostIP: "0.0.0.0", HostPort: "8080", ContainerPort: "8080"})
 			},
-			field:    "PortBindings",
-			wantErr:  true,
-			message:  "PortBinding empty protocol",
-			expected: nil,
+			field:   "PortBindings",
+			wantErr: false,
+			message: "PortBinding empty protocol defaults to TCP",
+			expected: nat.PortMap{
+				"8080/tcp": []nat.PortBinding{{HostIP: "0.0.0.0", HostPort: "8080"}},
+			},
 		},
 		{
 			config: &container.HostConfig{},

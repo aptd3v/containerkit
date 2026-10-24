@@ -52,7 +52,7 @@ func TestDockerFileWriterRealBuild(t *testing.T) {
 		Onbuild("RUN true").
 		StopSignal("SIGTERM").
 		Volumes("/data").
-		Healthcheck(kit.NewHealth().CMD("true").Timeout(2).Interval(5).Retries(1)).
+		HealthCheck(kit.NewHealth().CMD("true").Timeout(2).Interval(5).Retries(1)).
 		User("nobody").
 		Shell("/bin/echo", "from-shell").
 		Command("sleep", "infinity")
