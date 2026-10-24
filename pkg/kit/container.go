@@ -14,9 +14,10 @@ import (
 )
 
 type Container struct {
-	Name       string              // the name of the container
-	Config     *types.MergedConfig // merged docker sdk configuration for container creation
-	Errors     []error
+	Name   string              // the name of the container
+	Config *types.MergedConfig // merged docker sdk configuration for container creation
+	Errors []error             // errors encountered during configuration
+	// mountNotes carries Compose mount fields the engine mount type does not store.
 	mountNotes map[string]mountNote
 }
 
