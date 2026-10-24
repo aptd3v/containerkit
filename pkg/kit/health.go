@@ -40,7 +40,7 @@ func (h Health) CMD(args ...string) Health {
 
 // CMDShell sets a CMD-SHELL healthcheck.
 func (h Health) CMDShell(cmd string) Health {
-	return h.Test("CMD-SHELL", cmd)
+	return h.Test(append([]string{"CMD-SHELL"}, cmd)...)
 }
 
 // None disables the healthcheck (HEALTHCHECK NONE).
