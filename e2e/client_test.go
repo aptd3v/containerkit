@@ -18,7 +18,7 @@ import (
 	"github.com/aptd3v/containerkit/pkg/client/auth"
 	"github.com/aptd3v/containerkit/pkg/client/response"
 	"github.com/aptd3v/containerkit/pkg/kit"
-	"github.com/aptd3v/containerkit/pkg/kit/types"
+	"github.com/moby/moby/api/types/container"
 	ocispec "github.com/opencontainers/image-spec/specs-go/v1"
 )
 
@@ -420,7 +420,10 @@ func TestClientContainerMoreOps(t *testing.T) {
 	if err := cli.ContainerRename(ctx, id, renamed); err != nil {
 		t.Fatalf("ContainerRename: %v", err)
 	}
-	if _, err := cli.ContainerUpdate(ctx, id, &client.Update{CPUShares: 512, RestartPolicy: types.RestartPolicyOnFailure, RestartMaxRetry: 1}); err != nil {
+	if _, err := cli.ContainerUpdate(ctx, id, &client.Update{
+		Resources:     &container.Resources{CPUShares: 512},
+		RestartPolicy: &container.RestartPolicy{Name: container.RestartPolicyOnFailure, MaximumRetryCount: 1},
+	}); err != nil {
 		t.Fatalf("ContainerUpdate: %v", err)
 	}
 
@@ -505,7 +508,7 @@ func TestClientContainerMoreOps(t *testing.T) {
 	_ = cli.ContainerCheckpointDelete(ctx, id, &client.CheckpointDelete{CheckpointID: "e2e"})
 
 	tag := ident(t, "i") + ":commit"
-	commit, err := cli.ContainerCommit(ctx, id, &client.Commit{Reference: tag, Comment: "e2e", Pause: false})
+	commit, err := cli.ContainerCommit(ctx, id, &client.Commit{Reference: tag, Comment: "e2e"})
 	if err != nil {
 		t.Fatalf("ContainerCommit: %v", err)
 	}

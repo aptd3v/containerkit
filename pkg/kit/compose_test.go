@@ -36,6 +36,13 @@ func TestIgnoreOrphans(t *testing.T) {
 	require.False(t, ignore)
 }
 
+func TestComposeProject(t *testing.T) {
+	p := NewProject("app")
+	app := NewCompose(p)
+	require.Same(t, p, app.Project())
+	require.Nil(t, (*Compose)(nil).Project())
+}
+
 func TestProjectLoadOptions(t *testing.T) {
 	app := NewCompose(NewProject("app"))
 	app.Global(Global{ProjectDirectory: "/work", AllResources: true, Compatibility: true, EnvFile: []string{"a.env"}})

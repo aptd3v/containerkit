@@ -413,6 +413,20 @@ func TestWithServiceMapsContainerFields(t *testing.T) {
 	require.Equal(t, "writable", imageVols[1].Bind.Recursive)
 }
 
+func TestServiceLabelKeepsExisting(t *testing.T) {
+	p := NewProject("app")
+	p.WithService(NewService("api", NewContainer("api").Image("alpine").Label("app", "web")))
+	p.ServiceLabel("app", "other")
+	p.ServiceLabel("flow", "ci")
+	p.ServiceLabel("flow", "other")
+	p.ServiceLabel("", "x")
+	svc, err := p.GetService("api")
+	require.NoError(t, err)
+	require.Equal(t, "web", svc.Labels["app"])
+	require.Equal(t, "ci", svc.Labels["flow"])
+	require.Nil(t, (*Project)(nil).ServiceLabel("k", "v"))
+}
+
 func TestFirstNonEmptyAndApplySpecs(t *testing.T) {
 	require.Equal(t, "a", firstNonEmpty("a", "b"))
 	require.Equal(t, "b", firstNonEmpty("", "b"))

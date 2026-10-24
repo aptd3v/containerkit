@@ -15,6 +15,7 @@ const (
 
 // PortBinding publishes one container port on the host.
 // Host() is the [nat.PortBinding]; Protocol and ContainerPort become the [nat.Port] map key.
+// An empty Protocol is treated as TCP, and an empty HostIP as 0.0.0.0, when the binding is applied.
 type PortBinding struct {
 	Protocol      Protocol
 	HostIP        string

@@ -167,6 +167,26 @@ func (p *Project) WithService(service *Service) *Project {
 	return p
 }
 
+// ServiceLabel sets a label on every service that does not already have key.
+// Empty key or value is ignored. Labels added after WithService still reach
+// Compose Up; mutating the original *Container does not.
+func (p *Project) ServiceLabel(key, value string) *Project {
+	if p == nil || p.wrapped == nil || key == "" || value == "" {
+		return p
+	}
+	for name, svc := range p.wrapped.Services {
+		if _, exists := svc.Labels[key]; exists {
+			continue
+		}
+		if svc.Labels == nil {
+			svc.Labels = types.Labels{}
+		}
+		svc.Labels[key] = value
+		p.wrapped.Services[name] = svc
+	}
+	return p
+}
+
 func serviceSpec(name string, service *Container) (types.ServiceConfig, error) {
 	config := service.Config
 	if config.Container == nil {

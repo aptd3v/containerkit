@@ -43,6 +43,14 @@ func NewCompose(project *Project) *Compose {
 	}
 }
 
+// Project is the Compose project this runner was constructed with.
+func (c *Compose) Project() *Project {
+	if c == nil {
+		return nil
+	}
+	return c.project
+}
+
 // Global sets parent settings used by every command on this runner.
 func (c *Compose) Global(g Global) *Compose {
 	if c == nil {
