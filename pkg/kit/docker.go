@@ -421,9 +421,9 @@ func (d *Dockerfile) Volumes(volumes ...string) *Dockerfile {
 
 // Healthcheck sets a HEALTHCHECK instruction from a container Health value.
 // Zero interval, timeout, start period, and retries are omitted.
-func (d *Dockerfile) Healthcheck(h Health) *Dockerfile {
+func (d *Dockerfile) HealthCheck(h Health) *Dockerfile {
 	if len(h.test) > 0 && h.test[0] == "NONE" {
-		return d.HealthcheckNone()
+		return d.HealthCheckNone()
 	}
 	c := NewContainer().HealthCheck(h)
 	d.errs = append(d.errs, c.Errors...)
@@ -439,7 +439,7 @@ func (d *Dockerfile) Healthcheck(h Health) *Dockerfile {
 		return d.fail(err)
 	}
 	if cmd == "NONE" {
-		return d.HealthcheckNone()
+		return d.HealthCheckNone()
 	}
 	var flags []string
 	if hc.Interval > 0 {
@@ -462,8 +462,8 @@ func (d *Dockerfile) Healthcheck(h Health) *Dockerfile {
 	return d
 }
 
-// HealthcheckNone sets HEALTHCHECK NONE.
-func (d *Dockerfile) HealthcheckNone() *Dockerfile {
+// HealthCheckNone sets HEALTHCHECK NONE.
+func (d *Dockerfile) HealthCheckNone() *Dockerfile {
 	d.commit("HEALTHCHECK NONE\n", false)
 	return d
 }

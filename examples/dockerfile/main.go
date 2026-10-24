@@ -42,7 +42,7 @@ func run() error {
 		Label("example", "dockerfile").
 		Expose("8080").
 		User("nobody").
-		Healthcheck(kit.NewHealth().
+		HealthCheck(kit.NewHealth().
 			CMDShell("wget -qO- http://127.0.0.1:8080/ >/dev/null").
 			IntervalD("5s").
 			TimeoutD("2s").

@@ -12,7 +12,7 @@ import (
 )
 
 func TestDockerFileBuilder(t *testing.T) {
-	df := NewDockerFile().From("alpine", "latest").FromAs("golang:1.22", "build").Arg("VERSION").Arg("APP", "web").Env("FOO", "bar").Copy("a.txt", "b.txt").Copy("file with space.txt", "/dest with space").Add("src", "dest").Add("src file", "dest dir").Entrypoint("/bin/sh", "-c").Expose("80").Label("k", "v").Onbuild("RUN echo hi").Workdir("/app").StopSignal("SIGTERM").User("root").Comment("note").Volumes("/data", "/logs").Healthcheck(NewHealth().CMD("true").Timeout(1).Interval(1).Retries(1)).Run("apk add --no-cache curl").Run("echo still-run").RunArgs("--no-cache", "ok").Command("sleep", "infinity")
+	df := NewDockerFile().From("alpine", "latest").FromAs("golang:1.22", "build").Arg("VERSION").Arg("APP", "web").Env("FOO", "bar").Copy("a.txt", "b.txt").Copy("file with space.txt", "/dest with space").Add("src", "dest").Add("src file", "dest dir").Entrypoint("/bin/sh", "-c").Expose("80").Label("k", "v").Onbuild("RUN echo hi").Workdir("/app").StopSignal("SIGTERM").User("root").Comment("note").Volumes("/data", "/logs").HealthCheck(NewHealth().CMD("true").Timeout(1).Interval(1).Retries(1)).Run("apk add --no-cache curl").Run("echo still-run").RunArgs("--no-cache", "ok").Command("sleep", "infinity")
 
 	require.NoError(t, df.Validate())
 	s := df.String()
@@ -86,7 +86,7 @@ func TestDockerFileInstructions(t *testing.T) {
 		Checksum:   "sha256:abc",
 		KeepGitDir: true,
 		Link:       true,
-	}).Shell("/bin/bash", "-c").EntrypointShell("nginx", "-g", "daemon off;").HealthcheckNone().Run("echo a").RunLayer("echo b").Run("echo c", RunOpts{
+	}).Shell("/bin/bash", "-c").EntrypointShell("nginx", "-g", "daemon off;").HealthCheckNone().Run("echo a").RunLayer("echo b").Run("echo c", RunOpts{
 		Mount:    []string{"type=cache,target=/cache"},
 		Network:  "none",
 		Security: "sandbox",
@@ -111,18 +111,18 @@ func TestDockerFileInstructions(t *testing.T) {
 }
 
 func TestDockerFileHealthcheckShell(t *testing.T) {
-	df := NewDockerFile().Healthcheck(NewHealth().CMDShell("curl -f http://localhost || exit 1").Interval(5))
+	df := NewDockerFile().HealthCheck(NewHealth().CMDShell("curl -f http://localhost || exit 1").Interval(5))
 	require.NoError(t, df.Validate())
 	require.Equal(t,
 		"HEALTHCHECK --interval=5s \\\n\tCMD curl -f http://localhost || exit 1\n",
 		df.String(),
 	)
 
-	none := NewDockerFile().Healthcheck(NewHealth().None())
+	none := NewDockerFile().HealthCheck(NewHealth().None())
 	require.NoError(t, none.Validate())
 	require.Equal(t, "HEALTHCHECK NONE\n", none.String())
 
-	bad := NewDockerFile().Healthcheck(NewHealth().Timeout(-1).CMD("true"))
+	bad := NewDockerFile().HealthCheck(NewHealth().Timeout(-1).CMD("true"))
 	require.Error(t, bad.Validate())
 	require.Empty(t, bad.String())
 }

@@ -48,7 +48,8 @@ func run(ctx context.Context, cmd string) error {
 					From(baseImage).
 					Label(labelKey, labelValue).
 					Workdir(workdir).
-					Run(cmd).Command("sleep", "5s"),
+					Run(cmd).
+					Command("sleep", "5s"),
 			))
 	_, err = project.WriteTo(os.Stdout)
 	if err != nil {
