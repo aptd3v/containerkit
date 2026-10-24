@@ -14,20 +14,12 @@ It executes the privileged function if the operation is unauthorized and it
 tries one more time. It's up to the caller to handle the io.ReadCloser and close it properly.
 */
 func (c *Client) ImagePull(ctx context.Context, ref string, opt *ImagePull) (io.ReadCloser, error) {
-	op, err := opt.apply()
-	if err != nil {
-		return nil, err
-	}
-	return c.wrapped.ImagePull(ctx, ref, op)
+	return c.wrapped.ImagePull(ctx, ref, opt.apply())
 }
 
 // ImageCreate pulls ref and creates a local image. The engine no longer exposes a separate create call.
 func (c *Client) ImageCreate(ctx context.Context, ref string, opt *ImageCreate) (io.ReadCloser, error) {
-	op, err := opt.apply()
-	if err != nil {
-		return nil, err
-	}
-	return c.wrapped.ImagePull(ctx, ref, op)
+	return c.wrapped.ImagePull(ctx, ref, opt.apply())
 }
 
 /*
@@ -112,11 +104,7 @@ func (c *Client) ImageRemove(ctx context.Context, ref string, opt *ImageRemove) 
 
 // ImageSearch makes the docker host search by a term in a remote registry. The list of results is not sorted in any fashion.
 func (c *Client) ImageSearch(ctx context.Context, term string, opt *ImageSearch) ([]response.ImageSearchResult, error) {
-	op, err := opt.apply()
-	if err != nil {
-		return nil, err
-	}
-	resp, err := c.wrapped.ImageSearch(ctx, term, op)
+	resp, err := c.wrapped.ImageSearch(ctx, term, opt.apply())
 	if err != nil {
 		return nil, err
 	}
@@ -131,11 +119,7 @@ func (c *Client) ImageSearch(ctx context.Context, term string, opt *ImageSearch)
 // the privileged function if the operation is unauthorized and it tries one more time.
 // Nil options push with an empty auth header. It's up to the caller to handle the io.ReadCloser and close it properly.
 func (c *Client) ImagePush(ctx context.Context, ref string, opt *ImagePush) (io.ReadCloser, error) {
-	op, err := opt.apply()
-	if err != nil {
-		return nil, err
-	}
-	return c.wrapped.ImagePush(ctx, ref, op)
+	return c.wrapped.ImagePush(ctx, ref, opt.apply())
 }
 
 // ImageImport creates a new image based on the source options. It returns the JSON content in the response body.
@@ -143,18 +127,15 @@ func (c *Client) ImageImport(ctx context.Context, ref string, opt *ImageImport) 
 	if opt == nil {
 		opt = &ImageImport{}
 	}
-	options := sdk.ImageImportOptions{
-		Tag:     opt.Tag,
-		Message: opt.Message,
-		Changes: opt.Changes,
-	}
-	if platform, ok := parsePlatform(opt.Platform); ok {
-		options.Platform = platform
-	}
 	return c.wrapped.ImageImport(ctx, sdk.ImageImportSource{
 		Source:     opt.Source,
 		SourceName: opt.SourceName,
-	}, ref, options)
+	}, ref, sdk.ImageImportOptions{
+		Tag:      opt.Tag,
+		Message:  opt.Message,
+		Changes:  opt.Changes,
+		Platform: opt.Platform,
+	})
 }
 
 /*
@@ -176,7 +157,7 @@ func (c *Client) ImageLoad(ctx context.Context, opt *ImageLoad) (*response.Image
 
 // ImagesPrune requests the daemon to delete unused data.
 func (c *Client) ImagesPrune(ctx context.Context, opt *ImagePrune) (*response.PruneReport, error) {
-	resp, err := c.wrapped.ImagePrune(ctx, sdk.ImagePruneOptions{Filters: opt.apply()})
+	resp, err := c.wrapped.ImagePrune(ctx, opt.apply())
 	if err != nil {
 		return nil, err
 	}

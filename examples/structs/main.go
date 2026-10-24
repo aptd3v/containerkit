@@ -6,7 +6,8 @@ import (
 	"runtime"
 	"time"
 
-	"github.com/aptd3v/containerkit/pkg/containerkit"
+	"github.com/aptd3v/containerkit/pkg/kit"
+	"github.com/aptd3v/containerkit/pkg/kit/types"
 	"github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/api/types/network"
 	"github.com/docker/go-connections/nat"
@@ -18,14 +19,14 @@ var (
 )
 
 func main() {
-	project := containerkit.NewProject("my-project")
+	project := kit.NewProject("my-project")
 	// Service created entirely using Docker SDK native structs and then mutated using containerkit methods
 	alpine := MyAlpineBaseService(architecture)
 	alpine.ExposedPort("tcp", "8080")
 	if alpine.Config != nil && alpine.Config.Container != nil && alpine.Config.Container.Healthcheck != nil {
 		alpine.Config.Container.Healthcheck.Test = append(alpine.Config.Container.Healthcheck.Test, "http://localhost:8080")
 	}
-	project.WithService("my-alpine-service", alpine)
+	project.WithService(kit.NewService("my-alpine-service", alpine))
 	err := project.Export("./examples/structs/docker-compose.yml", 0644)
 	if err != nil {
 		log.Fatalf("Error exporting project: %v", err)
@@ -33,9 +34,9 @@ func main() {
 
 }
 
-func MyAlpineBaseService(architecture string) *containerkit.Container {
-	return &containerkit.Container{
-		Config: &containerkit.MergedConfig{
+func MyAlpineBaseService(architecture string) *kit.Container {
+	return &kit.Container{
+		Config: &types.MergedConfig{
 			Container: &container.Config{
 				Image: "alpine",
 				Cmd:   []string{"tail", "-f", "/dev/null"},

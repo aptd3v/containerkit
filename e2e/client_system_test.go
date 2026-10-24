@@ -12,7 +12,7 @@ import (
 	"time"
 
 	"github.com/aptd3v/containerkit/pkg/client"
-	"github.com/aptd3v/containerkit/pkg/containerkit"
+	"github.com/aptd3v/containerkit/pkg/kit"
 )
 
 func TestClientMeta(t *testing.T) {
@@ -136,7 +136,7 @@ func TestClientEvents(t *testing.T) {
 	}
 
 	name := ident(t, "c")
-	ctr := containerkit.NewContainer(name).Image(alpine).Command("true")
+	ctr := kit.NewContainer(name).Image(alpine).Command("true")
 	created, err := cli.ContainerCreate(ctx, ctr)
 	if err != nil {
 		t.Fatalf("ContainerCreate: %v", err)
@@ -146,11 +146,7 @@ func TestClientEvents(t *testing.T) {
 	evCtx, evCancel := context.WithTimeout(ctx, 30*time.Second)
 	defer evCancel()
 	msgs, errs = cli.Events(evCtx, &client.EngineEvents{
-		Filters: []client.Filter{
-			{Key: "type", Value: "container"},
-			{Key: "container", Value: created.ID},
-			{Key: "event", Value: "start"},
-		},
+		Filters: make(client.Filters).Add("type", "container").Add("container", created.ID).Add("event", "start"),
 	})
 	if err := cli.ContainerStart(ctx, created.ID, nil); err != nil {
 		t.Fatalf("ContainerStart: %v", err)
@@ -189,7 +185,7 @@ func TestClientEngineErrors(t *testing.T) {
 	}
 
 	name := ident(t, "c")
-	ctr := containerkit.NewContainer(name).Image(alpine).Command("true")
+	ctr := kit.NewContainer(name).Image(alpine).Command("true")
 	created, err := cli.ContainerCreate(ctx, ctr)
 	if err != nil {
 		t.Fatalf("ContainerCreate: %v", err)
@@ -244,7 +240,7 @@ func TestClientNetworkAndImageFilters(t *testing.T) {
 	if _, err := cli.NetworkInspect(ctx, net.ID, &client.NetworkInspect{Verbose: true}); err != nil {
 		t.Fatalf("NetworkInspect verbose: %v", err)
 	}
-	listed, err := cli.NetworkList(ctx, &client.NetworkList{Filters: []client.Filter{{Key: "name", Value: netName}}})
+	listed, err := cli.NetworkList(ctx, &client.NetworkList{Filters: make(client.Filters).Add("name", netName)})
 	if err != nil {
 		t.Fatalf("NetworkList filter: %v", err)
 	}
@@ -261,7 +257,7 @@ func TestClientNetworkAndImageFilters(t *testing.T) {
 	imgs, err := cli.ImageList(ctx, &client.ImageList{
 		All:        true,
 		SharedSize: true,
-		Filters:    []client.Filter{{Key: "reference", Value: alpine}},
+		Filters:    make(client.Filters).Add("reference", alpine),
 	})
 	if err != nil {
 		t.Fatalf("ImageList filter: %v", err)
@@ -290,7 +286,7 @@ func TestClientNetworkAndImageFilters(t *testing.T) {
 		defer cancel()
 		_ = cli.VolumeRemove(c, vol.Name, true)
 	})
-	vols, err := cli.VolumeList(ctx, &client.VolumeList{Filters: []client.Filter{{Key: "name", Value: vol.Name}}})
+	vols, err := cli.VolumeList(ctx, &client.VolumeList{Filters: make(client.Filters).Add("name", vol.Name)})
 	if err != nil {
 		t.Fatalf("VolumeList filter: %v", err)
 	}

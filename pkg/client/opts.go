@@ -1,26 +1,29 @@
 package client
 
-import sdk "github.com/moby/moby/client"
+import (
+	"github.com/moby/moby/api/types/container"
+	sdk "github.com/moby/moby/client"
+)
 
-// Filter is a key/value filter passed to list and prune operations.
-type Filter struct {
-	Key   string
-	Value string
-}
+// Filters is [sdk.Filters].
+type Filters = sdk.Filters
 
-func argsFromFilters(fs []Filter) sdk.Filters {
-	out := make(sdk.Filters)
-	for _, f := range fs {
-		out.Add(f.Key, f.Value)
-	}
-	return out
-}
-
-// WaitCondition is a container state to wait for.
-type WaitCondition string
+// WaitCondition is [container.WaitCondition].
+type WaitCondition = container.WaitCondition
 
 const (
-	WaitConditionNotRunning WaitCondition = "not-running"
-	WaitConditionNextExit   WaitCondition = "next-exit"
-	WaitConditionRemoved    WaitCondition = "removed"
+	WaitConditionNotRunning = container.WaitConditionNotRunning
+	WaitConditionNextExit   = container.WaitConditionNextExit
+	WaitConditionRemoved    = container.WaitConditionRemoved
 )
+
+// ConsoleSize is [sdk.ConsoleSize].
+type ConsoleSize = sdk.ConsoleSize
+
+func apply[T any](o *T) T {
+	if o == nil {
+		var z T
+		return z
+	}
+	return *o
+}

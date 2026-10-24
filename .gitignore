@@ -27,6 +27,16 @@ go.work.sum
 # env file
 .env
 
+# containerkitd local data
+/data/
+/bin/
+
+# temporarily omitted from this release
+/web/
+/internal/server/
+/api/
+/cmd/
+
 
 # Editor/IDE
 # .idea/
