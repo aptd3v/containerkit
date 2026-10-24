@@ -8,14 +8,14 @@ import (
 
 	"github.com/aptd3v/containerkit/pkg/client/response"
 	"github.com/aptd3v/containerkit/pkg/client/terminal"
-	"github.com/aptd3v/containerkit/pkg/containerkit"
+	"github.com/aptd3v/containerkit/pkg/kit"
 	"github.com/moby/moby/api/types/container"
 	"github.com/moby/moby/api/types/network"
 	sdk "github.com/moby/moby/client"
 )
 
 // ContainerCreate creates a new container based on the given configuration. It can be associated with a name, but it's not mandatory.
-func (c *Client) ContainerCreate(ctx context.Context, created *containerkit.Container) (*response.ContainerCreate, error) {
+func (c *Client) ContainerCreate(ctx context.Context, created *kit.Container) (*response.ContainerCreate, error) {
 	if err := created.Validate(); err != nil {
 		return nil, err
 	}
@@ -127,7 +127,7 @@ ContainerStart request.
 */
 func (c *Client) ContainerWait(ctx context.Context, id string, condition WaitCondition) (<-chan response.ContainerWait, <-chan error) {
 	waited := c.wrapped.ContainerWait(ctx, id, sdk.ContainerWaitOptions{
-		Condition: container.WaitCondition(condition),
+		Condition: condition,
 	})
 	waitCh, errCh := waited.Result, waited.Error
 
@@ -206,7 +206,7 @@ func (c *Client) ContainerExecStart(ctx context.Context, execID string, opt *Exe
 // ContainerExecResize changes the size of the tty for an exec process running inside a container.
 func (c *Client) ContainerExecResize(ctx context.Context, execID string, opt *Resize) error {
 	size := opt.apply()
-	_, err := c.wrapped.ExecResize(ctx, execID, sdk.ExecResizeOptions{Height: size.Height, Width: size.Width})
+	_, err := c.wrapped.ExecResize(ctx, execID, sdk.ExecResizeOptions(size))
 	return err
 }
 
@@ -242,7 +242,7 @@ func (c *Client) ContainerUnpause(ctx context.Context, id string) error {
 
 // ContainerPrune requests the daemon to delete unused data
 func (c *Client) ContainerPrune(ctx context.Context, opt *Prune) (*response.ContainerPruneReport, error) {
-	prune, err := c.wrapped.ContainerPrune(ctx, sdk.ContainerPruneOptions{Filters: opt.apply()})
+	prune, err := c.wrapped.ContainerPrune(ctx, opt.apply())
 	if err != nil {
 		return nil, err
 	}
@@ -251,11 +251,7 @@ func (c *Client) ContainerPrune(ctx context.Context, opt *Prune) (*response.Cont
 
 // ContainerCommit applies changes to a container and creates a new tagged image.
 func (c *Client) ContainerCommit(ctx context.Context, id string, opt *Commit) (*response.ContainerCommitResponse, error) {
-	op, err := opt.apply()
-	if err != nil {
-		return nil, err
-	}
-	commit, err := c.wrapped.ContainerCommit(ctx, id, op)
+	commit, err := c.wrapped.ContainerCommit(ctx, id, opt.apply())
 	if err != nil {
 		return nil, err
 	}

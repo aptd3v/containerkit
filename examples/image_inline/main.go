@@ -1,4 +1,5 @@
-// Build a tagged image from an inline Dockerfile, then run it.
+// Build an image if it doesn't exist, tag it, then run it. Subsequent runs
+// reuse the image and Compose skips the build.
 //
 // The Engine client inspects the tag first. A second run reuses the image
 // and Compose skips the build.
@@ -11,62 +12,83 @@ import (
 	"os"
 
 	"github.com/aptd3v/containerkit/pkg/client"
-	"github.com/aptd3v/containerkit/pkg/containerkit"
+	"github.com/aptd3v/containerkit/pkg/kit"
 )
 
-const imageRef = "hello-inline:example"
+const (
+	baseImage   = "alpine:latest"
+	taggedImage = "hello-inline:v1"
+	svcName     = "hello-image-inline"
+	projectName = "image-inline"
+	workdir     = "/app"
+	labelKey    = "example"
+	labelValue  = "image-inline"
+)
 
 func main() {
-	if err := run(); err != nil {
+	ctx := context.Background()
+	if err := run(ctx, "echo 'Hello, World!' > hello.txt"); err != nil {
 		log.Fatal(err)
 	}
 }
 
-func run() error {
-	ctx := context.Background()
-	cli, err := client.NewClient(client.FromEnv(), client.WithAPIVersionFromEnv())
+func run(ctx context.Context, cmd string) error {
+	imageExists, err := ImageExists(ctx, taggedImage)
 	if err != nil {
-		return err
+		return fmt.Errorf("image exists: %w", err)
 	}
-	defer cli.Close()
-
-	img, err := cli.ImageInspect(ctx, imageRef, nil)
-	if err != nil && !client.IsErrNotFound(err) {
-		return err
-	}
-
-	df := containerkit.NewDockerFile().
-		From("alpine", "latest").
-		Label("example", "image-inline").
-		Workdir("/app").
-		Run(`printf 'Hello, World!\n' > hello.txt`).
-		CommandExec("cat", "hello.txt")
-
-	project := containerkit.NewProject("image-inline")
-	project.WithService("hello",
-		containerkit.NewContainer().Image(imageRef),
-		df.WithInline(),
-	)
-	if err := project.Validate(); err != nil {
-		return fmt.Errorf("validate: %w", err)
+	project := kit.NewProject(projectName)
+	project.WithService(
+		kit.NewService(
+			svcName,
+			SimpleContainer(taggedImage),
+		).
+			Dockerfile(
+				kit.NewDockerFile().
+					From(baseImage).
+					Label(labelKey, labelValue).
+					Workdir(workdir).
+					Run(cmd).Command("sleep", "5s"),
+			))
+	_, err = project.WriteTo(os.Stdout)
+	if err != nil {
+		return fmt.Errorf("write to stdout: %w", err)
 	}
 
-	app := containerkit.NewCompose(project)
+	app := kit.NewCompose(project)
+
 	defer func() {
-		if err := app.Down(context.Background(), &containerkit.Down{RemoveOrphans: true}); err != nil {
+		if err := Down(ctx, app); err != nil {
 			log.Printf("down: %v", err)
 		}
 	}()
 
-	if img == nil {
-		fmt.Print(df.String())
-	} else {
-		fmt.Printf("reusing %s\n", imageRef)
-	}
+	return Up(ctx, app, imageExists)
+}
 
-	return app.Up(ctx, &containerkit.Up{
-		Build:         img == nil,
-		RemoveOrphans: true,
+func Down(ctx context.Context, app *kit.Compose) error {
+	return app.Down(ctx, &kit.Down{RemoveOrphans: true})
+}
+
+func Up(ctx context.Context, app *kit.Compose, exists bool) error {
+	return app.Up(ctx, &kit.Up{
+		Build:         !exists,
+		RemoveOrphans: false,
 		Writer:        os.Stdout,
 	})
+}
+func SimpleContainer(image string) *kit.Container {
+	return kit.NewContainer().Image(image)
+}
+func ImageExists(ctx context.Context, ref string) (bool, error) {
+	cli, err := client.NewClient(client.FromEnv(), client.WithAPIVersionFromEnv())
+	if err != nil {
+		return false, err
+	}
+	defer cli.Close()
+	img, err := cli.ImageInspect(ctx, ref, nil)
+	if client.IsErrNotFound(err) {
+		return false, nil
+	}
+	return img != nil, err
 }

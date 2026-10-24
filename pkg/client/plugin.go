@@ -32,20 +32,12 @@ func (c *Client) PluginInspect(ctx context.Context, name string) (*response.Plug
 
 // PluginInstall installs a plugin. The caller closes the progress stream.
 func (c *Client) PluginInstall(ctx context.Context, name string, opt *PluginInstall) (io.ReadCloser, error) {
-	op, err := opt.apply()
-	if err != nil {
-		return nil, err
-	}
-	return c.wrapped.PluginInstall(ctx, name, op)
+	return c.wrapped.PluginInstall(ctx, name, opt.apply())
 }
 
 // PluginUpgrade upgrades an installed plugin. The caller closes the progress stream.
 func (c *Client) PluginUpgrade(ctx context.Context, name string, opt *PluginUpgrade) (io.ReadCloser, error) {
-	op, err := opt.apply()
-	if err != nil {
-		return nil, err
-	}
-	return c.wrapped.PluginUpgrade(ctx, name, op)
+	return c.wrapped.PluginUpgrade(ctx, name, opt.apply())
 }
 
 // PluginCreate creates a plugin from a local rootfs tar. createContext is that tar.
@@ -80,9 +72,5 @@ func (c *Client) PluginSet(ctx context.Context, name string, opt *PluginSet) err
 
 // PluginPush pushes a plugin to a registry. The caller closes the progress stream.
 func (c *Client) PluginPush(ctx context.Context, name string, opt *PluginPush) (io.ReadCloser, error) {
-	op, err := opt.apply()
-	if err != nil {
-		return nil, err
-	}
-	return c.wrapped.PluginPush(ctx, name, op)
+	return c.wrapped.PluginPush(ctx, name, opt.apply())
 }

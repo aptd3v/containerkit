@@ -20,7 +20,7 @@ import (
 	"log"
 	"os"
 
-	"github.com/aptd3v/containerkit/pkg/containerkit"
+	"github.com/aptd3v/containerkit/pkg/kit"
 )
 
 const (
@@ -29,18 +29,18 @@ const (
 )
 
 func main() {
-	project := containerkit.NewProject(ProjectName)
-	project.WithService(ServiceName, AlpineContainer("latest"))
+	project := kit.NewProject(ProjectName)
+	project.WithService(kit.NewService(ServiceName, AlpineContainer("latest")))
 
 	ctx := context.Background()
-	app := containerkit.NewCompose(project)
-	if err := app.Up(ctx, &containerkit.Up{Writer: os.Stdout}); err != nil {
+	app := kit.NewCompose(project)
+	if err := app.Up(ctx, &kit.Up{Writer: os.Stdout}); err != nil {
 		log.Fatal(err)
 	}
 }
 
-func AlpineContainer(tag string) *containerkit.Container {
-	return containerkit.NewContainer().
+func AlpineContainer(tag string) *kit.Container {
+	return kit.NewContainer().
 		Imagef("alpine:%s", tag).
 		Command("echo", "hello, world")
 }

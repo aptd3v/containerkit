@@ -9,11 +9,13 @@ import (
 	"log"
 	"os"
 	"os/signal"
+	"runtime"
 	"syscall"
 
 	"github.com/aptd3v/containerkit/pkg/client"
 	"github.com/aptd3v/containerkit/pkg/client/terminal"
-	"github.com/aptd3v/containerkit/pkg/containerkit"
+	"github.com/aptd3v/containerkit/pkg/kit"
+	ocispec "github.com/opencontainers/image-spec/specs-go/v1"
 )
 
 func main() {
@@ -26,7 +28,7 @@ func run() error {
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer stop()
 
-	alpineContainer := containerkit.NewContainer("exec", "example").
+	alpineContainer := kit.NewContainer("exec", "example").
 		Image("alpine:latest").
 		Command("tail", "-f", "/dev/null")
 
@@ -41,7 +43,7 @@ func run() error {
 			return err
 		}
 		fmt.Fprintln(os.Stderr, "pulling alpine:latest")
-		pulled, err := cli.ImagePull(ctx, "alpine:latest", &client.ImagePull{CurrentPlatform: true})
+		pulled, err := cli.ImagePull(ctx, "alpine:latest", &client.ImagePull{Platforms: []ocispec.Platform{{OS: "linux", Architecture: runtime.GOARCH}}})
 		if err != nil {
 			return err
 		}
@@ -65,14 +67,14 @@ func run() error {
 		AttachStderr: true,
 		AttachStdin:  true,
 		AttachStdout: true,
-		Tty:          true,
-		Command:      []string{"/bin/sh"},
+		TTY:          true,
+		Cmd:          []string{"/bin/sh"},
 	})
 	if err != nil {
 		return err
 	}
 
-	session, err := cli.ContainerExecAttachTerminal(ctx, execCreate.ID, &client.ExecAttach{Tty: true})
+	session, err := cli.ContainerExecAttachTerminal(ctx, execCreate.ID, &client.ExecAttach{TTY: true})
 	if err != nil {
 		return err
 	}

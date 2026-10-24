@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"io"
 	"net"
+	"runtime"
 	"strings"
 	"testing"
 	"time"
@@ -16,7 +17,9 @@ import (
 	"github.com/aptd3v/containerkit/pkg/client"
 	"github.com/aptd3v/containerkit/pkg/client/auth"
 	"github.com/aptd3v/containerkit/pkg/client/response"
-	"github.com/aptd3v/containerkit/pkg/containerkit"
+	"github.com/aptd3v/containerkit/pkg/kit"
+	"github.com/aptd3v/containerkit/pkg/kit/types"
+	ocispec "github.com/opencontainers/image-spec/specs-go/v1"
 )
 
 func TestClientImagePullInspectList(t *testing.T) {
@@ -56,7 +59,7 @@ func TestClientContainerLifecycle(t *testing.T) {
 	cli := newCLI(t)
 	pullAlpine(t, cli)
 	name := ident(t, "c")
-	ctr := containerkit.NewContainer(name).
+	ctr := kit.NewContainer(name).
 		Image(alpine).
 		Command("sleep", "infinity")
 	if err := ctr.Validate(); err != nil {
@@ -98,7 +101,7 @@ func TestClientContainerLifecycle(t *testing.T) {
 	execResp, err := cli.ContainerExecCreate(ctx, id, &client.Exec{
 		AttachStdout: true,
 		AttachStderr: true,
-		Command:      []string{"echo", "client-ok"},
+		Cmd:          []string{"echo", "client-ok"},
 	})
 	if err != nil {
 		t.Fatalf("ContainerExecCreate: %v", err)
@@ -150,7 +153,7 @@ func TestClientContainerLifecycle(t *testing.T) {
 	if err := cli.ContainerStop(ctx, id, &client.Stop{}); err != nil {
 		t.Fatalf("ContainerStop: %v", err)
 	}
-	if err := cli.ContainerRemove(ctx, id, &client.Remove{Force: true, Volumes: true}); err != nil {
+	if err := cli.ContainerRemove(ctx, id, &client.Remove{Force: true, RemoveVolumes: true}); err != nil {
 		t.Fatalf("ContainerRemove: %v", err)
 	}
 }
@@ -192,7 +195,7 @@ func TestClientNetwork(t *testing.T) {
 		t.Fatal("NetworkList: created network missing")
 	}
 
-	ctr := containerkit.NewContainer(ctrName).Image(alpine).Command("sleep", "infinity")
+	ctr := kit.NewContainer(ctrName).Image(alpine).Command("sleep", "infinity")
 	created, err := cli.ContainerCreate(ctx, ctr)
 	if err != nil {
 		t.Fatalf("ContainerCreate: %v", err)
@@ -262,10 +265,10 @@ func TestClientImageBuild(t *testing.T) {
 	cli := newCLI(t)
 	pullAlpine(t, cli)
 	tag := ident(t, "i") + ":e2e"
-	df := containerkit.NewDockerFile().From("alpine", "latest").CommandExec("true")
-	ctxReader, err := df.NewLocalBuildContext(t.TempDir())
+	df := kit.NewDockerFile().From("alpine:latest").Command("true")
+	ctxReader, err := kit.NewBuild().Dockerfile(df).Reader()
 	if err != nil {
-		t.Fatalf("NewLocalBuildContext: %v", err)
+		t.Fatalf("Reader: %v", err)
 	}
 
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Minute)
@@ -302,7 +305,7 @@ func TestClientNilOptions(t *testing.T) {
 	cli := newCLI(t)
 	pullAlpine(t, cli)
 	name := ident(t, "c")
-	ctr := containerkit.NewContainer(name).Image(alpine).Command("true")
+	ctr := kit.NewContainer(name).Image(alpine).Command("true")
 	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Minute)
 	defer cancel()
 
@@ -386,7 +389,7 @@ func TestClientContainerMoreOps(t *testing.T) {
 	pullAlpine(t, cli)
 	name := ident(t, "c")
 	renamed := ident(t, "r")
-	ctr := containerkit.NewContainer(name).Image(alpine).Command("sleep", "infinity")
+	ctr := kit.NewContainer(name).Image(alpine).Command("sleep", "infinity")
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Minute)
 	defer cancel()
 
@@ -400,7 +403,7 @@ func TestClientContainerMoreOps(t *testing.T) {
 		t.Fatalf("ContainerStart: %v", err)
 	}
 
-	list, err := cli.ContainerList(ctx, &client.List{All: true, Size: true, Filters: []client.Filter{{Key: "name", Value: name}}})
+	list, err := cli.ContainerList(ctx, &client.List{All: true, Size: true, Filters: make(client.Filters).Add("name", name)})
 	if err != nil {
 		t.Fatalf("ContainerList: %v", err)
 	}
@@ -417,7 +420,7 @@ func TestClientContainerMoreOps(t *testing.T) {
 	if err := cli.ContainerRename(ctx, id, renamed); err != nil {
 		t.Fatalf("ContainerRename: %v", err)
 	}
-	if _, err := cli.ContainerUpdate(ctx, id, &client.Update{CPUShares: 512, RestartPolicy: containerkit.RestartPolicyOnFailure, RestartMaxRetry: 1}); err != nil {
+	if _, err := cli.ContainerUpdate(ctx, id, &client.Update{CPUShares: 512, RestartPolicy: types.RestartPolicyOnFailure, RestartMaxRetry: 1}); err != nil {
 		t.Fatalf("ContainerUpdate: %v", err)
 	}
 
@@ -470,7 +473,7 @@ func TestClientContainerMoreOps(t *testing.T) {
 	}
 
 	execResp, err := cli.ContainerExecCreate(ctx, id, &client.Exec{
-		Command: []string{"true"},
+		Cmd: []string{"true"},
 	})
 	if err != nil {
 		t.Fatalf("ContainerExecCreate detach: %v", err)
@@ -520,7 +523,7 @@ func TestClientContainerMoreOps(t *testing.T) {
 		t.Fatalf("ContainerKill: %v", err)
 	}
 
-	never := []client.Filter{{Key: "label", Value: "containerkit-e2e=never"}}
+	never := make(client.Filters).Add("label", "containerkit-e2e=never")
 	if _, err := cli.ContainerPrune(ctx, &client.Prune{Filters: never}); err != nil {
 		t.Fatalf("ContainerPrune: %v", err)
 	}
@@ -588,7 +591,7 @@ func TestClientImageMoreOps(t *testing.T) {
 		_, _ = io.Copy(io.Discard, io.LimitReader(rc, 1024))
 		rc.Close()
 	}
-	if _, err := cli.ImagesPrune(ctx, &client.ImagePrune{Filters: []client.Filter{{Key: "label", Value: "containerkit-e2e=never"}}}); err != nil {
+	if _, err := cli.ImagesPrune(ctx, &client.ImagePrune{Filters: make(client.Filters).Add("label", "containerkit-e2e=never")}); err != nil {
 		t.Fatalf("ImagesPrune: %v", err)
 	}
 	if _, err := cli.ImageSave(ctx, nil); err != nil {
@@ -605,7 +608,7 @@ func TestClientNetworkVolumePrune(t *testing.T) {
 	cli := newCLI(t)
 	ctx, cancel := context.WithTimeout(context.Background(), time.Minute)
 	defer cancel()
-	never := []client.Filter{{Key: "label", Value: "containerkit-e2e=never"}}
+	never := make(client.Filters).Add("label", "containerkit-e2e=never")
 	if _, err := cli.NetworksPrune(ctx, &client.NetworkPrune{Filters: never}); err != nil {
 		t.Fatalf("NetworksPrune: %v", err)
 	}
@@ -639,7 +642,7 @@ func TestClientRegistryLogin(t *testing.T) {
 	defer cancel()
 
 	const image = "registry:2"
-	pulled, err := cli.ImagePull(ctx, image, &client.ImagePull{CurrentPlatform: true})
+	pulled, err := cli.ImagePull(ctx, image, &client.ImagePull{Platforms: []ocispec.Platform{{OS: "linux", Architecture: runtime.GOARCH}}})
 	if err != nil {
 		t.Fatalf("ImagePull registry: %v", err)
 	}
@@ -650,7 +653,7 @@ func TestClientRegistryLogin(t *testing.T) {
 	pulled.Close()
 
 	name := ident(t, "reg")
-	ctr := containerkit.NewContainer(name).Image(image)
+	ctr := kit.NewContainer(name).Image(image)
 	if err := ctr.Validate(); err != nil {
 		t.Fatalf("Validate: %v", err)
 	}

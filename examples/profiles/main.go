@@ -7,7 +7,7 @@ import (
 	"log"
 	"strings"
 
-	"github.com/aptd3v/containerkit/pkg/containerkit"
+	"github.com/aptd3v/containerkit/pkg/kit"
 )
 
 var (
@@ -23,43 +23,36 @@ with a specific profile.
 )
 
 func main() {
-	project := containerkit.NewProject("my-project")
-	project.WithService("never-service",
-		containerkit.NewContainer().
+	project := kit.NewProject("my-project")
+	project.WithService(kit.NewService("never-service",
+		kit.NewContainer().
 			Image("alpine:latest").
 			Command("echo", "you wont see me"),
-		containerkit.Profiles("never"),
-	)
-	project.WithService("never-ever-service",
-		containerkit.NewContainer().
+	).Profiles("never"))
+	project.WithService(kit.NewService("never-ever-service",
+		kit.NewContainer().
 			Image("alpine:latest").
 			Command("echo", "you wont see me part II"),
-		containerkit.Profiles("never-ever"),
-	)
-	project.WithService("kill-me-service",
-		containerkit.NewContainer().
+	).Profiles("never-ever"))
+	project.WithService(kit.NewService("kill-me-service",
+		kit.NewContainer().
 			Image("alpine:latest").
 			Command("tail", "-f", "/dev/null"),
-		containerkit.Profiles("kill-me"),
-	)
+	).Profiles("kill-me"))
 
-	for i, word := range strings.Split(paragraph, "\n") {
-		serviceName := fmt.Sprintf("service%d", i)
-		extras := []any{containerkit.Profiles(selectedProfile)}
-		if i > 0 {
-			extras = append(extras, containerkit.DependsOn(fmt.Sprintf("service%d", i-1)))
-		}
-		project.WithService(serviceName,
-			containerkit.NewContainer().
-				Image("alpine:latest").
-				Command("echo", word),
-			extras...,
-		)
+	words := strings.Split(paragraph, "\n")
+	project.WithService(kit.NewService("service0",
+		kit.NewContainer().Image("alpine:latest").Command("echo", words[0]),
+	).Profiles(selectedProfile))
+	for i := 1; i < len(words); i++ {
+		project.WithService(kit.NewService(fmt.Sprintf("service%d", i),
+			kit.NewContainer().Image("alpine:latest").Command("echo", words[i]),
+		).Profiles(selectedProfile).DependsOn(fmt.Sprintf("service%d", i-1)))
 	}
-	example := containerkit.NewCompose(project)
+	example := kit.NewCompose(project)
 	err := example.Up(
 		context.Background(),
-		&containerkit.Up{
+		&kit.Up{
 			Profiles:      []string{selectedProfile},
 			NoLogPrefix:   true,
 			RemoveOrphans: true,
@@ -70,7 +63,7 @@ func main() {
 		log.Fatalf("error executing example 'up' with profile 'tail': %v", err)
 	}
 	err = example.Up(context.Background(),
-		&containerkit.Up{
+		&kit.Up{
 			Profiles:      []string{"kill-me"},
 			NoLogPrefix:   true,
 			RemoveOrphans: true,
@@ -83,7 +76,7 @@ func main() {
 
 	sig := "SIGKILL"
 	err = example.Kill(context.Background(),
-		&containerkit.Kill{
+		&kit.Kill{
 			Signal:        &sig,
 			RemoveOrphans: true,
 			Profiles:      []string{"kill-me"},
