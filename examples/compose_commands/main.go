@@ -16,7 +16,8 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/aptd3v/containerkit/pkg/containerkit"
+	"github.com/aptd3v/containerkit/pkg/kit"
+	"github.com/aptd3v/containerkit/pkg/kit/types"
 )
 
 const (
@@ -26,34 +27,33 @@ const (
 	redisService = "redis"
 )
 
-func inlineDockerfile(image, tag string) containerkit.BuildSpec {
-	df := containerkit.NewDockerFile()
-	df.From(image, tag)
-	df.Workdir("/app")
-	df.Run("echo \"Hello, World!\"")
-	df.CommandExec("tail", "-f", "/dev/null")
-	return df.WithInline()
+func inlineDockerfile(image, tag string) *kit.Dockerfile {
+	return kit.NewDockerFile().
+		From(image, tag).
+		Workdir("/app").
+		Run("echo \"Hello, World!\"").
+		Command("tail", "-f", "/dev/null")
 }
 
 func main() {
-	project := containerkit.NewProject(projectName)
+	project := kit.NewProject(projectName)
 	project.WithNetwork("backend")
-	project.WithService(appService, containerkit.NewContainer(appService),
-		inlineDockerfile("alpine", "latest"),
+	project.WithService(kit.NewService(appService, kit.NewContainer(appService)).
+		Dockerfile(inlineDockerfile("alpine", "latest")),
 	)
-	project.WithService(webService, containerkit.NewContainer(webService).
+	project.WithService(kit.NewService(webService, kit.NewContainer(webService).
 		Image("nginx:alpine").
 		Command("nginx", "-g", "daemon off;").
-		PortBinding(containerkit.PortBinding{Protocol: containerkit.TCP, HostIP: "0.0.0.0", HostPort: "9080", ContainerPort: "80"}).
+		PortBinding(types.PortBinding{Protocol: types.TCP, HostIP: "0.0.0.0", HostPort: "9080", ContainerPort: "80"}).
 		Endpoint("backend"),
-	)
-	project.WithService(redisService, containerkit.NewContainer(redisService).
+	))
+	project.WithService(kit.NewService(redisService, kit.NewContainer(redisService).
 		Image("redis:7-alpine").
 		Command("redis-server").
 		Endpoint("backend"),
-	)
+	))
 
-	app := containerkit.NewCompose(project)
+	app := kit.NewCompose(project)
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
@@ -66,23 +66,23 @@ func main() {
 	}()
 
 	fmt.Println("Building app service...")
-	if err := app.Build(ctx, &containerkit.ComposeBuild{Writer: os.Stdout, ServiceNames: []string{appService}}); err != nil {
+	if err := app.Build(ctx, &kit.ComposeBuild{Writer: os.Stdout, ServiceNames: []string{appService}}); err != nil {
 		log.Fatalf("Build: %v", err)
 	}
 
 	fmt.Println("\nStarting stack...")
-	if err := app.Up(ctx, &containerkit.Up{Detach: true, RemoveOrphans: true, Writer: os.Stdout}); err != nil {
+	if err := app.Up(ctx, &kit.Up{Detach: true, RemoveOrphans: true, Writer: os.Stdout}); err != nil {
 		log.Fatalf("Up: %v", err)
 	}
 
 	fmt.Println("\n--- docker compose ps -a ---")
-	if err := app.Ps(ctx, &containerkit.Ps{All: true, Writer: os.Stdout}); err != nil {
+	if err := app.Ps(ctx, &kit.Ps{All: true, Writer: os.Stdout}); err != nil {
 		log.Printf("Ps: %v", err)
 	}
 
 	fmt.Println("\n--- docker compose ps -a --format json (parsed) ---")
 	var psOut bytes.Buffer
-	if err := app.Ps(ctx, &containerkit.Ps{All: true, Format: "json", Writer: &psOut}); err != nil {
+	if err := app.Ps(ctx, &kit.Ps{All: true, Format: "json", Writer: &psOut}); err != nil {
 		log.Printf("Ps (json): %v", err)
 	} else {
 		var entries []struct {
@@ -118,30 +118,30 @@ func main() {
 
 	fmt.Println("\nStopping web...")
 	stopTimeout := 5
-	if err := app.Stop(ctx, &containerkit.Stop{Timeout: &stopTimeout, ServiceNames: []string{webService}}); err != nil {
+	if err := app.Stop(ctx, &kit.Stop{Timeout: &stopTimeout, ServiceNames: []string{webService}}); err != nil {
 		log.Printf("Stop: %v", err)
 	}
 	time.Sleep(1 * time.Second)
 
 	fmt.Println("\n--- docker compose ps -a (after stop web) ---")
-	if err := app.Ps(ctx, &containerkit.Ps{All: true, Writer: os.Stdout}); err != nil {
+	if err := app.Ps(ctx, &kit.Ps{All: true, Writer: os.Stdout}); err != nil {
 		log.Printf("Ps: %v", err)
 	}
 
 	fmt.Println("\nStarting web...")
-	if err := app.Start(ctx, &containerkit.Start{ServiceNames: []string{webService}}); err != nil {
+	if err := app.Start(ctx, &kit.Start{ServiceNames: []string{webService}}); err != nil {
 		log.Printf("Start: %v", err)
 	}
 	time.Sleep(1 * time.Second)
 
 	fmt.Println("\nRestarting redis...")
 	restartTimeout := 5
-	if err := app.Restart(ctx, &containerkit.Restart{NoDeps: true, Timeout: &restartTimeout, ServiceNames: []string{redisService}}); err != nil {
+	if err := app.Restart(ctx, &kit.Restart{NoDeps: true, Timeout: &restartTimeout, ServiceNames: []string{redisService}}); err != nil {
 		log.Printf("Restart: %v", err)
 	}
 
 	fmt.Println("\n--- docker compose exec (non-interactive) ---")
-	if err := app.Exec(ctx, &containerkit.Exec{
+	if err := app.Exec(ctx, &kit.Exec{
 		Service: appService,
 		Command: []string{"sh", "-c", "echo hello from compose exec"},
 		NoTTY:   true,
@@ -151,30 +151,30 @@ func main() {
 	}
 
 	fmt.Println("\n--- docker compose config --services ---")
-	if err := app.Config(ctx, &containerkit.ComposeConfig{PrintServices: true, Writer: os.Stdout}); err != nil {
+	if err := app.Config(ctx, &kit.ComposeConfig{PrintServices: true, Writer: os.Stdout}); err != nil {
 		log.Printf("Config: %v", err)
 	}
 
 	fmt.Println("\n--- docker compose images ---")
-	if err := app.Images(ctx, &containerkit.Images{Writer: os.Stdout}); err != nil {
+	if err := app.Images(ctx, &kit.Images{Writer: os.Stdout}); err != nil {
 		log.Printf("Images: %v", err)
 	}
 
 	fmt.Println("\n--- docker compose top (app) ---")
-	if err := app.Top(ctx, &containerkit.Top{ServiceNames: []string{appService}, Writer: os.Stdout}); err != nil {
+	if err := app.Top(ctx, &kit.Top{ServiceNames: []string{appService}, Writer: os.Stdout}); err != nil {
 		log.Printf("Top: %v", err)
 	}
 
 	fmt.Println("\n--- docker compose pause / unpause (web) ---")
-	if err := app.Pause(ctx, &containerkit.Pause{ServiceNames: []string{webService}, Writer: os.Stdout}); err != nil {
+	if err := app.Pause(ctx, &kit.Pause{ServiceNames: []string{webService}, Writer: os.Stdout}); err != nil {
 		log.Printf("Pause: %v", err)
 	}
-	if err := app.Unpause(ctx, &containerkit.Unpause{ServiceNames: []string{webService}, Writer: os.Stdout}); err != nil {
+	if err := app.Unpause(ctx, &kit.Unpause{ServiceNames: []string{webService}, Writer: os.Stdout}); err != nil {
 		log.Printf("Unpause: %v", err)
 	}
 
 	fmt.Println("\n--- docker compose run (one-off) ---")
-	if err := app.Run(ctx, &containerkit.Run{
+	if err := app.Run(ctx, &kit.Run{
 		Service: appService,
 		Command: []string{"echo", "hello from compose run"},
 		NoTTY:   true,
@@ -187,7 +187,7 @@ func main() {
 
 	defer func() {
 		fmt.Println("\nTearing down...")
-		if err := app.Down(context.Background(), &containerkit.Down{RemoveOrphans: true, Writer: os.Stdout}); err != nil {
+		if err := app.Down(context.Background(), &kit.Down{RemoveOrphans: true, Writer: os.Stdout}); err != nil {
 			log.Printf("Down: %v", err)
 		}
 	}()

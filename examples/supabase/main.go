@@ -1,4 +1,4 @@
-// Supabase bootstrap example: one-execute install of the Supabase stack using containerkit.
+// Supabase bootstrap example: one-execute install of the Supabase stack using kit.
 // Required volume files are auto-downloaded from the Supabase repo when missing.
 // Streams compose events (start/stop/health) alongside logs; Ctrl+C kills containers and brings the stack down.
 //
@@ -18,7 +18,7 @@ import (
 	"os/signal"
 	"strings"
 
-	"github.com/aptd3v/containerkit/pkg/containerkit"
+	"github.com/aptd3v/containerkit/pkg/kit"
 )
 
 func main() {
@@ -52,7 +52,7 @@ func main() {
 		log.Printf("warning: export to %s: %v", exportPath, err)
 	}
 
-	supabase := containerkit.NewCompose(project)
+	supabase := kit.NewCompose(project)
 	ctx := context.Background()
 	profiles := []string{"minimal"}
 	if profile == "full" {
@@ -60,7 +60,7 @@ func main() {
 	}
 	timeout := 5
 	waitTimeout := 300
-	if err := supabase.Up(ctx, &containerkit.Up{
+	if err := supabase.Up(ctx, &kit.Up{
 		RemoveOrphans: true,
 		Detach:        true,
 		Timeout:       &timeout,
@@ -78,7 +78,7 @@ func main() {
 		cancel()
 	}()
 
-	eventsCh, eventsErrCh, err := supabase.Events(ctx, &containerkit.EventsOpt{Profiles: profiles})
+	eventsCh, eventsErrCh, err := supabase.Events(ctx, &kit.EventsOpt{Profiles: profiles})
 	if err != nil {
 		log.Printf("events: %v", err)
 	} else {
@@ -98,16 +98,16 @@ func main() {
 		}()
 	}
 
-	if err := supabase.Logs(ctx, &containerkit.Logs{Follow: true, NoLogPrefix: true, Profiles: profiles}); err != nil && err != context.Canceled {
+	if err := supabase.Logs(ctx, &kit.Logs{Follow: true, NoLogPrefix: true, Profiles: profiles}); err != nil && err != context.Canceled {
 		log.Printf("logs: %v", err)
 	}
 
 	killCtx := context.Background()
 	sig := "SIGKILL"
-	if err := supabase.Kill(killCtx, &containerkit.Kill{Signal: &sig, RemoveOrphans: true, Profiles: profiles}); err != nil {
+	if err := supabase.Kill(killCtx, &kit.Kill{Signal: &sig, RemoveOrphans: true, Profiles: profiles}); err != nil {
 		log.Printf("kill: %v", err)
 	}
-	if err := supabase.Down(killCtx, &containerkit.Down{RemoveOrphans: true, RemoveVolumes: true, Profiles: profiles}); err != nil {
+	if err := supabase.Down(killCtx, &kit.Down{RemoveOrphans: true, RemoveVolumes: true, Profiles: profiles}); err != nil {
 		log.Fatalf("down: %v", err)
 	}
 }

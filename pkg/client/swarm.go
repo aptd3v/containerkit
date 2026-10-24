@@ -9,11 +9,7 @@ import (
 
 // SwarmInit initializes the swarm and returns the node ID.
 func (c *Client) SwarmInit(ctx context.Context, opt *SwarmInit) (string, error) {
-	op, err := opt.apply()
-	if err != nil {
-		return "", err
-	}
-	res, err := c.wrapped.SwarmInit(ctx, op)
+	res, err := c.wrapped.SwarmInit(ctx, opt.apply())
 	if err != nil {
 		return "", err
 	}

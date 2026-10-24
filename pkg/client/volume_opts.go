@@ -1,67 +1,24 @@
 package client
 
-import (
-	"github.com/moby/moby/api/types/volume"
-	sdk "github.com/moby/moby/client"
-)
+import sdk "github.com/moby/moby/client"
 
-// VolumeCreate is options for VolumeCreate.
-type VolumeCreate struct {
-	Name              string
-	Driver            string
-	DriverOpts        map[string]string
-	Labels            map[string]string
-	ClusterVolumeSpec *volume.ClusterVolumeSpec
-}
+// VolumeCreate is [sdk.VolumeCreateOptions].
+type VolumeCreate sdk.VolumeCreateOptions
 
-func (o *VolumeCreate) apply() sdk.VolumeCreateOptions {
-	if o == nil {
-		return sdk.VolumeCreateOptions{}
-	}
-	return sdk.VolumeCreateOptions{
-		Name:              o.Name,
-		Driver:            o.Driver,
-		DriverOpts:        o.DriverOpts,
-		Labels:            o.Labels,
-		ClusterVolumeSpec: o.ClusterVolumeSpec,
-	}
-}
+func (o *VolumeCreate) apply() sdk.VolumeCreateOptions { return sdk.VolumeCreateOptions(apply(o)) }
 
-// VolumeList is options for VolumeList.
-type VolumeList struct {
-	Filters []Filter
-}
+// VolumeList is [sdk.VolumeListOptions].
+type VolumeList sdk.VolumeListOptions
 
-func (o *VolumeList) apply() sdk.VolumeListOptions {
-	op := sdk.VolumeListOptions{Filters: argsFromFilters(nil)}
-	if o == nil {
-		return op
-	}
-	op.Filters = argsFromFilters(o.Filters)
-	return op
-}
+func (o *VolumeList) apply() sdk.VolumeListOptions { return sdk.VolumeListOptions(apply(o)) }
 
-// VolumeUpdate is options for VolumeUpdate.
-type VolumeUpdate struct {
-	ClusterVolumeSpec *volume.ClusterVolumeSpec
-}
+// VolumeUpdate is [sdk.VolumeUpdateOptions].
+// Version is filled from the method argument.
+type VolumeUpdate sdk.VolumeUpdateOptions
 
-func (o *VolumeUpdate) apply() sdk.VolumeUpdateOptions {
-	if o == nil {
-		return sdk.VolumeUpdateOptions{}
-	}
-	return sdk.VolumeUpdateOptions{Spec: o.ClusterVolumeSpec}
-}
+func (o *VolumeUpdate) apply() sdk.VolumeUpdateOptions { return sdk.VolumeUpdateOptions(apply(o)) }
 
-// VolumePrune is options for VolumesPrune.
-type VolumePrune struct {
-	All     bool
-	Filters []Filter
-}
+// VolumePrune is [sdk.VolumePruneOptions].
+type VolumePrune sdk.VolumePruneOptions
 
-func (o *VolumePrune) apply() sdk.VolumePruneOptions {
-	if o == nil {
-		return sdk.VolumePruneOptions{Filters: argsFromFilters(nil)}
-	}
-	return sdk.VolumePruneOptions{All: o.All, Filters: argsFromFilters(o.Filters)}
-}
+func (o *VolumePrune) apply() sdk.VolumePruneOptions { return sdk.VolumePruneOptions(apply(o)) }

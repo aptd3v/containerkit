@@ -1,261 +1,85 @@
 package client
 
-import (
-	"github.com/aptd3v/containerkit/pkg/client/auth"
-	"github.com/moby/moby/api/types/swarm"
-	sdk "github.com/moby/moby/client"
-)
+import sdk "github.com/moby/moby/client"
 
-// NodeList is options for NodeList.
-type NodeList struct {
-	Filters []Filter
-}
+// NodeList is [sdk.NodeListOptions].
+type NodeList sdk.NodeListOptions
 
-func (o *NodeList) apply() sdk.NodeListOptions {
-	if o == nil {
-		return sdk.NodeListOptions{Filters: argsFromFilters(nil)}
-	}
-	return sdk.NodeListOptions{Filters: argsFromFilters(o.Filters)}
-}
+func (o *NodeList) apply() sdk.NodeListOptions { return sdk.NodeListOptions(apply(o)) }
 
-// NodeUpdate is options for NodeUpdate.
-type NodeUpdate struct {
-	Version swarm.Version
-	Spec    swarm.NodeSpec
-}
+// NodeUpdate is [sdk.NodeUpdateOptions].
+type NodeUpdate sdk.NodeUpdateOptions
 
-func (o *NodeUpdate) apply() sdk.NodeUpdateOptions {
-	if o == nil {
-		return sdk.NodeUpdateOptions{}
-	}
-	return sdk.NodeUpdateOptions{Version: o.Version, Spec: o.Spec}
-}
+func (o *NodeUpdate) apply() sdk.NodeUpdateOptions { return sdk.NodeUpdateOptions(apply(o)) }
 
-// NodeRemove is options for NodeRemove.
-type NodeRemove struct {
-	Force bool
-}
+// NodeRemove is [sdk.NodeRemoveOptions].
+type NodeRemove sdk.NodeRemoveOptions
 
-func (o *NodeRemove) apply() sdk.NodeRemoveOptions {
-	if o == nil {
-		return sdk.NodeRemoveOptions{}
-	}
-	return sdk.NodeRemoveOptions{Force: o.Force}
-}
+func (o *NodeRemove) apply() sdk.NodeRemoveOptions { return sdk.NodeRemoveOptions(apply(o)) }
 
-// ServiceCreate is options for ServiceCreate.
-type ServiceCreate struct {
-	Spec          swarm.ServiceSpec
-	Auth          auth.Auth
-	QueryRegistry bool
-}
+// ServiceCreate is [sdk.ServiceCreateOptions].
+type ServiceCreate sdk.ServiceCreateOptions
 
-func (o *ServiceCreate) apply() (sdk.ServiceCreateOptions, error) {
-	if o == nil {
-		return sdk.ServiceCreateOptions{}, nil
-	}
-	encoded, err := encodeAuth(o.Auth)
-	if err != nil {
-		return sdk.ServiceCreateOptions{}, err
-	}
-	return sdk.ServiceCreateOptions{
-		Spec:                o.Spec,
-		EncodedRegistryAuth: encoded,
-		QueryRegistry:       o.QueryRegistry,
-	}, nil
-}
+func (o *ServiceCreate) apply() sdk.ServiceCreateOptions { return sdk.ServiceCreateOptions(apply(o)) }
 
-// ServiceInspect is options for ServiceInspect.
-type ServiceInspect struct {
-	InsertDefaults bool
-}
+// ServiceInspect is [sdk.ServiceInspectOptions].
+type ServiceInspect sdk.ServiceInspectOptions
 
 func (o *ServiceInspect) apply() sdk.ServiceInspectOptions {
-	if o == nil {
-		return sdk.ServiceInspectOptions{}
-	}
-	return sdk.ServiceInspectOptions{InsertDefaults: o.InsertDefaults}
+	return sdk.ServiceInspectOptions(apply(o))
 }
 
-// ServiceList is options for ServiceList.
-type ServiceList struct {
-	Filters []Filter
-	Status  bool
-}
+// ServiceList is [sdk.ServiceListOptions].
+type ServiceList sdk.ServiceListOptions
 
-func (o *ServiceList) apply() sdk.ServiceListOptions {
-	if o == nil {
-		return sdk.ServiceListOptions{Filters: argsFromFilters(nil)}
-	}
-	return sdk.ServiceListOptions{Filters: argsFromFilters(o.Filters), Status: o.Status}
-}
+func (o *ServiceList) apply() sdk.ServiceListOptions { return sdk.ServiceListOptions(apply(o)) }
 
-// ServiceUpdate is options for ServiceUpdate.
-type ServiceUpdate struct {
-	Version          swarm.Version
-	Spec             swarm.ServiceSpec
-	Auth             auth.Auth
-	RegistryAuthFrom swarm.RegistryAuthSource
-	Rollback         string
-	QueryRegistry    bool
-}
+// ServiceUpdate is [sdk.ServiceUpdateOptions].
+type ServiceUpdate sdk.ServiceUpdateOptions
 
-func (o *ServiceUpdate) apply() (sdk.ServiceUpdateOptions, error) {
-	if o == nil {
-		return sdk.ServiceUpdateOptions{}, nil
-	}
-	encoded, err := encodeAuth(o.Auth)
-	if err != nil {
-		return sdk.ServiceUpdateOptions{}, err
-	}
-	return sdk.ServiceUpdateOptions{
-		Version:             o.Version,
-		Spec:                o.Spec,
-		EncodedRegistryAuth: encoded,
-		RegistryAuthFrom:    o.RegistryAuthFrom,
-		Rollback:            o.Rollback,
-		QueryRegistry:       o.QueryRegistry,
-	}, nil
-}
+func (o *ServiceUpdate) apply() sdk.ServiceUpdateOptions { return sdk.ServiceUpdateOptions(apply(o)) }
 
-// ServiceLogs is options for ServiceLogs.
-type ServiceLogs struct {
-	ShowStdout bool
-	ShowStderr bool
-	Since      string
-	Until      string
-	Timestamps bool
-	Follow     bool
-	Tail       string
-	Details    bool
-}
+// ServiceLogs is [sdk.ServiceLogsOptions].
+type ServiceLogs sdk.ServiceLogsOptions
 
-func (o *ServiceLogs) apply() sdk.ServiceLogsOptions {
-	if o == nil {
-		return sdk.ServiceLogsOptions{}
-	}
-	return sdk.ServiceLogsOptions{
-		ShowStdout: o.ShowStdout,
-		ShowStderr: o.ShowStderr,
-		Since:      o.Since,
-		Until:      o.Until,
-		Timestamps: o.Timestamps,
-		Follow:     o.Follow,
-		Tail:       o.Tail,
-		Details:    o.Details,
-	}
-}
+func (o *ServiceLogs) apply() sdk.ServiceLogsOptions { return sdk.ServiceLogsOptions(apply(o)) }
 
-// TaskList is options for TaskList.
-type TaskList struct {
-	Filters []Filter
-}
+// TaskList is [sdk.TaskListOptions].
+type TaskList sdk.TaskListOptions
 
-func (o *TaskList) apply() sdk.TaskListOptions {
-	if o == nil {
-		return sdk.TaskListOptions{Filters: argsFromFilters(nil)}
-	}
-	return sdk.TaskListOptions{Filters: argsFromFilters(o.Filters)}
-}
+func (o *TaskList) apply() sdk.TaskListOptions { return sdk.TaskListOptions(apply(o)) }
 
-// TaskLogs is options for TaskLogs.
-type TaskLogs struct {
-	ShowStdout bool
-	ShowStderr bool
-	Since      string
-	Until      string
-	Timestamps bool
-	Follow     bool
-	Tail       string
-	Details    bool
-}
+// TaskLogs is [sdk.TaskLogsOptions].
+type TaskLogs sdk.TaskLogsOptions
 
-func (o *TaskLogs) apply() sdk.TaskLogsOptions {
-	if o == nil {
-		return sdk.TaskLogsOptions{}
-	}
-	return sdk.TaskLogsOptions{
-		ShowStdout: o.ShowStdout,
-		ShowStderr: o.ShowStderr,
-		Since:      o.Since,
-		Until:      o.Until,
-		Timestamps: o.Timestamps,
-		Follow:     o.Follow,
-		Tail:       o.Tail,
-		Details:    o.Details,
-	}
-}
+func (o *TaskLogs) apply() sdk.TaskLogsOptions { return sdk.TaskLogsOptions(apply(o)) }
 
-// SecretCreate is options for SecretCreate.
-type SecretCreate struct {
-	Spec swarm.SecretSpec
-}
+// SecretCreate is [sdk.SecretCreateOptions].
+type SecretCreate sdk.SecretCreateOptions
 
-func (o *SecretCreate) apply() sdk.SecretCreateOptions {
-	if o == nil {
-		return sdk.SecretCreateOptions{}
-	}
-	return sdk.SecretCreateOptions{Spec: o.Spec}
-}
+func (o *SecretCreate) apply() sdk.SecretCreateOptions { return sdk.SecretCreateOptions(apply(o)) }
 
-// SecretList is options for SecretList.
-type SecretList struct {
-	Filters []Filter
-}
+// SecretList is [sdk.SecretListOptions].
+type SecretList sdk.SecretListOptions
 
-func (o *SecretList) apply() sdk.SecretListOptions {
-	if o == nil {
-		return sdk.SecretListOptions{Filters: argsFromFilters(nil)}
-	}
-	return sdk.SecretListOptions{Filters: argsFromFilters(o.Filters)}
-}
+func (o *SecretList) apply() sdk.SecretListOptions { return sdk.SecretListOptions(apply(o)) }
 
-// SecretUpdate is options for SecretUpdate.
-type SecretUpdate struct {
-	Version swarm.Version
-	Spec    swarm.SecretSpec
-}
+// SecretUpdate is [sdk.SecretUpdateOptions].
+type SecretUpdate sdk.SecretUpdateOptions
 
-func (o *SecretUpdate) apply() sdk.SecretUpdateOptions {
-	if o == nil {
-		return sdk.SecretUpdateOptions{}
-	}
-	return sdk.SecretUpdateOptions{Version: o.Version, Spec: o.Spec}
-}
+func (o *SecretUpdate) apply() sdk.SecretUpdateOptions { return sdk.SecretUpdateOptions(apply(o)) }
 
-// ConfigCreate is options for ConfigCreate.
-type ConfigCreate struct {
-	Spec swarm.ConfigSpec
-}
+// ConfigCreate is [sdk.ConfigCreateOptions].
+type ConfigCreate sdk.ConfigCreateOptions
 
-func (o *ConfigCreate) apply() sdk.ConfigCreateOptions {
-	if o == nil {
-		return sdk.ConfigCreateOptions{}
-	}
-	return sdk.ConfigCreateOptions{Spec: o.Spec}
-}
+func (o *ConfigCreate) apply() sdk.ConfigCreateOptions { return sdk.ConfigCreateOptions(apply(o)) }
 
-// ConfigList is options for ConfigList.
-type ConfigList struct {
-	Filters []Filter
-}
+// ConfigList is [sdk.ConfigListOptions].
+type ConfigList sdk.ConfigListOptions
 
-func (o *ConfigList) apply() sdk.ConfigListOptions {
-	if o == nil {
-		return sdk.ConfigListOptions{Filters: argsFromFilters(nil)}
-	}
-	return sdk.ConfigListOptions{Filters: argsFromFilters(o.Filters)}
-}
+func (o *ConfigList) apply() sdk.ConfigListOptions { return sdk.ConfigListOptions(apply(o)) }
 
-// ConfigUpdate is options for ConfigUpdate.
-type ConfigUpdate struct {
-	Version swarm.Version
-	Spec    swarm.ConfigSpec
-}
+// ConfigUpdate is [sdk.ConfigUpdateOptions].
+type ConfigUpdate sdk.ConfigUpdateOptions
 
-func (o *ConfigUpdate) apply() sdk.ConfigUpdateOptions {
-	if o == nil {
-		return sdk.ConfigUpdateOptions{}
-	}
-	return sdk.ConfigUpdateOptions{Version: o.Version, Spec: o.Spec}
-}
+func (o *ConfigUpdate) apply() sdk.ConfigUpdateOptions { return sdk.ConfigUpdateOptions(apply(o)) }

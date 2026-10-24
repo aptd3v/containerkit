@@ -11,11 +11,7 @@ import (
 
 // NetworkCreate creates a new network in the docker host.
 func (c *Client) NetworkCreate(ctx context.Context, name string, opt *NetworkCreate) (*response.NetworkCreate, error) {
-	op, err := opt.apply()
-	if err != nil {
-		return nil, err
-	}
-	resp, err := c.wrapped.NetworkCreate(ctx, name, op)
+	resp, err := c.wrapped.NetworkCreate(ctx, name, opt.apply())
 	if err != nil {
 		return nil, err
 	}
@@ -70,7 +66,7 @@ func (c *Client) NetworkList(ctx context.Context, opt *NetworkList) ([]*response
 
 // NetworksPrune requests the daemon to delete unused networks.
 func (c *Client) NetworksPrune(ctx context.Context, opt *NetworkPrune) (*response.NetworkPruneReport, error) {
-	resp, err := c.wrapped.NetworkPrune(ctx, sdk.NetworkPruneOptions{Filters: opt.apply()})
+	resp, err := c.wrapped.NetworkPrune(ctx, opt.apply())
 	if err != nil {
 		return nil, err
 	}

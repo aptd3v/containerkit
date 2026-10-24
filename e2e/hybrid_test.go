@@ -11,7 +11,7 @@ import (
 	"time"
 
 	"github.com/aptd3v/containerkit/pkg/client"
-	"github.com/aptd3v/containerkit/pkg/containerkit"
+	"github.com/aptd3v/containerkit/pkg/kit"
 )
 
 func TestHybridImageBuildThenCompose(t *testing.T) {
@@ -20,13 +20,13 @@ func TestHybridImageBuildThenCompose(t *testing.T) {
 	pullAlpine(t, cli)
 
 	tag := ident(t, "i") + ":e2e"
-	df := containerkit.NewDockerFile().
-		From("alpine", "latest").
+	df := kit.NewDockerFile().
+		From("alpine:latest").
 		Run("echo hybrid > /hello.txt").
-		CommandExec("sleep", "infinity")
-	ctxReader, err := df.NewLocalBuildContext(t.TempDir())
+		Command("sleep", "infinity")
+	ctxReader, err := kit.NewBuild().Dockerfile(df).Reader()
 	if err != nil {
-		t.Fatalf("NewLocalBuildContext: %v", err)
+		t.Fatalf("Reader: %v", err)
 	}
 
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Minute)
@@ -46,27 +46,27 @@ func TestHybridImageBuildThenCompose(t *testing.T) {
 		_, _ = cli.ImageRemove(c, tag, &client.ImageRemove{Force: true, PruneChildren: true})
 	})
 
-	project := containerkit.NewProject(ident(t, "p"))
-	project.WithService("app", containerkit.NewContainer().Image(tag))
+	project := kit.NewProject(ident(t, "p"))
+	project.WithService(kit.NewService("app", kit.NewContainer().Image(tag)))
 	if err := project.Validate(); err != nil {
 		t.Fatalf("Validate: %v", err)
 	}
-	app := containerkit.NewCompose(project)
+	app := kit.NewCompose(project)
 	composeDown(t, app)
 
-	if err := app.Up(ctx, &containerkit.Up{Detach: true, RemoveOrphans: true, Writer: testWriter(t)}); err != nil {
+	if err := app.Up(ctx, &kit.Up{Detach: true, RemoveOrphans: true, Writer: testWriter(t)}); err != nil {
 		t.Fatalf("Up: %v", err)
 	}
 
 	var psOut bytes.Buffer
-	if err := app.Ps(ctx, &containerkit.Ps{All: true, Format: "json", Writer: io.MultiWriter(&psOut, testWriter(t))}); err != nil {
+	if err := app.Ps(ctx, &kit.Ps{All: true, Format: "json", Writer: io.MultiWriter(&psOut, testWriter(t))}); err != nil {
 		t.Fatalf("Ps: %v", err)
 	}
 	if !strings.Contains(psOut.String(), "app") {
 		t.Fatalf("Ps missing app: %s", psOut.String())
 	}
 
-	if err := app.Exec(ctx, &containerkit.Exec{
+	if err := app.Exec(ctx, &kit.Exec{
 		Service: "app",
 		Command: []string{"cat", "/hello.txt"},
 		NoTTY:   true,
@@ -75,7 +75,7 @@ func TestHybridImageBuildThenCompose(t *testing.T) {
 		t.Fatalf("Exec: %v", err)
 	}
 
-	if err := app.Down(ctx, &containerkit.Down{RemoveOrphans: true, RemoveVolumes: true, Writer: testWriter(t)}); err != nil {
+	if err := app.Down(ctx, &kit.Down{RemoveOrphans: true, RemoveVolumes: true, Writer: testWriter(t)}); err != nil {
 		t.Fatalf("Down: %v", err)
 	}
 }

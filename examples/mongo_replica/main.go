@@ -13,7 +13,8 @@ import (
 	"strings"
 
 	"github.com/aptd3v/containerkit/pkg/client"
-	"github.com/aptd3v/containerkit/pkg/containerkit"
+	"github.com/aptd3v/containerkit/pkg/kit"
+	"github.com/aptd3v/containerkit/pkg/kit/types"
 )
 
 const (
@@ -37,18 +38,18 @@ type RSMember struct {
 
 func main() {
 
-	project := containerkit.NewProject("mongo-db-cluster")
+	project := kit.NewProject("mongo-db-cluster")
 
 	members := []RSMember{}
 	urlParts := make([]string, 0, NumReplicas)
 	for i := range NumReplicas {
 		serviceName := fmt.Sprintf("db-%d", i)
 
-		extras := []any{}
+		db := kit.NewService(serviceName, WithMongoReplica(i))
 		if i > 0 {
-			extras = append(extras, containerkit.DependsOn(fmt.Sprintf("db-%d", i-1)))
+			db.DependsOn(fmt.Sprintf("db-%d", i-1))
 		}
-		project.WithService(serviceName, WithMongoReplica(i), extras...)
+		project.WithService(db)
 		member := RSMember{
 			Host: serviceName + ":27017",
 			ID:   i,
@@ -64,22 +65,22 @@ func main() {
 	}
 	url := fmt.Sprintf("mongodb://%s/?replicaSet=rs0", strings.Join(urlParts, ","))
 
-	expressExtras := make([]any, 0, NumReplicas)
+	express := kit.NewService("mongo-express", WithMongoExpress(url))
 	for i := range NumReplicas {
-		expressExtras = append(expressExtras, containerkit.DependsOnHealthy(fmt.Sprintf("db-%d", i)))
+		express.DependsOnHealthy(fmt.Sprintf("db-%d", i))
 	}
-	project.WithService("mongo-express", WithMongoExpress(url), expressExtras...)
+	project.WithService(express)
 
 	project.WithNetwork("mongo-cluster").WithVolume("mongo-data")
 
-	database := containerkit.NewCompose(project)
+	database := kit.NewCompose(project)
 	ctx := context.Background()
 
 	replicaServices := make([]string, 0, NumReplicas)
 	for i := range NumReplicas {
 		replicaServices = append(replicaServices, fmt.Sprintf("db-%d", i))
 	}
-	if err := database.Up(ctx, &containerkit.Up{
+	if err := database.Up(ctx, &kit.Up{
 		ForceRecreate: true,
 		RemoveOrphans: true,
 		Wait:          true,
@@ -92,7 +93,7 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	if err := database.Up(ctx, &containerkit.Up{
+	if err := database.Up(ctx, &kit.Up{
 		Wait:         true,
 		ServiceNames: []string{"mongo-express"},
 	}); err != nil {
@@ -123,19 +124,18 @@ func main() {
 	<-ctx.Done()
 }
 
-func WithMongoReplica(index int) *containerkit.Container {
+func WithMongoReplica(index int) *kit.Container {
 	containerName := fmt.Sprintf("mongodb-%d", index)
-	return containerkit.NewContainer(containerName).
+	return kit.NewContainer(containerName).
 		Image("mongo:latest").
 		HostName(fmt.Sprintf("db-%d", index)).
 		Command("mongod", "--replSet", "rs0", "--bind_ip_all").
-		HealthCheck(containerkit.Health{
-			Test:         []string{"CMD", "mongosh", "--eval", `db.adminCommand("ping")`},
-			IntervalD:    "1s",
-			TimeoutD:     "10s",
-			StartPeriodD: "0s",
-			Retries:      5,
-		}).
+		HealthCheck(kit.NewHealth().
+			CMD("mongosh", "--eval", `db.adminCommand("ping")`).
+			IntervalD("1s").
+			TimeoutD("10s").
+			StartPeriodD("0s").
+			Retries(5)).
 		ExposedPort("tcp", "27017").
 		RestartUnlessStopped().
 		Endpoint("mongo-cluster")
@@ -165,7 +165,7 @@ func Initialize(ctx context.Context, initContainer string, members []RSMember) e
 
 	fmt.Println("mongosh --eval rs.initiate(...)")
 	res, err := cli.ContainerExecCreate(ctx, initContainer, &client.Exec{
-		Command:      command,
+		Cmd:          command,
 		AttachStdout: true,
 		AttachStderr: true,
 	})
@@ -188,8 +188,8 @@ func Initialize(ctx context.Context, initContainer string, members []RSMember) e
 	return nil
 }
 
-func WithMongoExpress(url string) *containerkit.Container {
-	return containerkit.NewContainer("mongo-express").
+func WithMongoExpress(url string) *kit.Container {
+	return kit.NewContainer("mongo-express").
 		Image("mongo-express:latest").
 		Env("ME_CONFIG_MONGODB_URL", url).
 		Env("ME_CONFIG_MONGODB_ENABLE_ADMIN", "true").
@@ -199,7 +199,7 @@ func WithMongoExpress(url string) *containerkit.Container {
 		Env("ME_CONFIG_BASICAUTH_PASSWORD", mongoExpressPass).
 		Env("ME_CONFIG_SITE_COOKIESECRET", "containerkit-mongo-express").
 		Env("ME_CONFIG_SITE_SESSIONSECRET", "containerkit-mongo-express").
-		PortBinding(containerkit.PortBinding{Protocol: containerkit.TCP, HostIP: "0.0.0.0", HostPort: "8081", ContainerPort: "8081"}).
+		PortBinding(types.PortBinding{Protocol: types.TCP, HostIP: "0.0.0.0", HostPort: "8081", ContainerPort: "8081"}).
 		RestartAlways().
 		Endpoint("mongo-cluster")
 }
