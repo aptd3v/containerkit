@@ -8,7 +8,8 @@ import (
 	"log"
 	"time"
 
-	"github.com/aptd3v/containerkit/pkg/containerkit"
+	"github.com/aptd3v/containerkit/pkg/kit"
+	"github.com/aptd3v/containerkit/pkg/kit/types"
 )
 
 const (
@@ -16,22 +17,23 @@ const (
 )
 
 func main() {
-	project := containerkit.NewProject("events-project")
-	project.WithService(serviceName, containerkit.NewContainer().
+	project := kit.NewProject("events-project")
+
+	project.WithService(kit.NewService(serviceName, kit.NewContainer().
 		Image("nginx:latest").
-		PortBinding(containerkit.PortBinding{Protocol: containerkit.TCP, HostIP: "0.0.0.0", HostPort: "8080", ContainerPort: "80"}).
-		HealthCheck(containerkit.Health{
-			Test:         []string{"CMD-SHELL", "curl -f http://localhost:80 || exit 1"},
-			IntervalD:    "2s",
-			TimeoutD:     "5s",
-			Retries:      3,
-			StartPeriodD: "0s",
-		}),
+		PortBinding(types.PortBinding{Protocol: types.TCP, HostIP: "0.0.0.0", HostPort: "8080", ContainerPort: "80"}).
+		HealthCheck(
+			kit.NewHealth().
+				CMDShell("curl -f http://localhost:80 || exit 1").
+				IntervalD("2s").
+				TimeoutD("5s").
+				Retries(3).
+				StartPeriodD("0s"))),
 	)
 
-	example := containerkit.NewCompose(project)
+	example := kit.NewCompose(project)
 	ctx, cancel := context.WithCancel(context.Background())
-	events, errCh, err := example.Events(ctx, &containerkit.EventsOpt{Service: serviceName})
+	events, errCh, err := example.Events(ctx, &kit.EventsOpt{Service: serviceName})
 	if err != nil {
 		log.Fatalf("error starting events: %v", err)
 	}
@@ -72,7 +74,7 @@ func main() {
 		log.Printf("Cycle %d: Starting container...\n", i+1)
 		time.Sleep(1 * time.Second)
 
-		err := example.Up(context.Background(), &containerkit.Up{Detach: true, Writer: io.Discard})
+		err := example.Up(context.Background(), &kit.Up{Detach: true, Writer: io.Discard})
 		if err != nil {
 			log.Fatalf("error executing 'up': %v", err)
 		}
@@ -81,7 +83,7 @@ func main() {
 		log.Printf("Cycle %d: Stopping container...\n", i+1)
 		time.Sleep(1 * time.Second)
 
-		err = example.Down(context.Background(), &containerkit.Down{RemoveOrphans: true, Writer: io.Discard})
+		err = example.Down(context.Background(), &kit.Down{RemoveOrphans: true, Writer: io.Discard})
 		if err != nil {
 			log.Fatalf("error executing 'down': %v", err)
 		}

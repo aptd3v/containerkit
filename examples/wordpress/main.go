@@ -13,7 +13,8 @@ import (
 	"sync"
 	"syscall"
 
-	"github.com/aptd3v/containerkit/pkg/containerkit"
+	"github.com/aptd3v/containerkit/pkg/kit"
+	"github.com/aptd3v/containerkit/pkg/kit/types"
 )
 
 var (
@@ -30,10 +31,10 @@ func main() {
 		log.Fatalf("failed to export to docker-compose.yaml: %v", err)
 	}
 
-	wordpress := containerkit.NewCompose(project)
+	wordpress := kit.NewCompose(project)
 
 	upTimeout := 3
-	err = wordpress.Up(context.Background(), &containerkit.Up{
+	err = wordpress.Up(context.Background(), &kit.Up{
 		Writer:        NewLogger("up"),
 		RemoveOrphans: true,
 		NoLogPrefix:   true,
@@ -52,7 +53,7 @@ func main() {
 		cancel()
 	}()
 
-	err = wordpress.Logs(ctx, &containerkit.Logs{
+	err = wordpress.Logs(ctx, &kit.Logs{
 		Writer:      NewLogger("logs"),
 		NoLogPrefix: true,
 		Follow:      true,
@@ -63,7 +64,7 @@ func main() {
 
 	err = wordpress.Down(
 		context.Background(),
-		&containerkit.Down{
+		&kit.Down{
 			Writer:        NewLogger("down"),
 			RemoveOrphans: true,
 			RemoveVolumes: true,
@@ -74,31 +75,31 @@ func main() {
 	}
 }
 
-func SetupProject() *containerkit.Project {
-	project := containerkit.NewProject(fmt.Sprintf("gocontain-wp-scale-%d", NumWordPress))
-	project.WithService("database-example", DatabaseContainer())
+func SetupProject() *kit.Project {
+	project := kit.NewProject(fmt.Sprintf("gocontain-wp-scale-%d", NumWordPress))
+	project.WithService(kit.NewService("database-example", DatabaseContainer()))
 
 	if IsNotWindows {
-		project.WithService("portainer-container", PortainerContainer())
+		project.WithService(kit.NewService("portainer-container", PortainerContainer()))
 	}
-	deps := []any{}
+	proxy := kit.NewService("proxy-container", ProxyContainer())
 	services := []string{}
 	for i := 1; i <= NumWordPress; i++ {
 		serviceName := fmt.Sprintf("wordpress-example-%d", i)
 		services = append(services, serviceName)
-		extras := []any{containerkit.DependsOnHealthy("database-example")}
+		wordpress := kit.NewService(serviceName, WordPressContainer()).DependsOnHealthy("database-example")
 		if i > 1 {
-			extras = append(extras, containerkit.DependsOn(fmt.Sprintf("wordpress-example-%d", i-1)))
+			wordpress.DependsOn(fmt.Sprintf("wordpress-example-%d", i-1))
 		}
-		project.WithService(serviceName, WordPressContainer(), extras...)
-		deps = append(deps, containerkit.DependsOnHealthy(fmt.Sprintf("wordpress-example-%d", i)))
+		project.WithService(wordpress)
+		proxy.DependsOnHealthy(serviceName)
 	}
 	err := GenerateHAProxyConfig(services)
 	if err != nil {
 		log.Fatalf("failed to generate haproxy.cfg: %v", err)
 	}
 
-	project.WithService("proxy-container", ProxyContainer(), deps...)
+	project.WithService(proxy)
 
 	project.
 		WithVolume("wordpress-data").
@@ -109,21 +110,20 @@ func SetupProject() *containerkit.Project {
 	return project
 }
 
-func WordPressContainer() *containerkit.Container {
-	c := containerkit.NewContainer().
+func WordPressContainer() *kit.Container {
+	c := kit.NewContainer().
 		Image("wordpress:latest").
 		Env("WORDPRESS_DB_HOST", "database-example").
 		Env("WORDPRESS_DB_USER", "exampleuser").
 		Env("WORDPRESS_DB_PASSWORD", "examplepass").
 		Env("WORDPRESS_DB_NAME", "exampledb").
 		ExposedPort("tcp", "80").
-		HealthCheck(containerkit.Health{
-			Test:        []string{"CMD", "curl", "-f", "http://localhost/wp-login.php"},
-			StartPeriod: 5,
-			Interval:    10,
-			Timeout:     20,
-			Retries:     3,
-		}).
+		HealthCheck(kit.NewHealth().
+			CMD("curl", "-f", "http://localhost/wp-login.php").
+			StartPeriod(5).
+			Interval(10).
+			Timeout(20).
+			Retries(3)).
 		RestartUnlessStopped().
 		Endpoint("wordpress-network")
 	if IsLinux {
@@ -134,20 +134,19 @@ func WordPressContainer() *containerkit.Container {
 	return c
 }
 
-func DatabaseContainer() *containerkit.Container {
-	c := containerkit.NewContainer("database-container").
+func DatabaseContainer() *kit.Container {
+	c := kit.NewContainer("database-container").
 		Image("mysql:8.0").
 		Env("MYSQL_DATABASE", "exampledb").
 		Env("MYSQL_PASSWORD", "examplepass").
 		Env("MYSQL_USER", "exampleuser").
 		Env("MYSQL_RANDOM_ROOT_PASSWORD", "1").
-		HealthCheck(containerkit.Health{
-			Test:        []string{"CMD", "mysqladmin", "ping", "-h", "127.0.0.1", "-pexamplepass"},
-			StartPeriod: 5,
-			Interval:    10,
-			Timeout:     20,
-			Retries:     3,
-		}).
+		HealthCheck(kit.NewHealth().
+			CMD("mysqladmin", "ping", "-h", "127.0.0.1", "-pexamplepass").
+			StartPeriod(5).
+			Interval(10).
+			Timeout(20).
+			Retries(3)).
 		Endpoint("wordpress-network")
 	if IsLinux {
 		c.RWNamedVolumeMount("database-data", "/var/lib/mysql/")
@@ -157,7 +156,7 @@ func DatabaseContainer() *containerkit.Container {
 	return c
 }
 
-func PortainerContainer() *containerkit.Container {
+func PortainerContainer() *kit.Container {
 	rootless := fmt.Sprintf("/var/run/user/%d/docker.sock", syscall.Geteuid())
 	_, err := os.Stat(rootless)
 	isRootless := err == nil
@@ -166,22 +165,22 @@ func PortainerContainer() *containerkit.Container {
 		src = rootless
 	}
 
-	return containerkit.NewContainer().
+	return kit.NewContainer().
 		Image("portainer/portainer-ce:latest").
-		PortBinding(containerkit.PortBinding{Protocol: containerkit.TCP, HostIP: "0.0.0.0", HostPort: "9000", ContainerPort: "9000"}).
+		PortBinding(types.PortBinding{Protocol: types.TCP, HostIP: "0.0.0.0", HostPort: "9000", ContainerPort: "9000"}).
 		RWNamedVolumeMount("portainer-data", "/data").
-		Mount(containerkit.Mount{
+		Mount(kit.Mount{
 			Source: src, Target: "/var/run/docker.sock",
-			Type: containerkit.MountBind,
+			Type: types.MountBind,
 		}).
 		Endpoint("wordpress-network")
 }
 
-func ProxyContainer() *containerkit.Container {
-	return containerkit.NewContainer("proxy-container").
+func ProxyContainer() *kit.Container {
+	return kit.NewContainer("proxy-container").
 		Image("haproxy:latest").
 		Command("-f", "/usr/local/etc/haproxy/haproxy.cfg").
-		PortBinding(containerkit.PortBinding{Protocol: containerkit.TCP, HostIP: "0.0.0.0", HostPort: "80", ContainerPort: "80"}).
+		PortBinding(types.PortBinding{Protocol: types.TCP, HostIP: "0.0.0.0", HostPort: "80", ContainerPort: "80"}).
 		VolumeBinds("./examples/wordpress/haproxy.cfg:/usr/local/etc/haproxy/haproxy.cfg:ro").
 		Endpoint("wordpress-network")
 }

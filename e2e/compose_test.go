@@ -14,26 +14,27 @@ import (
 	"time"
 
 	"github.com/aptd3v/containerkit/pkg/client"
-	"github.com/aptd3v/containerkit/pkg/containerkit"
-	"github.com/aptd3v/containerkit/pkg/containerkit/errdefs"
+	"github.com/aptd3v/containerkit/pkg/kit"
+	"github.com/aptd3v/containerkit/pkg/kit/errdefs"
+	"github.com/aptd3v/containerkit/pkg/kit/types"
 )
 
 func TestComposeEchoUp(t *testing.T) {
 	t.Parallel()
 	name := ident(t, "p")
-	project := containerkit.NewProject(name)
-	project.WithService("echo", containerkit.NewContainer().
+	project := kit.NewProject(name)
+	project.WithService(kit.NewService("echo", kit.NewContainer().
 		Image(alpine).
 		Command("echo", "hello-e2e"),
-	)
+	))
 	if err := project.Validate(); err != nil {
 		t.Fatalf("Validate: %v", err)
 	}
-	app := containerkit.NewCompose(project)
+	app := kit.NewCompose(project)
 	composeDown(t, app)
 	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Minute)
 	defer cancel()
-	if err := app.Up(ctx, &containerkit.Up{Writer: testWriter(t), RemoveOrphans: true}); err != nil {
+	if err := app.Up(ctx, &kit.Up{Writer: testWriter(t), RemoveOrphans: true}); err != nil {
 		t.Fatalf("Up: %v", err)
 	}
 }
@@ -41,37 +42,37 @@ func TestComposeEchoUp(t *testing.T) {
 func TestComposeLifecycle(t *testing.T) {
 	t.Parallel()
 	name := ident(t, "p")
-	project := containerkit.NewProject(name)
-	project.WithService("app", containerkit.NewContainer().
+	project := kit.NewProject(name)
+	project.WithService(kit.NewService("app", kit.NewContainer().
 		Image(alpine).
 		Command("sleep", "infinity").
-		PortBinding(containerkit.PortBinding{Protocol: containerkit.TCP, HostIP: "127.0.0.1", HostPort: "0", ContainerPort: "80"}),
-	)
+		PortBinding(types.PortBinding{Protocol: types.TCP, HostIP: "127.0.0.1", HostPort: "0", ContainerPort: "80"}),
+	))
 	if err := project.Validate(); err != nil {
 		t.Fatalf("Validate: %v", err)
 	}
-	app := containerkit.NewCompose(project)
+	app := kit.NewCompose(project)
 	composeDown(t, app)
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Minute)
 	defer cancel()
 
-	if err := app.Up(ctx, &containerkit.Up{Detach: true, RemoveOrphans: true, Writer: testWriter(t)}); err != nil {
+	if err := app.Up(ctx, &kit.Up{Detach: true, RemoveOrphans: true, Writer: testWriter(t)}); err != nil {
 		t.Fatalf("Up: %v", err)
 	}
 
-	if err := app.Ps(ctx, &containerkit.Ps{All: true, Writer: testWriter(t)}); err != nil {
+	if err := app.Ps(ctx, &kit.Ps{All: true, Writer: testWriter(t)}); err != nil {
 		t.Fatalf("Ps: %v", err)
 	}
 
 	var psOut bytes.Buffer
-	if err := app.Ps(ctx, &containerkit.Ps{All: true, Format: "json", Writer: io.MultiWriter(&psOut, testWriter(t))}); err != nil {
+	if err := app.Ps(ctx, &kit.Ps{All: true, Format: "json", Writer: io.MultiWriter(&psOut, testWriter(t))}); err != nil {
 		t.Fatalf("Ps json: %v", err)
 	}
 	if !strings.Contains(psOut.String(), "app") && !strings.Contains(psOut.String(), `"State"`) {
 		t.Fatalf("Ps json missing service: %s", psOut.String())
 	}
 
-	if err := app.Exec(ctx, &containerkit.Exec{
+	if err := app.Exec(ctx, &kit.Exec{
 		Service: "app",
 		Command: []string{"sh", "-c", "echo compose-ok"},
 		NoTTY:   true,
@@ -81,49 +82,49 @@ func TestComposeLifecycle(t *testing.T) {
 	}
 
 	stopTimeout := 5
-	if err := app.Stop(ctx, &containerkit.Stop{Timeout: &stopTimeout, ServiceNames: []string{"app"}, Writer: testWriter(t)}); err != nil {
+	if err := app.Stop(ctx, &kit.Stop{Timeout: &stopTimeout, ServiceNames: []string{"app"}, Writer: testWriter(t)}); err != nil {
 		t.Fatalf("Stop: %v", err)
 	}
 	time.Sleep(time.Second)
-	if err := app.Start(ctx, &containerkit.Start{ServiceNames: []string{"app"}, Writer: testWriter(t)}); err != nil {
+	if err := app.Start(ctx, &kit.Start{ServiceNames: []string{"app"}, Writer: testWriter(t)}); err != nil {
 		t.Fatalf("Start: %v", err)
 	}
 	restartTimeout := 5
-	if err := app.Restart(ctx, &containerkit.Restart{Timeout: &restartTimeout, ServiceNames: []string{"app"}, Writer: testWriter(t)}); err != nil {
+	if err := app.Restart(ctx, &kit.Restart{Timeout: &restartTimeout, ServiceNames: []string{"app"}, Writer: testWriter(t)}); err != nil {
 		t.Fatalf("Restart: %v", err)
 	}
 
-	if err := app.Config(ctx, &containerkit.ComposeConfig{Quiet: true, Writer: testWriter(t)}); err != nil {
+	if err := app.Config(ctx, &kit.ComposeConfig{Quiet: true, Writer: testWriter(t)}); err != nil {
 		t.Fatalf("Config: %v", err)
 	}
-	if err := app.Images(ctx, &containerkit.Images{Writer: testWriter(t)}); err != nil {
+	if err := app.Images(ctx, &kit.Images{Writer: testWriter(t)}); err != nil {
 		t.Fatalf("Images: %v", err)
 	}
-	if err := app.Top(ctx, &containerkit.Top{ServiceNames: []string{"app"}, Writer: testWriter(t)}); err != nil {
+	if err := app.Top(ctx, &kit.Top{ServiceNames: []string{"app"}, Writer: testWriter(t)}); err != nil {
 		t.Fatalf("Top: %v", err)
 	}
-	if err := app.Stats(ctx, &containerkit.Stats{NoStream: true, ServiceNames: []string{"app"}, Writer: testWriter(t)}); err != nil {
+	if err := app.Stats(ctx, &kit.Stats{NoStream: true, ServiceNames: []string{"app"}, Writer: testWriter(t)}); err != nil {
 		t.Fatalf("Stats: %v", err)
 	}
-	if err := app.Pause(ctx, &containerkit.Pause{ServiceNames: []string{"app"}, Writer: testWriter(t)}); err != nil {
+	if err := app.Pause(ctx, &kit.Pause{ServiceNames: []string{"app"}, Writer: testWriter(t)}); err != nil {
 		t.Fatalf("Pause: %v", err)
 	}
-	if err := app.Unpause(ctx, &containerkit.Unpause{ServiceNames: []string{"app"}, Writer: testWriter(t)}); err != nil {
+	if err := app.Unpause(ctx, &kit.Unpause{ServiceNames: []string{"app"}, Writer: testWriter(t)}); err != nil {
 		t.Fatalf("Unpause: %v", err)
 	}
-	if err := app.Port(ctx, &containerkit.Port{Service: "app", PrivatePort: 80, Writer: testWriter(t)}); err != nil {
+	if err := app.Port(ctx, &kit.Port{Service: "app", PrivatePort: 80, Writer: testWriter(t)}); err != nil {
 		t.Fatalf("Port: %v", err)
 	}
-	if err := app.Ls(ctx, &containerkit.Ls{Writer: testWriter(t)}); err != nil {
+	if err := app.Ls(ctx, &kit.Ls{Writer: testWriter(t)}); err != nil {
 		t.Fatalf("Ls: %v", err)
 	}
-	if err := app.Version(ctx, &containerkit.Version{Short: true, Writer: testWriter(t)}); err != nil {
+	if err := app.Version(ctx, &kit.Version{Short: true, Writer: testWriter(t)}); err != nil {
 		t.Fatalf("Version: %v", err)
 	}
-	if err := app.Volumes(ctx, &containerkit.Volumes{Writer: testWriter(t)}); err != nil {
+	if err := app.Volumes(ctx, &kit.Volumes{Writer: testWriter(t)}); err != nil {
 		t.Fatalf("Volumes: %v", err)
 	}
-	if err := app.Run(ctx, &containerkit.Run{
+	if err := app.Run(ctx, &kit.Run{
 		Service: "app",
 		Command: []string{"echo", "run-ok"},
 		NoTTY:   true,
@@ -134,24 +135,24 @@ func TestComposeLifecycle(t *testing.T) {
 		t.Fatalf("Run: %v", err)
 	}
 	hostFile := filepath.Join(t.TempDir(), "hostname")
-	if err := app.Cp(ctx, &containerkit.Cp{Source: "app:/etc/hostname", Dest: hostFile, Writer: testWriter(t)}); err != nil {
+	if err := app.Cp(ctx, &kit.Cp{Source: "app:/etc/hostname", Dest: hostFile, Writer: testWriter(t)}); err != nil {
 		t.Fatalf("Cp: %v", err)
 	}
 
-	if err := app.Logs(ctx, &containerkit.Logs{Tail: intPtr(20), Writer: testWriter(t)}); err != nil {
+	if err := app.Logs(ctx, &kit.Logs{Tail: intPtr(20), Writer: testWriter(t)}); err != nil {
 		t.Fatalf("Logs: %v", err)
 	}
-	if err := app.Pull(ctx, &containerkit.Pull{Policy: "missing", Quiet: true, Writer: testWriter(t)}); err != nil {
+	if err := app.Pull(ctx, &kit.Pull{Policy: "missing", Quiet: true, Writer: testWriter(t)}); err != nil {
 		t.Fatalf("Pull: %v", err)
 	}
-	if err := app.Kill(ctx, &containerkit.Kill{Writer: testWriter(t)}); err != nil {
+	if err := app.Kill(ctx, &kit.Kill{Writer: testWriter(t)}); err != nil {
 		t.Fatalf("Kill: %v", err)
 	}
-	if err := app.Rm(ctx, &containerkit.Rm{Force: true, Writer: testWriter(t)}); err != nil {
+	if err := app.Rm(ctx, &kit.Rm{Force: true, Writer: testWriter(t)}); err != nil {
 		t.Fatalf("Rm: %v", err)
 	}
 
-	if err := app.Down(ctx, &containerkit.Down{RemoveOrphans: true, RemoveVolumes: true, Writer: testWriter(t)}); err != nil {
+	if err := app.Down(ctx, &kit.Down{RemoveOrphans: true, RemoveVolumes: true, Writer: testWriter(t)}); err != nil {
 		t.Fatalf("Down: %v", err)
 	}
 }
@@ -161,22 +162,20 @@ func intPtr(v int) *int { return &v }
 func TestComposeProfiles(t *testing.T) {
 	t.Parallel()
 	name := ident(t, "p")
-	project := containerkit.NewProject(name)
-	project.WithService("keep",
-		containerkit.NewContainer().Image(alpine).Command("sleep", "infinity"),
-		containerkit.Profiles("demo"),
-	)
-	project.WithService("skip",
-		containerkit.NewContainer().Image(alpine).Command("sleep", "infinity"),
-		containerkit.Profiles("other"),
-	)
-	app := containerkit.NewCompose(project)
+	project := kit.NewProject(name)
+	project.WithService(kit.NewService("keep",
+		kit.NewContainer().Image(alpine).Command("sleep", "infinity"),
+	).Profiles("demo"))
+	project.WithService(kit.NewService("skip",
+		kit.NewContainer().Image(alpine).Command("sleep", "infinity"),
+	).Profiles("other"))
+	app := kit.NewCompose(project)
 	composeDown(t, app, "demo")
 
 	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Minute)
 	defer cancel()
 
-	err := app.Up(ctx, &containerkit.Up{Detach: true, Writer: testWriter(t)})
+	err := app.Up(ctx, &kit.Up{Detach: true, Writer: testWriter(t)})
 	if err == nil {
 		t.Fatal("Up without Profiles: want error")
 	}
@@ -187,7 +186,7 @@ func TestComposeProfiles(t *testing.T) {
 		t.Fatalf("Up without Profiles: unexpected error: %v", err)
 	}
 
-	if err := app.Up(ctx, &containerkit.Up{
+	if err := app.Up(ctx, &kit.Up{
 		Detach:   true,
 		Profiles: []string{"demo"},
 		Writer:   testWriter(t),
@@ -196,7 +195,7 @@ func TestComposeProfiles(t *testing.T) {
 	}
 
 	var psOut bytes.Buffer
-	if err := app.Ps(ctx, &containerkit.Ps{All: true, Format: "json", Writer: io.MultiWriter(&psOut, testWriter(t)), Profiles: []string{"demo"}}); err != nil {
+	if err := app.Ps(ctx, &kit.Ps{All: true, Format: "json", Writer: io.MultiWriter(&psOut, testWriter(t)), Profiles: []string{"demo"}}); err != nil {
 		t.Fatalf("Ps: %v", err)
 	}
 	raw := psOut.String()
@@ -212,16 +211,15 @@ func TestComposeInlineBuild(t *testing.T) {
 	t.Parallel()
 	name := ident(t, "p")
 	img := ident(t, "i") + ":e2e"
-	df := containerkit.NewDockerFile().From("alpine", "latest").CommandExec("sleep", "infinity")
-	project := containerkit.NewProject(name)
-	project.WithService("app",
-		containerkit.NewContainer().Image(img),
-		df.WithInline(),
-	)
+	df := kit.NewDockerFile().From("alpine:latest").Command("sleep", "infinity")
+	project := kit.NewProject(name)
+	project.WithService(kit.NewService("app",
+		kit.NewContainer().Image(img),
+	).Dockerfile(df))
 	if err := project.Validate(); err != nil {
 		t.Fatalf("Validate: %v", err)
 	}
-	app := containerkit.NewCompose(project)
+	app := kit.NewCompose(project)
 	composeDown(t, app)
 	cli := newCLI(t)
 	t.Cleanup(func() {
@@ -232,13 +230,13 @@ func TestComposeInlineBuild(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Minute)
 	defer cancel()
 
-	if err := app.Build(ctx, &containerkit.ComposeBuild{Writer: testWriter(t), ServiceNames: []string{"app"}}); err != nil {
+	if err := app.Build(ctx, &kit.ComposeBuild{Writer: testWriter(t), ServiceNames: []string{"app"}}); err != nil {
 		t.Fatalf("Build: %v", err)
 	}
-	if err := app.Up(ctx, &containerkit.Up{Detach: true, RemoveOrphans: true, Writer: testWriter(t)}); err != nil {
+	if err := app.Up(ctx, &kit.Up{Detach: true, RemoveOrphans: true, Writer: testWriter(t)}); err != nil {
 		t.Fatalf("Up: %v", err)
 	}
-	if err := app.Exec(ctx, &containerkit.Exec{
+	if err := app.Exec(ctx, &kit.Exec{
 		Service: "app",
 		Command: []string{"echo", "inline-ok"},
 		NoTTY:   true,
@@ -251,12 +249,12 @@ func TestComposeInlineBuild(t *testing.T) {
 func TestComposeEvents(t *testing.T) {
 	t.Parallel()
 	name := ident(t, "p")
-	project := containerkit.NewProject(name)
-	project.WithService("web", containerkit.NewContainer().
+	project := kit.NewProject(name)
+	project.WithService(kit.NewService("web", kit.NewContainer().
 		Image(alpine).
 		Command("sleep", "infinity"),
-	)
-	app := containerkit.NewCompose(project)
+	))
+	app := kit.NewCompose(project)
 	composeDown(t, app)
 
 	ctx, cancel := context.WithCancel(context.Background())
@@ -280,7 +278,7 @@ func TestComposeEvents(t *testing.T) {
 
 	upCtx, upCancel := context.WithTimeout(context.Background(), 2*time.Minute)
 	defer upCancel()
-	if err := app.Up(upCtx, &containerkit.Up{Detach: true, RemoveOrphans: true, Writer: testWriter(t)}); err != nil {
+	if err := app.Up(upCtx, &kit.Up{Detach: true, RemoveOrphans: true, Writer: testWriter(t)}); err != nil {
 		t.Fatalf("Up: %v", err)
 	}
 
@@ -295,7 +293,7 @@ func TestComposeEvents(t *testing.T) {
 		}
 	}
 
-	if err := app.Down(upCtx, &containerkit.Down{RemoveOrphans: true, Writer: testWriter(t)}); err != nil {
+	if err := app.Down(upCtx, &kit.Down{RemoveOrphans: true, Writer: testWriter(t)}); err != nil {
 		t.Fatalf("Down: %v", err)
 	}
 	cancel()
@@ -309,48 +307,42 @@ func TestComposeStackNetworkVolumeHealthScaleWait(t *testing.T) {
 	name := ident(t, "p")
 	netName := ident(t, "n")
 	volName := ident(t, "v")
-	project := containerkit.NewProject(name)
+	project := kit.NewProject(name)
 	project.WithNetwork(netName)
 	project.WithVolume(volName)
-	project.WithService("db",
-		containerkit.NewContainer().
+	project.WithService(kit.NewService("db",
+		kit.NewContainer().
 			Image(alpine).
 			Command("sleep", "infinity").
-			HealthCheck(containerkit.Health{
-				Test:     []string{"CMD-SHELL", "true"},
-				Interval: 1,
-				Timeout:  1,
-				Retries:  5,
-			}).
+			HealthCheck(kit.NewHealth().CMDShell("true").Interval(1).Timeout(1).Retries(5)).
 			RWNamedVolumeMount(volName, "/data").
 			Endpoint(netName),
-	)
-	project.WithService("app",
-		containerkit.NewContainer().
+	))
+	project.WithService(kit.NewService("app",
+		kit.NewContainer().
 			Image(alpine).
 			Command("sleep", "infinity").
 			RWNamedVolumeMount(volName, "/data").
 			Endpoint(netName),
-		containerkit.DependsOnHealthy("db"),
-	)
-	project.WithService("oneshot",
-		containerkit.NewContainer().
+	).DependsOnHealthy("db"))
+	project.WithService(kit.NewService("oneshot",
+		kit.NewContainer().
 			Image(alpine).
 			Command("sleep", "infinity").
 			RestartPolicyNever().
 			Endpoint(netName),
-	)
+	))
 	if err := project.Validate(); err != nil {
 		t.Fatalf("Validate: %v", err)
 	}
 
-	app := containerkit.NewCompose(project)
+	app := kit.NewCompose(project)
 	composeDown(t, app)
 	ctx, cancel := context.WithTimeout(context.Background(), 4*time.Minute)
 	defer cancel()
 
 	waitTimeout := 90
-	if err := app.Up(ctx, &containerkit.Up{
+	if err := app.Up(ctx, &kit.Up{
 		Wait:          true,
 		WaitTimeout:   &waitTimeout,
 		RemoveOrphans: true,
@@ -359,7 +351,7 @@ func TestComposeStackNetworkVolumeHealthScaleWait(t *testing.T) {
 		t.Fatalf("Up wait: %v", err)
 	}
 
-	if err := app.Exec(ctx, &containerkit.Exec{
+	if err := app.Exec(ctx, &kit.Exec{
 		Service: "db",
 		Command: []string{"sh", "-c", "echo shared-ok > /data/ping"},
 		NoTTY:   true,
@@ -368,7 +360,7 @@ func TestComposeStackNetworkVolumeHealthScaleWait(t *testing.T) {
 		t.Fatalf("Exec db write: %v", err)
 	}
 	var volOut bytes.Buffer
-	if err := app.Exec(ctx, &containerkit.Exec{
+	if err := app.Exec(ctx, &kit.Exec{
 		Service: "app",
 		Command: []string{"cat", "/data/ping"},
 		NoTTY:   true,
@@ -381,7 +373,7 @@ func TestComposeStackNetworkVolumeHealthScaleWait(t *testing.T) {
 	}
 
 	var netOut bytes.Buffer
-	if err := app.Exec(ctx, &containerkit.Exec{
+	if err := app.Exec(ctx, &kit.Exec{
 		Service: "app",
 		Command: []string{"getent", "hosts", "db"},
 		NoTTY:   true,
@@ -393,14 +385,14 @@ func TestComposeStackNetworkVolumeHealthScaleWait(t *testing.T) {
 		t.Fatalf("network dns missing db: %s", netOut.String())
 	}
 
-	if err := app.Scale(ctx, &containerkit.Scale{
-		Replicas: []containerkit.UpScale{{Service: "app", Num: 2}},
+	if err := app.Scale(ctx, &kit.Scale{
+		Replicas: []kit.UpScale{{Service: "app", Num: 2}},
 		Writer:   testWriter(t),
 	}); err != nil {
 		t.Fatalf("Scale: %v", err)
 	}
 	var psOut bytes.Buffer
-	if err := app.Ps(ctx, &containerkit.Ps{All: true, Format: "json", Writer: io.MultiWriter(&psOut, testWriter(t))}); err != nil {
+	if err := app.Ps(ctx, &kit.Ps{All: true, Format: "json", Writer: io.MultiWriter(&psOut, testWriter(t))}); err != nil {
 		t.Fatalf("Ps after scale: %v", err)
 	}
 	if n := countPSService(psOut.String(), "app"); n < 2 {
@@ -410,9 +402,9 @@ func TestComposeStackNetworkVolumeHealthScaleWait(t *testing.T) {
 	stopErr := make(chan error, 1)
 	go func() {
 		time.Sleep(time.Second)
-		stopErr <- app.Stop(ctx, &containerkit.Stop{ServiceNames: []string{"oneshot"}, Writer: testWriter(t)})
+		stopErr <- app.Stop(ctx, &kit.Stop{ServiceNames: []string{"oneshot"}, Writer: testWriter(t)})
 	}()
-	waitErr := app.Wait(ctx, &containerkit.Wait{ServiceNames: []string{"oneshot"}, Writer: testWriter(t)})
+	waitErr := app.Wait(ctx, &kit.Wait{ServiceNames: []string{"oneshot"}, Writer: testWriter(t)})
 	if err := <-stopErr; err != nil {
 		t.Fatalf("Stop oneshot: %v", err)
 	}
@@ -427,11 +419,11 @@ func TestComposeLoadProjectUp(t *testing.T) {
 	pullAlpine(t, cli)
 
 	name := ident(t, "p")
-	src := containerkit.NewProject(name)
-	src.WithService("web", containerkit.NewContainer().
+	src := kit.NewProject(name)
+	src.WithService(kit.NewService("web", kit.NewContainer().
 		Image(alpine).
 		Command("sleep", "infinity"),
-	)
+	))
 	if err := src.Validate(); err != nil {
 		t.Fatalf("Validate: %v", err)
 	}
@@ -449,8 +441,8 @@ func TestComposeLoadProjectUp(t *testing.T) {
 
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Minute)
 	defer cancel()
-	loader := containerkit.NewCompose(containerkit.NewProject("loader"))
-	loaded, err := loader.LoadProject(ctx, &containerkit.ProjectLoad{
+	loader := kit.NewCompose(kit.NewProject("loader"))
+	loaded, err := loader.LoadProject(ctx, &kit.ProjectLoad{
 		Name:       name,
 		Files:      []string{yamlPath},
 		WorkingDir: dir,
@@ -463,12 +455,12 @@ func TestComposeLoadProjectUp(t *testing.T) {
 		t.Fatalf("loaded web: %v", err)
 	}
 
-	app := containerkit.NewCompose(loaded)
+	app := kit.NewCompose(loaded)
 	composeDown(t, app)
-	if err := app.Up(ctx, &containerkit.Up{Detach: true, RemoveOrphans: true, Writer: testWriter(t)}); err != nil {
+	if err := app.Up(ctx, &kit.Up{Detach: true, RemoveOrphans: true, Writer: testWriter(t)}); err != nil {
 		t.Fatalf("Up loaded: %v", err)
 	}
-	if err := app.Exec(ctx, &containerkit.Exec{
+	if err := app.Exec(ctx, &kit.Exec{
 		Service: "web",
 		Command: []string{"echo", "loaded-ok"},
 		NoTTY:   true,

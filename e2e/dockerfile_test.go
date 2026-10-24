@@ -12,7 +12,7 @@ import (
 	"time"
 
 	"github.com/aptd3v/containerkit/pkg/client"
-	"github.com/aptd3v/containerkit/pkg/containerkit"
+	"github.com/aptd3v/containerkit/pkg/kit"
 )
 
 func TestDockerFileWriterRealBuild(t *testing.T) {
@@ -31,13 +31,13 @@ func TestDockerFileWriterRealBuild(t *testing.T) {
 	mustWrite("my file.txt", "spaced-copy")
 	mustWrite("extra.txt", "from-add")
 
-	df := containerkit.NewDockerFile().
+	df := kit.NewDockerFile().
 		Comment("writer e2e for %s").
 		FromAs("%s:%s", "base").
 		From("%s", "%s").
 		Format("alpine", "alpine", "latest", "alpine", "latest").
 		Arg("MSG").
-		ArgKV("APP", "e2e").
+		Arg("APP", "e2e").
 		Env("APP", "e2e").
 		Env("GREETING", "hello").
 		Label("e2e.writer", "1").
@@ -52,15 +52,10 @@ func TestDockerFileWriterRealBuild(t *testing.T) {
 		Onbuild("RUN true").
 		StopSignal("SIGTERM").
 		Volumes("/data").
-		Healthcheck(containerkit.Health{
-			Test:     []string{"CMD", "true"},
-			Timeout:  2,
-			Interval: 5,
-			Retries:  1,
-		}).
+		HealthCheck(kit.NewHealth().CMD("true").Timeout(2).Interval(5).Retries(1)).
 		User("nobody").
 		Shell("/bin/echo", "from-shell").
-		CommandExec("sleep", "infinity")
+		Command("sleep", "infinity")
 	if err := df.Validate(); err != nil {
 		t.Fatalf("Validate: %v", err)
 	}
@@ -70,9 +65,9 @@ func TestDockerFileWriterRealBuild(t *testing.T) {
 		t.Fatalf("Export: %v", err)
 	}
 
-	ctxReader, err := df.NewLocalBuildContext(src)
+	ctxReader, err := kit.NewBuild().Context(src).Dockerfile(df).Reader()
 	if err != nil {
-		t.Fatalf("NewLocalBuildContext: %v", err)
+		t.Fatalf("Reader: %v", err)
 	}
 
 	tag := ident(t, "i") + ":e2e"
@@ -132,7 +127,7 @@ func TestDockerFileWriterRealBuild(t *testing.T) {
 	}
 
 	name := ident(t, "c")
-	ctr := containerkit.NewContainer(name).Image(tag)
+	ctr := kit.NewContainer(name).Image(tag)
 	if err := ctr.Validate(); err != nil {
 		t.Fatalf("container Validate: %v", err)
 	}
@@ -172,7 +167,7 @@ func execOutput(t *testing.T, cli *client.Client, id string, cmd ...string) stri
 		AttachStdout: true,
 		AttachStderr: true,
 		User:         "root",
-		Command:      cmd,
+		Cmd:          cmd,
 	})
 	if err != nil {
 		t.Fatalf("ContainerExecCreate: %v", err)

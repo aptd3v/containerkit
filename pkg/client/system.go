@@ -8,39 +8,27 @@ import (
 	sdk "github.com/moby/moby/client"
 )
 
-// DiskUsage selects which object types [Client.DiskUsage] reports.
+// DiskUsage is [sdk.DiskUsageOptions].
 // Nil options report containers, images, volumes, and build cache.
-type DiskUsage struct {
-	Containers bool
-	Images     bool
-	BuildCache bool
-	Volumes    bool
-	Verbose    bool
-}
+type DiskUsage sdk.DiskUsageOptions
 
 func (o *DiskUsage) apply() sdk.DiskUsageOptions {
 	if o == nil {
 		return sdk.DiskUsageOptions{Containers: true, Images: true, BuildCache: true, Volumes: true}
 	}
-	return sdk.DiskUsageOptions{
-		Containers: o.Containers,
-		Images:     o.Images,
-		BuildCache: o.BuildCache,
-		Volumes:    o.Volumes,
-		Verbose:    o.Verbose,
-	}
+	return sdk.DiskUsageOptions(*o)
 }
 
-// EngineEvents filters the engine event stream. Nil watches every event.
-type EngineEvents struct {
-	Since   string
-	Until   string
-	Filters []Filter
-}
+// EngineEvents is [sdk.EventsListOptions]. Nil watches every event.
+type EngineEvents sdk.EventsListOptions
 
-// DistributionInspect is options for DistributionInspect.
-type DistributionInspect struct {
-	Auth auth.Auth
+func (o *EngineEvents) apply() sdk.EventsListOptions { return sdk.EventsListOptions(apply(o)) }
+
+// DistributionInspect is [sdk.DistributionInspectOptions].
+type DistributionInspect sdk.DistributionInspectOptions
+
+func (o *DistributionInspect) apply() sdk.DistributionInspectOptions {
+	return sdk.DistributionInspectOptions(apply(o))
 }
 
 // Info returns daemon information.
@@ -52,18 +40,10 @@ func (c *Client) Info(ctx context.Context) (*response.Info, error) {
 	return &response.Info{Info: info.Info}, nil
 }
 
-// Ping is options for Ping. Nil leaves API version negotiation to the client constructor.
-type Ping struct {
-	NegotiateAPIVersion bool
-	ForceNegotiate      bool
-}
+// Ping is [sdk.PingOptions]. Nil leaves API version negotiation to the client constructor.
+type Ping sdk.PingOptions
 
-func (o *Ping) apply() sdk.PingOptions {
-	if o == nil {
-		return sdk.PingOptions{}
-	}
-	return sdk.PingOptions{NegotiateAPIVersion: o.NegotiateAPIVersion, ForceNegotiate: o.ForceNegotiate}
-}
+func (o *Ping) apply() sdk.PingOptions { return sdk.PingOptions(apply(o)) }
 
 // Ping checks that the daemon is reachable.
 func (c *Client) Ping(ctx context.Context, opt *Ping) (*response.Ping, error) {
@@ -140,11 +120,7 @@ func (c *Client) Events(ctx context.Context, opt *EngineEvents) (<-chan response
 	if opt == nil {
 		opt = &EngineEvents{}
 	}
-	stream := c.wrapped.Events(ctx, sdk.EventsListOptions{
-		Since:   opt.Since,
-		Until:   opt.Until,
-		Filters: argsFromFilters(opt.Filters),
-	})
+	stream := c.wrapped.Events(ctx, opt.apply())
 	out := make(chan response.EngineEvent)
 	errs := make(chan error, 1)
 	go func() {
@@ -176,15 +152,7 @@ func (c *Client) Events(ctx context.Context, opt *EngineEvents) (<-chan response
 
 // DistributionInspect returns the image digest and manifest descriptor from the registry.
 func (c *Client) DistributionInspect(ctx context.Context, ref string, opt *DistributionInspect) (*response.DistributionInspect, error) {
-	var encoded string
-	if opt != nil {
-		var err error
-		encoded, err = encodeAuth(opt.Auth)
-		if err != nil {
-			return nil, err
-		}
-	}
-	inspected, err := c.wrapped.DistributionInspect(ctx, ref, sdk.DistributionInspectOptions{EncodedRegistryAuth: encoded})
+	inspected, err := c.wrapped.DistributionInspect(ctx, ref, opt.apply())
 	if err != nil {
 		return nil, err
 	}

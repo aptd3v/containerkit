@@ -18,8 +18,9 @@ import (
 	"unicode"
 
 	"github.com/aptd3v/containerkit/pkg/client"
-	"github.com/aptd3v/containerkit/pkg/containerkit"
+	"github.com/aptd3v/containerkit/pkg/kit"
 	"github.com/docker/docker/pkg/stdcopy"
+	ocispec "github.com/opencontainers/image-spec/specs-go/v1"
 )
 
 const alpine = "alpine:latest"
@@ -107,7 +108,7 @@ func pullAlpine(t *testing.T, cli *client.Client) {
 	t.Helper()
 	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Minute)
 	defer cancel()
-	rc, err := cli.ImagePull(ctx, alpine, &client.ImagePull{CurrentPlatform: true})
+	rc, err := cli.ImagePull(ctx, alpine, &client.ImagePull{Platforms: []ocispec.Platform{{OS: "linux", Architecture: runtime.GOARCH}}})
 	if err != nil {
 		t.Fatalf("ImagePull: %v", err)
 	}
@@ -155,12 +156,12 @@ func drainBuild(t *testing.T, body io.ReadCloser) {
 	}
 }
 
-func composeDown(t *testing.T, app *containerkit.Compose, profiles ...string) {
+func composeDown(t *testing.T, app *kit.Compose, profiles ...string) {
 	t.Helper()
 	t.Cleanup(func() {
 		ctx, cancel := context.WithTimeout(context.Background(), 90*time.Second)
 		defer cancel()
-		_ = app.Down(ctx, &containerkit.Down{
+		_ = app.Down(ctx, &kit.Down{
 			RemoveOrphans: true,
 			RemoveVolumes: true,
 			Writer:        testWriter(t),
@@ -174,7 +175,7 @@ func removeContainer(t *testing.T, cli *client.Client, id string) {
 	t.Cleanup(func() {
 		ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 		defer cancel()
-		_ = cli.ContainerRemove(ctx, id, &client.Remove{Force: true, Volumes: true})
+		_ = cli.ContainerRemove(ctx, id, &client.Remove{Force: true, RemoveVolumes: true})
 	})
 }
 

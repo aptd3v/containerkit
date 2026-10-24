@@ -51,11 +51,7 @@ func (c *Client) NodeRemove(ctx context.Context, id string, opt *NodeRemove) err
 
 // ServiceCreate creates a swarm service.
 func (c *Client) ServiceCreate(ctx context.Context, opt *ServiceCreate) (*response.ServiceCreate, error) {
-	op, err := opt.apply()
-	if err != nil {
-		return nil, err
-	}
-	created, err := c.wrapped.ServiceCreate(ctx, op)
+	created, err := c.wrapped.ServiceCreate(ctx, opt.apply())
 	if err != nil {
 		return nil, err
 	}
@@ -86,11 +82,7 @@ func (c *Client) ServiceList(ctx context.Context, opt *ServiceList) ([]response.
 
 // ServiceUpdate updates a swarm service.
 func (c *Client) ServiceUpdate(ctx context.Context, id string, opt *ServiceUpdate) (*response.ServiceUpdate, error) {
-	op, err := opt.apply()
-	if err != nil {
-		return nil, err
-	}
-	updated, err := c.wrapped.ServiceUpdate(ctx, id, op)
+	updated, err := c.wrapped.ServiceUpdate(ctx, id, opt.apply())
 	if err != nil {
 		return nil, err
 	}

@@ -73,9 +73,9 @@ go run ./examples/supabase/
 
 ## containerkit features used
 
-- **Profiles** — `containerkit.Profiles("minimal")` / `"full"` mirrored on `Up.Profiles` (and Logs/Events/Kill/Down).
+- **Profiles** — `Service.Profiles("minimal")` / `"full"` mirrored on `Up.Profiles` (and Logs/Events/Kill/Down).
 - **DependsOn** — Studio waits for `meta`; most services wait for healthy `db` / `analytics`.
-- **Conditional limits** — ordinary `if` plus `containerkit.Deploy{Limits: &containerkit.Resources{...}}`.
-- **Health** — `containerkit.Health{StartPeriod: 120}` on db.
+- **Conditional limits** — ordinary `if` plus `kit.Deploy{Limits: &types.Resources{...}}`.
+- **Health** — `kit.NewHealth().StartPeriod(120)` on db.
 - **Compose API** — `Up`, `Logs`, `Events`, `Kill`, `Down` with profile fields on option structs.
 - **Validation** — `project.Validate()` before up.

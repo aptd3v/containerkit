@@ -11,7 +11,8 @@ import (
 	"os/signal"
 
 	"github.com/aptd3v/containerkit/pkg/client"
-	"github.com/aptd3v/containerkit/pkg/containerkit"
+	"github.com/aptd3v/containerkit/pkg/kit"
+	"github.com/aptd3v/containerkit/pkg/kit/types"
 )
 
 const (
@@ -28,25 +29,24 @@ func main() {
 }
 
 func run() error {
-	df := containerkit.NewDockerFile().
+	df := kit.NewDockerFile().
 		Syntax("docker/dockerfile:1").
 		Comment("stage a static page, then serve it with busybox httpd").
 		FromAs("alpine:latest", "build").
 		Workdir("/out").
 		Run(`printf 'Hello from containerkit\n' > index.html`).
 		Run("chmod 644 index.html").
-		From("alpine", "latest").
+		From("alpine:latest").
 		Run("apk add --no-cache busybox-extras").
-		Copy("/out/index.html", "/www/index.html", containerkit.CopyOpts{From: "build"}).
+		Copy("/out/index.html", "/www/index.html", kit.CopyOpts{From: "build"}).
 		Label("example", "dockerfile").
 		Expose("8080").
 		User("nobody").
-		Healthcheck(containerkit.Health{
-			Test:      []string{"CMD-SHELL", "wget -qO- http://127.0.0.1:8080/ >/dev/null"},
-			IntervalD: "5s",
-			TimeoutD:  "2s",
-			Retries:   3,
-		}).
+		HealthCheck(kit.NewHealth().
+			CMDShell("wget -qO- http://127.0.0.1:8080/ >/dev/null").
+			IntervalD("5s").
+			TimeoutD("2s").
+			Retries(3)).
 		Entrypoint("/usr/sbin/httpd", "-f", "-p", "8080", "-h", "/www")
 	if err := df.Validate(); err != nil {
 		return fmt.Errorf("dockerfile: %w", err)
@@ -65,13 +65,7 @@ func run() error {
 	}
 	defer cli.Close()
 
-	src, err := os.MkdirTemp("", "dockerfile-example-")
-	if err != nil {
-		return err
-	}
-	defer os.RemoveAll(src)
-
-	buildCtx, err := df.NewLocalBuildContext(src)
+	buildCtx, err := kit.NewBuild().Dockerfile(df).Reader()
 	if err != nil {
 		return fmt.Errorf("build context: %w", err)
 	}
@@ -87,10 +81,10 @@ func run() error {
 		return fmt.Errorf("build output: %w", err)
 	}
 
-	ctr := containerkit.NewContainer(containerName).
+	ctr := kit.NewContainer(containerName).
 		Image(imageRef).
-		PortBinding(containerkit.PortBinding{
-			Protocol:      containerkit.TCP,
+		PortBinding(types.PortBinding{
+			Protocol:      types.TCP,
 			HostIP:        "0.0.0.0",
 			HostPort:      hostPort,
 			ContainerPort: "8080",
