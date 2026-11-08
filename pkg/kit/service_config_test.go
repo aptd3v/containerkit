@@ -25,7 +25,7 @@ func TestServiceConfigSetters(t *testing.T) {
 			setFn:    NewService("", nil).Profiles("foo", "bar").settings[0].Apply,
 			field:    "Profiles",
 			wantErr:  false,
-			message:  "WithProfiles ok",
+			message:  "Profiles ok",
 			expected: []string{"foo", "bar"},
 		},
 		{
@@ -33,7 +33,7 @@ func TestServiceConfigSetters(t *testing.T) {
 			setFn:   NewService("", nil).EnvFile("foo").settings[0].Apply,
 			field:   "EnvFiles",
 			wantErr: false,
-			message: "WithEnvFile ok",
+			message: "EnvFile ok",
 			expected: []types.EnvFile{{
 				Path:     "foo",
 				Required: true,
@@ -44,7 +44,7 @@ func TestServiceConfigSetters(t *testing.T) {
 			setFn:   NewService("", nil).DependsOnHealthy("foo").settings[0].Apply,
 			field:   "DependsOn",
 			wantErr: false,
-			message: "WithDependsOnHealthy ok",
+			message: "DependsOnHealthy ok",
 			expected: types.DependsOnConfig{"foo": types.ServiceDependency{
 				Condition: "service_healthy",
 				Restart:   true,
@@ -56,7 +56,7 @@ func TestServiceConfigSetters(t *testing.T) {
 			setFn:   NewService("", nil).DependsOn("foo").settings[0].Apply,
 			field:   "DependsOn",
 			wantErr: false,
-			message: "WithDependsOn ok",
+			message: "DependsOn ok",
 			expected: types.DependsOnConfig{"foo": types.ServiceDependency{
 				Condition: "service_started",
 				Restart:   true,
@@ -68,7 +68,7 @@ func TestServiceConfigSetters(t *testing.T) {
 			setFn:   NewService("", nil).Develop(Develop{Action: WatchActionSyncRestart, Path: "foo", Target: "bar"}).settings[0].Apply,
 			field:   "Develop",
 			wantErr: false,
-			message: "WithDevelop ok",
+			message: "Develop ok",
 			expected: &types.DevelopConfig{
 				Watch: []types.Trigger{
 					{
@@ -84,7 +84,7 @@ func TestServiceConfigSetters(t *testing.T) {
 			setFn:    NewService("", nil).Annotation("foo", "bar").settings[0].Apply,
 			field:    "Annotations",
 			wantErr:  false,
-			message:  "WithAnnotation ok",
+			message:  "Annotation ok",
 			expected: types.Mapping{"foo": "bar"},
 		},
 		{
@@ -92,7 +92,7 @@ func TestServiceConfigSetters(t *testing.T) {
 			setFn:    NewService("", nil).NoAttach().settings[0].Apply,
 			field:    "Attach",
 			wantErr:  false,
-			message:  "WithNoAttach ok",
+			message:  "NoAttach ok",
 			expected: &boolFalse,
 		},
 	}
@@ -108,7 +108,7 @@ func TestServiceConfigSetters(t *testing.T) {
 	}
 }
 
-func TestWithEnvFileWhenEnvironmentIsSet(t *testing.T) {
+func TestEnvFileWhenEnvironmentIsSet(t *testing.T) {
 	config := &types.ServiceConfig{}
 	config.Environment = types.NewMappingWithEquals([]string{"A=1"})
 	assert.NoError(t, NewService("", nil).EnvFile("bar").settings[0].Apply(config))

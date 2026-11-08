@@ -53,6 +53,8 @@ go get github.com/aptd3v/containerkit@latest
 
 ## Features
 
+The published core is `pkg/kit` and `pkg/client`, with optional `pkg/taskflow` for DAGs over the same values. One `*kit.Container` feeds both Engine create and Compose. Fluent setters accumulate errors; call `Validate` (or let `Up` / `Export` / `ContainerCreate` do it) before side effects. Dockerfile-as-Go plus `Build.Reader`, in-process Compose option structs, health/`DependsOnHealthy`/`Up.Wait`, and `project.WriteTo` / `Export` for plan preview are the agent-friendly path. An HTTP daemon or canvas UI is not part of this module.
+
 ### Two ways to run the same container
 
 | Piece | Import | Role |
@@ -63,6 +65,10 @@ go get github.com/aptd3v/containerkit@latest
 | Engine client | `github.com/aptd3v/containerkit/pkg/client` | Docker Engine SDK wrapper. Each call takes a per-op struct (`Remove`, `Exec`, `ImageBuild`, …). |
 
 Compose fits a multi-service stack: networks, volumes, profiles, and `Up` / `Down` / `Logs`. The Engine client fits one container, image builds, and an interactive TTY. A hybrid program uses the client to build or exec, then Compose to run the stack. See [examples/nginx](./examples/nginx), [examples/image_inline](./examples/image_inline), and [examples/mongo_replica](./examples/mongo_replica).
+
+### Type stacks
+
+`pkg/kit` config types come from `github.com/docker/docker/api/types/...`. `pkg/client` talks to `github.com/moby/moby/client` and `github.com/moby/moby/api/types/...`. Those are distinct Go types. Pass kit configs through the client APIs (they convert internally); do not assign across packages by hand.
 
 ### Compose stack
 
@@ -208,19 +214,31 @@ if runtime.GOOS == "linux" {
 
 Full signatures are on [pkg.go.dev](https://pkg.go.dev/github.com/aptd3v/containerkit/pkg/kit).
 
+**Naming families** (as they exist today; no forced rename):
+
+| Family | Pattern | Examples |
+|---|---|---|
+| Container fluent | method on `*Container` | `.Image()`, `.Env()`, `.HealthCheck(...)` |
+| Project builders | `With*` on `*Project` | `WithService`, `WithNetwork` |
+| Service Compose-only | method on `*Service` | `.DependsOn()`, `.Profiles()` |
+| Client construction | functional options | `client.WithAPIVersionNegotiation()` |
+| Client / Compose ops | per-op structs | `&client.Remove{…}`, `&kit.Up{…}` |
+| Registry auth | `With*` options | `auth.WithUsername` (`WithEmail` is deprecated) |
+
 **Container.** Image, env, command, ports, mounts, health, restart, resources, capabilities, logging, and platform. You can also mix in Docker SDK structs. See [examples/structs](./examples/structs).
 
 **Service.** `NewService(name, container)`, then `DependsOn`, `DependsOnHealthy`, `Profiles`, `Build`, `Deploy`, `Secret`, and the other Compose-only methods. Pass the service to `Project.WithService`.
 
 **Project.** `WithService`, `WithNetwork`, `WithVolume`, `WithSecret`, `WithJob`, and `WithModel`.
 
-**Compose commands.**
+**Compose commands (selection).** Full list: [pkg.go.dev](https://pkg.go.dev/github.com/aptd3v/containerkit/pkg/kit).
 
 | Group | Commands |
 |---|---|
-| Lifecycle | `Up`, `Down`, `Start`, `Stop`, `Restart`, `Kill`, `Rm`, `Run`, `Scale` |
-| Observe | `Logs`, `Ps`, `Events`, `Top`, `Stats`, `Wait` |
-| Files and build | `Build`, `Pull`, `Push`, `Config`, `Export`, `Watch` |
+| Lifecycle | `Up`, `Down`, `Create`, `Start`, `Stop`, `Restart`, `Kill`, `Rm`, `Run`, `Scale`, `Pause`, `Unpause` |
+| Observe | `Logs`, `Ps`, `Events`, `Top`, `Stats`, `Wait`, `Images`, `Ls`, `Port` |
+| Files / build / config | `Build`, `Pull`, `Push`, `Config`, `Export`, `Watch`, `Cp`, `Exec`, `Attach`, `Commit` |
+| Also | `Publish`, `Version`, `Volumes`, `Viz`, `Generate`, `LoadProject`, `Bridge*` — see pkg.go.dev |
 
 **Engine client.** Containers, images, networks, volumes, swarm, and plugins, plus interactive TTY in `pkg/client/terminal`. See [pkg.go.dev/pkg/client](https://pkg.go.dev/github.com/aptd3v/containerkit/pkg/client).
 

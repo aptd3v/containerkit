@@ -25,7 +25,7 @@ func TestPlatformConfigSetters(t *testing.T) {
 			},
 			field:    "Architecture",
 			wantErr:  false,
-			message:  "WithArchitecture ok",
+			message:  "Architecture ok",
 			expected: "amd64",
 		},
 		{
@@ -35,7 +35,7 @@ func TestPlatformConfigSetters(t *testing.T) {
 			},
 			field:    "OS",
 			wantErr:  false,
-			message:  "WithOS ok",
+			message:  "OS ok",
 			expected: "linux",
 		},
 		{
@@ -45,7 +45,7 @@ func TestPlatformConfigSetters(t *testing.T) {
 			},
 			field:    "OSVersion",
 			wantErr:  false,
-			message:  "WithOSVersion ok",
+			message:  "OSVersion ok",
 			expected: "1.0.0",
 		},
 		{
@@ -55,7 +55,7 @@ func TestPlatformConfigSetters(t *testing.T) {
 			},
 			field:    "OSFeatures",
 			wantErr:  false,
-			message:  "WithOSFeatures ok",
+			message:  "OSFeatures ok",
 			expected: []string{"foo", "bar"},
 		},
 		{
@@ -65,7 +65,7 @@ func TestPlatformConfigSetters(t *testing.T) {
 			},
 			field:    "Variant",
 			wantErr:  false,
-			message:  "WithVariant ok",
+			message:  "Variant ok",
 			expected: "v1",
 		},
 	}

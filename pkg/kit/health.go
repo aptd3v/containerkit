@@ -9,8 +9,12 @@ import (
 )
 
 // Health is a fluent container healthcheck.
-// Pass it to Container.HealthCheck and Dockerfile.Healthcheck.
-// Timeout/Interval/StartPeriod are seconds unless the matching *D method is used ("2s", "1m").
+// Pass it to [Container.HealthCheck] and [Dockerfile.HealthCheck].
+//
+// Timeout, Interval, and StartPeriod are seconds. Prefer TimeoutD, IntervalD,
+// and StartPeriodD for duration strings ("2s", "1m"). An empty Health becomes
+// HEALTHCHECK NONE when applied. [Container.DisabledHealthCheck] is equivalent
+// to HealthCheck(NewHealth().None()).
 type Health struct {
 	test         []string
 	timeout      int

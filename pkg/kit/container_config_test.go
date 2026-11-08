@@ -37,7 +37,7 @@ func TestContainerConfigSetters(t *testing.T) {
 			field:    "Env",
 			expected: []string{"TEST=test"},
 			wantErr:  false,
-			message:  "WithEnv ok",
+			message:  "Env ok",
 		},
 		{
 			config: &container.Config{},
@@ -47,7 +47,7 @@ func TestContainerConfigSetters(t *testing.T) {
 			field:    "Env",
 			expected: make([]string, 0),
 			wantErr:  true,
-			message:  "WithEnv error",
+			message:  "Env error",
 		},
 		{
 			config: &container.Config{},
@@ -57,7 +57,7 @@ func TestContainerConfigSetters(t *testing.T) {
 			field:    "Env",
 			expected: []string{"TEST=test"},
 			wantErr:  false,
-			message:  "WithEnvMap ok",
+			message:  "EnvMap ok",
 		},
 		{
 			config: &container.Config{},
@@ -67,7 +67,7 @@ func TestContainerConfigSetters(t *testing.T) {
 			field:    "Env",
 			expected: make([]string, 0),
 			wantErr:  true,
-			message:  "WithEnvMap error",
+			message:  "EnvMap error",
 		},
 		{
 			config: &container.Config{},
@@ -77,7 +77,7 @@ func TestContainerConfigSetters(t *testing.T) {
 			field:    "ExposedPorts",
 			expected: nat.PortSet{nat.Port("80/tcp"): {}},
 			wantErr:  false,
-			message:  "WithExposedPort ok",
+			message:  "ExposedPort ok",
 		},
 		{
 			config: &container.Config{},
@@ -87,7 +87,7 @@ func TestContainerConfigSetters(t *testing.T) {
 			field:    "ExposedPorts",
 			expected: nat.PortSet{},
 			wantErr:  true,
-			message:  "WithExposedPort error",
+			message:  "ExposedPort error",
 		},
 		{
 			config: &container.Config{},
@@ -97,7 +97,7 @@ func TestContainerConfigSetters(t *testing.T) {
 			field:    "Hostname",
 			expected: "test",
 			wantErr:  false,
-			message:  "WithHostName ok",
+			message:  "HostName ok",
 		},
 		{
 			config: &container.Config{},
@@ -107,7 +107,7 @@ func TestContainerConfigSetters(t *testing.T) {
 			field:    "Hostname",
 			expected: "",
 			wantErr:  true,
-			message:  "WithHostName error",
+			message:  "HostName error",
 		},
 		{
 			config: &container.Config{},
@@ -117,7 +117,7 @@ func TestContainerConfigSetters(t *testing.T) {
 			field:    "Domainname",
 			expected: "test",
 			wantErr:  false,
-			message:  "WithDomainName ok",
+			message:  "DomainName ok",
 		},
 		{
 			config: &container.Config{},
@@ -127,7 +127,7 @@ func TestContainerConfigSetters(t *testing.T) {
 			field:    "Domainname",
 			expected: "",
 			wantErr:  true,
-			message:  "WithDomainName error",
+			message:  "DomainName error",
 		},
 		{
 			config: &container.Config{},
@@ -137,7 +137,7 @@ func TestContainerConfigSetters(t *testing.T) {
 			field:    "Image",
 			expected: "test",
 			wantErr:  false,
-			message:  "WithImage ok",
+			message:  "Image ok",
 		},
 		{
 			config: &container.Config{},
@@ -147,7 +147,7 @@ func TestContainerConfigSetters(t *testing.T) {
 			field:    "Image",
 			expected: "",
 			wantErr:  true,
-			message:  "WithImage error",
+			message:  "Image error",
 		},
 		{
 			config: &container.Config{},
@@ -157,7 +157,7 @@ func TestContainerConfigSetters(t *testing.T) {
 			field:    "Image",
 			expected: "test-test",
 			wantErr:  false,
-			message:  "WithImagef ok",
+			message:  "Imagef ok",
 		},
 		{
 			config: &container.Config{},
@@ -167,7 +167,7 @@ func TestContainerConfigSetters(t *testing.T) {
 			field:    "Image",
 			expected: "",
 			wantErr:  true,
-			message:  "WithImagef error",
+			message:  "Imagef error",
 		},
 		{
 			config: &container.Config{},
@@ -177,7 +177,7 @@ func TestContainerConfigSetters(t *testing.T) {
 			field:    "Cmd",
 			expected: strslice.StrSlice([]string{"test", "test2", "test3"}),
 			wantErr:  false,
-			message:  "WithCommand ok",
+			message:  "Command ok",
 		},
 		{
 			config: &container.Config{},
@@ -187,7 +187,7 @@ func TestContainerConfigSetters(t *testing.T) {
 			field:    "Cmd",
 			expected: strslice.StrSlice(strslice.StrSlice(nil)),
 			wantErr:  true,
-			message:  "WithCommand error",
+			message:  "Command error",
 		},
 		{
 			config: &container.Config{},
@@ -197,7 +197,7 @@ func TestContainerConfigSetters(t *testing.T) {
 			field:    "User",
 			expected: "test",
 			wantErr:  false,
-			message:  "WithUser ok",
+			message:  "User ok",
 		},
 		{
 			config: &container.Config{},
@@ -207,7 +207,7 @@ func TestContainerConfigSetters(t *testing.T) {
 			field:    "User",
 			expected: "",
 			wantErr:  true,
-			message:  "WithUser error",
+			message:  "User error",
 		},
 		{
 			config: &container.Config{},
@@ -217,7 +217,7 @@ func TestContainerConfigSetters(t *testing.T) {
 			field:    "AttachStdin",
 			expected: true,
 			wantErr:  false,
-			message:  "WithAttachedStdin ok",
+			message:  "AttachedStdin ok",
 		},
 		{
 			config: &container.Config{},
@@ -227,7 +227,7 @@ func TestContainerConfigSetters(t *testing.T) {
 			field:    "AttachStdout",
 			expected: true,
 			wantErr:  false,
-			message:  "WithAttachedStdout ok",
+			message:  "AttachedStdout ok",
 		},
 		{
 			config: &container.Config{},
@@ -237,7 +237,7 @@ func TestContainerConfigSetters(t *testing.T) {
 			field:    "AttachStderr",
 			expected: true,
 			wantErr:  false,
-			message:  "WithAttachedStderr ok",
+			message:  "AttachedStderr ok",
 		},
 		{
 			config: &container.Config{},
@@ -247,7 +247,7 @@ func TestContainerConfigSetters(t *testing.T) {
 			field:    "Tty",
 			expected: true,
 			wantErr:  false,
-			message:  "WithTty ok",
+			message:  "Tty ok",
 		},
 		{
 			config: &container.Config{},
@@ -257,7 +257,7 @@ func TestContainerConfigSetters(t *testing.T) {
 			field:    "OpenStdin",
 			expected: true,
 			wantErr:  false,
-			message:  "WithStdinOpen ok",
+			message:  "StdinOpen ok",
 		},
 		{
 			config: &container.Config{},
@@ -267,7 +267,7 @@ func TestContainerConfigSetters(t *testing.T) {
 			field:    "OpenStdin",
 			expected: true,
 			wantErr:  false,
-			message:  "WithStdinOpen ok",
+			message:  "StdinOpen ok",
 		},
 		{
 			config: &container.Config{},
@@ -277,7 +277,7 @@ func TestContainerConfigSetters(t *testing.T) {
 			field:    "StdinOnce",
 			expected: true,
 			wantErr:  false,
-			message:  "WithStdinOnce ok",
+			message:  "StdinOnce ok",
 		},
 		{
 			config: &container.Config{},
@@ -287,7 +287,7 @@ func TestContainerConfigSetters(t *testing.T) {
 			field:    "ArgsEscaped",
 			expected: true,
 			wantErr:  false,
-			message:  "WithEscapedArgs ok",
+			message:  "EscapedArgs ok",
 		},
 		{
 			config: &container.Config{},
@@ -297,7 +297,7 @@ func TestContainerConfigSetters(t *testing.T) {
 			field:    "Volumes",
 			expected: map[string]struct{}{"test": {}},
 			wantErr:  false,
-			message:  "WithVolume ok",
+			message:  "Volume ok",
 		},
 		{
 			config: &container.Config{},
@@ -307,7 +307,7 @@ func TestContainerConfigSetters(t *testing.T) {
 			field:    "Volumes",
 			expected: nilMapStruct,
 			wantErr:  true,
-			message:  "WithVolume error",
+			message:  "Volume error",
 		},
 		{
 			config: &container.Config{},
@@ -317,7 +317,7 @@ func TestContainerConfigSetters(t *testing.T) {
 			field:    "WorkingDir",
 			expected: "test",
 			wantErr:  false,
-			message:  "WithWorkingDir ok",
+			message:  "WorkingDir ok",
 		},
 		{
 			config: &container.Config{},
@@ -327,7 +327,7 @@ func TestContainerConfigSetters(t *testing.T) {
 			field:    "WorkingDir",
 			expected: "",
 			wantErr:  true,
-			message:  "WithWorkingDir error",
+			message:  "WorkingDir error",
 		},
 		{
 			config: &container.Config{},
@@ -337,7 +337,7 @@ func TestContainerConfigSetters(t *testing.T) {
 			field:    "NetworkDisabled",
 			expected: true,
 			wantErr:  false,
-			message:  "WithDisabledNetwork ok",
+			message:  "DisabledNetwork ok",
 		},
 		{
 			config: &container.Config{},
@@ -347,7 +347,7 @@ func TestContainerConfigSetters(t *testing.T) {
 			field:    "OnBuild",
 			expected: []string{"test", "test2", "test3"},
 			wantErr:  false,
-			message:  "WithOnBuild ok",
+			message:  "OnBuild ok",
 		},
 		{
 			config: &container.Config{},
@@ -357,7 +357,7 @@ func TestContainerConfigSetters(t *testing.T) {
 			field:    "OnBuild",
 			expected: nilStringSlice,
 			wantErr:  true,
-			message:  "WithOnBuild error",
+			message:  "OnBuild error",
 		},
 		{
 			config: &container.Config{},
@@ -367,7 +367,7 @@ func TestContainerConfigSetters(t *testing.T) {
 			field:    "Labels",
 			expected: map[string]string{"test": "test"},
 			wantErr:  false,
-			message:  "WithLabel ok",
+			message:  "Label ok",
 		},
 		{
 			config: &container.Config{},
@@ -377,7 +377,7 @@ func TestContainerConfigSetters(t *testing.T) {
 			field:    "Labels",
 			expected: nilMapString,
 			wantErr:  true,
-			message:  "WithLabel error",
+			message:  "Label error",
 		},
 		{
 			config: &container.Config{},
@@ -387,7 +387,7 @@ func TestContainerConfigSetters(t *testing.T) {
 			field:    "StopSignal",
 			expected: "test",
 			wantErr:  false,
-			message:  "WithStopSignal ok",
+			message:  "StopSignal ok",
 		},
 		{
 			config: &container.Config{},
@@ -397,7 +397,7 @@ func TestContainerConfigSetters(t *testing.T) {
 			field:    "StopSignal",
 			expected: "",
 			wantErr:  true,
-			message:  "WithStopSignal error",
+			message:  "StopSignal error",
 		},
 		{
 			config: &container.Config{},
@@ -407,7 +407,7 @@ func TestContainerConfigSetters(t *testing.T) {
 			field:    "Entrypoint",
 			expected: strslice.StrSlice{"test", "test2", "test3"},
 			wantErr:  false,
-			message:  "WithEntrypoint ok",
+			message:  "Entrypoint ok",
 		},
 		{
 			config: &container.Config{},
@@ -417,7 +417,7 @@ func TestContainerConfigSetters(t *testing.T) {
 			field:    "Entrypoint",
 			expected: nilDockerStrSlice,
 			wantErr:  true,
-			message:  "WithEntrypoint error",
+			message:  "Entrypoint error",
 		},
 		{
 			config: &container.Config{},
@@ -427,7 +427,7 @@ func TestContainerConfigSetters(t *testing.T) {
 			field:    "Shell",
 			expected: strslice.StrSlice{"test", "test2", "test3"},
 			wantErr:  false,
-			message:  "WithShell ok",
+			message:  "Shell ok",
 		},
 		{
 			config: &container.Config{},
@@ -437,7 +437,7 @@ func TestContainerConfigSetters(t *testing.T) {
 			field:    "Shell",
 			expected: nilDockerStrSlice,
 			wantErr:  true,
-			message:  "WithShell error",
+			message:  "Shell error",
 		},
 		{
 			config: &container.Config{},
@@ -447,7 +447,7 @@ func TestContainerConfigSetters(t *testing.T) {
 			field:    "StopTimeout",
 			expected: &stopTimeout,
 			wantErr:  false,
-			message:  "WithStopTimeout ok",
+			message:  "StopTimeout ok",
 		},
 		{
 			config: &container.Config{},
@@ -457,7 +457,7 @@ func TestContainerConfigSetters(t *testing.T) {
 			field:    "StopTimeout",
 			expected: nilStopTimeout,
 			wantErr:  true,
-			message:  "WithStopTimeout error",
+			message:  "StopTimeout error",
 		},
 	}
 

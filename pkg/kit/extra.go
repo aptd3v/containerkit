@@ -12,6 +12,7 @@ import (
 )
 
 // HealthCheck sets the container healthcheck from a Health value.
+// Empty Health becomes HEALTHCHECK NONE. Prefer this over mixing raw SDK structs.
 func (c *Container) HealthCheck(h Health) *Container {
 	check, err := h.healthConfig()
 	if err != nil {
@@ -23,6 +24,7 @@ func (c *Container) HealthCheck(h Health) *Container {
 }
 
 // DisabledHealthCheck disables the healthcheck.
+// Equivalent to HealthCheck(NewHealth().None()).
 func (c *Container) DisabledHealthCheck() *Container {
 	c.Config.Container.Healthcheck = &container.HealthConfig{Test: []string{"NONE"}}
 	return c

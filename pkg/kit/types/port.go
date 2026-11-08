@@ -27,6 +27,3 @@ type PortBinding struct {
 func (p PortBinding) Host() nat.PortBinding {
 	return nat.PortBinding{HostIP: p.HostIP, HostPort: p.HostPort}
 }
-func NewPortBinding(protocol Protocol, hostIP string, hostPort string, containerPort string) PortBinding {
-	return PortBinding{Protocol: protocol, HostIP: hostIP, HostPort: hostPort, ContainerPort: containerPort}
-}

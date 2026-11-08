@@ -419,7 +419,7 @@ func (d *Dockerfile) Volumes(volumes ...string) *Dockerfile {
 	return d
 }
 
-// Healthcheck sets a HEALTHCHECK instruction from a container Health value.
+// HealthCheck sets a HEALTHCHECK instruction from a container Health value.
 // Zero interval, timeout, start period, and retries are omitted.
 func (d *Dockerfile) HealthCheck(h Health) *Dockerfile {
 	if len(h.test) > 0 && h.test[0] == "NONE" {

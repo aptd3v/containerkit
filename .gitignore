@@ -27,11 +27,12 @@ go.work.sum
 # env file
 .env
 
-# containerkitd local data
+# Local build and data directories
 /data/
 /bin/
 
-# temporarily omitted from this release
+# Not part of this SDK release (daemon/UI trees are unpublished here).
+# Patterns keep accidental local copies of those trees untracked.
 /web/
 /internal/server/
 /api/

@@ -1,5 +1,3 @@
-// Package kit defines Compose projects and runs them through the
-// Docker Compose SDK.
 package kit
 
 import (
