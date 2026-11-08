@@ -1,4 +1,4 @@
-// Package main: taskflow DAG — Build(kit-probe) → Compose Up → probe → print URLs.
+// Package main: taskflow DAG: Build(kit-probe) -> Compose Up -> probe -> print URLs.
 package main
 
 import (
@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"slices"
 
 	"github.com/aptd3v/containerkit/pkg/client"
 	"github.com/aptd3v/containerkit/pkg/kit"
@@ -21,14 +22,7 @@ func printURLs(w io.Writer, cfg *Config, profiles []string) {
 	fmt.Fprintln(w, "Astronomy Shop is up:")
 	fmt.Fprintf(w, "  Store:          %s\n", storeURL(cfg))
 	fmt.Fprintf(w, "  Load generator: http://127.0.0.1:%s/\n", cfg.LocustWebPort)
-	hasObs := false
-	for _, p := range profiles {
-		if p == profileObservability {
-			hasObs = true
-			break
-		}
-	}
-	if hasObs {
+	if slices.Contains(profiles, profileObservability) {
 		fmt.Fprintf(w, "  Grafana:        http://127.0.0.1:%s/grafana/\n", cfg.EnvoyPort)
 		fmt.Fprintf(w, "  Jaeger:         http://127.0.0.1:%s/jaeger/ui\n", cfg.JaegerUIPort)
 		fmt.Fprintf(w, "  Prometheus:     http://127.0.0.1:%s/\n", cfg.PrometheusPort)
@@ -36,7 +30,7 @@ func printURLs(w io.Writer, cfg *Config, profiles []string) {
 	fmt.Fprintln(w, "")
 }
 
-// runFlow validates, optionally exports, then runs Build → Up(Wait) → probe.
+// runFlow validates, optionally exports, then runs Build -> Up(Wait) -> probe.
 func runFlow(ctx context.Context, cfg *Config, project *kit.Project, profiles []string, skipBuild bool) error {
 	cli, err := client.NewClient(client.FromEnv(), client.WithAPIVersionNegotiation())
 	if err != nil {
@@ -47,12 +41,12 @@ func runFlow(ctx context.Context, cfg *Config, project *kit.Project, profiles []
 	app := kit.NewCompose(project)
 	waitTimeout := 600
 	up := &kit.Up{
-		Detach:      true,
-		Wait:        true,
-		WaitTimeout: &waitTimeout,
-		Profiles:    profiles,
+		Detach:        true,
+		Wait:          true,
+		WaitTimeout:   &waitTimeout,
+		Profiles:      profiles,
 		RemoveOrphans: true,
-		Writer:      os.Stdout,
+		Writer:        os.Stdout,
 	}
 
 	flow := taskflow.New("astronomy-shop", cli)

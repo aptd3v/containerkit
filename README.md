@@ -44,12 +44,18 @@ The `echo` container exits when the command finishes.
 ## Getting started
 
 ```bash
-go get github.com/aptd3v/containerkit@latest
+go get github.com/aptd3v/containerkit@v0.7.0
 ```
 
 - **Go** 1.26.8+
 - **Docker Engine**
 - Linux, macOS, or Windows
+
+## v0.7.0
+
+- **Astronomy Shop showcase** ([examples/astronomy_shop](./examples/astronomy_shop)): CNCF OpenTelemetry demo as a Go Compose project with `shop` / `full` / `observability` profiles, health waits, kit-probe Dockerfile-as-Go, and a taskflow `Build -> Up -> probe` DAG.
+- **Dockerfile injection harden**: fluent Dockerfile scalars reject newline / control-character injection before build context is sent.
+- **Trap-removal cleanup**: nil-safe `Container.Validate`, dead daemon deps and unused Makefile targets removed from the published tree.
 
 ## Features
 
@@ -238,7 +244,7 @@ Full signatures are on [pkg.go.dev](https://pkg.go.dev/github.com/aptd3v/contain
 | Lifecycle | `Up`, `Down`, `Create`, `Start`, `Stop`, `Restart`, `Kill`, `Rm`, `Run`, `Scale`, `Pause`, `Unpause` |
 | Observe | `Logs`, `Ps`, `Events`, `Top`, `Stats`, `Wait`, `Images`, `Ls`, `Port` |
 | Files / build / config | `Build`, `Pull`, `Push`, `Config`, `Export`, `Watch`, `Cp`, `Exec`, `Attach`, `Commit` |
-| Also | `Publish`, `Version`, `Volumes`, `Viz`, `Generate`, `LoadProject`, `Bridge*` — see pkg.go.dev |
+| Also | `Publish`, `Version`, `Volumes`, `Viz`, `Generate`, `LoadProject`, `Bridge*` (see pkg.go.dev) |
 
 **Engine client.** Containers, images, networks, volumes, swarm, and plugins, plus interactive TTY in `pkg/client/terminal`. See [pkg.go.dev/pkg/client](https://pkg.go.dev/github.com/aptd3v/containerkit/pkg/client).
 
@@ -261,13 +267,14 @@ Run from the repo root.
 | [examples/structs](./examples/structs) | Config | Mix Docker SDK structs with fluent methods |
 | [examples/taskflow](./examples/taskflow) | Task graph | `pkg/taskflow`: build, Compose `Up`, parallel test containers, retry, `Down` |
 | [examples/supabase](./examples/supabase) | Compose | Full multi-profile stack. See its [README](./examples/supabase/README.md) |
-| [examples/astronomy_shop](./examples/astronomy_shop) | Task graph / Compose hybrid | OpenTelemetry Astronomy Shop: profiles, health waits, kit-probe Dockerfile-as-Go, taskflow Build→Up→probe. See its [README](./examples/astronomy_shop/README.md) |
+| [examples/astronomy_shop](./examples/astronomy_shop) | Task graph / Compose hybrid | OpenTelemetry Astronomy Shop: profiles, health waits, kit-probe Dockerfile-as-Go, taskflow Build -> Up -> probe. See its [README](./examples/astronomy_shop/README.md) |
 
 ```bash
 go run ./examples/simple/
 go run ./examples/supabase/                    # minimal
 go run ./examples/supabase/ -profile full
-go run ./examples/supabase/ -resource-limits
+go run ./examples/astronomy_shop/              # store + observability (default)
+go run ./examples/astronomy_shop/ -follow
 ```
 
 ## Migrating from go-contain

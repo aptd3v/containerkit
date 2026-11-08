@@ -19,12 +19,12 @@ type Config struct {
 	ImageName    string
 	ImageVersion string
 
-	CollectorImage string
-	FlagdImage     string
-	PostgresImage  string
-	ValkeyImage    string
-	GrafanaImage   string
-	JaegerImage    string
+	CollectorImage  string
+	FlagdImage      string
+	PostgresImage   string
+	ValkeyImage     string
+	GrafanaImage    string
+	JaegerImage     string
 	PrometheusImage string
 
 	EnvPlatform string
@@ -141,15 +141,15 @@ func (c *Config) otlpHTTP() string {
 
 func (c *Config) otlpMetricsPrefs() map[string]string {
 	return map[string]string{
-		"OTEL_EXPORTER_OTLP_METRICS_TEMPORALITY_PREFERENCE":         "cumulative",
+		"OTEL_EXPORTER_OTLP_METRICS_TEMPORALITY_PREFERENCE":        "cumulative",
 		"OTEL_EXPORTER_OTLP_METRICS_DEFAULT_HISTOGRAM_AGGREGATION": "explicit_bucket_histogram",
 	}
 }
 
 func (c *Config) commonOTEL(service, criticality, endpoint string) map[string]string {
 	m := map[string]string{
-		"OTEL_SERVICE_NAME":        service,
-		"OTEL_RESOURCE_ATTRIBUTES": c.resourceAttributes(criticality),
+		"OTEL_SERVICE_NAME":           service,
+		"OTEL_RESOURCE_ATTRIBUTES":    c.resourceAttributes(criticality),
 		"OTEL_EXPORTER_OTLP_ENDPOINT": endpoint,
 	}
 	for k, v := range c.otlpMetricsPrefs() {

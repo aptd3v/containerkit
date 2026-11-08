@@ -1,6 +1,6 @@
 // Astronomy Shop showcase: OpenTelemetry demo defined entirely in Go with kit.
 // Pulls published ghcr.io/open-telemetry/demo images, builds a small kit-probe
-// via Dockerfile-as-Go, then runs a taskflow Build→Up→probe DAG (or -follow).
+// via Dockerfile-as-Go, then runs a taskflow Build -> Up -> probe DAG (or -follow).
 //
 // Flags:
 //

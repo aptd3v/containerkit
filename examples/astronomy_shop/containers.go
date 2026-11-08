@@ -96,9 +96,9 @@ func otelCollector(cfg *Config, vol func(string) string, withObs bool) *kit.Cont
 		User("0:0").
 		Command(cmd...).
 		EnvMap(map[string]string{
-			"OTEL_COLLECTOR_HOST":           "0.0.0.0",
-			"OTEL_COLLECTOR_PORT_GRPC":      cfg.CollectorGRPCPort,
-			"OTEL_COLLECTOR_PORT_HTTP":      cfg.CollectorHTTPPort,
+			"OTEL_COLLECTOR_HOST":          "0.0.0.0",
+			"OTEL_COLLECTOR_PORT_GRPC":     cfg.CollectorGRPCPort,
+			"OTEL_COLLECTOR_PORT_HTTP":     cfg.CollectorHTTPPort,
 			"FRONTEND_PROXY_ADDR":          "frontend-proxy:" + cfg.EnvoyPort,
 			"IMAGE_PROVIDER_HOST":          "image-provider",
 			"IMAGE_PROVIDER_PORT":          cfg.ImageProviderPort,
@@ -124,7 +124,7 @@ func flagd(cfg *Config, vol func(string) string) *kit.Container {
 				"GOMEMLIMIT":                  "60MiB",
 			},
 		)).
-		VolumeBinds(vol("flagd") + ":/etc/flagd:ro").
+		VolumeBinds(vol("flagd")+":/etc/flagd:ro").
 		ExposedPort(types.TCP, cfg.FlagdPort).
 		ExposedPort(types.TCP, cfg.FlagdOFREPPort)
 }
@@ -141,7 +141,7 @@ func flagdUI(cfg *Config, vol func(string) string) *kit.Container {
 			},
 		)).
 		HealthCheck(bashTCPHealth(cfg.FlagdUIPort, 10, 5, 5, 20)).
-		VolumeBinds(vol("flagd") + ":/app/data").
+		VolumeBinds(vol("flagd")+":/app/data").
 		ExposedPort(types.TCP, cfg.FlagdUIPort)
 }
 
@@ -151,11 +151,11 @@ func ad(cfg *Config) *kit.Container {
 		EnvMap(mergeEnv(
 			cfg.commonOTEL("ad", "medium", cfg.otlpHTTP()),
 			map[string]string{
-				"AD_PORT":             cfg.ADPort,
-				"AD_PROMETHEUS_PORT":  cfg.ADPrometheusPort,
-				"FLAGD_HOST":          "flagd",
-				"FLAGD_PORT":          cfg.FlagdPort,
-				"OTEL_LOGS_EXPORTER":  "otlp",
+				"AD_PORT":            cfg.ADPort,
+				"AD_PROMETHEUS_PORT": cfg.ADPrometheusPort,
+				"FLAGD_HOST":         "flagd",
+				"FLAGD_PORT":         cfg.FlagdPort,
+				"OTEL_LOGS_EXPORTER": "otlp",
 				"OTEL_EXPERIMENTAL_SDK_TELEMETRY_VERSION": "latest",
 			},
 		)).
@@ -169,11 +169,11 @@ func cart(cfg *Config) *kit.Container {
 		EnvMap(mergeEnv(
 			cfg.commonOTEL("cart", "high", cfg.otlpGRPC()),
 			map[string]string{
-				"CART_PORT":               cfg.CartPort,
-				"FLAGD_HOST":              "flagd",
-				"FLAGD_PORT":              cfg.FlagdPort,
-				"VALKEY_ADDR":             "valkey-cart:" + cfg.ValkeyPort,
-				"ASPNETCORE_HTTP_PORTS":   cfg.CartPort,
+				"CART_PORT":             cfg.CartPort,
+				"FLAGD_HOST":            "flagd",
+				"FLAGD_PORT":            cfg.FlagdPort,
+				"VALKEY_ADDR":           "valkey-cart:" + cfg.ValkeyPort,
+				"ASPNETCORE_HTTP_PORTS": cfg.CartPort,
 			},
 		)).
 		ExposedPort(types.TCP, cfg.CartPort)
@@ -185,20 +185,20 @@ func checkout(cfg *Config) *kit.Container {
 		EnvMap(mergeEnv(
 			cfg.commonOTEL("checkout", "critical", cfg.otlpHTTP()),
 			map[string]string{
-				"CHECKOUT_PORT":                 cfg.CheckoutPort,
-				"FLAGD_HOST":                    "flagd",
-				"FLAGD_PORT":                    cfg.FlagdPort,
-				"CART_ADDR":                     "cart:" + cfg.CartPort,
-				"CURRENCY_ADDR":                 "currency:" + cfg.CurrencyPort,
-				"EMAIL_ADDR":                    "http://email:" + cfg.EmailPort,
-				"PAYMENT_ADDR":                  "payment:" + cfg.PaymentPort,
-				"PRODUCT_CATALOG_ADDR":          "product-catalog:" + cfg.ProductCatalogPort,
-				"SHIPPING_ADDR":                 "http://shipping:" + cfg.ShippingPort,
-				"KAFKA_ADDR":                    "kafka:" + cfg.KafkaPort,
-				"KAFKA_TOPIC":                   "orders",
-				"GOMEMLIMIT":                    "16MiB",
-				"OTEL_EXPORTER_OTLP_PROTOCOL":   "http/protobuf",
-				"OTEL_GO_X_OBSERVABILITY":       "true",
+				"CHECKOUT_PORT":               cfg.CheckoutPort,
+				"FLAGD_HOST":                  "flagd",
+				"FLAGD_PORT":                  cfg.FlagdPort,
+				"CART_ADDR":                   "cart:" + cfg.CartPort,
+				"CURRENCY_ADDR":               "currency:" + cfg.CurrencyPort,
+				"EMAIL_ADDR":                  "http://email:" + cfg.EmailPort,
+				"PAYMENT_ADDR":                "payment:" + cfg.PaymentPort,
+				"PRODUCT_CATALOG_ADDR":        "product-catalog:" + cfg.ProductCatalogPort,
+				"SHIPPING_ADDR":               "http://shipping:" + cfg.ShippingPort,
+				"KAFKA_ADDR":                  "kafka:" + cfg.KafkaPort,
+				"KAFKA_TOPIC":                 "orders",
+				"GOMEMLIMIT":                  "16MiB",
+				"OTEL_EXPORTER_OTLP_PROTOCOL": "http/protobuf",
+				"OTEL_GO_X_OBSERVABILITY":     "true",
 			},
 		)).
 		HealthCheck(grpcHealth(cfg.CheckoutPort)).
@@ -228,10 +228,10 @@ func email(cfg *Config) *kit.Container {
 		EnvMap(mergeEnv(
 			cfg.commonOTEL("email", "medium", cfg.otlpHTTP()),
 			map[string]string{
-				"APP_ENV":     "production",
-				"EMAIL_PORT":  cfg.EmailPort,
-				"FLAGD_HOST":  "flagd",
-				"FLAGD_PORT":  cfg.FlagdPort,
+				"APP_ENV":    "production",
+				"EMAIL_PORT": cfg.EmailPort,
+				"FLAGD_HOST": "flagd",
+				"FLAGD_PORT": cfg.FlagdPort,
 			},
 		)).
 		HealthCheck(kit.NewHealth().
@@ -246,10 +246,10 @@ func payment(cfg *Config) *kit.Container {
 		EnvMap(mergeEnv(
 			cfg.commonOTEL("payment", "critical", cfg.otlpGRPC()),
 			map[string]string{
-				"IPV6_ENABLED":              cfg.IPV6Enabled,
-				"PAYMENT_PORT":              cfg.PaymentPort,
-				"FLAGD_HOST":                "flagd",
-				"FLAGD_PORT":                cfg.FlagdPort,
+				"IPV6_ENABLED":                cfg.IPV6Enabled,
+				"PAYMENT_PORT":                cfg.PaymentPort,
+				"FLAGD_HOST":                  "flagd",
+				"FLAGD_PORT":                  cfg.FlagdPort,
 				"OTEL_EXPORTER_OTLP_PROTOCOL": "grpc",
 			},
 		)).
@@ -266,12 +266,12 @@ func productCatalog(cfg *Config, vol func(string) string) *kit.Container {
 		EnvMap(mergeEnv(
 			cfg.commonOTEL("product-catalog", "high", cfg.otlpGRPC()),
 			map[string]string{
-				"PRODUCT_CATALOG_PORT":        cfg.ProductCatalogPort,
-				"FLAGD_HOST":                  "flagd",
-				"FLAGD_PORT":                  cfg.FlagdPort,
-				"GOMEMLIMIT":                  "16MiB",
-				"OTEL_GO_X_OBSERVABILITY":     "true",
-				"OTEL_CONFIG_FILE":            "/otel-config.yml",
+				"PRODUCT_CATALOG_PORT":          cfg.ProductCatalogPort,
+				"FLAGD_HOST":                    "flagd",
+				"FLAGD_PORT":                    cfg.FlagdPort,
+				"GOMEMLIMIT":                    "16MiB",
+				"OTEL_GO_X_OBSERVABILITY":       "true",
+				"OTEL_CONFIG_FILE":              "/otel-config.yml",
 				"OTEL_SEMCONV_STABILITY_OPT_IN": "database",
 				"DB_CONNECTION_STRING": fmt.Sprintf(
 					"postgres://astronomy_user:%s@astronomy-db/astronomy_db?sslmode=disable",
@@ -280,7 +280,7 @@ func productCatalog(cfg *Config, vol func(string) string) *kit.Container {
 			},
 		)).
 		HealthCheck(grpcHealth(cfg.ProductCatalogPort)).
-		VolumeBinds(vol("otel-config.yml") + ":/otel-config.yml:ro").
+		VolumeBinds(vol("otel-config.yml")+":/otel-config.yml:ro").
 		ExposedPort(types.TCP, cfg.ProductCatalogPort)
 }
 
@@ -290,9 +290,9 @@ func quote(cfg *Config) *kit.Container {
 		EnvMap(mergeEnv(
 			cfg.commonOTEL("quote", "low", cfg.otlpHTTP()),
 			map[string]string{
-				"IPV6_ENABLED":                   cfg.IPV6Enabled,
-				"QUOTE_PORT":                     cfg.QuotePort,
-				"OTEL_PHP_AUTOLOAD_ENABLED":      "true",
+				"IPV6_ENABLED":                      cfg.IPV6Enabled,
+				"QUOTE_PORT":                        cfg.QuotePort,
+				"OTEL_PHP_AUTOLOAD_ENABLED":         "true",
 				"OTEL_PHP_INTERNAL_METRICS_ENABLED": "true",
 			},
 		)).
@@ -308,10 +308,10 @@ func recommendation(cfg *Config) *kit.Container {
 		EnvMap(mergeEnv(
 			cfg.commonOTEL("recommendation", "medium", cfg.otlpHTTP()),
 			map[string]string{
-				"RECOMMENDATION_PORT": cfg.RecommendationPort,
+				"RECOMMENDATION_PORT":  cfg.RecommendationPort,
 				"PRODUCT_CATALOG_ADDR": "product-catalog:" + cfg.ProductCatalogPort,
-				"FLAGD_HOST":          "flagd",
-				"FLAGD_PORT":          cfg.FlagdPort,
+				"FLAGD_HOST":           "flagd",
+				"FLAGD_PORT":           cfg.FlagdPort,
 				"OTEL_EXPERIMENTAL_SDK_TELEMETRY_VERSION": "latest",
 			},
 		)).
@@ -372,10 +372,10 @@ func frontend(cfg *Config) *kit.Container {
 				"SHIPPING_ADDR":        "http://shipping:" + cfg.ShippingPort,
 				"ENV_PLATFORM":         cfg.EnvPlatform,
 				"PUBLIC_OTEL_EXPORTER_OTLP_TRACES_ENDPOINT": "http://localhost:" + cfg.EnvoyPort + "/otlp-http/v1/traces",
-				"WEB_OTEL_SERVICE_NAME": "frontend-web",
-				"OTEL_COLLECTOR_HOST":   "otel-collector",
-				"FLAGD_HOST":            "flagd",
-				"FLAGD_PORT":            cfg.FlagdPort,
+				"WEB_OTEL_SERVICE_NAME":                     "frontend-web",
+				"OTEL_COLLECTOR_HOST":                       "otel-collector",
+				"FLAGD_HOST":                                "flagd",
+				"FLAGD_PORT":                                cfg.FlagdPort,
 			},
 		)).
 		HealthCheck(kit.NewHealth().
@@ -391,20 +391,20 @@ func loadGenerator(cfg *Config) *kit.Container {
 		EnvMap(mergeEnv(
 			cfg.commonOTEL("load-generator", "low", cfg.otlpGRPC()),
 			map[string]string{
-				"LOCUST_WEB_PORT":                    cfg.LocustWebPort,
-				"LOCUST_USERS":                       "5",
-				"LOCUST_HOST":                        "http://frontend-proxy:" + cfg.EnvoyPort,
-				"LOCUST_HEADLESS":                    "false",
-				"LOCUST_AUTOSTART":                   "true",
-				"LOCUST_BROWSER_TRAFFIC_ENABLED":     "true",
-				"LOCUST_HTTP_USER_WEIGHT":            "9",
-				"LOCUST_BROWSER_USER_WEIGHT":         "1",
-				"LOCUST_WEB_HOST":                    "0.0.0.0",
+				"LOCUST_WEB_PORT":                          cfg.LocustWebPort,
+				"LOCUST_USERS":                             "5",
+				"LOCUST_HOST":                              "http://frontend-proxy:" + cfg.EnvoyPort,
+				"LOCUST_HEADLESS":                          "false",
+				"LOCUST_AUTOSTART":                         "true",
+				"LOCUST_BROWSER_TRAFFIC_ENABLED":           "true",
+				"LOCUST_HTTP_USER_WEIGHT":                  "9",
+				"LOCUST_BROWSER_USER_WEIGHT":               "1",
+				"LOCUST_WEB_HOST":                          "0.0.0.0",
 				"OTEL_PYTHON_SDK_INTERNAL_METRICS_ENABLED": "true",
 				"PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION":   "python",
-				"FLAGD_HOST":                         "flagd",
-				"FLAGD_PORT":                         cfg.FlagdPort,
-				"FLAGD_OFREP_PORT":                   cfg.FlagdOFREPPort,
+				"FLAGD_HOST":                               "flagd",
+				"FLAGD_PORT":                               cfg.FlagdPort,
+				"FLAGD_OFREP_PORT":                         cfg.FlagdOFREPPort,
 			},
 		)).
 		HealthCheck(kit.NewHealth().
@@ -463,9 +463,9 @@ func kafka(cfg *Config) *kit.Container {
 			cfg.commonOTEL("kafka", "low", cfg.otlpHTTP()),
 			map[string]string{
 				"KAFKA_ADVERTISED_LISTENERS":              "PLAINTEXT://kafka:9092",
-				"KAFKA_LISTENERS":                       "PLAINTEXT://kafka:9092,CONTROLLER://kafka:9093",
-				"KAFKA_CONTROLLER_QUORUM_VOTERS":        "1@kafka:9093",
-				"KAFKA_HEAP_OPTS":                       "-Xmx400m -Xms400m",
+				"KAFKA_LISTENERS":                         "PLAINTEXT://kafka:9092,CONTROLLER://kafka:9093",
+				"KAFKA_CONTROLLER_QUORUM_VOTERS":          "1@kafka:9093",
+				"KAFKA_HEAP_OPTS":                         "-Xmx400m -Xms400m",
 				"OTEL_EXPERIMENTAL_SDK_TELEMETRY_VERSION": "latest",
 			},
 		)).
@@ -502,7 +502,7 @@ func fraudDetection(cfg *Config) *kit.Container {
 				"FLAGD_PORT":  cfg.FlagdPort,
 				"KAFKA_ADDR":  "kafka:" + cfg.KafkaPort,
 				"KAFKA_TOPIC": "orders",
-				"OTEL_INSTRUMENTATION_KAFKA_EXPERIMENTAL_SPAN_ATTRIBUTES":              "true",
+				"OTEL_INSTRUMENTATION_KAFKA_EXPERIMENTAL_SPAN_ATTRIBUTES":               "true",
 				"OTEL_INSTRUMENTATION_MESSAGING_EXPERIMENTAL_RECEIVE_TELEMETRY_ENABLED": "true",
 				"OTEL_EXPERIMENTAL_SDK_TELEMETRY_VERSION":                               "latest",
 			},
