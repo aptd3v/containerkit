@@ -261,6 +261,7 @@ Run from the repo root.
 | [examples/structs](./examples/structs) | Config | Mix Docker SDK structs with fluent methods |
 | [examples/taskflow](./examples/taskflow) | Task graph | `pkg/taskflow`: build, Compose `Up`, parallel test containers, retry, `Down` |
 | [examples/supabase](./examples/supabase) | Compose | Full multi-profile stack. See its [README](./examples/supabase/README.md) |
+| [examples/astronomy_shop](./examples/astronomy_shop) | Task graph / Compose hybrid | OpenTelemetry Astronomy Shop: profiles, health waits, kit-probe Dockerfile-as-Go, taskflow Build→Up→probe. See its [README](./examples/astronomy_shop/README.md) |
 
 ```bash
 go run ./examples/simple/

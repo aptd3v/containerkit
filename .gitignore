@@ -53,6 +53,8 @@ examples/wordpress/haproxy.cfg
 examples/mongo_replica/docker-compose.yaml
 examples/supabase/docker-compose.yaml
 examples/structs/docker-compose.yml
+examples/astronomy_shop/astronomy-shop.compose.yaml
+astronomy-shop.compose.yaml
 docker-compose.yaml
 volumes/
 
