@@ -44,12 +44,16 @@ The `echo` container exits when the command finishes.
 ## Getting started
 
 ```bash
-go get github.com/aptd3v/containerkit@v0.7.0
+go get github.com/aptd3v/containerkit@v0.7.1
 ```
 
 - **Go** 1.26.8+
 - **Docker Engine**
 - Linux, macOS, or Windows
+
+## v0.7.1
+
+Docs-only patch so pkg.go.dev picks up `pkg/kit` as latest after the v0.7.0 release.
 
 ## v0.7.0
 
