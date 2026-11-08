@@ -29,7 +29,7 @@ func printURLs(w io.Writer, cfg *Config, profiles []string) {
 		}
 	}
 	if hasObs {
-		fmt.Fprintf(w, "  Grafana:        http://127.0.0.1:%s/\n", cfg.GrafanaPort)
+		fmt.Fprintf(w, "  Grafana:        http://127.0.0.1:%s/grafana/\n", cfg.EnvoyPort)
 		fmt.Fprintf(w, "  Jaeger:         http://127.0.0.1:%s/jaeger/ui\n", cfg.JaegerUIPort)
 		fmt.Fprintf(w, "  Prometheus:     http://127.0.0.1:%s/\n", cfg.PrometheusPort)
 	}

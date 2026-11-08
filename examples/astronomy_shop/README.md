@@ -8,6 +8,14 @@ Flagship [containerkit](https://github.com/aptd3v/containerkit) showcase: the CN
 - Docker Engine
 - RAM: ~3 GB for `shop`, ~6 GB for `shop,observability` (default). Add more for `full` (Kafka).
 
+On some nested/containerized Docker hosts, same-bridge traffic is dropped when
+`net.bridge.bridge-nf-call-iptables=1`. If services stay unhealthy and cannot
+reach each other, set:
+
+```bash
+sudo sysctl -w net.bridge.bridge-nf-call-iptables=0 net.bridge.bridge-nf-call-ip6tables=0
+```
+
 ## Run (from repo root)
 
 ```bash
@@ -32,7 +40,7 @@ Default mode validates, exports compose YAML, builds `astronomy-shop-kit-probe:l
 | --- | --- | --- |
 | Store (Envoy) | http://localhost:8080/ | shop |
 | Load generator (Locust) | http://localhost:8089/ | shop |
-| Grafana | http://localhost:3000/ | observability |
+| Grafana | http://localhost:8080/grafana/ (or :3000 via proxy root URL) | observability |
 | Jaeger UI | http://localhost:16686/jaeger/ui | observability |
 | Prometheus | http://localhost:9090/ | observability |
 

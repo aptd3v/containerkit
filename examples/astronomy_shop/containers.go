@@ -14,9 +14,20 @@ func base(name string) *kit.Container {
 		Endpoint(networkName)
 }
 
-func tcpHealth(port string, start, interval, timeout, retries int) kit.Health {
+// bashTCPHealth uses bash /dev/tcp (Java/Envoy images that ship bash but not nc).
+func bashTCPHealth(port string, start, interval, timeout, retries int) kit.Health {
 	return kit.NewHealth().
 		CMDShell(fmt.Sprintf("bash -c 'echo > /dev/tcp/localhost/%s'", port)).
+		StartPeriod(start).
+		Interval(interval).
+		Timeout(timeout).
+		Retries(retries)
+}
+
+// ncHealth uses nc -z (Alpine images like recommendation that lack bash).
+func ncHealth(port string, start, interval, timeout, retries int) kit.Health {
+	return kit.NewHealth().
+		CMDShell("nc -z localhost " + port).
 		StartPeriod(start).
 		Interval(interval).
 		Timeout(timeout).
@@ -129,7 +140,7 @@ func flagdUI(cfg *Config, vol func(string) string) *kit.Container {
 				"PHX_HOST":        "localhost",
 			},
 		)).
-		HealthCheck(tcpHealth(cfg.FlagdUIPort, 10, 5, 5, 20)).
+		HealthCheck(bashTCPHealth(cfg.FlagdUIPort, 10, 5, 5, 20)).
 		VolumeBinds(vol("flagd") + ":/app/data").
 		ExposedPort(types.TCP, cfg.FlagdUIPort)
 }
@@ -148,7 +159,7 @@ func ad(cfg *Config) *kit.Container {
 				"OTEL_EXPERIMENTAL_SDK_TELEMETRY_VERSION": "latest",
 			},
 		)).
-		HealthCheck(tcpHealth(cfg.ADPort, 20, 5, 5, 20)).
+		HealthCheck(bashTCPHealth(cfg.ADPort, 20, 5, 5, 20)).
 		ExposedPort(types.TCP, cfg.ADPort)
 }
 
@@ -304,7 +315,7 @@ func recommendation(cfg *Config) *kit.Container {
 				"OTEL_EXPERIMENTAL_SDK_TELEMETRY_VERSION": "latest",
 			},
 		)).
-		HealthCheck(tcpHealth(cfg.RecommendationPort, 20, 5, 5, 20)).
+		HealthCheck(ncHealth(cfg.RecommendationPort, 20, 5, 5, 20)).
 		ExposedPort(types.TCP, cfg.RecommendationPort)
 }
 
