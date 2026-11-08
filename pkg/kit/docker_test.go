@@ -251,3 +251,165 @@ func readTar(t *testing.T, r io.Reader) map[string]tarEntry {
 type errString string
 
 func (e errString) Error() string { return string(e) }
+
+func TestDockerfileTokenRejectsLineBreaks(t *testing.T) {
+	tests := []struct {
+		name    string
+		build   func() *Dockerfile
+		wantErr string
+		forbid  []string
+	}{
+		{
+			name: "env value newline injects RUN",
+			build: func() *Dockerfile {
+				return NewDockerFile().
+					From("alpine:latest").
+					Env("APP_ENV", "safe\nRUN id > /tmp/pwned\nENV X=1").
+					Command("true")
+			},
+			wantErr: "env value",
+			forbid:  []string{"RUN id", "ENV X=1"},
+		},
+		{
+			name: "syntax directive newline injects FROM",
+			build: func() *Dockerfile {
+				return NewDockerFile().
+					Syntax("docker/dockerfile:1\nFROM evil").
+					From("alpine:latest").
+					Command("true")
+			},
+			wantErr: "syntax directive",
+			forbid:  []string{"FROM evil"},
+		},
+		{
+			name: "user newline injects RUN",
+			build: func() *Dockerfile {
+				return NewDockerFile().
+					From("alpine:latest").
+					User("nobody\nRUN id").
+					Command("true")
+			},
+			wantErr: "user",
+			forbid:  []string{"RUN id"},
+		},
+		{
+			name: "healthcheck shell newline injects RUN",
+			build: func() *Dockerfile {
+				return NewDockerFile().
+					From("alpine:latest").
+					HealthCheck(NewHealth().CMDShell("true\nRUN id")).
+					Command("true")
+			},
+			wantErr: "healthcheck shell command",
+			forbid:  []string{"RUN id"},
+		},
+		{
+			name: "arg default newline",
+			build: func() *Dockerfile {
+				return NewDockerFile().From("alpine:latest").Arg("V", "1\nADD http://evil/x /x")
+			},
+			wantErr: "arg default",
+			forbid:  []string{"ADD http://evil/x"},
+		},
+		{
+			name: "label value newline",
+			build: func() *Dockerfile {
+				return NewDockerFile().From("alpine:latest").Label("k", "v\nUSER root\nRUN echo pwned")
+			},
+			wantErr: "label value",
+			forbid:  []string{"USER root", "RUN echo pwned"},
+		},
+		{
+			name: "comment newline",
+			build: func() *Dockerfile {
+				return NewDockerFile().From("alpine:latest").Comment("note\nRUN echo pwned")
+			},
+			wantErr: "comment",
+			forbid:  []string{"RUN echo pwned"},
+		},
+		{
+			name: "workdir newline",
+			build: func() *Dockerfile {
+				return NewDockerFile().From("alpine:latest").Workdir("/app\nRUN id")
+			},
+			wantErr: "workdir",
+			forbid:  []string{"RUN id"},
+		},
+		{
+			name: "run newline",
+			build: func() *Dockerfile {
+				return NewDockerFile().From("alpine:latest").Run("echo a\nRUN id")
+			},
+			wantErr: "run",
+			forbid:  []string{"RUN id"},
+		},
+		{
+			name: "cr also rejected",
+			build: func() *Dockerfile {
+				return NewDockerFile().From("alpine:latest").Env("A", "b\rc")
+			},
+			wantErr: "env value",
+			forbid:  []string{"ENV A=b"},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			df := tt.build()
+			err := df.Validate()
+			require.Error(t, err)
+			require.Contains(t, err.Error(), tt.wantErr)
+			require.Contains(t, err.Error(), "line break")
+			out := df.String()
+			for _, bad := range tt.forbid {
+				require.NotContains(t, out, bad)
+			}
+		})
+	}
+}
+
+func TestDockerfileFormatPlaceholders(t *testing.T) {
+	t.Run("percent in prior content is not reinterpreted", func(t *testing.T) {
+		df := NewDockerFile().From("%s").Env("PCT", "100%").Format("alpine")
+		require.NoError(t, df.Validate())
+		out := df.String()
+		require.Contains(t, out, "FROM alpine\n")
+		require.Contains(t, out, "ENV PCT=100%\n")
+		require.NotContains(t, out, "%!(EXTRA")
+		require.NotContains(t, out, "%!s")
+	})
+
+	t.Run("extra args without placeholders fail closed", func(t *testing.T) {
+		df := NewDockerFile().From("alpine").Env("PCT", "100%").Format("ignored")
+		require.Error(t, df.Validate())
+		require.Contains(t, df.Validate().Error(), "too many arguments")
+		require.Contains(t, df.String(), "ENV PCT=100%")
+	})
+
+	t.Run("intentional %s still works", func(t *testing.T) {
+		df := NewDockerFile().From("%s", "%s").Format("alpine", "latest")
+		require.NoError(t, df.Validate())
+		require.Equal(t, "FROM alpine:latest\n", df.String())
+	})
+
+	t.Run("format arg with newline fails", func(t *testing.T) {
+		df := NewDockerFile().From("%s").Format("alpine\nRUN id")
+		require.Error(t, df.Validate())
+		require.Contains(t, df.Validate().Error(), "format arg")
+		require.NotContains(t, df.String(), "RUN id")
+	})
+
+	t.Run("double percent escapes", func(t *testing.T) {
+		df := NewDockerFile().Env("PCT", "%%s").Format()
+		require.NoError(t, df.Validate())
+		require.Equal(t, "ENV PCT=%s\n", df.String())
+	})
+}
+
+func TestDockerfileTokenHelper(t *testing.T) {
+	require.NoError(t, dockerfileToken("hello world"))
+	require.NoError(t, dockerfileToken("a\tb"))
+	require.Error(t, dockerfileToken("a\nb"))
+	require.Error(t, dockerfileToken("a\rb"))
+	require.Error(t, dockerfileToken("a\x00b"))
+	require.Error(t, dockerfileToken("a\x01b"))
+}

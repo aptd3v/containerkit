@@ -118,6 +118,9 @@ func (d *Dockerfile) directive(name, value string, seen *bool) *Dockerfile {
 	if strings.TrimSpace(value) == "" {
 		return d.fail(fmt.Errorf("%s directive is empty", name))
 	}
+	if err := dockerfileToken(value); err != nil {
+		return d.fail(fmt.Errorf("%s directive: %w", name, err))
+	}
 	*seen = true
 	d.builder.WriteString("# ")
 	d.builder.WriteString(name)
@@ -209,10 +212,16 @@ func (d *Dockerfile) Arg(name string, defaultValue ...string) *Dockerfile {
 	if strings.TrimSpace(name) == "" {
 		return d.fail(fmt.Errorf("arg name is empty"))
 	}
+	if err := dockerfileToken(name); err != nil {
+		return d.fail(fmt.Errorf("arg name: %w", err))
+	}
 	switch len(defaultValue) {
 	case 0:
 		d.commit("ARG "+name+"\n", false)
 	case 1:
+		if err := dockerfileToken(defaultValue[0]); err != nil {
+			return d.fail(fmt.Errorf("arg default: %w", err))
+		}
 		d.commit(fmt.Sprintf("ARG %s=%s\n", name, defaultValue[0]), false)
 	default:
 		return d.fail(fmt.Errorf("arg accepts at most one default value"))
@@ -224,6 +233,12 @@ func (d *Dockerfile) Arg(name string, defaultValue ...string) *Dockerfile {
 func (d *Dockerfile) Env(key string, value string) *Dockerfile {
 	if strings.TrimSpace(key) == "" {
 		return d.fail(fmt.Errorf("env name is empty"))
+	}
+	if err := dockerfileToken(key); err != nil {
+		return d.fail(fmt.Errorf("env name: %w", err))
+	}
+	if err := dockerfileToken(value); err != nil {
+		return d.fail(fmt.Errorf("env value: %w", err))
 	}
 	d.commit(fmt.Sprintf("ENV %s=%s\n", key, value), false)
 	return d
@@ -346,6 +361,9 @@ func (d *Dockerfile) Expose(port string) *Dockerfile {
 	if strings.TrimSpace(port) == "" {
 		return d.fail(fmt.Errorf("expose port is empty"))
 	}
+	if err := dockerfileToken(port); err != nil {
+		return d.fail(fmt.Errorf("expose port: %w", err))
+	}
 	d.commit("EXPOSE "+port+"\n", false)
 	return d
 }
@@ -354,6 +372,12 @@ func (d *Dockerfile) Expose(port string) *Dockerfile {
 func (d *Dockerfile) Label(key string, value string) *Dockerfile {
 	if strings.TrimSpace(key) == "" {
 		return d.fail(fmt.Errorf("label name is empty"))
+	}
+	if err := dockerfileToken(key); err != nil {
+		return d.fail(fmt.Errorf("label name: %w", err))
+	}
+	if err := dockerfileToken(value); err != nil {
+		return d.fail(fmt.Errorf("label value: %w", err))
 	}
 	d.commit(fmt.Sprintf("LABEL %s=%s\n", key, value), false)
 	return d
@@ -364,6 +388,9 @@ func (d *Dockerfile) Onbuild(cmd string) *Dockerfile {
 	if strings.TrimSpace(cmd) == "" {
 		return d.fail(fmt.Errorf("onbuild command is empty"))
 	}
+	if err := dockerfileToken(cmd); err != nil {
+		return d.fail(fmt.Errorf("onbuild: %w", err))
+	}
 	d.commit("ONBUILD "+cmd+"\n", false)
 	return d
 }
@@ -372,6 +399,9 @@ func (d *Dockerfile) Onbuild(cmd string) *Dockerfile {
 func (d *Dockerfile) Workdir(path string) *Dockerfile {
 	if strings.TrimSpace(path) == "" {
 		return d.fail(fmt.Errorf("workdir path is empty"))
+	}
+	if err := dockerfileToken(path); err != nil {
+		return d.fail(fmt.Errorf("workdir: %w", err))
 	}
 	d.commit("WORKDIR "+path+"\n", false)
 	return d
@@ -382,6 +412,9 @@ func (d *Dockerfile) StopSignal(signal string) *Dockerfile {
 	if strings.TrimSpace(signal) == "" {
 		return d.fail(fmt.Errorf("stopsignal is empty"))
 	}
+	if err := dockerfileToken(signal); err != nil {
+		return d.fail(fmt.Errorf("stopsignal: %w", err))
+	}
 	d.commit("STOPSIGNAL "+signal+"\n", false)
 	return d
 }
@@ -391,12 +424,18 @@ func (d *Dockerfile) User(user string) *Dockerfile {
 	if strings.TrimSpace(user) == "" {
 		return d.fail(fmt.Errorf("user is empty"))
 	}
+	if err := dockerfileToken(user); err != nil {
+		return d.fail(fmt.Errorf("user: %w", err))
+	}
 	d.commit("USER "+user+"\n", false)
 	return d
 }
 
 // Comment writes a dockerfile comment.
 func (d *Dockerfile) Comment(comment string) *Dockerfile {
+	if err := dockerfileToken(comment); err != nil {
+		return d.fail(fmt.Errorf("comment: %w", err))
+	}
 	d.commit("# "+comment+"\n", false)
 	return d
 }
@@ -526,6 +565,9 @@ func (d *Dockerfile) run(cmd string, fresh bool, opts ...RunOpts) *Dockerfile {
 	if strings.TrimSpace(cmd) == "" {
 		return d.fail(fmt.Errorf("run command is empty"))
 	}
+	if err := dockerfileToken(cmd); err != nil {
+		return d.fail(fmt.Errorf("run: %w", err))
+	}
 	flags, flagged, err := runFlags(o)
 	if err != nil {
 		return d.fail(err)
@@ -554,6 +596,9 @@ func (d *Dockerfile) RunArgs(args ...string) *Dockerfile {
 		if strings.TrimSpace(arg) == "" {
 			return d.fail(fmt.Errorf("runargs argument is empty"))
 		}
+		if err := dockerfileToken(arg); err != nil {
+			return d.fail(fmt.Errorf("runargs: %w", err))
+		}
 	}
 	nStr := strings.TrimSuffix(d.builder.String(), "\n")
 	d.builder.Reset()
@@ -563,9 +608,19 @@ func (d *Dockerfile) RunArgs(args ...string) *Dockerfile {
 	return d
 }
 
-// Format formats the dockerfile with the given arguments and replaces its contents.
+// Format substitutes %s placeholders in the current dockerfile text.
+// Only %s is replaced (in order). %% writes a literal %. Other % sequences
+// stay literal so prior content such as "100%" is not reinterpreted as printf.
 func (d *Dockerfile) Format(args ...any) *Dockerfile {
-	formatted := fmt.Sprintf(d.builder.String(), args...)
+	for i, arg := range args {
+		if err := dockerfileToken(fmt.Sprint(arg)); err != nil {
+			return d.fail(fmt.Errorf("format arg[%d]: %w", i, err))
+		}
+	}
+	formatted, err := formatDockerfilePlaceholders(d.builder.String(), args...)
+	if err != nil {
+		return d.fail(err)
+	}
 	d.builder.Reset()
 	d.builder.WriteString(formatted)
 	d.lastCmdIsRun = false
@@ -621,6 +676,61 @@ func oneOpt[T any](kind string, opts []T) (T, error) {
 	}
 }
 
+// dockerfileToken rejects scalars that would break out of a single Dockerfile
+// instruction line. CR/LF start a new instruction; other C0 controls (except
+// tab) and NUL/DEL are rejected. Spaces and tabs are allowed so shell-form
+// commands and values like "hello world" remain valid.
+func dockerfileToken(s string) error {
+	for i := 0; i < len(s); i++ {
+		c := s[i]
+		switch {
+		case c == '\n' || c == '\r':
+			return fmt.Errorf("contains line break")
+		case c == 0:
+			return fmt.Errorf("contains NUL")
+		case c < 0x20 && c != '\t':
+			return fmt.Errorf("contains control character")
+		case c == 0x7f:
+			return fmt.Errorf("contains control character")
+		}
+	}
+	return nil
+}
+
+// formatDockerfilePlaceholders replaces %s in order. %% is a literal %.
+// Any other % is left as a literal percent so content like ENV PCT=100% is
+// preserved when Format runs.
+func formatDockerfilePlaceholders(tmpl string, args ...any) (string, error) {
+	var b strings.Builder
+	b.Grow(len(tmpl))
+	argI := 0
+	for i := 0; i < len(tmpl); i++ {
+		if tmpl[i] != '%' {
+			b.WriteByte(tmpl[i])
+			continue
+		}
+		if i+1 < len(tmpl) && tmpl[i+1] == '%' {
+			b.WriteByte('%')
+			i++
+			continue
+		}
+		if i+1 < len(tmpl) && tmpl[i+1] == 's' {
+			if argI >= len(args) {
+				return "", fmt.Errorf("format: not enough arguments")
+			}
+			b.WriteString(fmt.Sprint(args[argI]))
+			argI++
+			i++
+			continue
+		}
+		b.WriteByte('%')
+	}
+	if argI != len(args) {
+		return "", fmt.Errorf("format: too many arguments")
+	}
+	return b.String(), nil
+}
+
 func writeFlag(b *strings.Builder, name, value string) error {
 	if value == "" {
 		return nil
@@ -661,6 +771,12 @@ func fileInstruction(instr, flags, src, dest string) (string, error) {
 	if src == "" || dest == "" {
 		return "", fmt.Errorf("%s source and destination are required", strings.ToLower(instr))
 	}
+	if err := dockerfileToken(src); err != nil {
+		return "", fmt.Errorf("%s source: %w", strings.ToLower(instr), err)
+	}
+	if err := dockerfileToken(dest); err != nil {
+		return "", fmt.Errorf("%s destination: %w", strings.ToLower(instr), err)
+	}
 	if strings.Contains(src, " ") || strings.Contains(dest, " ") {
 		arr, err := jsonArray([]string{src, dest})
 		if err != nil {
@@ -685,6 +801,14 @@ func execInstruction(instr, executable string, args []string) (string, error) {
 func shellInstruction(instr, executable string, args []string) (string, error) {
 	if strings.TrimSpace(executable) == "" {
 		return "", fmt.Errorf("%s executable is empty", strings.ToLower(instr))
+	}
+	if err := dockerfileToken(executable); err != nil {
+		return "", fmt.Errorf("%s executable: %w", strings.ToLower(instr), err)
+	}
+	for i, arg := range args {
+		if err := dockerfileToken(arg); err != nil {
+			return "", fmt.Errorf("%s arg[%d]: %w", strings.ToLower(instr), i, err)
+		}
 	}
 	line := instr + " " + executable
 	if len(args) > 0 {
@@ -718,6 +842,9 @@ func formatHealthCmd(test []string) (string, error) {
 	case "CMD-SHELL":
 		if len(test) != 2 || strings.TrimSpace(test[1]) == "" {
 			return "", fmt.Errorf("healthcheck shell command is empty")
+		}
+		if err := dockerfileToken(test[1]); err != nil {
+			return "", fmt.Errorf("healthcheck shell command: %w", err)
 		}
 		return "CMD " + test[1], nil
 	case "CMD":
