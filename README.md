@@ -44,7 +44,7 @@ The `echo` container exits when the command finishes.
 ## Getting started
 
 ```bash
-go get github.com/aptd3v/containerkit@v0.7.1
+go get github.com/aptd3v/containerkit@v0.7.2
 ```
 
 - **Go** 1.26.8+
