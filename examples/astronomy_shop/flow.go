@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"os/signal"
 	"slices"
 
 	"github.com/aptd3v/containerkit/pkg/client"
@@ -39,7 +40,7 @@ func runFlow(ctx context.Context, cfg *Config, project *kit.Project, profiles []
 	defer cli.Close()
 
 	app := kit.NewCompose(project)
-	waitTimeout := 600
+	waitTimeout := 900
 	up := &kit.Up{
 		Detach:        true,
 		Wait:          true,
@@ -52,12 +53,12 @@ func runFlow(ctx context.Context, cfg *Config, project *kit.Project, profiles []
 	flow := taskflow.New("astronomy-shop", cli)
 	var build *taskflow.Task
 	if !skipBuild {
-		build = flow.Build("build-kit-probe", kitProbeBuild(storeURL(cfg)), &client.ImageBuild{
+		build = flow.Build("build-kit-probe", kitProbeBuild(), &client.ImageBuild{
 			Tags: []string{probeImage},
 		})
 	}
 	upTask := flow.Compose("compose-up", app, up)
-	probe := flow.Container("kit-probe", kitProbeContainer(), &taskflow.ContainerRun{Logs: os.Stdout}).
+	probe := flow.Container("kit-probe", kitProbeContainer(cfg), &taskflow.ContainerRun{Logs: os.Stdout}).
 		Retry(5)
 	urls := flow.Task("print-urls", func(context.Context) error {
 		printURLs(os.Stdout, cfg, profiles)
@@ -73,8 +74,8 @@ func runFlow(ctx context.Context, cfg *Config, project *kit.Project, profiles []
 	if err := flow.Dump(os.Stdout); err != nil {
 		return err
 	}
-	// Profiled Down first (taskflow.Remove's Down omits Profiles), then Remove for probe.
-	defer func() {
+
+	tearDown := func() {
 		_ = app.Down(context.Background(), &kit.Down{
 			RemoveOrphans: true,
 			RemoveVolumes: true,
@@ -82,9 +83,9 @@ func runFlow(ctx context.Context, cfg *Config, project *kit.Project, profiles []
 			Writer:        os.Stdout,
 		})
 		_ = flow.Remove(context.Background())
-	}()
+	}
 
-	return flow.Run(ctx, &taskflow.Run{
+	err = flow.Run(ctx, &taskflow.Run{
 		Writer: os.Stdout,
 		Watch: func(e taskflow.Event) {
 			switch e.Kind {
@@ -95,4 +96,18 @@ func runFlow(ctx context.Context, cfg *Config, project *kit.Project, profiles []
 			}
 		},
 	})
+	if err != nil {
+		tearDown()
+		return err
+	}
+	fmt.Fprintln(os.Stdout, "stack is up; Ctrl+C to tear down")
+	waitInterrupt()
+	tearDown()
+	return nil
+}
+
+func waitInterrupt() {
+	ch := make(chan os.Signal, 1)
+	signal.Notify(ch, os.Interrupt)
+	<-ch
 }

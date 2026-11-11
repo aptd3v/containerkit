@@ -30,6 +30,7 @@ go.work.sum
 # Local build and data directories
 /data/
 /bin/
+.containerkit/
 
 # Not part of this SDK release (daemon/UI trees are unpublished here).
 # Patterns keep accidental local copies of those trees untracked.
@@ -57,6 +58,7 @@ examples/astronomy_shop/astronomy-shop.compose.yaml
 astronomy-shop.compose.yaml
 docker-compose.yaml
 volumes/
+examples/astronomy_shop/volumes/
 
 # IDE
 .vscode/

@@ -305,9 +305,12 @@ type ProjectNetwork struct {
 	Internal      bool
 	Attachable    bool
 	EnableIPv6    bool
-	Labels        map[string]string
-	IPAMDriver    string
-	IPAMPools     []IPAMPool
+	// DisableIPv6 writes enable_ipv6: false so Compose does not inherit Docker
+	// Desktop's dual-stack default. Takes precedence over EnableIPv6.
+	DisableIPv6 bool
+	Labels      map[string]string
+	IPAMDriver  string
+	IPAMPools   []IPAMPool
 }
 
 // IPAMPool is a project network IPAM pool.
@@ -344,7 +347,11 @@ func (n ProjectNetwork) apply(cfg *composetypes.NetworkConfig) {
 	}
 	cfg.Internal = n.Internal
 	cfg.Attachable = n.Attachable
-	if n.EnableIPv6 {
+	switch {
+	case n.DisableIPv6:
+		disable := false
+		cfg.EnableIPv6 = &disable
+	case n.EnableIPv6:
 		enable := true
 		cfg.EnableIPv6 = &enable
 	}

@@ -196,6 +196,25 @@ func TestWithNetworkOneSpec(t *testing.T) {
 	require.Error(t, bad.Validate())
 }
 
+func TestWithNetworkDisableIPv6(t *testing.T) {
+	p := NewProject("n")
+	p.WithService(NewService("web", NewContainer().Image("alpine")))
+	p.WithNetwork("shop", ProjectNetwork{Driver: "bridge", Attachable: true, DisableIPv6: true})
+	require.NoError(t, p.Validate())
+
+	net := p.Unwrap().Networks["shop"]
+	require.NotNil(t, net.EnableIPv6)
+	require.False(t, *net.EnableIPv6)
+	require.True(t, net.Attachable)
+
+	both := NewProject("n")
+	both.WithService(NewService("web", NewContainer().Image("alpine")))
+	both.WithNetwork("shop", ProjectNetwork{EnableIPv6: true, DisableIPv6: true})
+	require.NoError(t, both.Validate())
+	require.NotNil(t, both.Unwrap().Networks["shop"].EnableIPv6)
+	require.False(t, *both.Unwrap().Networks["shop"].EnableIPv6)
+}
+
 func TestImplicitDefaultNetwork(t *testing.T) {
 	t.Run("service without networks uses project default", func(t *testing.T) {
 		p := NewProject("nginx-example")

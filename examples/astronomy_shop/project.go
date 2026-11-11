@@ -15,6 +15,7 @@ func SetupProject(cfg *Config, baseVolumesPath string, profiles []string) *kit.P
 	project := kit.NewProject(projectName)
 	vol := func(p string) string { return filepath.Join(baseVolumesPath, p) }
 	withObs := slices.Contains(profiles, profileObservability)
+	withFull := slices.Contains(profiles, profileFull)
 
 	add := func(name string, c *kit.Container, profile string) *kit.Service {
 		s := kit.NewService(name, c).Profiles(profile)
@@ -71,7 +72,7 @@ func SetupProject(cfg *Config, baseVolumesPath string, profiles []string) *kit.P
 	add("image-provider", imageProvider(cfg), profileShop).
 		DependsOn("otel-collector")
 
-	checkoutSvc := add("checkout", checkout(cfg), profileShop).
+	checkoutSvc := add("checkout", checkout(cfg, withFull), profileShop).
 		DependsOn("cart").
 		DependsOnHealthy("currency").
 		DependsOnHealthy("email").
@@ -122,7 +123,13 @@ func SetupProject(cfg *Config, baseVolumesPath string, profiles []string) *kit.P
 		DependsOn("prometheus").
 		DependsOn("jaeger")
 
-	project.WithNetwork(networkName)
+	// IPv4-only and attachable: Docker Desktop DNS otherwise prefers AAAA, and
+	// the kit-probe (Engine API, not Compose) must be able to join this network.
+	project.WithNetwork(networkName, kit.ProjectNetwork{
+		Driver:      "bridge",
+		Attachable:  true,
+		DisableIPv6: true,
+	})
 	return project
 }
 

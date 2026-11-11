@@ -17,7 +17,7 @@ func base(name string) *kit.Container {
 // bashTCPHealth uses bash /dev/tcp (Java/Envoy images that ship bash but not nc).
 func bashTCPHealth(port string, start, interval, timeout, retries int) kit.Health {
 	return kit.NewHealth().
-		CMDShell(fmt.Sprintf("bash -c 'echo > /dev/tcp/localhost/%s'", port)).
+		CMDShell(fmt.Sprintf("bash -c 'echo > /dev/tcp/127.0.0.1/%s'", port)).
 		StartPeriod(start).
 		Interval(interval).
 		Timeout(timeout).
@@ -27,7 +27,7 @@ func bashTCPHealth(port string, start, interval, timeout, retries int) kit.Healt
 // ncHealth uses nc -z (Alpine images like recommendation that lack bash).
 func ncHealth(port string, start, interval, timeout, retries int) kit.Health {
 	return kit.NewHealth().
-		CMDShell("nc -z localhost " + port).
+		CMDShell("nc -z 127.0.0.1 " + port).
 		StartPeriod(start).
 		Interval(interval).
 		Timeout(timeout).
@@ -36,11 +36,11 @@ func ncHealth(port string, start, interval, timeout, retries int) kit.Health {
 
 func grpcHealth(port string) kit.Health {
 	return kit.NewHealth().
-		CMD("/bin/grpc_health_probe", "-addr=:"+port).
-		StartPeriod(10).
+		CMD("/bin/grpc_health_probe", "-addr=127.0.0.1:"+port).
+		StartPeriod(90).
 		Interval(5).
-		Timeout(5).
-		Retries(20)
+		Timeout(10).
+		Retries(30)
 }
 
 func publish(c *kit.Container, hostPort, containerPort string) *kit.Container {
@@ -57,12 +57,12 @@ func astronomyDB(cfg *Config, vol func(string) string) *kit.Container {
 		Env("POSTGRES_PASSWORD", cfg.PostgresPassword).
 		Command("postgres", "-c", "shared_preload_libraries=pg_stat_statements").
 		HealthCheck(kit.NewHealth().
-			CMDShell("pg_isready").
-			StartPeriod(10).
+			CMDShell("pg_isready -U astronomy_user -d astronomy_db").
+			StartPeriod(30).
 			Interval(5).
-			Timeout(5).
-			Retries(10)).
-		VolumeBinds(vol("postgresql/init.sql") + ":/docker-entrypoint-initdb.d/init.sql:ro")
+			Timeout(10).
+			Retries(20)).
+		VolumeBinds(vol("postgresql/init.sql") + ":/docker-entrypoint-initdb.d/init.sql:ro,z")
 }
 
 func valkeyCart(cfg *Config) *kit.Container {
@@ -82,12 +82,12 @@ func otelCollector(cfg *Config, vol func(string) string, withObs bool) *kit.Cont
 		"--config=/etc/otelcol-config.yml",
 	}
 	binds := []string{
-		vol("otel-collector/otelcol-config.yml") + ":/etc/otelcol-config.yml:ro",
-		vol("otel-collector/otelcol-config-extras.yml") + ":/etc/otelcol-config-extras.yml:ro",
+		vol("otel-collector/otelcol-config.yml") + ":/etc/otelcol-config.yml:ro,z",
+		vol("otel-collector/otelcol-config-extras.yml") + ":/etc/otelcol-config-extras.yml:ro,z",
 	}
 	if withObs {
 		cmd = append(cmd, "--config=/etc/otelcol-config-observability.yml")
-		binds = append(binds, vol("otel-collector/otelcol-config-observability.yml")+":/etc/otelcol-config-observability.yml:ro")
+		binds = append(binds, vol("otel-collector/otelcol-config-observability.yml")+":/etc/otelcol-config-observability.yml:ro,z")
 	}
 	cmd = append(cmd, "--config=/etc/otelcol-config-extras.yml")
 
@@ -124,7 +124,7 @@ func flagd(cfg *Config, vol func(string) string) *kit.Container {
 				"GOMEMLIMIT":                  "60MiB",
 			},
 		)).
-		VolumeBinds(vol("flagd")+":/etc/flagd:ro").
+		VolumeBinds(vol("flagd")+":/etc/flagd:ro,z").
 		ExposedPort(types.TCP, cfg.FlagdPort).
 		ExposedPort(types.TCP, cfg.FlagdOFREPPort)
 }
@@ -141,7 +141,7 @@ func flagdUI(cfg *Config, vol func(string) string) *kit.Container {
 			},
 		)).
 		HealthCheck(bashTCPHealth(cfg.FlagdUIPort, 10, 5, 5, 20)).
-		VolumeBinds(vol("flagd")+":/app/data").
+		VolumeBinds(vol("flagd")+":/app/data:z").
 		ExposedPort(types.TCP, cfg.FlagdUIPort)
 }
 
@@ -179,27 +179,30 @@ func cart(cfg *Config) *kit.Container {
 		ExposedPort(types.TCP, cfg.CartPort)
 }
 
-func checkout(cfg *Config) *kit.Container {
+func checkout(cfg *Config, withKafka bool) *kit.Container {
+	env := map[string]string{
+		"CHECKOUT_PORT":               cfg.CheckoutPort,
+		"FLAGD_HOST":                  "flagd",
+		"FLAGD_PORT":                  cfg.FlagdPort,
+		"CART_ADDR":                   "cart:" + cfg.CartPort,
+		"CURRENCY_ADDR":               "currency:" + cfg.CurrencyPort,
+		"EMAIL_ADDR":                  "http://email:" + cfg.EmailPort,
+		"PAYMENT_ADDR":                "payment:" + cfg.PaymentPort,
+		"PRODUCT_CATALOG_ADDR":        "product-catalog:" + cfg.ProductCatalogPort,
+		"SHIPPING_ADDR":               "http://shipping:" + cfg.ShippingPort,
+		"GOMEMLIMIT":                  "64MiB",
+		"OTEL_EXPORTER_OTLP_PROTOCOL": "http/protobuf",
+		"OTEL_GO_X_OBSERVABILITY":     "true",
+	}
+	if withKafka {
+		env["KAFKA_ADDR"] = "kafka:" + cfg.KafkaPort
+		env["KAFKA_TOPIC"] = "orders"
+	}
 	return base("checkout").
 		Image(cfg.demoImage("checkout")).
 		EnvMap(mergeEnv(
 			cfg.commonOTEL("checkout", "critical", cfg.otlpHTTP()),
-			map[string]string{
-				"CHECKOUT_PORT":               cfg.CheckoutPort,
-				"FLAGD_HOST":                  "flagd",
-				"FLAGD_PORT":                  cfg.FlagdPort,
-				"CART_ADDR":                   "cart:" + cfg.CartPort,
-				"CURRENCY_ADDR":               "currency:" + cfg.CurrencyPort,
-				"EMAIL_ADDR":                  "http://email:" + cfg.EmailPort,
-				"PAYMENT_ADDR":                "payment:" + cfg.PaymentPort,
-				"PRODUCT_CATALOG_ADDR":        "product-catalog:" + cfg.ProductCatalogPort,
-				"SHIPPING_ADDR":               "http://shipping:" + cfg.ShippingPort,
-				"KAFKA_ADDR":                  "kafka:" + cfg.KafkaPort,
-				"KAFKA_TOPIC":                 "orders",
-				"GOMEMLIMIT":                  "16MiB",
-				"OTEL_EXPORTER_OTLP_PROTOCOL": "http/protobuf",
-				"OTEL_GO_X_OBSERVABILITY":     "true",
-			},
+			env,
 		)).
 		HealthCheck(grpcHealth(cfg.CheckoutPort)).
 		ExposedPort(types.TCP, cfg.CheckoutPort)
@@ -217,7 +220,7 @@ func currency(cfg *Config) *kit.Container {
 			},
 		)).
 		HealthCheck(kit.NewHealth().
-			CMDShell("nc -z localhost "+cfg.CurrencyPort).
+			CMDShell("nc -z 127.0.0.1 "+cfg.CurrencyPort).
 			StartPeriod(10).Interval(5).Timeout(5).Retries(20)).
 		ExposedPort(types.TCP, cfg.CurrencyPort)
 }
@@ -235,7 +238,7 @@ func email(cfg *Config) *kit.Container {
 			},
 		)).
 		HealthCheck(kit.NewHealth().
-			CMD("ruby", "-e", fmt.Sprintf("require 'socket'; TCPSocket.new('localhost', %s).close", cfg.EmailPort)).
+			CMD("ruby", "-e", fmt.Sprintf("require 'socket'; TCPSocket.new('127.0.0.1', %s).close", cfg.EmailPort)).
 			StartPeriod(10).Interval(5).Timeout(5).Retries(20)).
 		ExposedPort(types.TCP, cfg.EmailPort)
 }
@@ -269,7 +272,7 @@ func productCatalog(cfg *Config, vol func(string) string) *kit.Container {
 				"PRODUCT_CATALOG_PORT":          cfg.ProductCatalogPort,
 				"FLAGD_HOST":                    "flagd",
 				"FLAGD_PORT":                    cfg.FlagdPort,
-				"GOMEMLIMIT":                    "16MiB",
+				"GOMEMLIMIT":                    "64MiB",
 				"OTEL_GO_X_OBSERVABILITY":       "true",
 				"OTEL_CONFIG_FILE":              "/otel-config.yml",
 				"OTEL_SEMCONV_STABILITY_OPT_IN": "database",
@@ -279,8 +282,13 @@ func productCatalog(cfg *Config, vol func(string) string) *kit.Container {
 				),
 			},
 		)).
-		HealthCheck(grpcHealth(cfg.ProductCatalogPort)).
-		VolumeBinds(vol("otel-config.yml")+":/otel-config.yml:ro").
+		HealthCheck(kit.NewHealth().
+			CMD("/bin/grpc_health_probe", "-addr=127.0.0.1:"+cfg.ProductCatalogPort).
+			StartPeriod(90).
+			Interval(5).
+			Timeout(10).
+			Retries(36)).
+		VolumeBinds(vol("otel-config.yml")+":/otel-config.yml:ro,z").
 		ExposedPort(types.TCP, cfg.ProductCatalogPort)
 }
 
@@ -297,7 +305,7 @@ func quote(cfg *Config) *kit.Container {
 			},
 		)).
 		HealthCheck(kit.NewHealth().
-			CMD("php", "-r", fmt.Sprintf("fsockopen('localhost', %s) or die('fail');", cfg.QuotePort)).
+			CMD("php", "-r", fmt.Sprintf("fsockopen('127.0.0.1', %s) or die('fail');", cfg.QuotePort)).
 			StartPeriod(10).Interval(5).Timeout(5).Retries(20)).
 		ExposedPort(types.TCP, cfg.QuotePort)
 }
@@ -350,7 +358,7 @@ func imageProvider(cfg *Config) *kit.Container {
 			"OTEL_SERVICE_NAME":        "image-provider",
 		}).
 		HealthCheck(kit.NewHealth().
-			CMD("wget", "--quiet", "--tries=1", "--spider", "http://localhost:"+cfg.ImageProviderPort+"/status").
+			CMD("wget", "--quiet", "--tries=1", "--spider", "http://127.0.0.1:"+cfg.ImageProviderPort+"/status").
 			StartPeriod(10).Interval(5).Timeout(5).Retries(20)).
 		ExposedPort(types.TCP, cfg.ImageProviderPort)
 }
@@ -409,7 +417,7 @@ func loadGenerator(cfg *Config) *kit.Container {
 		)).
 		HealthCheck(kit.NewHealth().
 			CMD("python3", "-c",
-				fmt.Sprintf("import socket; s=socket.create_connection(('localhost',%s),2); s.close()", cfg.LocustWebPort)).
+				fmt.Sprintf("import socket; s=socket.create_connection(('127.0.0.1',%s),2); s.close()", cfg.LocustWebPort)).
 			StartPeriod(30).Interval(5).Timeout(5).Retries(20))
 	return publish(c, cfg.LocustWebPort, cfg.LocustWebPort)
 }
@@ -451,7 +459,7 @@ func frontendProxy(cfg *Config) *kit.Container {
 			"CHATBOT_PORT":             "7860",
 		}).
 		HealthCheck(kit.NewHealth().
-			CMD("bash", "-c", "echo > /dev/tcp/localhost/"+cfg.EnvoyPort).
+			CMD("bash", "-c", "echo > /dev/tcp/127.0.0.1/"+cfg.EnvoyPort).
 			StartPeriod(10).Interval(5).Timeout(5).Retries(20))
 	return publish(c, cfg.EnvoyPort, cfg.EnvoyPort)
 }
@@ -522,8 +530,8 @@ func jaeger(cfg *Config, vol func(string) string) *kit.Container {
 			"MEMORY_MAX_TRACES":        "25000",
 		}).
 		VolumeBinds(
-			vol("jaeger/config.yml")+":/etc/jaeger/config.yml:ro",
-			vol("jaeger/ui-config.json")+":/etc/jaeger/ui-config.json:ro",
+			vol("jaeger/config.yml")+":/etc/jaeger/config.yml:ro,z",
+			vol("jaeger/ui-config.json")+":/etc/jaeger/ui-config.json:ro,z",
 		)
 	return publish(c, cfg.JaegerUIPort, cfg.JaegerUIPort)
 }
@@ -542,7 +550,7 @@ func prometheus(cfg *Config, vol func(string) string) *kit.Container {
 			"--web.enable-otlp-receiver",
 			"--enable-feature=exemplar-storage",
 		).
-		VolumeBinds(vol("prometheus/prometheus-config.yaml") + ":/etc/prometheus/prometheus-config.yaml:ro")
+		VolumeBinds(vol("prometheus/prometheus-config.yaml") + ":/etc/prometheus/prometheus-config.yaml:ro,z")
 	return publish(c, cfg.PrometheusPort, cfg.PrometheusPort)
 }
 
@@ -550,8 +558,8 @@ func grafana(cfg *Config, vol func(string) string) *kit.Container {
 	c := base("grafana").
 		Image(cfg.GrafanaImage).
 		VolumeBinds(
-			vol("grafana/grafana.ini")+":/etc/grafana/grafana.ini:ro",
-			vol("grafana/provisioning")+":/etc/grafana/provisioning:ro",
+			vol("grafana/grafana.ini")+":/etc/grafana/grafana.ini:ro,z",
+			vol("grafana/provisioning")+":/etc/grafana/provisioning:ro,z",
 		)
 	return publish(c, cfg.GrafanaPort, cfg.GrafanaPort)
 }

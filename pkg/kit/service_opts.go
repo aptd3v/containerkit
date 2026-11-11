@@ -20,6 +20,29 @@ func (s *Service) DependsOn(name string) *Service {
 	}))
 }
 
+// DependsOnCondition marks a dependency. condition is service_started,
+// service_healthy, or service_completed_successfully.
+func (s *Service) DependsOnCondition(name, condition string) *Service {
+	switch condition {
+	case "service_started", "service_healthy", "service_completed_successfully":
+	default:
+		return s.add(setServiceConfig(func(*types.ServiceConfig) error {
+			return errdefs.NewServiceConfigError(s.name, "depends_on condition must be service_started, service_healthy, or service_completed_successfully")
+		}))
+	}
+	return s.add(setServiceConfig(func(config *types.ServiceConfig) error {
+		if config.DependsOn == nil {
+			config.DependsOn = make(types.DependsOnConfig, 0)
+		}
+		config.DependsOn[name] = types.ServiceDependency{
+			Condition: condition,
+			Restart:   true,
+			Required:  true,
+		}
+		return nil
+	}))
+}
+
 // DependsOnHealthy marks the service as depending on another becoming healthy.
 func (s *Service) DependsOnHealthy(name string) *Service {
 	return s.add(setServiceConfig(func(config *types.ServiceConfig) error {

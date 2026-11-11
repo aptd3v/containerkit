@@ -7,30 +7,37 @@ import (
 
 	"github.com/aptd3v/containerkit/pkg/client"
 	"github.com/aptd3v/containerkit/pkg/kit"
-	"github.com/aptd3v/containerkit/pkg/kit/types"
 )
 
 // kitProbeDockerfile builds a tiny alpine image with curl that hits the store.
-func kitProbeDockerfile(storeURL string) *kit.Dockerfile {
+func kitProbeDockerfile() *kit.Dockerfile {
 	return kit.NewDockerFile().
 		From("alpine:3.20").
 		Run("apk add --no-cache curl").
-		Label("example", "astronomy-shop-kit-probe").
-		Command("sh", "-c",
-			fmt.Sprintf("curl -fsS --max-time 10 %s >/dev/null && echo OK", storeURL))
+		Label("example", "astronomy-shop-kit-probe")
 }
 
 // kitProbeBuild returns a kit.Build wrapping the probe Dockerfile.
-func kitProbeBuild(storeURL string) kit.Build {
-	return kit.NewBuild().Dockerfile(kitProbeDockerfile(storeURL))
+func kitProbeBuild() kit.Build {
+	return kit.NewBuild().Dockerfile(kitProbeDockerfile())
 }
 
-// kitProbeContainer runs the built probe once on the host network so it can
-// reach the published frontend-proxy port (default http://127.0.0.1:8080/).
-func kitProbeContainer() *kit.Container {
+// kitProbeContainer curls the storefront. Prefer compose DNS (frontend-proxy);
+// fall back to host.docker.internal for Docker Desktop when the Engine-API
+// probe cannot join the compose network. extra_hosts host-gateway works on
+// Desktop and Linux 20.10+ without a GOOS branch.
+func kitProbeContainer(cfg *Config) *kit.Container {
+	viaNet := fmt.Sprintf("http://frontend-proxy:%s/", cfg.EnvoyPort)
+	viaHost := fmt.Sprintf("http://host.docker.internal:%s/", cfg.EnvoyPort)
+	script := fmt.Sprintf(
+		"curl -fsS --max-time 20 %s >/dev/null || curl -fsS --max-time 20 %s >/dev/null",
+		viaNet, viaHost,
+	)
 	return kit.NewContainer("kit-probe").
 		Image(probeImage).
-		NetworkMode(types.NetworkHost)
+		Endpoint(networkName).
+		ExtraHost("host.docker.internal", "host-gateway").
+		Command("sh", "-c", script+" && echo OK")
 }
 
 // imageExists reports whether ref is already present locally (skip rebuild).

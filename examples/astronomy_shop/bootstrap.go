@@ -14,6 +14,8 @@ var assetsEmbed embed.FS
 
 // bootstrapVolumes materializes embedded flagd, postgres, collector, jaeger,
 // grafana, and prometheus configs under basePath (no network fetch).
+// Directories and files are made 0777/0666 so containers with arbitrary UIDs
+// (common on Linux) can always access the bind mounts.
 func bootstrapVolumes(basePath string) {
 	if err := os.MkdirAll(basePath, 0755); err != nil {
 		log.Fatalf("bootstrap volumes: mkdir %s: %v", basePath, err)
@@ -46,4 +48,20 @@ func bootstrapVolumes(basePath string) {
 	if err != nil {
 		log.Fatalf("bootstrap volumes: %v", err)
 	}
+
+	// Make world-accessible so containers (which may run as different UIDs on Linux)
+	// can read/write bind mounts regardless of host user. Harmless on macOS.
+	_ = os.Chmod(basePath, 0777)
+	_ = fs.WalkDir(os.DirFS(basePath), ".", func(p string, d fs.DirEntry, err error) error {
+		if err != nil {
+			return nil // best effort
+		}
+		dest := filepath.Join(basePath, p)
+		if d.IsDir() {
+			_ = os.Chmod(dest, 0777)
+		} else {
+			_ = os.Chmod(dest, 0666)
+		}
+		return nil
+	})
 }

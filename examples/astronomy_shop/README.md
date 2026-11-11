@@ -6,11 +6,13 @@ Flagship [containerkit](https://github.com/aptd3v/containerkit) showcase: the CN
 
 - Go 1.26+
 - Docker Engine
+- Works on **macOS** and **Linux** (native or Docker Desktop).
 - RAM: about 3 GB for `shop`, about 6 GB for `shop,observability` (default). Add more for `full` (Kafka).
 
-On some nested or containerized Docker hosts, same-bridge traffic is dropped when
-`net.bridge.bridge-nf-call-iptables=1`. If services stay unhealthy and cannot
-reach each other, set:
+
+On some **Linux** nested or containerized Docker hosts, same-bridge traffic is
+dropped when `net.bridge.bridge-nf-call-iptables=1`.
+If Linux services stay unhealthy, set:
 
 ```bash
 sudo sysctl -w net.bridge.bridge-nf-call-iptables=0 net.bridge.bridge-nf-call-ip6tables=0
@@ -32,7 +34,7 @@ go run ./examples/astronomy_shop/ -profile shop,full,observability
 go run ./examples/astronomy_shop/ -follow
 ```
 
-Default mode validates, exports compose YAML, builds `astronomy-shop-kit-probe:local` if missing, runs Compose `Up` with `Wait`, runs the probe (curl storefront), prints URLs, then tears down.
+Default mode validates, exports compose YAML, builds `astronomy-shop-kit-probe:local` if missing, runs Compose `Up` with `Wait` (up to 15 minutes), probes the storefront, prints URLs, then stays up until Ctrl+C (then `Down`). `-follow` is the same lifecycle plus compose events and logs.
 
 ## Open
 
@@ -51,8 +53,8 @@ Images are pinned to `IMAGE_VERSION=3.1.0` (`ghcr.io/open-telemetry/demo:3.1.0-*
 | Flag | Description |
 | --- | --- |
 | `-profile` | Comma-separated: `shop`, `full`, `observability`. Default `shop,observability`. `shop` is always included. |
-| `-follow` | After `Up`, stream compose events and logs until Ctrl+C. |
-| `-volumes-path` | Host directory for bind-mounted configs. Default `./volumes` or `ASTRONOMY_SHOP_VOLUMES_PATH`. |
+| `-follow` | After `Up`, also stream compose events and logs until Ctrl+C. |
+| `-volumes-path` | Host directory for bind-mounted configs. Defaults to a `volumes` dir next to the example source (portable across working directories), or `ASTRONOMY_SHOP_VOLUMES_PATH`. |
 | `-export` | Write resolved compose YAML (default `./astronomy-shop.compose.yaml`; empty skips). |
 
 ## Profiles
@@ -71,8 +73,8 @@ OpenSearch and OpAMP from upstream `compose.observability.yaml` are omitted to k
 
 1. **Bootstrap**: writes embedded flagd, Postgres init, collector, Jaeger, Grafana, and Prometheus configs under the volumes path (offline).
 2. **Validate / export**: `project.Validate()`, then optional `Export`.
-3. **taskflow**: `Build(kit-probe)` -> `Compose(Up{Detach, Wait, Profiles})` -> `Container(kit-probe)` with `Retry` -> print URLs.
-4. **`-follow`**: Supabase-style lifecycle: `Up` -> Events + Logs -> Ctrl+C -> `Kill` / `Down`.
+3. **taskflow** (default): `Build(kit-probe)` -> `Compose(Up{Detach, Wait, Profiles})` -> `Container(kit-probe)` with `Retry` -> print URLs -> Ctrl+C -> `Down`.
+4. **`-follow`**: `Up` -> Events + Logs -> Ctrl+C -> `Kill` / `Down` (no kit-probe).
 5. **Teardown**: profiled `Down` plus `flow.Remove` for the probe container.
 
 ## containerkit features used
@@ -86,7 +88,10 @@ OpenSearch and OpAMP from upstream `compose.observability.yaml` are omitted to k
 
 ## Clean run
 
+If a previous run created an IPv6-enabled `astronomy-shop` network, remove it so Compose recreates it IPv4-only:
+
 ```bash
-rm -rf volumes astronomy-shop.compose.yaml
+rm -rf examples/astronomy_shop/volumes astronomy-shop.compose.yaml
+docker network rm astronomy-shop 2>/dev/null || true
 go run ./examples/astronomy_shop/ -follow
 ```
