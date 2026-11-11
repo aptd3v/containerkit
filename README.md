@@ -44,12 +44,20 @@ The `echo` container exits when the command finishes.
 ## Getting started
 
 ```bash
-go get github.com/aptd3v/containerkit@v0.7.1
+go get github.com/aptd3v/containerkit@v0.7.2
 ```
 
 - **Go** 1.26.8+
 - **Docker Engine**
 - Linux, macOS, or Windows
+
+## v0.7.2
+
+- **IPv4-only networks**: `ProjectNetwork.DisableIPv6` writes `enable_ipv6: false`. It takes precedence over `EnableIPv6`, so Compose does not inherit Docker Desktop's dual-stack default.
+- **Conditional depends_on**: `DependsOnCondition` accepts `service_started`, `service_healthy`, or `service_completed_successfully`.
+- **Loaded projects**: `Adopt` wraps a Compose project loaded elsewhere. `ReplaceService` swaps a service of the same name.
+- **Astronomy Shop**: IPv4-only attachable network, health checks against `127.0.0.1`, a volumes path next to the example, a probe on the Compose network, and the demo stays up until Ctrl+C.
+- **Published tree**: the Docker e2e suite and the Makefile are no longer in the module.
 
 ## v0.7.1
 

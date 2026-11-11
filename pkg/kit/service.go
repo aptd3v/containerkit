@@ -125,6 +125,30 @@ func (p *Project) GetService(name string) (*types.ServiceConfig, error) {
 	return &service, nil
 }
 
+// Adopt wraps a Compose project that was loaded elsewhere.
+// The caller keeps ownership of spec; later WithService calls mutate it.
+func Adopt(spec *types.Project) *Project {
+	if spec == nil {
+		return &Project{errs: []error{errdefs.NewProjectConfigError("project", "project is nil")}}
+	}
+	return &Project{wrapped: spec}
+}
+
+// ReplaceService removes a service of the same name, then adds service.
+func (p *Project) ReplaceService(service *Service) *Project {
+	if p == nil || p.wrapped == nil {
+		return p
+	}
+	if service == nil || service.name == "" {
+		p.errs = append(p.errs, errdefs.NewProjectConfigError("service", "service is nil"))
+		return p
+	}
+	if p.wrapped.Services != nil {
+		delete(p.wrapped.Services, service.name)
+	}
+	return p.WithService(service)
+}
+
 // WithService adds a service to the project.
 func (p *Project) WithService(service *Service) *Project {
 	if service == nil || service.container == nil {

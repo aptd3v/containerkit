@@ -1,12 +1,13 @@
 // Astronomy Shop showcase: OpenTelemetry demo defined entirely in Go with kit.
 // Pulls published ghcr.io/open-telemetry/demo images, builds a small kit-probe
-// via Dockerfile-as-Go, then runs a taskflow Build -> Up -> probe DAG (or -follow).
+// via Dockerfile-as-Go, then runs a taskflow Build -> Up -> probe DAG and stays
+// up until Ctrl+C. -follow also streams compose events and logs.
 //
 // Flags:
 //
 //	-profile: comma-separated shop,full,observability (default shop,observability)
-//	-follow:  after Up, stream Events+Logs until Ctrl+C (Supabase-style lifecycle)
-//	-volumes-path: host dir for bind-mounted configs (default ./volumes)
+//	-follow:  after Up, stream Events+Logs until Ctrl+C
+//	-volumes-path: host dir for bind-mounted configs (defaults to <package>/volumes)
 //	-export:  write resolved compose YAML (default ./astronomy-shop.compose.yaml)
 package main
 
@@ -17,7 +18,8 @@ import (
 	"fmt"
 	"log"
 	"os"
-	"os/signal"
+	"path/filepath"
+	"runtime"
 	"strings"
 
 	"github.com/aptd3v/containerkit/pkg/kit"
@@ -26,18 +28,12 @@ import (
 func main() {
 	profileFlag := flag.String("profile", "", "comma-separated profiles: shop, full, observability (default shop,observability)")
 	followFlag := flag.Bool("follow", false, "after Up, stream events and logs until Ctrl+C")
-	volumesPathFlag := flag.String("volumes-path", "", "directory for bind-mounted configs (default ./volumes)")
+	volumesPathFlag := flag.String("volumes-path", "", "directory for bind-mounted configs (default <package>/volumes)")
 	exportFlag := flag.String("export", "./astronomy-shop.compose.yaml", "write resolved compose YAML (empty to skip)")
 	flag.Parse()
 
 	cfg := DefaultConfig()
-	baseVolumesPath := *volumesPathFlag
-	if baseVolumesPath == "" {
-		baseVolumesPath = os.Getenv("ASTRONOMY_SHOP_VOLUMES_PATH")
-	}
-	if baseVolumesPath == "" {
-		baseVolumesPath = "./volumes"
-	}
+	baseVolumesPath := resolveVolumesPath(*volumesPathFlag)
 
 	rawProfile := strings.TrimSpace(*profileFlag)
 	if rawProfile == "" {
@@ -78,7 +74,7 @@ func main() {
 
 func runFollow(ctx context.Context, cfg *Config, project *kit.Project, profiles []string) error {
 	app := kit.NewCompose(project)
-	waitTimeout := 600
+	waitTimeout := 900
 	timeout := 5
 	if err := app.Up(ctx, &kit.Up{
 		Detach:        true,
@@ -94,10 +90,8 @@ func runFollow(ctx context.Context, cfg *Config, project *kit.Project, profiles 
 	printURLs(os.Stdout, cfg, profiles)
 
 	runCtx, cancel := context.WithCancel(context.Background())
-	sigCh := make(chan os.Signal, 1)
-	signal.Notify(sigCh, os.Interrupt)
 	go func() {
-		<-sigCh
+		waitInterrupt()
 		cancel()
 	}()
 
@@ -134,4 +128,33 @@ func runFollow(ctx context.Context, cfg *Config, project *kit.Project, profiles 
 		return fmt.Errorf("down: %w", err)
 	}
 	return nil
+}
+
+// resolveVolumesPath returns an absolute path for the volumes directory.
+// Priority: explicit flag > env var > package-relative default (./volumes next to the example).
+// Explicit values (flag/env) are resolved relative to the current working directory.
+// The package-relative default is computed from runtime.Caller so the demo
+// works regardless of the directory it is run from.
+func resolveVolumesPath(explicit string) string {
+	p := strings.TrimSpace(explicit)
+	if p == "" {
+		p = os.Getenv("ASTRONOMY_SHOP_VOLUMES_PATH")
+	}
+	if p != "" {
+		abs, err := filepath.Abs(p)
+		if err == nil {
+			return abs
+		}
+		return p
+	}
+
+	// Package-relative default: <package-dir>/volumes
+	// This makes "go run ./examples/astronomy_shop/" work from any cwd.
+	if _, file, _, ok := runtime.Caller(0); ok {
+		pkgDir := filepath.Dir(file)
+		return filepath.Join(pkgDir, "volumes")
+	}
+
+	// Last resort (should never be reached in normal builds)
+	return "./volumes"
 }
