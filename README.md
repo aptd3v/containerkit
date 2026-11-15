@@ -1,309 +1,157 @@
 # containerkit
 
-[![Go Reference](https://pkg.go.dev/badge/github.com/aptd3v/containerkit.svg)](https://pkg.go.dev/github.com/aptd3v/containerkit)
-[![Go Report Card](https://goreportcard.com/badge/github.com/aptd3v/containerkit)](https://goreportcard.com/report/github.com/aptd3v/containerkit)
-[![Go Version](https://img.shields.io/github/go-mod/go-version/aptd3v/containerkit)](https://go.dev/dl/)
-[![License](https://img.shields.io/github/license/aptd3v/containerkit)](./LICENSE)
+containerkit is the Docker stack as a program. It integrates the Engine SDK and the Compose SDK directly: one client, and a service, a volume, a healthcheck, and a `pull` are the same names in Go and in TSX, so the Compose SDK and the Engine SDK are unified. Instead of a YAML file and various scripts that hopes the names still match. You export that program to Compose or a Dockerfile whenever you want, and a live `docker.ts` keeps the session open and applies the project only when the rendered YAML changes. When Moby or Compose ships a new field, regeneration keeps the bindings aligned with the pinned upstream SDKs.
 
-Define Docker stacks in Go. The same `*kit.Container` is a Compose service or an Engine create config. Compose runs in-process through `github.com/docker/compose/v5` and does not need a `docker compose` binary.
+## A project is a component
 
-## Demo
+```tsx
+import { Compose, Service, Publish, Volume, Health, Env, Restart, exportYAML } from "containerkit";
+import { proto, restartPolicy } from "containerkit/vocab";
 
-```go
-package main
+const prod = process.env.NODE_ENV === "production";
 
-import (
-	"context"
-	"log"
-	"os"
-
-	"github.com/aptd3v/containerkit/pkg/kit"
-)
-
-func main() {
-	project := kit.NewProject("hello-world")
-	project.WithService(kit.NewService("hello",
-		kit.NewContainer().
-			Image("alpine:latest").
-			Command("echo", "Hello from containerkit!"),
-	))
-
-	if err := project.Validate(); err != nil {
-		log.Fatal(err)
-	}
-
-	app := kit.NewCompose(project)
-	if err := app.Up(context.Background(), &kit.Up{Writer: os.Stdout}); err != nil {
-		log.Fatal(err)
-	}
+export default function App() {
+  return (
+    <Compose name="app">
+      <Volume name="data" />
+      <Service
+        name="api"
+        image="alpine:latest"
+        command={["sh", "-c", "mkdir -p /www && echo ok > /www/index.html && exec httpd -f -p 80 -h /www"]}
+      >
+        <Publish hostPort={8080} containerPort={80} protocol={proto.TCP} />
+        <Volume source="data" target="/www" />
+        <Restart policy={restartPolicy.UnlessStopped} />
+        <Health test={["CMD", "wget", "-q", "-O", "/dev/null", "http://127.0.0.1/"]} interval="5s" retries={3} />
+        <Env name="APP" value={prod ? "prod" : "dev"} />
+      </Service>
+    </Compose>
+  );
 }
+
+export const yaml = exportYAML(<App />);
 ```
 
-The `echo` container exits when the command finishes.
+`false` disappears. `.map()` repeats a child. A function that returns a node is a component, so a gateway, a database, and a pooler are props on one stack. [`examples/supabase`](examples/supabase) is that stack in Go. [`tsx/examples/supabase.tsx`](tsx/examples/supabase.tsx) is the same project in TSX: Envoy or Kong, Postgres 15 or 17, Supavisor or PgBouncer, file or S3, logs on or off, printed as Compose on stdout.
 
-## Getting started
+A Dockerfile is the other tree, in `containerkit/dockerfile`. `<Run>` joins into one layer. `<RunLayer>` starts the next. `exportDockerfile` prints the file. [`tsx/examples/image.tsx`](tsx/examples/image.tsx) is a multi-stage build whose stages and layers follow the environment.
+
+[`tsx/examples/taskflow.tsx`](tsx/examples/taskflow.tsx) orders those pieces as a graph. The image build overlaps Postgres coming up. Lint waits for that image, then overlaps the database. Migrate can be tried again. A failed check skips the tag. Down waits only for migrate, because unit and lint do not use Postgres, and the project is still taken down when migrate fails. Stdout is the plan document.
+
+## A container becomes a service
+
+`NewContainer` and `NewService` write the same spec. `EngineConfig` turns that spec into the Engine SDK's `Config`, `HostConfig`, and `NetworkingConfig`. `AsService` copies the spec onto a Compose service, and `ComposeConfig` turns it into compose-go's `ServiceConfig`. `NewService(FromContainer(worker))` and passing the container itself do the same copy.
+
+```go
+worker := NewContainer(
+    Name("api"),
+    Image("alpine:latest"),
+    Command("sh", "-c", "mkdir -p /www && echo ok > /www/index.html && exec httpd -f -p 80 -h /www"),
+    Publish(Protocol(TCP), HostPort(8080), ContainerPort(80)),
+)
+svc := worker.AsService()
+```
+
+`AutoRemove`, `PublishAll`, `ContainerIDFile`, `Shell`, `OnBuild`, `MaskedPath`, and `ReadonlyPath` exist only on the Engine create call. They stay on the container. `Validate` on the service reports each one as an unsupported mapping.
+
+## It stays open
+
+`docker.ts` default-exports `root()`. The session stays up for the life of the process. A later render applies the project only when the rendered YAML changes. Exporting the file does not stop it.
+
+```tsx
+import { Compose, Service, Publish, Health } from "containerkit";
+import { proto } from "containerkit/vocab";
+import { root } from "containerkit/live";
+
+export default root({ fromEnv: true }, function App() {
+  return (
+    <Compose name="app">
+      <Service
+        name="api"
+        image="alpine:latest"
+        command={["sh", "-c", "mkdir -p /www && echo ok > /www/index.html && exec httpd -f -p 80 -h /www"]}
+      >
+        <Publish hostPort={8080} containerPort={80} protocol={proto.TCP} />
+        <Health test={["CMD", "wget", "-q", "-O", "/dev/null", "http://127.0.0.1/"]} interval="5s" retries={3} />
+      </Service>
+    </Compose>
+  );
+});
+```
+
+Commands are methods on that session. `await app.pullImage("alpine:latest")` runs, then the next line runs. `useMemo` writes the result to `.containerkit/memo` and skips the call the next time the same inputs come back.
+
+## The same words in Go
+
+```go
+import . "github.com/aptd3v/containerkit/pkg/kit"
+
+cli, err := Connect()
+if err != nil {
+    return err
+}
+defer cli.Close()
+
+app := NewCompose("app").WithService(
+    NewService(
+        Name("api"),
+        Image("alpine:latest"),
+        Command("sh", "-c", "mkdir -p /www && echo ok > /www/index.html && exec httpd -f -p 80 -h /www"),
+        Publish(Protocol(TCP), HostPort(8080), ContainerPort(80)),
+    ),
+)
+if err := cli.Up(ctx, app); err != nil {
+    return err
+}
+
+loaded, err := cli.Load(ctx, "compose.yaml")
+if err != nil {
+    return err
+}
+return loaded.Up(ctx)
+```
+
+`Connect` is the daemon. `Run` starts a container. `Up` applies a project. `ImportFile` reads a compose file with no daemon. `Name`, `Image`, `Env`, `Memory`, and `ReadOnly` mean the same thing on a container, a service, and a job. The compiler rejects a name on a scope that does not have it.
+
+A few words only look the same:
+
+| Word | Means |
+| --- | --- |
+| `File` | A compose YAML path |
+| `FromFile` | Secret or config content |
+| `DockerfilePath` | The Dockerfile on a build |
+| `OutputFile` | An archive written by export |
+| `Publish` | A port mapping |
+| `PublishOCI` | The project published as an OCI artifact |
+| `Log` | The progress logger |
+| `Logging` | The container log driver |
+| `WorkingDir` | The directory inside the container |
+| `ProjectDirectory` | The compose project directory on disk |
+
+`Test` is the healthcheck command. `Interval`, `Timeout`, and `Retries` are the timing around it.
+
+## Current with upstream
+
+The kit is generated from the modules it wraps: `github.com/moby/moby/api`, `github.com/moby/moby/client`, `github.com/compose-spec/compose-go/v2`, and `github.com/docker/compose/v5`, plus the image spec, OCI, and reference types beside them. `gencatalog` copies each exported type into `internal/` under its original name. `gentsx` writes the TSX components and the session methods from that kit. Bump the modules, run `go generate`, and the tree moves with Docker.
+
+## Start
 
 ```bash
-go get github.com/aptd3v/containerkit@v0.7.2
+go get github.com/aptd3v/containerkit
 ```
 
-- **Go** 1.26.8+
-- **Docker Engine**
-- Linux, macOS, or Windows
+The TypeScript package lives in [`tsx/`](tsx/README.md). It needs Node 20. A folder that extends `containerkit/tsconfig.jsx.json` compiles `<Compose>` without a per-file pragma. React and containerkit can share a repository. They cannot share a file.
 
-## v0.7.2
+Running a live session needs the `containerkit` binary on `PATH`, or `CONTAINERKIT_BIN` pointing at it. Build it for the host, and archives for linux, darwin, and windows, with `go run ./tools/crossbuild`.
 
-- **IPv4-only networks**: `ProjectNetwork.DisableIPv6` writes `enable_ipv6: false`. It takes precedence over `EnableIPv6`, so Compose does not inherit Docker Desktop's dual-stack default.
-- **Conditional depends_on**: `DependsOnCondition` accepts `service_started`, `service_healthy`, or `service_completed_successfully`.
-- **Loaded projects**: `Adopt` wraps a Compose project loaded elsewhere. `ReplaceService` swaps a service of the same name.
-- **Astronomy Shop**: IPv4-only attachable network, health checks against `127.0.0.1`, a volumes path next to the example, a probe on the Compose network, and the demo stays up until Ctrl+C.
-- **Published tree**: the Docker e2e suite and the Makefile are no longer in the module.
-
-## v0.7.1
-
-Docs-only patch so pkg.go.dev picks up `pkg/kit` as latest after the v0.7.0 release.
-
-## v0.7.0
-
-- **Astronomy Shop showcase** ([examples/astronomy_shop](./examples/astronomy_shop)): CNCF OpenTelemetry demo as a Go Compose project with `shop` / `full` / `observability` profiles, health waits, kit-probe Dockerfile-as-Go, and a taskflow `Build -> Up -> probe` DAG.
-- **Dockerfile injection harden**: fluent Dockerfile scalars reject newline / control-character injection before build context is sent.
-- **Trap-removal cleanup**: nil-safe `Container.Validate`, dead daemon deps and unused Makefile targets removed from the published tree.
-
-## Features
-
-The published core is `pkg/kit` and `pkg/client`, with optional `pkg/taskflow` for DAGs over the same values. One `*kit.Container` feeds both Engine create and Compose. Fluent setters accumulate errors; call `Validate` (or let `Up` / `Export` / `ContainerCreate` do it) before side effects. Dockerfile-as-Go plus `Build.Reader`, in-process Compose option structs, health/`DependsOnHealthy`/`Up.Wait`, and `project.WriteTo` / `Export` for plan preview are the agent-friendly path. An HTTP daemon or canvas UI is not part of this module.
-
-### Two ways to run the same container
-
-| Piece | Import | Role |
-|---|---|---|
-| `Project`, `*Container` | `github.com/aptd3v/containerkit/pkg/kit` | Stack and container config. Fluent methods set image, env, ports, mounts, and the rest. |
-| SDK value types | `github.com/aptd3v/containerkit/pkg/kit/types` | `ByteSize`, `PortBinding`, `Capability`, host modes, mount aliases. |
-| `NewCompose`, `Up`, `Down`, … | `pkg/kit` | In-process Compose runner. Each command takes an option struct. |
-| Engine client | `github.com/aptd3v/containerkit/pkg/client` | Docker Engine SDK wrapper. Each call takes a per-op struct (`Remove`, `Exec`, `ImageBuild`, …). |
-
-Compose fits a multi-service stack: networks, volumes, profiles, and `Up` / `Down` / `Logs`. The Engine client fits one container, image builds, and an interactive TTY. A hybrid program uses the client to build or exec, then Compose to run the stack. See [examples/nginx](./examples/nginx), [examples/image_inline](./examples/image_inline), and [examples/mongo_replica](./examples/mongo_replica).
-
-### Type stacks
-
-`pkg/kit` config types come from `github.com/docker/docker/api/types/...`. `pkg/client` talks to `github.com/moby/moby/client` and `github.com/moby/moby/api/types/...`. Those are distinct Go types. Pass kit configs through the client APIs (they convert internally); do not assign across packages by hand.
-
-### Compose stack
-
-```go
-project := kit.NewProject("my-app")
-project.
-	WithNetwork("backend").
-	WithVolume("data").
-	WithService(kit.NewService("api",
-		kit.NewContainer().
-			Image("alpine:latest").
-			Command("sleep", "inf").
-			PortBinding(types.PortBinding{Protocol: types.TCP, HostIP: "0.0.0.0", HostPort: "8080", ContainerPort: "8080"}).
-			RWNamedVolumeMount("data", "/data").
-			Endpoint("backend"),
-	).DependsOn("db"))
-
-if err := project.Validate(); err != nil {
-	log.Fatal(err)
-}
-
-app := kit.NewCompose(project)
-if err := app.Up(ctx, &kit.Up{
-	Detach:        true,
-	RemoveOrphans: true,
-	Writer:        os.Stdout,
-}); err != nil {
-	log.Fatal(err)
-}
-defer app.Down(ctx, &kit.Down{RemoveVolumes: true, Writer: os.Stdout})
-```
-
-`Export` writes the project as Compose YAML. `Print` writes that YAML to stdout. `WriteTo` writes it to any `io.Writer`.
-
-```go
-if err := project.Export("./docker-compose.yaml", 0644); err != nil {
-	log.Fatal(err)
-}
-_ = project.Print()
-_, _ = project.WriteTo(w)
-```
-
-### Engine client
-
-`NewContainer` joins every name part with a hyphen (`"my", "api"` becomes `my-api`). Pass a name for `ContainerCreate`. A Compose service can omit it. Construction options stay funcs on `client`.
-
-```go
-cli, err := client.NewClient(client.FromEnv(), client.WithAPIVersionNegotiation())
-if err != nil {
-	log.Fatal(err)
-}
-
-ctr := kit.NewContainer("my-api")
-ctr.Image("alpine:latest").Command("sleep", "inf")
-
-resp, err := cli.ContainerCreate(ctx, ctr)
-if err != nil {
-	log.Fatal(err)
-}
-_ = cli.ContainerRemove(ctx, resp.ID, &client.Remove{Force: true, RemoveVolumes: true})
-```
-
-Pass that same `*kit.Container` to `NewService` when the stack should run under Compose.
-
-### Task graph
-
-`pkg/taskflow` is optional. It orders the same `*kit.Container`, `kit.Build`, and `*kit.Compose` values as a DAG. Import it only when you want that; `pkg/kit` and `pkg/client` do not depend on it.
-
-```go
-flow := taskflow.New("ci", cli)
-build := flow.Build("build",
-	kit.NewBuild().Dockerfile(df),
-	&client.ImageBuild{Tags: []string{"app:ci"}},
-)
-up := flow.Compose("up-db", db, &kit.Up{Detach: true, Wait: true})
-test := flow.Container("test", kit.NewContainer().Image("app:ci"), nil)
-
-test.DependsOn(up.DependsOn(build))
-
-defer flow.Remove(ctx)
-err := flow.Run(ctx, &taskflow.Run{Writer: os.Stdout})
-```
-
-A failed step skips its successors. Full guide: [`pkg/taskflow`](./pkg/taskflow). Demo: [examples/taskflow](./examples/taskflow).
-
-### Dockerfile
-
-`NewDockerFile` writes a Dockerfile in Go. `ParseDockerfile` wraps a string and `ReadDockerfile` loads a file. `Export` writes the file to disk. A `Build` carries the Dockerfile plus the build context: pass it to `Service.Build` for Compose, or call `Reader` for the tar `client.ImageBuild` accepts.
-
-```go
-df := kit.NewDockerFile().
-	FromAs("alpine:latest", "build").
-	Run("echo ok > /out/app").
-	From("alpine:latest").
-	Copy("/out/app", "/app", kit.CopyOpts{From: "build"})
-
-if err := df.Export("Dockerfile", 0644); err != nil {
-	log.Fatal(err)
-}
-
-build := kit.NewBuild().Context(".").Dockerfile(df)
-
-project.WithService(kit.NewService("app",
-	kit.NewContainer().Image("my-image:tag"),
-).Build(build))
-
-r, err := build.Reader()
-if err != nil {
-	log.Fatal(err)
-}
-resp, err := cli.ImageBuild(ctx, r, &client.ImageBuild{Tags: []string{"my-image:tag"}})
-```
-
-`Reader` packs the context directory, writes the generated Dockerfile over any `Dockerfile` already there, and honors `.dockerignore`. An empty context packs only the Dockerfile. When only `Context` or `DockerfilePath` is set, `Reader` reads that file from disk. See [examples/dockerfile](./examples/dockerfile) and [examples/image_inline](./examples/image_inline).
-
-### Rules
-
-- Setters append to `Container.Errors` and to the project. Call `Validate` before `Up`, `Export`, or `ContainerCreate`. Those three calls run `Validate` themselves.
-- A nil `Up` or `Down` uses defaults. The writer is `os.Stdout`.
-- `Service.Profiles` is Compose’s `profiles:` key. If the project has any profiled service, set `Profiles` on the command (`Up.Profiles`, `Down.Profiles`, and the rest). Compose returns an error when that list is empty.
-
-```go
-project.WithService(kit.NewService("worker",
-	kit.NewContainer().Image("alpine:latest"),
-).Profiles("full"))
-_ = app.Up(ctx, &kit.Up{Profiles: []string{"full"}, Writer: os.Stdout})
-```
-
-- Compose-only settings are methods on `*Service`: `DependsOn`, `Profiles`, `Build`, `Deploy`. `*Container` stays the process config.
-- Sizes are a `types.ByteSize`: `MemoryLimit(100 * types.MiB)`.
-- Branch with an ordinary `if`.
-
-```go
-c := kit.NewContainer().Image("node:latest")
-if runtime.GOOS == "linux" {
-	c.RWNamedVolumeMount("data", "/app")
-} else {
-	c.VolumeBinds("./:/app/:rw")
-}
-```
-
-### API surface
-
-Full signatures are on [pkg.go.dev](https://pkg.go.dev/github.com/aptd3v/containerkit/pkg/kit).
-
-**Naming families** (as they exist today; no forced rename):
-
-| Family | Pattern | Examples |
-|---|---|---|
-| Container fluent | method on `*Container` | `.Image()`, `.Env()`, `.HealthCheck(...)` |
-| Project builders | `With*` on `*Project` | `WithService`, `WithNetwork` |
-| Service Compose-only | method on `*Service` | `.DependsOn()`, `.Profiles()` |
-| Client construction | functional options | `client.WithAPIVersionNegotiation()` |
-| Client / Compose ops | per-op structs | `&client.Remove{…}`, `&kit.Up{…}` |
-| Registry auth | `With*` options | `auth.WithUsername` (`WithEmail` is deprecated) |
-
-**Container.** Image, env, command, ports, mounts, health, restart, resources, capabilities, logging, and platform. You can also mix in Docker SDK structs. See [examples/structs](./examples/structs).
-
-**Service.** `NewService(name, container)`, then `DependsOn`, `DependsOnHealthy`, `Profiles`, `Build`, `Deploy`, `Secret`, and the other Compose-only methods. Pass the service to `Project.WithService`.
-
-**Project.** `WithService`, `WithNetwork`, `WithVolume`, `WithSecret`, `WithJob`, and `WithModel`.
-
-**Compose commands (selection).** Full list: [pkg.go.dev](https://pkg.go.dev/github.com/aptd3v/containerkit/pkg/kit).
-
-| Group | Commands |
-|---|---|
-| Lifecycle | `Up`, `Down`, `Create`, `Start`, `Stop`, `Restart`, `Kill`, `Rm`, `Run`, `Scale`, `Pause`, `Unpause` |
-| Observe | `Logs`, `Ps`, `Events`, `Top`, `Stats`, `Wait`, `Images`, `Ls`, `Port` |
-| Files / build / config | `Build`, `Pull`, `Push`, `Config`, `Export`, `Watch`, `Cp`, `Exec`, `Attach`, `Commit` |
-| Also | `Publish`, `Version`, `Volumes`, `Viz`, `Generate`, `LoadProject`, `Bridge*` (see pkg.go.dev) |
-
-**Engine client.** Containers, images, networks, volumes, swarm, and plugins, plus interactive TTY in `pkg/client/terminal`. See [pkg.go.dev/pkg/client](https://pkg.go.dev/github.com/aptd3v/containerkit/pkg/client).
-
-### Examples
-
-Run from the repo root.
-
-| Path | Path type | What it shows |
-|---|---|---|
-| [examples/simple](./examples/simple) | Compose | Minimal `NewProject` → `Up` |
-| [examples/wordpress](./examples/wordpress) | Compose | Multi-service, OS-conditional mounts, logs, signal `Down` |
-| [examples/profiles](./examples/profiles) | Compose | `Profiles` mirrored on `Up` / `Kill` |
-| [examples/events](./examples/events) | Compose | Events channel + healthcheck |
-| [examples/compose_commands](./examples/compose_commands) | Compose | `Build`, `Ps`, `Start`, `Stop`, `Restart`, `Exec`, `Config`, `Images`, `Top`, `Pause`, `Run` |
-| [examples/nginx](./examples/nginx) | Hybrid | `client.ImageBuild` then compose `Up` |
-| [examples/image_inline](./examples/image_inline) | Hybrid | Inline Dockerfile; Engine inspect skips a rebuild when the tag exists |
-| [examples/dockerfile](./examples/dockerfile) | Client | Multi-stage `NewDockerFile`, `Export`, `ImageBuild`, `ContainerCreate` |
-| [examples/mongo_replica](./examples/mongo_replica) | Hybrid | Compose `Up` with `Wait`, then client exec to init a replica set |
-| [examples/terminal](./examples/terminal) | Client | Interactive TTY exec + resize |
-| [examples/structs](./examples/structs) | Config | Mix Docker SDK structs with fluent methods |
-| [examples/taskflow](./examples/taskflow) | Task graph | `pkg/taskflow`: build, Compose `Up`, parallel test containers, retry, `Down` |
-| [examples/supabase](./examples/supabase) | Compose | Full multi-profile stack. See its [README](./examples/supabase/README.md) |
-| [examples/astronomy_shop](./examples/astronomy_shop) | Task graph / Compose hybrid | OpenTelemetry Astronomy Shop: profiles, health waits, kit-probe Dockerfile-as-Go, taskflow Build -> Up -> probe. See its [README](./examples/astronomy_shop/README.md) |
-
-```bash
-go run ./examples/simple/
-go run ./examples/supabase/                    # minimal
-go run ./examples/supabase/ -profile full
-go run ./examples/astronomy_shop/              # store + observability (default)
-go run ./examples/astronomy_shop/ -follow
-```
-
-## Migrating from go-contain
-
-This project was renamed from `go-contain`.
-
-| Old | New |
-|---|---|
-| `github.com/aptd3v/go-contain` | `github.com/aptd3v/containerkit` |
-| `pkg/create`, `cc.WithImage`, … | `pkg/kit`, fluent `.Image()`, … |
-| `pkg/compose`, `up.WithRemoveOrphans()` | `kit.NewCompose` + `&kit.Up{…}` |
-| `pkg/client/options/**` | per-op structs on `pkg/client` (`Remove`, `Exec`, …) |
-
-## Contributing
-
-Issues and pull requests are welcome: [issues](https://github.com/aptd3v/containerkit/issues) · [discussions](https://github.com/aptd3v/containerkit/discussions)
+- [For coding agents](llms.txt). Emit containerkit instead of a Compose file plus a script.
+- [Publish a port](docs/publish-a-port.md)
+- [Mount a volume](docs/mount-a-volume.md)
+- [Bring a compose file up](docs/bring-a-compose-file-up.md)
+- [Declare config in TSX](docs/tsx-configuration.md)
+- [Runner binary](docs/runner-binary.md)
+- [TypeScript guide](tsx/docs/README.md)
 
 ## License
 
-MIT. See [LICENSE](./LICENSE).
+MIT. See [LICENSE](LICENSE).

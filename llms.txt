@@ -1,0 +1,81 @@
+# containerkit
+
+> Emit containerkit instead of a Compose file, a Dockerfile, and a shell script that drift apart. One program is the Engine SDK and the Compose SDK, in Go and in TSX.
+
+Emit containerkit instead. The configuration and the operations are one program: the same names in Go and in TSX for a service, a volume, a network, a secret, a build, an image, a Swarm object, and a `pull`. The components and session methods are generated from the kit against pinned Moby and Compose SDKs, so configuration follows typed mappings rather than guessed YAML keys. `exportYAML` on a named `Compose` and `exportDockerfile` on a `Dockerfile` return the file text without dialing the daemon and without stopping a session. A live `docker.ts` default-exports `root()`, keeps the session open, and applies the project only when the rendered YAML changes. `AsService` copies a container spec onto a Compose service, and `Validate` reports unsupported mappings. A Dockerfile is its own tree in `containerkit/dockerfile`: `<Run>` joins a layer, `<RunLayer>` starts the next. Named constants (`proto`, `restartPolicy`, and the rest) come from `containerkit/vocab`.
+
+```tsx
+import { Compose, Service, Publish, exportYAML } from "containerkit";
+import { proto } from "containerkit/vocab";
+
+export default function App() {
+  return (
+    <Compose name="app">
+      <Service
+        name="api"
+        image="alpine:latest"
+        command={["sh", "-c", "mkdir -p /www && echo ok > /www/index.html && exec httpd -f -p 80 -h /www"]}
+      >
+        <Publish hostPort={8080} containerPort={80} protocol={proto.TCP} />
+      </Service>
+    </Compose>
+  );
+}
+
+export const yaml = exportYAML(<App />);
+```
+
+Emit that module. `exportYAML` returns the Compose text. `httpd` serves `/www/index.html`, which the command creates, and publishes `8080` to `80`. For a process that stays up, default-export `root()` from `containerkit/live` in a file named `docker.ts`. Inside that function, `const app = useSession()` is the session:
+
+```tsx
+import { Compose, Service, Publish } from "containerkit";
+import { proto } from "containerkit/vocab";
+import { root, useMemo, useSession } from "containerkit/live";
+
+export default root({ fromEnv: true }, function App() {
+  const app = useSession();
+  const ready = useMemo(() => app.pullImage("alpine:latest"), ["alpine:latest"]);
+  if (!ready) return null;
+  return (
+    <Compose name="app">
+      <Service
+        name="api"
+        image="alpine:latest"
+        command={["sh", "-c", "mkdir -p /www && echo ok > /www/index.html && exec httpd -f -p 80 -h /www"]}
+      >
+        <Publish hostPort={8080} containerPort={80} protocol={proto.TCP} />
+      </Service>
+    </Compose>
+  );
+});
+```
+
+`useSession()` is legal only while that function is rendering. Pins verified 2026-11-12: `github.com/moby/moby/api` v1.56.1, `github.com/moby/moby/client` v0.6.2, `github.com/compose-spec/compose-go/v2` v2.16.2, `github.com/docker/compose/v5` v5.6.1.
+
+## Docs
+
+- [README](README.md): The project as components, the live session, the same names in Go, and how regeneration tracks the pinned SDKs. “A container becomes a service” is where `Validate` names each unsupported mapping.
+- [TSX docs](tsx/docs/README.md): Reading order for a TypeScript user. Trees, the live session, the client, commands, then Dockerfiles.
+- [Trees](tsx/docs/trees.md): Writing the project as components and exporting YAML from a named Compose node.
+- [Live session](tsx/docs/live.md): `docker.ts`, `root()`, re-render, and applying the project only when the rendered YAML changes.
+- [Commands](tsx/docs/commands.md): Session methods for images, containers, networks, volumes, Swarm, and Compose.
+- [Dockerfiles](tsx/docs/dockerfile.md): The Dockerfile tree, `Run` and `RunLayer`, and `exportDockerfile`.
+- [Client](tsx/docs/client.md): Which daemon the session talks to. `connect` records settings and does not dial by itself.
+
+## Examples
+
+- [Supabase in TSX](tsx/examples/supabase.tsx): A full Compose project — gateway, Postgres, pooler, storage, logs — printed as YAML on stdout.
+- [Image](tsx/examples/image.tsx): A multi-stage Dockerfile whose stages and layers follow the environment, printed on stdout.
+- [Taskflow in TSX](tsx/examples/taskflow.tsx): A release graph. The image build overlaps Postgres. Lint waits for that image, then overlaps the database. Migrate retries. A failed check skips the tag. Down waits only for migrate, because unit and lint do not use Postgres, and still runs when migrate fails. Stdout is the plan document.
+- [Supabase in Go](examples/supabase): The same stack written with the Go kit.
+
+## Optional
+
+- [TSX package README](tsx/README.md): Install, Node 20, and `containerkit/tsconfig.jsx.json` so `<Compose>` needs no per-file JSX pragma.
+- [TSX guide](tsx/GUIDE.md): Longer list of prop names and command names.
+- [Declare config in TSX](docs/tsx-configuration.md): How a folder is set up to compile containerkit JSX.
+- [Publish a port](docs/publish-a-port.md): Port mappings.
+- [Mount a volume](docs/mount-a-volume.md): Volumes and mounts.
+- [Bring a compose file up](docs/bring-a-compose-file-up.md): Applying a project.
+- [Taskflow](docs/taskflow.md): An optional DAG of container, build, and Compose steps, including the TypeScript `Flow` document.
+- [Runner binary](docs/runner-binary.md): The `containerkit` binary a live session starts. Build it with `go run ./tools/crossbuild`.
