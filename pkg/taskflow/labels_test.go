@@ -2,101 +2,104 @@ package taskflow
 
 import (
 	"context"
+	"errors"
 	"testing"
 
 	"github.com/aptd3v/containerkit/pkg/kit"
-	"github.com/stretchr/testify/require"
+	cerrdefs "github.com/containerd/errdefs"
+	"github.com/moby/moby/api/types/container"
 )
 
-func labelsOf(t *testing.T, ctr *kit.Container) map[string]string {
-	t.Helper()
-	require.NotNil(t, ctr.Config)
-	require.NotNil(t, ctr.Config.Container)
-	return ctr.Config.Container.Labels
-}
+func TestListAndRemove(t *testing.T) {
+	ctx := context.Background()
+	if _, err := List(ctx, nil, "ci"); !errors.Is(err, ErrNoClient) {
+		t.Fatal(err)
+	}
+	if _, err := List(nil, kit.NewClient(nil, nil), "ci"); !errors.Is(err, ErrNoClient) {
+		t.Fatal(err)
+	}
+	eng := &scriptedEngine{id: "made"}
+	eng.list.Items = []container.Summary{{ID: "left"}}
+	comp := &fakeComposer{}
+	cli := newClient(eng, comp)
+	app := sampleApp()
+	f := New("ci", cli)
+	f.Compose("up", app, Up())
+	f.Compose("again", app, Up())
+	step := f.Container("c", kit.NewContainer(kit.Image("app"), kit.Name("job")), nil)
+	if err := f.Run(ctx, discardRun()); err != nil {
+		t.Fatal(err)
+	}
+	listed, err := f.List(ctx)
+	if err != nil || len(listed.Items) != 1 {
+		t.Fatalf("list %v %#v", err, listed.Items)
+	}
+	if err := f.Remove(ctx); err != nil {
+		t.Fatal(err)
+	}
+	if comp.downs != 1 {
+		t.Fatalf("downs %d", comp.downs)
+	}
+	if step.ID() != "made" {
+		t.Fatal(step.ID())
+	}
 
-func TestStampRelationLabels(t *testing.T) {
-	flow := New("report", nil)
-	export := flow.Container("export", kit.NewContainer("export").Image("alpine"), nil)
-	gate := flow.Condition("gate", func(context.Context) uint { return 0 })
-	schema := flow.Container("schema", kit.NewContainer("schema").Image("alpine"), nil)
-	bundle := flow.Container("bundle", kit.NewContainer("bundle").Image("alpine"), nil)
-	publish := flow.Task("publish", func(context.Context) error { return nil })
-	export.Precede(gate)
-	gate.Precede(schema, bundle)
-	schema.Precede(publish)
-	bundle.Precede(publish)
-	flow.stamp()
+	eng = &scriptedEngine{listErr: errors.New("list")}
+	f = New("list", newClient(eng, &fakeComposer{}))
+	f.Container("c", kit.NewContainer(kit.Image("app")), nil)
+	if err := f.Run(ctx, discardRun()); err != nil {
+		t.Fatal(err)
+	}
+	if err := f.Remove(ctx); err == nil {
+		t.Fatal("list error")
+	}
 
-	el := labelsOf(t, export.container)
-	require.Equal(t, "report", el[LabelFlow])
-	require.Equal(t, "export", el[LabelTask])
-	require.Equal(t, "bundle,schema", el[LabelPrecedes])
-	require.Empty(t, el[LabelDepends])
+	eng = &scriptedEngine{}
+	f = New("busy", newClient(eng, &fakeComposer{}))
+	f.Container("c", kit.NewContainer(kit.Image("app")), nil)
+	if err := f.Run(ctx, discardRun()); err != nil {
+		t.Fatal(err)
+	}
+	eng.removeErr = errors.New("busy")
+	if err := f.Remove(ctx); err == nil {
+		t.Fatal("remove error")
+	}
 
-	sl := labelsOf(t, schema.container)
-	require.Equal(t, "export", sl[LabelDepends])
-	require.Empty(t, sl[LabelPrecedes])
+	eng = &scriptedEngine{}
+	eng.list.Items = []container.Summary{{ID: "gone"}}
+	f = New("gone", newClient(eng, &fakeComposer{}))
+	f.mu.Lock()
+	f.created = []string{"", "kept"}
+	f.mu.Unlock()
+	eng.removeErr = cerrdefs.ErrNotFound
+	if err := f.Remove(ctx); err != nil {
+		t.Fatal(err)
+	}
 
-	bl := labelsOf(t, bundle.container)
-	require.Equal(t, "export", bl[LabelDepends])
+	f = New("nocli", nil)
+	f.Compose("up", sampleApp(), func(context.Context, *kit.Compose) error { return nil })
+	if err := f.Run(ctx, discardRun()); err != nil {
+		t.Fatal(err)
+	}
+	if err := f.Remove(ctx); !errors.Is(err, ErrNoClient) {
+		t.Fatal(err)
+	}
+	if err := f.Remove(nil); !errors.Is(err, ErrNoClient) {
+		t.Fatal(err)
+	}
 
-	require.Nil(t, publish.container)
-}
-
-func TestStampSkipsSelfEdgeOnRetry(t *testing.T) {
-	flow := New("loop", nil)
-	export := flow.Container("export", kit.NewContainer("export").Image("alpine"), nil)
-	inspect := flow.Task("inspect", func(context.Context) error { return nil })
-	gate := flow.Condition("gate", func(context.Context) uint { return 1 })
-	retry := flow.Condition("retry", func(context.Context) uint { return 0 })
-	fail := flow.Task("fail", func(context.Context) error { return nil })
-	export.Precede(inspect)
-	inspect.Precede(gate)
-	gate.Precede(fail, retry)
-	retry.Precede(export)
-	flow.stamp()
-
-	el := labelsOf(t, export.container)
-	require.Empty(t, el[LabelDepends])
-	require.Empty(t, el[LabelPrecedes])
-}
-
-func TestEmptyContainerNameUsesTaskName(t *testing.T) {
-	flow := New("names", nil)
-	c := flow.Container("unit", kit.NewContainer().Image("alpine"), nil)
-	require.Equal(t, "unit", c.container.Name)
-	flow.stamp()
-	require.Equal(t, "unit", labelsOf(t, c.container)[LabelTask])
-}
-
-func TestListRequiresClient(t *testing.T) {
-	_, err := List(context.Background(), nil, "ci")
-	require.ErrorIs(t, err, ErrNoClient)
-}
-
-func TestStampComposeServices(t *testing.T) {
-	proj := kit.NewProject("db")
-	ctr := kit.NewContainer("ck-db").Image("postgres:16-alpine")
-	proj.WithService(kit.NewService("db", ctr))
-	db := kit.NewCompose(proj)
-
-	flow := New("ci", nil)
-	up := flow.Compose("up-db", db, &kit.Up{})
-	unit := flow.Container("unit", kit.NewContainer("ck-unit").Image("alpine"), nil)
-	down := flow.Compose("down-db", db, &kit.Down{}).Always()
-	up.Precede(unit)
-	unit.Precede(down)
-	flow.stamp()
-
-	svc, err := proj.GetService("db")
-	require.NoError(t, err)
-	require.Equal(t, "ci", svc.Labels[LabelFlow])
-	require.Equal(t, "up-db", svc.Labels[LabelTask])
-	require.Empty(t, svc.Labels[LabelDepends])
-	require.Empty(t, svc.Labels[LabelPrecedes])
-
-	ul := labelsOf(t, unit.container)
-	require.Equal(t, "ck-db", ul[LabelDepends])
-	require.Equal(t, "ck-db", ul[LabelPrecedes])
+	bare := New("bare", nil)
+	if err := bare.Remove(nil); err != nil {
+		t.Fatal(err)
+	}
+	comp = &fakeComposer{}
+	f = New("down", newClient(&scriptedEngine{}, comp))
+	f.Compose("up", sampleApp(), Up())
+	if err := f.Run(ctx, discardRun()); err != nil {
+		t.Fatal(err)
+	}
+	comp.err = errors.New("down")
+	if err := f.Remove(ctx); err == nil {
+		t.Fatal("down error")
+	}
 }

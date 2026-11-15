@@ -2,11 +2,10 @@ package taskflow
 
 import (
 	"context"
+	"errors"
 	"slices"
 	"strings"
 
-	"github.com/aptd3v/containerkit/pkg/client"
-	"github.com/aptd3v/containerkit/pkg/client/response"
 	"github.com/aptd3v/containerkit/pkg/kit"
 )
 
@@ -22,19 +21,15 @@ const (
 )
 
 // List returns containers stamped with LabelFlow equal to flowName, including
-// stopped ones. Flow.List does the same for a flow in hand; this form works
-// across processes.
-func List(ctx context.Context, cli *client.Client, flowName string) ([]response.ContainerSummary, error) {
-	if cli == nil {
-		return nil, ErrNoClient
+// stopped ones.
+func List(ctx context.Context, cli *kit.Client, flowName string) (kit.ContainerListResult, error) {
+	if cli == nil || cli.Engine() == nil {
+		return kit.ContainerListResult{}, ErrNoClient
 	}
 	if ctx == nil {
 		ctx = context.Background()
 	}
-	return cli.ContainerList(ctx, &client.List{
-		All:     true,
-		Filters: make(client.Filters).Add("label", LabelFlow+"="+flowName),
-	})
+	return kit.ListContainers(ctx, cli.Engine(), kit.All(true), kit.Filter("label", LabelFlow+"="+flowName))
 }
 
 func (f *Flow) stamp() {
@@ -42,63 +37,42 @@ func (f *Flow) stamp() {
 		return
 	}
 	for _, t := range f.taskList() {
-		t.stamp()
-	}
-}
-
-func (t *Task) stamp() {
-	if t == nil {
-		return
-	}
-	switch t.kind {
-	case kindContainer:
-		t.stampContainer()
-	case kindCompose:
+		_ = t.stampContainer()
 		t.stampCompose()
 	}
 }
 
-func (t *Task) stampContainer() {
-	if t.container == nil || t.alreadyCreated() {
-		return
+func (t *Task) stampContainer() error {
+	if t == nil || t.kind != kindContainer || t.container == nil || t.alreadyCreated() {
+		return nil
 	}
-	if t.container.Name == "" {
-		t.container.Name = t.name
+	var opts []kit.ContainerOption
+	if t.container.Name() == "" && t.name != "" {
+		opts = append(opts, kit.Name(t.name))
 	}
-	label(t.container, LabelFlow, t.flow.name)
-	label(t.container, LabelTask, t.name)
+	opts = append(opts, kit.Label(LabelFlow, t.flow.name), kit.Label(LabelTask, t.name))
 	if deps := strings.Join(t.nearestNames(false), ","); deps != "" {
-		label(t.container, LabelDepends, deps)
+		opts = append(opts, kit.Label(LabelDepends, deps))
 	}
 	if succs := strings.Join(t.nearestNames(true), ","); succs != "" {
-		label(t.container, LabelPrecedes, succs)
+		opts = append(opts, kit.Label(LabelPrecedes, succs))
 	}
+	return t.container.Apply(opts...)
 }
 
 func (t *Task) stampCompose() {
-	proj := t.composeProject()
-	if proj == nil {
+	if t == nil || t.kind != kindCompose || t.composeApp == nil {
 		return
 	}
-	proj.ServiceLabel(LabelFlow, t.flow.name)
-	proj.ServiceLabel(LabelTask, t.name)
-}
-
-func (t *Task) composeProject() *kit.Project {
-	if t == nil || t.composeApp == nil {
-		return nil
+	for _, svc := range t.composeApp.Services() {
+		_ = svc.Apply(kit.Label(LabelFlow, t.flow.name), kit.Label(LabelTask, t.name))
 	}
-	return t.composeApp.Project()
-}
-
-func label(c *kit.Container, key, value string) {
-	if c == nil || key == "" || value == "" {
-		return
-	}
-	c.Label(key, value)
 }
 
 func (t *Task) alreadyCreated() bool {
+	if t == nil {
+		return false
+	}
 	t.mu.Lock()
 	defer t.mu.Unlock()
 	return t.id != ""
@@ -108,25 +82,23 @@ func (t *Task) containerName() string {
 	if t == nil || t.kind != kindContainer {
 		return ""
 	}
-	if t.container != nil && t.container.Name != "" {
-		return t.container.Name
+	if t.container != nil && t.container.Name() != "" {
+		return t.container.Name()
 	}
-	return t.name
+	if t.name != "" {
+		return t.name
+	}
+	return ""
 }
 
 func (t *Task) composeContainerNames() []string {
-	proj := t.composeProject()
-	if proj == nil {
-		return nil
-	}
-	raw := proj.Unwrap()
-	if raw == nil {
+	if t == nil || t.composeApp == nil {
 		return nil
 	}
 	var names []string
-	for _, svc := range raw.Services {
-		if svc.ContainerName != "" {
-			names = append(names, svc.ContainerName)
+	for _, svc := range t.composeApp.Services() {
+		if name := svc.ContainerName(); name != "" {
+			names = append(names, name)
 		}
 	}
 	slices.Sort(names)
@@ -164,4 +136,70 @@ func (t *Task) nearestNames(successors bool) []string {
 	walk(t)
 	slices.Sort(names)
 	return slices.Compact(names)
+}
+
+// List returns containers stamped with this flow's name, including stopped ones.
+func (f *Flow) List(ctx context.Context) (kit.ContainerListResult, error) {
+	if f == nil {
+		return kit.ContainerListResult{}, errors.New("flow is nil")
+	}
+	return List(ctx, f.cli, f.name)
+}
+
+// Remove downs every Compose project the graph referenced, then force-removes
+// Container-step IDs and any leftover containers stamped with this flow's name.
+func (f *Flow) Remove(ctx context.Context) error {
+	if f == nil {
+		return errors.New("flow is nil")
+	}
+	if ctx == nil {
+		ctx = context.Background()
+	}
+	var errs []error
+	apps := f.composeList()
+	f.mu.Lock()
+	ids := append([]string(nil), f.created...)
+	f.mu.Unlock()
+	api := f.engine()
+	if api == nil {
+		if len(ids) > 0 || len(apps) > 0 {
+			errs = append(errs, ErrNoClient)
+		}
+		return errors.Join(errs...)
+	}
+	for _, app := range apps {
+		if app == nil {
+			continue
+		}
+		if err := app.Down(ctx, f.composer(), kit.Volumes(true)); err != nil {
+			errs = append(errs, err)
+		}
+	}
+	for _, id := range ids {
+		if err := removeContainer(ctx, api, id); err != nil {
+			errs = append(errs, err)
+		}
+	}
+	leftover, err := f.List(ctx)
+	if err != nil {
+		errs = append(errs, err)
+		return errors.Join(errs...)
+	}
+	for _, ctr := range leftover.Items {
+		if err := removeContainer(ctx, api, ctr.ID); err != nil {
+			errs = append(errs, err)
+		}
+	}
+	return errors.Join(errs...)
+}
+
+func removeContainer(ctx context.Context, api kit.Engine, id string) error {
+	if id == "" {
+		return nil
+	}
+	err := kit.NewContainer().Remove(ctx, api, id, kit.Force(true))
+	if err != nil && !kit.IsNotFound(err) {
+		return err
+	}
+	return nil
 }

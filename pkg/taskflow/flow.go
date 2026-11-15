@@ -10,8 +10,6 @@ import (
 	"sync"
 	"time"
 
-	"github.com/aptd3v/containerkit/pkg/client"
-	"github.com/aptd3v/containerkit/pkg/client/response"
 	"github.com/aptd3v/containerkit/pkg/kit"
 	gtf "github.com/noneback/go-taskflow"
 )
@@ -53,7 +51,7 @@ type scope struct {
 // Flow is a named task graph. One Run per Flow.
 type Flow struct {
 	name string
-	cli  *client.Client
+	cli  *kit.Client
 	tf   *gtf.TaskFlow
 
 	mu      sync.Mutex
@@ -97,10 +95,9 @@ type Task struct {
 
 	container    *kit.Container
 	containerRun *ContainerRun
-	build        kit.Build
-	buildOpt     *client.ImageBuild
+	build        []kit.EngineBuildOption
 	composeApp   *kit.Compose
-	composeFn    func(context.Context, *kit.Compose) error
+	composeFn    func(context.Context, *kit.Compose, kit.Composer) error
 	taskFn       func(context.Context) error
 	condFn       func(context.Context) uint
 	ifFn         func(context.Context) bool
@@ -130,8 +127,7 @@ type Run struct {
 	// retries, skips, or fails.
 	Watch func(Event)
 	// Log is called with step-scoped output (image build streams, container
-	// logs, compose output). May be called from worker goroutines with
-	// partial writes.
+	// logs). May be called from worker goroutines with partial writes.
 	Log func(step string, p []byte)
 }
 
@@ -143,8 +139,8 @@ type ContainerRun struct {
 }
 
 // New returns a Flow. name is the graph name and the flow label value.
-// cli may be nil when the flow has only Task and Compose steps.
-func New(name string, cli *client.Client) *Flow {
+// cli may be nil when the flow has only Task steps and Compose funcs.
+func New(name string, cli *kit.Client) *Flow {
 	if name == "" {
 		name = "taskflow"
 	}
@@ -198,7 +194,7 @@ func (f *Flow) Subflow(name string, instantiate func(*Subflow)) *Task {
 	if f == nil {
 		return nil
 	}
-	return f.scope().subflow(name, instantiate)
+	return f.scope().subflow(name, wrapSubflow(instantiate))
 }
 
 // Subflow adds a nested graph inside this subflow.
@@ -207,15 +203,22 @@ func (s *Subflow) Subflow(name string, instantiate func(*Subflow)) *Task {
 	if !ok {
 		return nil
 	}
-	return sc.subflow(name, instantiate)
+	return sc.subflow(name, wrapSubflow(instantiate))
+}
+
+func wrapSubflow(instantiate func(*Subflow)) func(*Subflow) error {
+	if instantiate == nil {
+		return nil
+	}
+	return func(sf *Subflow) error {
+		instantiate(sf)
+		return nil
+	}
 }
 
 // Condition adds an indexed branch. The returned index selects the successor
-// in Precede order. A Condition runs even when a predecessor failed, which is
-// what makes retry cycles work: a cycle needs a non-condition predecessor as
-// the first entry, then a Condition on the back edge. An index with no
-// successor fails the step instead of panicking; nothing runs after it.
-// Use If to gate on a predecessor's success.
+// in Precede order. A Condition runs even when a predecessor failed.
+// An index with no successor fails the step instead of panicking.
 func (f *Flow) Condition(name string, predict func(context.Context) uint) *Task {
 	if f == nil {
 		return nil
@@ -233,9 +236,8 @@ func (s *Subflow) Condition(name string, predict func(context.Context) uint) *Ta
 }
 
 // If adds a boolean branch. Then successors run when pred returns true, Else
-// successors when it returns false. A missing branch is a no-op. Unlike
-// Condition, an If is skipped when a predecessor failed, and then neither
-// branch runs.
+// successors when it returns false. A missing branch is a no-op. An If is
+// skipped when a predecessor failed, and then neither branch runs.
 func (f *Flow) If(name string, pred func(context.Context) bool) *Task {
 	if f == nil {
 		return nil
@@ -279,13 +281,15 @@ func (sc scope) task(name string, fn func(context.Context) error) *Task {
 	return t
 }
 
-func (sc scope) subflow(name string, instantiate func(*Subflow)) *Task {
+func (sc scope) subflow(name string, instantiate func(*Subflow) error) *Task {
 	t := sc.newTask(name, kindSubflow)
 	f := sc.flow
 	t.gtf = sc.adder.NewSubflow(name, func(sf *gtf.Subflow) {
 		t.observe(func() error {
 			if instantiate != nil {
-				instantiate(&Subflow{flow: f, gtf: sf, task: t})
+				if err := instantiate(&Subflow{flow: f, gtf: sf, task: t}); err != nil {
+					return err
+				}
 			}
 			for _, c := range t.childList() {
 				c.addFallback()
@@ -356,21 +360,15 @@ func (t *Task) fallbackIndex() uint {
 }
 
 func (f *Flow) context() context.Context {
+	if f == nil {
+		return context.Background()
+	}
 	f.mu.Lock()
 	defer f.mu.Unlock()
 	if f.ctx == nil {
 		return context.Background()
 	}
 	return f.ctx
-}
-
-func (f *Flow) hasLog() bool {
-	if f == nil {
-		return false
-	}
-	f.mu.Lock()
-	defer f.mu.Unlock()
-	return f.logfn != nil
 }
 
 func (f *Flow) out() io.Writer {
@@ -406,12 +404,18 @@ func (f *Flow) trackCompose(app *kit.Compose) {
 }
 
 func (f *Flow) composeList() []*kit.Compose {
+	if f == nil {
+		return nil
+	}
 	f.mu.Lock()
 	defer f.mu.Unlock()
 	return append([]*kit.Compose(nil), f.compose...)
 }
 
 func (f *Flow) taskList() []*Task {
+	if f == nil {
+		return nil
+	}
 	f.mu.Lock()
 	defer f.mu.Unlock()
 	return append([]*Task(nil), f.tasks...)
@@ -425,6 +429,20 @@ func (f *Flow) subflowCount() uint {
 		}
 	}
 	return n
+}
+
+func (f *Flow) engine() kit.Engine {
+	if f == nil || f.cli == nil {
+		return nil
+	}
+	return f.cli.Engine()
+}
+
+func (f *Flow) composer() kit.Composer {
+	if f == nil || f.cli == nil {
+		return nil
+	}
+	return f.cli.Composer()
 }
 
 // Precede makes tasks depend on t. For a Condition, the order is the branch
@@ -654,7 +672,7 @@ func (t *Task) blocks() bool {
 
 func (t *Task) predsFailed() bool {
 	for _, p := range t.preds {
-		if p.blocks() {
+		if p != nil && p.blocks() {
 			return true
 		}
 	}
@@ -762,10 +780,7 @@ func (f *Flow) Run(ctx context.Context, opt *Run) error {
 
 	c := opt.Concurrency
 	if c == 0 {
-		c = uint(runtime.NumCPU())
-		if c == 0 {
-			c = 1
-		}
+		c = uint(runtime.GOMAXPROCS(0))
 	}
 	if n := f.subflowCount(); c <= n {
 		c = n + 1
@@ -813,54 +828,4 @@ func (f *Flow) Dump(w io.Writer) error {
 		w = os.Stdout
 	}
 	return f.tf.Dump(w)
-}
-
-// List returns containers stamped with this flow's name, including stopped ones.
-func (f *Flow) List(ctx context.Context) ([]response.ContainerSummary, error) {
-	if f == nil {
-		return nil, errors.New("flow is nil")
-	}
-	return List(ctx, f.cli, f.name)
-}
-
-// Remove downs every Compose project the graph referenced, then force-removes
-// Container-step IDs and any leftover containers stamped with this flow's name.
-func (f *Flow) Remove(ctx context.Context) error {
-	if f == nil {
-		return errors.New("flow is nil")
-	}
-	if ctx == nil {
-		ctx = context.Background()
-	}
-	var errs []error
-	for _, app := range f.composeList() {
-		if err := app.Down(ctx, &kit.Down{RemoveVolumes: true, Writer: f.out()}); err != nil {
-			errs = append(errs, err)
-		}
-	}
-	f.mu.Lock()
-	ids := append([]string(nil), f.created...)
-	f.mu.Unlock()
-	if f.cli == nil {
-		if len(ids) > 0 {
-			errs = append(errs, ErrNoClient)
-		}
-		return errors.Join(errs...)
-	}
-	for _, id := range ids {
-		if err := f.cli.ContainerRemove(ctx, id, &client.Remove{Force: true}); err != nil && !client.IsErrNotFound(err) {
-			errs = append(errs, err)
-		}
-	}
-	leftover, err := f.List(ctx)
-	if err != nil {
-		errs = append(errs, err)
-		return errors.Join(errs...)
-	}
-	for _, ctr := range leftover {
-		if err := f.cli.ContainerRemove(ctx, ctr.ID, &client.Remove{Force: true}); err != nil && !client.IsErrNotFound(err) {
-			errs = append(errs, err)
-		}
-	}
-	return errors.Join(errs...)
 }

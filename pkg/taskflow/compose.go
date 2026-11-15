@@ -2,124 +2,335 @@ package taskflow
 
 import (
 	"context"
-	"errors"
 	"fmt"
-	"io"
 
 	"github.com/aptd3v/containerkit/pkg/kit"
+	composeapi "github.com/docker/compose/v5/pkg/api"
 )
 
-var errNilCompose = errors.New("compose is nil")
+// ComposeCmd runs one method of *kit.Compose. Construct it with Up, Down, and
+// the other constructors in this file. The option slice is copied.
+type ComposeCmd struct {
+	call func(context.Context, *kit.Compose, kit.Composer) error
+}
 
-func bindCompose[T any](
-	f *Flow,
-	name string,
-	src *T,
-	writer func(*T) *io.Writer,
-	call func(*kit.Compose, context.Context, *T) error,
-) func(context.Context, *kit.Compose) error {
-	return func(ctx context.Context, app *kit.Compose) error {
-		if app == nil {
-			return errNilCompose
+func command(fn func(context.Context, *kit.Compose, kit.Composer) error) ComposeCmd {
+	return ComposeCmd{call: fn}
+}
+
+func copyOpts[T any](opts []T) []T {
+	return append([]T(nil), opts...)
+}
+
+type discardLogs struct{}
+
+func (discardLogs) Log(string, string)    { discardLogsSeen++ }
+func (discardLogs) Err(string, string)    { discardLogsSeen++ }
+func (discardLogs) Status(string, string) { discardLogsSeen++ }
+
+var discardLogsSeen int
+
+var _ composeapi.LogConsumer = discardLogs{}
+
+func composeCommand(cmd any) (func(context.Context, *kit.Compose, kit.Composer) error, error) {
+	switch c := cmd.(type) {
+	case nil:
+		return nil, fmt.Errorf("compose command is nil")
+	case ComposeCmd:
+		if c.call == nil {
+			return nil, fmt.Errorf("compose command is nil")
 		}
-		var opt T
-		if src != nil {
-			opt = *src
-		}
-		if w := writer(&opt); w != nil {
-			*w = stepWriter(f, name, *w)
-		}
-		return call(app, ctx, &opt)
+		return c.call, nil
+	case func(context.Context, *kit.Compose) error:
+		return func(ctx context.Context, app *kit.Compose, _ kit.Composer) error {
+			return c(ctx, app)
+		}, nil
+	case func(context.Context, *kit.Compose, kit.Composer) error:
+		return c, nil
+	default:
+		return nil, fmt.Errorf("unsupported compose command %T", cmd)
 	}
 }
 
-func composeCommand(f *Flow, name string, cmd any) (func(context.Context, *kit.Compose) error, error) {
-	if cmd == nil {
-		return nil, errors.New("compose command is nil")
+func exitCode(code int, err error) error {
+	if err != nil {
+		return err
 	}
-	switch o := cmd.(type) {
-	case func(context.Context, *kit.Compose) error:
-		if o == nil {
-			return nil, errors.New("compose func is nil")
-		}
-		return o, nil
-	case *kit.Up:
-		return bindCompose(f, name, o, func(o *kit.Up) *io.Writer { return &o.Writer }, (*kit.Compose).Up), nil
-	case *kit.Down:
-		return bindCompose(f, name, o, func(o *kit.Down) *io.Writer { return &o.Writer }, (*kit.Compose).Down), nil
-	case *kit.Logs:
-		return bindCompose(f, name, o, func(o *kit.Logs) *io.Writer { return &o.Writer }, (*kit.Compose).Logs), nil
-	case *kit.Kill:
-		return bindCompose(f, name, o, func(o *kit.Kill) *io.Writer { return &o.Writer }, (*kit.Compose).Kill), nil
-	case *kit.Ps:
-		return bindCompose(f, name, o, func(o *kit.Ps) *io.Writer { return &o.Writer }, (*kit.Compose).Ps), nil
-	case *kit.Start:
-		return bindCompose(f, name, o, func(o *kit.Start) *io.Writer { return &o.Writer }, (*kit.Compose).Start), nil
-	case *kit.Stop:
-		return bindCompose(f, name, o, func(o *kit.Stop) *io.Writer { return &o.Writer }, (*kit.Compose).Stop), nil
-	case *kit.Restart:
-		return bindCompose(f, name, o, func(o *kit.Restart) *io.Writer { return &o.Writer }, (*kit.Compose).Restart), nil
-	case *kit.ComposeBuild:
-		return bindCompose(f, name, o, func(o *kit.ComposeBuild) *io.Writer { return &o.Writer }, (*kit.Compose).Build), nil
-	case *kit.Pull:
-		return bindCompose(f, name, o, func(o *kit.Pull) *io.Writer { return &o.Writer }, (*kit.Compose).Pull), nil
-	case *kit.Exec:
-		return bindCompose(f, name, o, func(o *kit.Exec) *io.Writer { return &o.Writer }, (*kit.Compose).Exec), nil
-	case *kit.Attach:
-		return bindCompose(f, name, o, func(o *kit.Attach) *io.Writer { return &o.Writer }, (*kit.Compose).Attach), nil
-	case *kit.Commit:
-		return bindCompose(f, name, o, func(o *kit.Commit) *io.Writer { return &o.Writer }, (*kit.Compose).Commit), nil
-	case *kit.ComposeConfig:
-		return bindCompose(f, name, o, func(o *kit.ComposeConfig) *io.Writer { return &o.Writer }, (*kit.Compose).Config), nil
-	case *kit.Cp:
-		return bindCompose(f, name, o, func(o *kit.Cp) *io.Writer { return &o.Writer }, (*kit.Compose).Cp), nil
-	case *kit.Create:
-		return bindCompose(f, name, o, func(o *kit.Create) *io.Writer { return &o.Writer }, (*kit.Compose).Create), nil
-	case *kit.ComposeExport:
-		return bindCompose(f, name, o, func(o *kit.ComposeExport) *io.Writer { return &o.Writer }, (*kit.Compose).Export), nil
-	case *kit.Images:
-		return bindCompose(f, name, o, func(o *kit.Images) *io.Writer { return &o.Writer }, (*kit.Compose).Images), nil
-	case *kit.Ls:
-		return bindCompose(f, name, o, func(o *kit.Ls) *io.Writer { return &o.Writer }, (*kit.Compose).Ls), nil
-	case *kit.Pause:
-		return bindCompose(f, name, o, func(o *kit.Pause) *io.Writer { return &o.Writer }, (*kit.Compose).Pause), nil
-	case *kit.Port:
-		return bindCompose(f, name, o, func(o *kit.Port) *io.Writer { return &o.Writer }, (*kit.Compose).Port), nil
-	case *kit.Publish:
-		return bindCompose(f, name, o, func(o *kit.Publish) *io.Writer { return &o.Writer }, (*kit.Compose).Publish), nil
-	case *kit.Push:
-		return bindCompose(f, name, o, func(o *kit.Push) *io.Writer { return &o.Writer }, (*kit.Compose).Push), nil
-	case *kit.Rm:
-		return bindCompose(f, name, o, func(o *kit.Rm) *io.Writer { return &o.Writer }, (*kit.Compose).Rm), nil
-	case *kit.Run:
-		return bindCompose(f, name, o, func(o *kit.Run) *io.Writer { return &o.Writer }, (*kit.Compose).Run), nil
-	case *kit.Scale:
-		return bindCompose(f, name, o, func(o *kit.Scale) *io.Writer { return &o.Writer }, (*kit.Compose).Scale), nil
-	case *kit.Stats:
-		return bindCompose(f, name, o, func(o *kit.Stats) *io.Writer { return &o.Writer }, (*kit.Compose).Stats), nil
-	case *kit.Top:
-		return bindCompose(f, name, o, func(o *kit.Top) *io.Writer { return &o.Writer }, (*kit.Compose).Top), nil
-	case *kit.Unpause:
-		return bindCompose(f, name, o, func(o *kit.Unpause) *io.Writer { return &o.Writer }, (*kit.Compose).Unpause), nil
-	case *kit.Version:
-		return bindCompose(f, name, o, func(o *kit.Version) *io.Writer { return &o.Writer }, (*kit.Compose).Version), nil
-	case *kit.Volumes:
-		return bindCompose(f, name, o, func(o *kit.Volumes) *io.Writer { return &o.Writer }, (*kit.Compose).Volumes), nil
-	case *kit.Wait:
-		return bindCompose(f, name, o, func(o *kit.Wait) *io.Writer { return &o.Writer }, (*kit.Compose).Wait), nil
-	case *kit.Watch:
-		return bindCompose(f, name, o, func(o *kit.Watch) *io.Writer { return &o.Writer }, (*kit.Compose).Watch), nil
-	case *kit.Viz:
-		return bindCompose(f, name, o, func(o *kit.Viz) *io.Writer { return &o.Writer }, (*kit.Compose).Viz), nil
-	case *kit.Generate:
-		return bindCompose(f, name, o, func(o *kit.Generate) *io.Writer { return &o.Writer }, (*kit.Compose).Generate), nil
-	case *kit.BridgeConvert:
-		return bindCompose(f, name, o, func(o *kit.BridgeConvert) *io.Writer { return &o.Writer }, (*kit.Compose).BridgeConvert), nil
-	case *kit.BridgeTransformationsList:
-		return bindCompose(f, name, o, func(o *kit.BridgeTransformationsList) *io.Writer { return &o.Writer }, (*kit.Compose).BridgeTransformationsList), nil
-	case *kit.BridgeTransformationsCreate:
-		return bindCompose(f, name, o, func(o *kit.BridgeTransformationsCreate) *io.Writer { return &o.Writer }, (*kit.Compose).BridgeTransformationsCreate), nil
-	default:
-		return nil, fmt.Errorf("unsupported compose command %T; use a *kit option or func(context.Context, *kit.Compose) error", cmd)
+	if code != 0 {
+		return fmt.Errorf("exit code %d", code)
 	}
+	return nil
+}
+
+// Up brings the project up.
+func Up(opts ...kit.UpOption) ComposeCmd {
+	opts = copyOpts(opts)
+	return command(func(ctx context.Context, app *kit.Compose, api kit.Composer) error {
+		return app.Up(ctx, api, opts...)
+	})
+}
+
+// Down tears the project down.
+func Down(opts ...kit.DownOption) ComposeCmd {
+	opts = copyOpts(opts)
+	return command(func(ctx context.Context, app *kit.Compose, api kit.Composer) error {
+		return app.Down(ctx, api, opts...)
+	})
+}
+
+// ComposeBuild builds images for the project.
+func ComposeBuild(opts ...kit.ComposeBuildOption) ComposeCmd {
+	opts = copyOpts(opts)
+	return command(func(ctx context.Context, app *kit.Compose, api kit.Composer) error {
+		return app.Build(ctx, api, opts...)
+	})
+}
+
+// Create creates containers for the project.
+func Create(opts ...kit.ComposeCreateOption) ComposeCmd {
+	opts = copyOpts(opts)
+	return command(func(ctx context.Context, app *kit.Compose, api kit.Composer) error {
+		return app.Create(ctx, api, opts...)
+	})
+}
+
+// Start starts the project's services.
+func Start(opts ...kit.ComposeStartOption) ComposeCmd {
+	opts = copyOpts(opts)
+	return command(func(ctx context.Context, app *kit.Compose, api kit.Composer) error {
+		return app.Start(ctx, api, opts...)
+	})
+}
+
+// Stop stops the project's services.
+func Stop(opts ...kit.ComposeStopOption) ComposeCmd {
+	opts = copyOpts(opts)
+	return command(func(ctx context.Context, app *kit.Compose, api kit.Composer) error {
+		return app.Stop(ctx, api, opts...)
+	})
+}
+
+// Restart restarts the project's services.
+func Restart(opts ...kit.ComposeRestartOption) ComposeCmd {
+	opts = copyOpts(opts)
+	return command(func(ctx context.Context, app *kit.Compose, api kit.Composer) error {
+		return app.Restart(ctx, api, opts...)
+	})
+}
+
+// Pull pulls images for the project.
+func Pull(opts ...kit.PullOption) ComposeCmd {
+	opts = copyOpts(opts)
+	return command(func(ctx context.Context, app *kit.Compose, api kit.Composer) error {
+		return app.Pull(ctx, api, opts...)
+	})
+}
+
+// Push pushes images for the project.
+func Push(opts ...kit.PushOption) ComposeCmd {
+	opts = copyOpts(opts)
+	return command(func(ctx context.Context, app *kit.Compose, api kit.Composer) error {
+		return app.Push(ctx, api, opts...)
+	})
+}
+
+// Logs streams project logs. The consumer is discarded; progress follows the
+// logger on the run context.
+func Logs(opts ...kit.LogsOption) ComposeCmd {
+	opts = copyOpts(opts)
+	return command(func(ctx context.Context, app *kit.Compose, api kit.Composer) error {
+		return app.Logs(ctx, api, discardLogs{}, opts...)
+	})
+}
+
+// Ps lists project containers.
+func Ps(opts ...kit.PsOption) ComposeCmd {
+	opts = copyOpts(opts)
+	return command(func(ctx context.Context, app *kit.Compose, api kit.Composer) error {
+		_, err := app.Ps(ctx, api, opts...)
+		return err
+	})
+}
+
+// Kill signals project containers.
+func Kill(opts ...kit.KillOption) ComposeCmd {
+	opts = copyOpts(opts)
+	return command(func(ctx context.Context, app *kit.Compose, api kit.Composer) error {
+		return app.Kill(ctx, api, opts...)
+	})
+}
+
+// Rm removes project containers.
+func Rm(opts ...kit.RemoveOption) ComposeCmd {
+	opts = copyOpts(opts)
+	return command(func(ctx context.Context, app *kit.Compose, api kit.Composer) error {
+		return app.Remove(ctx, api, opts...)
+	})
+}
+
+// RunService starts a one-off service command. A non-zero exit fails the step.
+func RunService(service string, opts ...kit.RunOption) ComposeCmd {
+	opts = copyOpts(opts)
+	return command(func(ctx context.Context, app *kit.Compose, api kit.Composer) error {
+		code, err := app.Run(ctx, api, service, opts...)
+		return exitCode(code, err)
+	})
+}
+
+// Exec runs a command in a service container. A non-zero exit fails the step.
+func Exec(service string, opts ...kit.RunOption) ComposeCmd {
+	opts = copyOpts(opts)
+	return command(func(ctx context.Context, app *kit.Compose, api kit.Composer) error {
+		code, err := app.Exec(ctx, api, service, opts...)
+		return exitCode(code, err)
+	})
+}
+
+// Attach attaches to a service container.
+func Attach(service string, opts ...kit.AttachOption) ComposeCmd {
+	opts = copyOpts(opts)
+	return command(func(ctx context.Context, app *kit.Compose, api kit.Composer) error {
+		return app.Attach(ctx, api, service, opts...)
+	})
+}
+
+// Copy copies files between the host and a service.
+func Copy(opts ...kit.CopyOption) ComposeCmd {
+	opts = copyOpts(opts)
+	return command(func(ctx context.Context, app *kit.Compose, api kit.Composer) error {
+		return app.Copy(ctx, api, opts...)
+	})
+}
+
+// Pause pauses the project's services.
+func Pause(opts ...kit.PauseOption) ComposeCmd {
+	opts = copyOpts(opts)
+	return command(func(ctx context.Context, app *kit.Compose, api kit.Composer) error {
+		return app.Pause(ctx, api, opts...)
+	})
+}
+
+// Unpause resumes the project's services.
+func Unpause(opts ...kit.PauseOption) ComposeCmd {
+	opts = copyOpts(opts)
+	return command(func(ctx context.Context, app *kit.Compose, api kit.Composer) error {
+		return app.Unpause(ctx, api, opts...)
+	})
+}
+
+// Top lists processes in the named services.
+func Top(services ...string) ComposeCmd {
+	services = copyOpts(services)
+	return command(func(ctx context.Context, app *kit.Compose, api kit.Composer) error {
+		_, err := app.Top(ctx, api, services...)
+		return err
+	})
+}
+
+// Events streams project events.
+func Events(opts ...kit.EventsOption) ComposeCmd {
+	opts = copyOpts(opts)
+	return command(func(ctx context.Context, app *kit.Compose, api kit.Composer) error {
+		return app.Events(ctx, api, opts...)
+	})
+}
+
+// Port prints the public address of a service port.
+func Port(service string, port uint16, opts ...kit.ComposePortOption) ComposeCmd {
+	opts = copyOpts(opts)
+	return command(func(ctx context.Context, app *kit.Compose, api kit.Composer) error {
+		_, _, err := app.Port(ctx, api, service, port, opts...)
+		return err
+	})
+}
+
+// PublishOCI publishes the project as an OCI artifact.
+func PublishOCI(repository string, opts ...kit.PublishOption) ComposeCmd {
+	opts = copyOpts(opts)
+	return command(func(ctx context.Context, app *kit.Compose, api kit.Composer) error {
+		return app.PublishOCI(ctx, api, repository, opts...)
+	})
+}
+
+// Images lists images used by the project.
+func Images(opts ...kit.ImagesOption) ComposeCmd {
+	opts = copyOpts(opts)
+	return command(func(ctx context.Context, app *kit.Compose, api kit.Composer) error {
+		_, err := app.Images(ctx, api, opts...)
+		return err
+	})
+}
+
+// Watch rebuilds and syncs the project.
+func Watch(opts ...kit.WatchOption) ComposeCmd {
+	opts = copyOpts(opts)
+	return command(func(ctx context.Context, app *kit.Compose, api kit.Composer) error {
+		return app.Watch(ctx, api, opts...)
+	})
+}
+
+// Viz renders the project graph.
+func Viz(opts ...kit.VizOption) ComposeCmd {
+	opts = copyOpts(opts)
+	return command(func(ctx context.Context, app *kit.Compose, api kit.Composer) error {
+		_, err := app.Viz(ctx, api, opts...)
+		return err
+	})
+}
+
+// Wait waits for the project to exit.
+func Wait(opts ...kit.WaitOption) ComposeCmd {
+	opts = copyOpts(opts)
+	return command(func(ctx context.Context, app *kit.Compose, api kit.Composer) error {
+		_, err := app.Wait(ctx, api, opts...)
+		return err
+	})
+}
+
+// Scale changes service replica counts.
+func Scale(opts ...kit.ScaleOption) ComposeCmd {
+	opts = copyOpts(opts)
+	return command(func(ctx context.Context, app *kit.Compose, api kit.Composer) error {
+		return app.Scale(ctx, api, opts...)
+	})
+}
+
+// Export copies a service container's filesystem out.
+func Export(service string, opts ...kit.ExportOption) ComposeCmd {
+	opts = copyOpts(opts)
+	return command(func(ctx context.Context, app *kit.Compose, api kit.Composer) error {
+		return app.Export(ctx, api, service, opts...)
+	})
+}
+
+// Commit creates an image from a service container.
+func Commit(service string, opts ...kit.CommitOption) ComposeCmd {
+	opts = copyOpts(opts)
+	return command(func(ctx context.Context, app *kit.Compose, api kit.Composer) error {
+		return app.Commit(ctx, api, service, opts...)
+	})
+}
+
+// VolumeList lists volumes for the project.
+func VolumeList(opts ...kit.VolumesListOption) ComposeCmd {
+	opts = copyOpts(opts)
+	return command(func(ctx context.Context, app *kit.Compose, api kit.Composer) error {
+		_, err := app.VolumeList(ctx, api, opts...)
+		return err
+	})
+}
+
+// MaxConcurrency sets the Compose runtime's parallel operation limit.
+func MaxConcurrency(n int) ComposeCmd {
+	return command(func(_ context.Context, app *kit.Compose, api kit.Composer) error {
+		return app.MaxConcurrency(api, n)
+	})
+}
+
+// DryRun toggles Compose dry-run mode.
+func DryRun(v bool) ComposeCmd {
+	return command(func(ctx context.Context, app *kit.Compose, api kit.Composer) error {
+		_, err := app.DryRunMode(ctx, api, v)
+		return err
+	})
 }

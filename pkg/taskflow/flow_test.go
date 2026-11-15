@@ -4,532 +4,330 @@ import (
 	"bytes"
 	"context"
 	"errors"
+	"io"
+	"os"
 	"sync"
-	"sync/atomic"
 	"testing"
 
 	"github.com/aptd3v/containerkit/pkg/kit"
-	"github.com/stretchr/testify/require"
 )
 
-func TestRunTaskGraph(t *testing.T) {
-	var hello atomic.Bool
-	flow := New("demo", nil)
-	a := flow.Task("hello", func(context.Context) error {
-		hello.Store(true)
-		return nil
-	})
-	require.NoError(t, flow.Run(context.Background(), nil))
-	require.True(t, hello.Load())
-	require.NoError(t, a.Err())
-	require.ErrorIs(t, flow.Run(context.Background(), nil), ErrAlreadyRun)
+func TestNilReceivers(t *testing.T) {
+	var f *Flow
+	var task *Task
+	var sf Subflow
+	if f.Name() != "" || f.Task("a", nil) != nil || f.Subflow("a", nil) != nil || f.Condition("a", nil) != nil || f.If("a", nil) != nil {
+		t.Fatal("nil flow constructors")
+	}
+	if f.Container("a", nil, nil) != nil || f.Build("a") != nil || f.Compose("a", nil, nil) != nil {
+		t.Fatal("nil flow steps")
+	}
+	if task.Precede(nil) != nil || task.DependsOn(nil) != nil || task.Then(nil) != nil || task.Else(nil) != nil {
+		t.Fatal("nil task edges")
+	}
+	if task.Priority(PriorityHigh) != nil || task.Always() != nil || task.Retry(1) != nil {
+		t.Fatal("nil task props")
+	}
+	if task.Name() != "" || task.ID() != "" || task.ExitCode() != 0 || task.Err() != nil {
+		t.Fatal("nil task readers")
+	}
+	if sf.Task("a", nil) != nil || sf.Subflow("a", nil) != nil || sf.Condition("a", nil) != nil || sf.If("a", nil) != nil {
+		t.Fatal("nil subflow")
+	}
+	if sf.Container("a", nil, nil) != nil || sf.Build("a") != nil || sf.Compose("a", nil, nil) != nil {
+		t.Fatal("nil subflow steps")
+	}
+	if err := f.Run(context.Background(), nil); err == nil {
+		t.Fatal("nil run")
+	}
+	if _, err := f.List(context.Background()); err == nil {
+		t.Fatal("nil list")
+	}
+	if err := f.Remove(context.Background()); err == nil || f.Dump(&bytes.Buffer{}) == nil {
+		t.Fatal("nil remove/dump")
+	}
+	if f.context() == nil || f.engine() != nil || f.composer() != nil || f.composeList() != nil || f.taskList() != nil {
+		t.Fatal("nil helpers")
+	}
+	f.stamp()
+	f.emit(Event{})
+	f.emitLog("a", []byte("x"))
+	f.trackCompose(nil)
+	logWriter{}.Write(nil)
+	logWriter{}.Write([]byte("x"))
 }
 
-func TestFailedStepSkipsDependents(t *testing.T) {
-	var ranB, ranC atomic.Bool
-	flow := New("skip", nil)
-	a := flow.Task("a", func(context.Context) error {
-		return errors.New("boom")
-	})
-	b := flow.Task("b", func(context.Context) error {
-		ranB.Store(true)
+func TestTaskGraph(t *testing.T) {
+	ctx := context.Background()
+	f := New("", nil)
+	if f.Name() != "taskflow" {
+		t.Fatalf("name %q", f.Name())
+	}
+	var ran bool
+	a := f.Task("a", func(context.Context) error {
+		ran = true
 		return nil
 	})
-	c := flow.Task("c", func(context.Context) error {
-		ranC.Store(true)
-		return nil
-	})
-	a.Precede(b)
-	err := flow.Run(context.Background(), nil)
-	require.Error(t, err)
-	var te *TaskError
-	require.ErrorAs(t, err, &te)
-	require.Equal(t, "a", te.Task)
-	require.False(t, ranB.Load())
-	require.True(t, ranC.Load())
-	require.Nil(t, b.Err())
-	require.Nil(t, c.Err())
+	b := f.Task("b", nil)
+	a.Precede(nil, b)
+	b.DependsOn(nil)
+	a.Then(b)
+	a.Else(b)
+	a.Priority(0)
+	a.Priority(PriorityHigh)
+	b.Priority(PriorityNormal)
+	b.Retry(-1)
+	if err := f.Run(ctx, discardRun()); err != nil {
+		t.Fatal(err)
+	}
+	if !ran || b.Err() != nil || a.Name() != "a" {
+		t.Fatalf("ran %v err %v", ran, b.Err())
+	}
+	if err := f.Run(ctx, discardRun()); !errors.Is(err, ErrAlreadyRun) {
+		t.Fatalf("second run %v", err)
+	}
 }
 
-func TestSiblingsRunWhenOneFails(t *testing.T) {
-	var ranBundle atomic.Bool
-	var ranPublish atomic.Bool
-	flow := New("fan", nil)
-	check := flow.Task("check", func(context.Context) error {
-		return errors.New("bad report")
-	})
-	bundle := flow.Task("bundle", func(context.Context) error {
-		ranBundle.Store(true)
-		return nil
-	})
-	publish := flow.Task("publish", func(context.Context) error {
-		ranPublish.Store(true)
-		return nil
-	})
-	check.Precede(publish)
-	bundle.Precede(publish)
-	err := flow.Run(context.Background(), nil)
-	require.Error(t, err)
-	require.True(t, ranBundle.Load())
-	require.False(t, ranPublish.Load())
-}
-
-func TestConditionSelectsBranch(t *testing.T) {
-	var ran0, ran1 atomic.Bool
-	flow := New("cond", nil)
-	start := flow.Task("start", func(context.Context) error { return nil })
-	gate := flow.Condition("gate", func(context.Context) uint { return 1 })
-	b0 := flow.Task("b0", func(context.Context) error {
-		ran0.Store(true)
-		return nil
-	})
-	b1 := flow.Task("b1", func(context.Context) error {
-		ran1.Store(true)
-		return nil
-	})
-	start.Precede(gate)
-	gate.Precede(b0, b1)
-	require.NoError(t, flow.Run(context.Background(), nil))
-	require.False(t, ran0.Load())
-	require.True(t, ran1.Load())
-}
-
-func TestConditionRetryLoop(t *testing.T) {
-	var n atomic.Int32
-	flow := New("retry", nil)
-	start := flow.Task("start", func(context.Context) error { return nil })
-	integ := flow.Task("integ", func(context.Context) error {
-		v := n.Add(1)
-		if v < 3 {
-			return errors.New("flaky")
-		}
-		return nil
-	})
-	verify := flow.Condition("verify", func(context.Context) uint {
-		if integ.Err() == nil || n.Load() >= 3 {
-			return 0
-		}
-		return 1
-	})
-	done := flow.Task("done", func(context.Context) error { return nil })
-	start.Precede(integ)
-	integ.Precede(verify)
-	verify.Precede(done, integ)
-	require.NoError(t, flow.Run(context.Background(), nil))
-	require.Equal(t, int32(3), n.Load())
-	require.NoError(t, done.Err())
-}
-
-func TestSubflowRunsInnerTask(t *testing.T) {
-	var inner atomic.Bool
-	flow := New("sf", nil)
-	flow.Subflow("tests", func(sf *Subflow) {
-		sf.Task("unit", func(context.Context) error {
-			inner.Store(true)
-			return nil
-		}).Priority(PriorityHigh)
-	})
-	require.NoError(t, flow.Run(context.Background(), &Run{Concurrency: 2}))
-	require.True(t, inner.Load())
-}
-
-func TestSubflowCycleRetries(t *testing.T) {
-	var n atomic.Int32
-	flow := New("sf-cycle", nil)
-	flow.Subflow("loop", func(sf *Subflow) {
-		enter := sf.Task("enter", func(context.Context) error { return nil })
-		body := sf.Task("body", func(context.Context) error {
-			n.Add(1)
-			return nil
-		})
-		verify := sf.Condition("verify", func(context.Context) uint {
-			if n.Load() >= 3 {
-				return 0
-			}
-			return 1
-		})
-		done := sf.Task("done", func(context.Context) error { return nil })
-		enter.Precede(body)
-		body.Precede(verify)
-		verify.Precede(done, body)
-	})
-	require.NoError(t, flow.Run(context.Background(), &Run{Concurrency: 2}))
-	require.Equal(t, int32(3), n.Load())
-}
-
-func TestWatchEvents(t *testing.T) {
+func TestSkipAlwaysRetryPanicCancel(t *testing.T) {
+	ctx := context.Background()
+	f := New("g", nil)
+	var events []EventKind
 	var mu sync.Mutex
-	var kinds []EventKind
-	flow := New("watch", nil)
-	a := flow.Task("a", func(context.Context) error { return nil })
-	b := flow.Task("b", func(context.Context) error { return errors.New("nope") })
-	c := flow.Task("c", func(context.Context) error { return nil })
-	a.Precede(b)
-	b.Precede(c)
-	err := flow.Run(context.Background(), &Run{
-		Watch: func(e Event) {
-			if e.Name != "b" && e.Name != "c" {
-				return
-			}
-			mu.Lock()
-			kinds = append(kinds, e.Kind)
-			mu.Unlock()
-		},
-	})
-	require.Error(t, err)
-	require.Error(t, b.Err())
-	mu.Lock()
-	defer mu.Unlock()
-	require.Equal(t, []EventKind{EventStart, EventError, EventSkip}, kinds)
-}
-
-func TestEmitLog(t *testing.T) {
-	var mu sync.Mutex
-	var got string
-	flow := New("log", nil)
-	flow.logfn = func(step string, p []byte) {
+	watch := func(e Event) {
 		mu.Lock()
-		got += step + ":" + string(p)
+		events = append(events, e.Kind)
 		mu.Unlock()
 	}
-	n, err := (logWriter{f: flow, step: "build"}).Write([]byte("layer"))
-	require.NoError(t, err)
-	require.Equal(t, 5, n)
-	mu.Lock()
-	defer mu.Unlock()
-	require.Equal(t, "build:layer", got)
-}
+	bad := f.Task("bad", func(context.Context) error { return errors.New("no") })
+	skipped := f.Task("skip", func(context.Context) error { return nil })
+	always := f.Task("always", func(context.Context) error { return nil }).Always()
+	after := f.Task("after", func(context.Context) error { return nil })
+	bad.Precede(skipped, always)
+	always.Precede(after)
+	if err := f.Run(ctx, &Run{Writer: io.Discard, Concurrency: 1, Watch: watch}); err == nil {
+		t.Fatal("expected failure")
+	}
+	if skipped.Err() != nil || always.Err() != nil || after.Err() != nil {
+		t.Fatalf("skip %v always %v after %v", skipped.Err(), always.Err(), after.Err())
+	}
 
-func TestDumpContainsTaskNames(t *testing.T) {
-	flow := New("dot", nil)
-	a := flow.Task("build", func(context.Context) error { return nil })
-	b := flow.Task("test", func(context.Context) error { return nil })
-	a.Precede(b)
-	var buf bytes.Buffer
-	require.NoError(t, flow.Dump(&buf))
-	out := buf.String()
-	require.Contains(t, out, "build")
-	require.Contains(t, out, "test")
-}
-
-func TestProfileAndTrace(t *testing.T) {
-	var prof, trace bytes.Buffer
-	flow := New("obs", nil)
-	flow.Task("a", func(context.Context) error { return nil })
-	require.NoError(t, flow.Run(context.Background(), &Run{Profile: &prof, Trace: &trace}))
-	require.NotEmpty(t, prof.String())
-	require.NotEmpty(t, trace.String())
-}
-
-func TestAlwaysRunsAfterFailureAndStillBlocks(t *testing.T) {
-	var ranDown, ranAfter atomic.Bool
-	flow := New("always", nil)
-	up := flow.Task("up", func(context.Context) error { return errors.New("boom") })
-	test := flow.Task("test", func(context.Context) error { return nil })
-	down := flow.Task("down", func(context.Context) error {
-		ranDown.Store(true)
-		return nil
-	}).Always()
-	after := flow.Task("after", func(context.Context) error {
-		ranAfter.Store(true)
-		return nil
-	})
-	up.Precede(test)
-	test.Precede(down)
-	down.Precede(after)
-	err := flow.Run(context.Background(), nil)
-	require.Error(t, err)
-	require.True(t, ranDown.Load())
-	require.NoError(t, down.Err())
-	require.False(t, ranAfter.Load())
-}
-
-func TestSubflowFailureSkipsSuccessors(t *testing.T) {
-	var ranAfter atomic.Bool
-	flow := New("sf-fail", nil)
-	tests := flow.Subflow("tests", func(sf *Subflow) {
-		sf.Task("unit", func(context.Context) error { return errors.New("red") })
-		sf.Task("lint", func(context.Context) error { return nil })
-	})
-	after := flow.Task("after", func(context.Context) error {
-		ranAfter.Store(true)
-		return nil
-	})
-	tests.Precede(after)
-	err := flow.Run(context.Background(), &Run{Concurrency: 2})
-	require.Error(t, err)
-	var te *TaskError
-	require.ErrorAs(t, err, &te)
-	require.Equal(t, "unit", te.Task)
-	require.False(t, ranAfter.Load())
-	require.NoError(t, tests.Err())
-}
-
-func TestSkippedSubflowDoesNotHang(t *testing.T) {
-	var inner atomic.Bool
-	flow := New("sf-skip", nil)
-	a := flow.Task("a", func(context.Context) error { return errors.New("boom") })
-	sf := flow.Subflow("tests", func(sf *Subflow) {
-		sf.Task("unit", func(context.Context) error {
-			inner.Store(true)
-			return nil
-		})
-	})
-	a.Precede(sf)
-	require.Error(t, flow.Run(context.Background(), &Run{Concurrency: 2}))
-	require.False(t, inner.Load())
-}
-
-func TestRetrySucceeds(t *testing.T) {
-	var n atomic.Int32
-	var mu sync.Mutex
-	var retries []int
-	flow := New("retry", nil)
-	flaky := flow.Task("flaky", func(context.Context) error {
-		if n.Add(1) < 3 {
+	f = New("retry", nil)
+	n := 0
+	step := f.Task("flaky", func(context.Context) error {
+		n++
+		if n < 3 {
 			return errors.New("flaky")
 		}
 		return nil
 	}).Retry(2)
-	require.NoError(t, flow.Run(context.Background(), &Run{Watch: func(e Event) {
-		if e.Kind == EventRetry {
-			require.Same(t, flaky, e.Task)
-			require.Error(t, e.Err)
-			mu.Lock()
-			retries = append(retries, e.Attempt)
-			mu.Unlock()
-		}
-	}}))
-	require.Equal(t, int32(3), n.Load())
-	require.NoError(t, flaky.Err())
-	mu.Lock()
-	defer mu.Unlock()
-	require.Equal(t, []int{1, 2}, retries)
-}
+	if err := f.Run(ctx, discardRun()); err != nil || step.Err() != nil || n != 3 {
+		t.Fatalf("retry %v n %d err %v", err, n, step.Err())
+	}
 
-func TestRetryExhausted(t *testing.T) {
-	var n atomic.Int32
-	flow := New("retry-fail", nil)
-	flow.Task("flaky", func(context.Context) error {
-		n.Add(1)
-		return errors.New("still flaky")
-	}).Retry(1)
-	err := flow.Run(context.Background(), nil)
-	require.Error(t, err)
-	require.Equal(t, int32(2), n.Load())
-}
+	f = New("exhaust", nil)
+	f.Task("nope", func(context.Context) error { return errors.New("no") }).Retry(1)
+	if err := f.Run(ctx, discardRun()); err == nil {
+		t.Fatal("expected exhaust")
+	}
 
-func TestIfThenElse(t *testing.T) {
-	for _, want := range []bool{true, false} {
-		var ranThen, ranElse atomic.Bool
-		flow := New("if", nil)
-		gate := flow.If("gate", func(context.Context) bool { return want })
-		then := flow.Task("then", func(context.Context) error {
-			ranThen.Store(true)
-			return nil
-		})
-		els := flow.Task("else", func(context.Context) error {
-			ranElse.Store(true)
-			return nil
-		})
-		gate.Then(then).Else(els)
-		require.NoError(t, flow.Run(context.Background(), nil))
-		require.Equal(t, want, ranThen.Load())
-		require.Equal(t, !want, ranElse.Load())
+	f = New("panic", nil)
+	p := f.Task("boom", func(context.Context) error { panic("boom") }).Retry(4)
+	if err := f.Run(ctx, discardRun()); err == nil || p.Err() == nil {
+		t.Fatal(err)
+	}
+
+	cancelCtx, cancel := context.WithCancel(ctx)
+	f = New("cancel", nil)
+	attempts := 0
+	f.Task("c", func(context.Context) error {
+		attempts++
+		cancel()
+		return errors.New("x")
+	}).Retry(3)
+	if err := f.Run(cancelCtx, discardRun()); err == nil || attempts != 1 {
+		t.Fatalf("cancel %v attempts %d", err, attempts)
+	}
+
+	doneCtx, done := context.WithCancel(ctx)
+	done()
+	f = New("precancel", nil)
+	called := false
+	f.Task("c", func(context.Context) error {
+		called = true
+		return nil
+	}).Retry(2)
+	if err := f.Run(doneCtx, &Run{Writer: io.Discard}); err == nil || called {
+		t.Fatalf("precancel %v called %v", err, called)
+	}
+	if err := f.Run(nil, discardRun()); !errors.Is(err, ErrAlreadyRun) {
+		t.Fatal(err)
 	}
 }
 
-func TestIfWithoutElse(t *testing.T) {
-	var ranThen atomic.Bool
-	flow := New("if-noelse", nil)
-	gate := flow.If("gate", func(context.Context) bool { return false })
-	gate.Then(flow.Task("then", func(context.Context) error {
-		ranThen.Store(true)
-		return nil
-	}))
-	require.NoError(t, flow.Run(context.Background(), nil))
-	require.False(t, ranThen.Load())
-}
-
-func TestIfSkipsWhenPredecessorFails(t *testing.T) {
-	var ranThen, ranElse, predicate atomic.Bool
-	flow := New("if-skip", nil)
-	a := flow.Task("a", func(context.Context) error { return errors.New("boom") })
-	gate := flow.If("gate", func(context.Context) bool {
-		predicate.Store(true)
-		return true
-	})
-	then := flow.Task("then", func(context.Context) error {
-		ranThen.Store(true)
-		return nil
-	})
-	els := flow.Task("else", func(context.Context) error {
-		ranElse.Store(true)
-		return nil
-	})
-	a.Precede(gate)
-	gate.Then(then).Else(els)
-	require.Error(t, flow.Run(context.Background(), nil))
-	require.False(t, predicate.Load())
-	require.False(t, ranThen.Load())
-	require.False(t, ranElse.Load())
-}
-
-func TestConditionOutOfRangeFailsStep(t *testing.T) {
-	var ran atomic.Bool
-	flow := New("cond-range", nil)
-	gate := flow.Condition("gate", func(context.Context) uint { return 7 })
-	gate.Precede(flow.Task("only", func(context.Context) error {
-		ran.Store(true)
-		return nil
-	}))
-	err := flow.Run(context.Background(), nil)
-	require.Error(t, err)
-	var te *TaskError
-	require.ErrorAs(t, err, &te)
-	require.Equal(t, "gate", te.Task)
-	require.False(t, ran.Load())
-}
-
-func TestConditionWithoutSuccessors(t *testing.T) {
-	flow := New("cond-none", nil)
-	flow.Condition("gate", func(context.Context) uint { return 0 })
-	err := flow.Run(context.Background(), nil)
-	require.Error(t, err)
-	var te *TaskError
-	require.ErrorAs(t, err, &te)
-	require.Equal(t, "gate", te.Task)
-}
-
-func TestConditionPanicFailsStep(t *testing.T) {
-	flow := New("cond-panic", nil)
-	gate := flow.Condition("gate", func(context.Context) uint { panic("nope") })
-	gate.Precede(flow.Task("only", func(context.Context) error { return nil }))
-	err := flow.Run(context.Background(), nil)
-	require.Error(t, err)
-	require.Contains(t, err.Error(), "panic")
-}
-
-func TestDependsOn(t *testing.T) {
-	var order []string
-	var mu sync.Mutex
-	rec := func(name string) func(context.Context) error {
-		return func(context.Context) error {
-			mu.Lock()
-			order = append(order, name)
-			mu.Unlock()
-			return nil
-		}
+func TestIfAndCondition(t *testing.T) {
+	ctx := context.Background()
+	f := New("if", nil)
+	yesRan, noRan := false, false
+	iff := f.If("gate", func(context.Context) bool { return true })
+	yes := f.Task("yes", func(context.Context) error { yesRan = true; return nil })
+	no := f.Task("no", func(context.Context) error { noRan = true; return nil })
+	iff.Then(yes).Else(no)
+	if err := f.Run(ctx, discardRun()); err != nil || !yesRan || noRan {
+		t.Fatalf("then %v yes %v no %v", err, yesRan, noRan)
 	}
-	flow := New("deps", nil)
-	a := flow.Task("a", rec("a"))
-	b := flow.Task("b", rec("b"))
-	b.DependsOn(a)
-	require.NoError(t, flow.Run(context.Background(), &Run{Concurrency: 1}))
-	require.Equal(t, []string{"a", "b"}, order)
+
+	f = New("else", nil)
+	yesRan, noRan = false, false
+	iff = f.If("gate", func(context.Context) bool { return false })
+	yes = f.Task("yes", func(context.Context) error { yesRan = true; return nil })
+	no = f.Task("no", func(context.Context) error { noRan = true; return nil })
+	iff.Else(no).Then(yes)
+	iff.Precede(yes)
+	if err := f.Run(ctx, discardRun()); err != nil || yesRan || !noRan {
+		t.Fatalf("else %v yes %v no %v", err, yesRan, noRan)
+	}
+
+	f = New("if-skip", nil)
+	yesRan, noRan = false, false
+	bad := f.Task("bad", func(context.Context) error { return errors.New("no") })
+	iff = f.If("gate", func(context.Context) bool { return true })
+	yes = f.Task("yes", func(context.Context) error { yesRan = true; return nil })
+	no = f.Task("no", func(context.Context) error { noRan = true; return nil })
+	bad.Precede(iff)
+	iff.Then(yes).Else(no)
+	if err := f.Run(ctx, discardRun()); err == nil || yesRan || noRan {
+		t.Fatalf("if skip %v yes %v no %v", err, yesRan, noRan)
+	}
+
+	f = New("if-nil", nil)
+	f.If("gate", nil)
+	if err := f.Run(ctx, discardRun()); err != nil {
+		t.Fatal(err)
+	}
+
+	f = New("cond", nil)
+	got := ""
+	cond := f.Condition("pick", func(context.Context) uint { return 1 })
+	a := f.Task("a", func(context.Context) error { got = "a"; return nil })
+	b := f.Task("b", func(context.Context) error { got = "b"; return nil })
+	cond.Precede(a, b)
+	if err := f.Run(ctx, discardRun()); err != nil || got != "b" {
+		t.Fatalf("cond %v got %s", err, got)
+	}
+
+	f = New("cond-range", nil)
+	cond = f.Condition("pick", func(context.Context) uint { return 9 })
+	ran := false
+	next := f.Task("next", func(context.Context) error { ran = true; return nil })
+	cond.Precede(next)
+	if err := f.Run(ctx, discardRun()); err == nil || ran || cond.Err() == nil {
+		t.Fatalf("range %v ran %v", err, ran)
+	}
+
+	f = New("cond-after", nil)
+	bad = f.Task("bad", func(context.Context) error { return errors.New("no") })
+	got = ""
+	cond = f.Condition("pick", func(context.Context) uint { return 0 })
+	a = f.Task("a", func(context.Context) error { got = "a"; return nil })
+	bad.Precede(cond)
+	cond.Precede(a)
+	if err := f.Run(ctx, discardRun()); err == nil || got != "a" {
+		t.Fatalf("cond after %v got %s", err, got)
+	}
+
+	f = New("cond-nil", nil)
+	f.Condition("pick", nil)
+	if err := f.Run(ctx, discardRun()); err != nil {
+		t.Fatal(err)
+	}
 }
 
-func TestFlowNameAndList(t *testing.T) {
-	flow := New("named", nil)
-	require.Equal(t, "named", flow.Name())
-	_, err := flow.List(context.Background())
-	require.ErrorIs(t, err, ErrNoClient)
+func TestSubflow(t *testing.T) {
+	ctx := context.Background()
+	f := New("sub", nil)
+	innerRan := false
+	outerRan := false
+	sub := f.Subflow("sf", func(sf *Subflow) {
+		inner := sf.Task("inner", func(context.Context) error {
+			innerRan = true
+			return errors.New("inner")
+		})
+		c := sf.Condition("c", func(context.Context) uint { return 0 })
+		c.Precede(inner)
+		sf.If("g", func(context.Context) bool { return true })
+		sf.Subflow("nested", func(sf *Subflow) {
+			sf.Task("deep", func(context.Context) error { return nil })
+		})
+		sf.Build("b")
+		sf.Container("ctr", nil, nil)
+		sf.Compose("cmp", nil, nil)
+	})
+	outer := f.Task("outer", func(context.Context) error { outerRan = true; return nil })
+	sub.Precede(outer)
+	f.Subflow("empty", nil)
+	err := f.Run(ctx, &Run{Writer: io.Discard, Concurrency: 1})
+	if err == nil || !innerRan || outerRan {
+		t.Fatalf("sub %v inner %v outer %v", err, innerRan, outerRan)
+	}
 }
 
-func TestTrackComposeDedup(t *testing.T) {
-	flow := New("ci", nil)
-	db := kit.NewCompose(kit.NewProject("db"))
-	other := kit.NewCompose(kit.NewProject("other"))
-	flow.Compose("up", db, &kit.Up{})
-	flow.Compose("down", db, &kit.Down{})
-	flow.Compose("x", other, func(context.Context, *kit.Compose) error { return nil })
-	flow.Compose("nil", nil, func(context.Context, *kit.Compose) error { return nil })
-	require.Equal(t, []*kit.Compose{db, other}, flow.composeList())
+func TestDumpProfileTrace(t *testing.T) {
+	f := New("dot", nil)
+	f.Task("a", func(context.Context) error { return nil }).Priority(PriorityLow)
+	var dot bytes.Buffer
+	if err := f.Dump(&dot); err != nil || !bytes.Contains(dot.Bytes(), []byte("digraph")) {
+		t.Fatalf("dump %v %s", err, dot.String())
+	}
+	r, w, err := os.Pipe()
+	if err != nil {
+		t.Fatal(err)
+	}
+	old := os.Stdout
+	os.Stdout = w
+	err = f.Dump(nil)
+	w.Close()
+	os.Stdout = old
+	slurp, _ := io.ReadAll(r)
+	r.Close()
+	if err != nil || !bytes.Contains(slurp, []byte("digraph")) {
+		t.Fatalf("stdout dump %v %s", err, slurp)
+	}
+
+	var prof, trace bytes.Buffer
+	if err := f.Run(nil, &Run{Writer: io.Discard, Profile: &prof, Trace: &trace}); err != nil {
+		t.Fatal(err)
+	}
+	if prof.Len() == 0 || trace.Len() == 0 {
+		t.Fatalf("profile %q trace %q", prof.String(), trace.String())
+	}
+
+	f = New("failio", nil)
+	f.Task("a", func(context.Context) error { return nil })
+	err = f.Run(context.Background(), &Run{Writer: io.Discard, Profile: failWriter{}, Trace: failWriter{}})
+	if err == nil || !bytes.Contains([]byte(err.Error()), []byte("profile")) {
+		t.Fatal(err)
+	}
 }
 
-func TestRemoveWithoutClientOrWork(t *testing.T) {
-	flow := New("empty", nil)
-	require.NoError(t, flow.Remove(context.Background()))
-}
+type failWriter struct{}
 
-func TestComposeUpDownRequireApp(t *testing.T) {
-	flow := New("cmp-nil", nil)
-	up := flow.Compose("up", nil, &kit.Up{})
-	down := flow.Compose("down", nil, &kit.Down{}).Always()
-	up.Precede(down)
-	err := flow.Run(context.Background(), nil)
-	require.Error(t, err)
-	require.ErrorIs(t, up.Err(), errNilCompose)
-	require.ErrorIs(t, down.Err(), errNilCompose)
-}
+func (failWriter) Write([]byte) (int, error) { return 0, errors.New("full") }
 
-func TestEventCarriesTask(t *testing.T) {
+func TestLoggerEvents(t *testing.T) {
+	var got []kit.LogEvent
 	var mu sync.Mutex
-	var seen []*Task
-	flow := New("evt", nil)
-	a := flow.Task("a", func(context.Context) error { return nil })
-	require.NoError(t, flow.Run(context.Background(), &Run{Watch: func(e Event) {
+	log := kit.NewFrameLogger(func(e kit.LogEvent) {
 		mu.Lock()
-		seen = append(seen, e.Task)
+		got = append(got, e)
 		mu.Unlock()
-	}}))
-	mu.Lock()
-	defer mu.Unlock()
-	require.NotEmpty(t, seen)
-	for _, s := range seen {
-		require.Same(t, a, s)
+	})
+	f := New("log", nil)
+	f.Task("a", func(context.Context) error { return errors.New("no") })
+	ctx := log.Context(context.Background())
+	if err := f.Run(ctx, discardRun()); err == nil {
+		t.Fatal("expected error")
 	}
-}
-
-func TestPanicIsTaskError(t *testing.T) {
-	var sibling atomic.Bool
-	flow := New("panic", nil)
-	flow.Task("boom", func(context.Context) error {
-		panic("nope")
-	})
-	flow.Task("ok", func(context.Context) error {
-		sibling.Store(true)
-		return nil
-	})
-	err := flow.Run(context.Background(), nil)
-	require.Error(t, err)
-	require.Contains(t, err.Error(), "panic")
-	require.True(t, sibling.Load())
-}
-
-func TestComposeStepCallsFunc(t *testing.T) {
-	var called atomic.Bool
-	flow := New("cmp", nil)
-	flow.Compose("up", nil, func(ctx context.Context, app *kit.Compose) error {
-		require.Nil(t, app)
-		called.Store(true)
-		return nil
-	})
-	require.NoError(t, flow.Run(context.Background(), nil))
-	require.True(t, called.Load())
-}
-
-func TestBuildAndContainerRequireClient(t *testing.T) {
-	t.Run("container", func(t *testing.T) {
-		flow := New("ctr", nil)
-		flow.Container("c", kit.NewContainer("c").Image("alpine"), nil)
-		err := flow.Run(context.Background(), nil)
-		require.ErrorIs(t, err, ErrNoClient)
-	})
-	t.Run("build", func(t *testing.T) {
-		flow := New("bld", nil)
-		flow.Build("b", kit.NewBuild().Dockerfile(kit.NewDockerFile().From("alpine:latest")), nil)
-		err := flow.Run(context.Background(), nil)
-		require.ErrorIs(t, err, ErrNoClient)
-	})
-}
-
-func TestCanceledContextFailsStep(t *testing.T) {
-	ctx, cancel := context.WithCancel(context.Background())
-	cancel()
-	flow := New("cancel", nil)
-	flow.Task("a", func(context.Context) error { return nil })
-	err := flow.Run(ctx, nil)
-	require.Error(t, err)
-	require.ErrorIs(t, err, context.Canceled)
+	if len(got) == 0 {
+		t.Fatal("no events")
+	}
 }

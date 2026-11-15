@@ -1,6 +1,10 @@
 package taskflow
 
-import "time"
+import (
+	"time"
+
+	"github.com/aptd3v/containerkit/pkg/kit"
+)
 
 // EventKind is a step lifecycle signal sent to Run.Watch.
 type EventKind string
@@ -16,7 +20,7 @@ const (
 
 // Event is one step lifecycle update. Watch may be called from several goroutines.
 type Event struct {
-	// Task is the step. Step names are not unique across subflows; compare Task.
+	// Task is the step. Step names are not unique across subflows.
 	Task *Task
 	Name string
 	Kind EventKind
@@ -33,10 +37,42 @@ func (f *Flow) emit(e Event) {
 	}
 	f.mu.Lock()
 	watch := f.watch
+	ctx := f.ctx
+	name := f.name
 	f.mu.Unlock()
 	if watch != nil {
 		watch(e)
 	}
+	log := kit.LoggerFrom(ctx)
+	if log == nil {
+		return
+	}
+	status := kit.StatusInfo
+	detail := e.Name
+	switch e.Kind {
+	case EventStart:
+		status = kit.StatusWorking
+	case EventDone:
+		status = kit.StatusDone
+	case EventSkip:
+		status = kit.StatusWarn
+		detail = "skip"
+	case EventRetry, EventError:
+		status = kit.StatusError
+		if e.Kind == EventRetry {
+			status = kit.StatusWarn
+		}
+		if e.Err != nil {
+			detail = e.Err.Error()
+		}
+	}
+	log.Emit(kit.LogEvent{
+		Kind:   kit.KindEngine,
+		Op:     e.Name,
+		ID:     name,
+		Detail: detail,
+		Status: status,
+	})
 }
 
 func (f *Flow) emitLog(step string, p []byte) {
@@ -45,9 +81,20 @@ func (f *Flow) emitLog(step string, p []byte) {
 	}
 	f.mu.Lock()
 	logfn := f.logfn
+	ctx := f.ctx
+	name := f.name
 	f.mu.Unlock()
 	if logfn != nil {
 		logfn(step, p)
+	}
+	if log := kit.LoggerFrom(ctx); log != nil {
+		log.Emit(kit.LogEvent{
+			Kind:   kit.KindLog,
+			Op:     step,
+			ID:     name,
+			Detail: string(p),
+			Status: kit.StatusInfo,
+		})
 	}
 }
 
@@ -57,7 +104,7 @@ type logWriter struct {
 }
 
 func (w logWriter) Write(p []byte) (int, error) {
-	if w.f == nil {
+	if w.f == nil || len(p) == 0 {
 		return len(p), nil
 	}
 	cp := append([]byte(nil), p...)
