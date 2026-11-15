@@ -1,0 +1,36 @@
+name: app
+services:
+  api:
+    image: "alpine:latest"
+    command:
+      - sleep
+      - infinity
+    healthcheck:
+      test:
+        - CMD
+        - "true"
+      interval: 5s
+      timeout: 3s
+      retries: 3
+    deploy:
+      replicas: 1
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - target: 80
+        published: "8080"
+        protocol: tcp
+    environment:
+      APP: "1"
+    volumes:
+      - type: volume
+        source: data
+        target: /data
+    networks:
+      front: {}
+networks:
+  front:
+    driver: bridge
+volumes:
+  data: {}

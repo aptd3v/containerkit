@@ -1,0 +1,11 @@
+# files in package.json is the allowlist. This keeps tests and
+# workspace junk out if dist ever contains them.
+**/*.test.js
+**/*.test.d.ts
+**/*.test.js.map
+examples/
+testdata/
+src/
+dist-test/
+dist-examples/
+node_modules/

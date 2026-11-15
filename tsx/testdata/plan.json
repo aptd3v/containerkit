@@ -1,0 +1,17 @@
+{
+  "connect": {
+    "fromEnv": true,
+    "timeout": "10s",
+    "userAgent": "containerkit-tsx-test"
+  },
+  "yaml": "name: app\nservices:\n  api:\n    image: alpine:latest\n    environment:\n      APP: \"1\"\n",
+  "actions": [
+    {
+      "op": "composeUp",
+      "options": {
+        "detach": true,
+        "timeout": "30s"
+      }
+    }
+  ]
+}

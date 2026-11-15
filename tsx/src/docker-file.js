@@ -1,0 +1,417 @@
+import { element, isReactElement, reactCompiledJSX } from "./node.js";
+export function Dockerfile(props) {
+    return element("dockerfile", props);
+}
+export const From = instr("dfFrom");
+export const Arg = instr("dfArg");
+export const Env = instr("dfEnv");
+export const Copy = instr("dfCopy");
+export const Add = instr("dfAdd");
+export const Entrypoint = instr("dfEntrypoint");
+export const EntrypointShell = instr("dfEntrypointShell");
+export const Expose = instr("dfExpose");
+export const Label = instr("dfLabel");
+export const Onbuild = instr("dfOnbuild");
+export const Workdir = instr("dfWorkdir");
+export const StopSignal = instr("dfStopSignal");
+export const User = instr("dfUser");
+export const Comment = instr("dfComment");
+export const Volume = instr("dfVolume");
+export const HealthCheck = instr("dfHealth");
+export const HealthCheckNone = instr("dfHealthNone");
+export const Shell = instr("dfShell");
+export const Command = instr("dfCommand");
+export const CommandShell = instr("dfCommandShell");
+export const Run = instr("dfRun");
+export const RunLayer = instr("dfRunLayer");
+export const RunArgs = instr("dfRunArgs");
+export const Syntax = instr("dfSyntax");
+export const Escape = instr("dfEscape");
+export const Check = instr("dfCheck");
+function instr(kind) {
+    return function instruction(props) {
+        return element(kind, props);
+    };
+}
+export function exportDockerfile(node) {
+    if (isReactElement(node)) {
+        throw new Error(reactCompiledJSX);
+    }
+    if (node.$$kind !== "dockerfile") {
+        throw new Error(`containerkit: exportDockerfile requires a Dockerfile node, got <${node.$$kind}>`);
+    }
+    let text = "";
+    let body = false;
+    let lastRun = false;
+    let cmdSet = false;
+    const directive = (name, value) => {
+        if (body) {
+            fail(`${name} directive must precede instructions`);
+        }
+        token(value, `${name} directive`);
+        if (value.trim() === "") {
+            fail(`${name} directive is empty`);
+        }
+        text += `# ${name}=${value}\n`;
+    };
+    const prop = (key) => (typeof node.props[key] === "string" ? node.props[key] : "");
+    if (prop("syntax")) {
+        directive("syntax", prop("syntax"));
+    }
+    if (prop("escape")) {
+        escapeChar(prop("escape"));
+        directive("escape", prop("escape"));
+    }
+    if (prop("check")) {
+        directive("check", prop("check"));
+    }
+    const commit = (line, run) => {
+        body = true;
+        lastRun = run;
+        text += line;
+    };
+    for (const child of node.children) {
+        const p = child.props;
+        switch (child.$$kind) {
+            case "dfSyntax":
+                directive("syntax", str(p.value, "syntax directive"));
+                break;
+            case "dfEscape": {
+                const value = str(p.value, "escape directive");
+                escapeChar(value);
+                directive("escape", value);
+                break;
+            }
+            case "dfCheck":
+                directive("check", str(p.value, "check directive"));
+                break;
+            case "dfFrom":
+                commit(fromLine(p), false);
+                break;
+            case "dfArg":
+                commit(argLine(p), false);
+                break;
+            case "dfEnv":
+                commit(`ENV ${token(str(p.name, "env name"), "env name")}=${token(str(p.value, "env value"), "env value")}\n`, false);
+                break;
+            case "dfCopy":
+                commit(fileLine("COPY", copyFlags(p), p), false);
+                break;
+            case "dfAdd":
+                commit(fileLine("ADD", addFlags(p), p), false);
+                break;
+            case "dfEntrypoint":
+                commit(execLine("ENTRYPOINT", p), false);
+                break;
+            case "dfEntrypointShell":
+                commit(shellLine("ENTRYPOINT", p), false);
+                break;
+            case "dfExpose":
+                commit(`EXPOSE ${token(str(p.port, "expose port"), "expose port")}\n`, false);
+                break;
+            case "dfLabel":
+                commit(`LABEL ${token(str(p.name, "label name"), "label name")}=${token(str(p.value, "label value"), "label value")}\n`, false);
+                break;
+            case "dfOnbuild":
+                commit(`ONBUILD ${token(str(p.command, "onbuild command"), "onbuild")}\n`, false);
+                break;
+            case "dfWorkdir":
+                commit(`WORKDIR ${token(str(p.path, "workdir path"), "workdir")}\n`, false);
+                break;
+            case "dfStopSignal":
+                commit(`STOPSIGNAL ${token(str(p.signal, "stopsignal"), "stopsignal")}\n`, false);
+                break;
+            case "dfUser":
+                commit(`USER ${token(str(p.name, "user"), "user")}\n`, false);
+                break;
+            case "dfComment":
+                commit(`# ${token(str(p.text, "comment"), "comment")}\n`, false);
+                break;
+            case "dfVolume":
+                commit(`VOLUME ${jsonArray(list(p.paths, "volume path"))}\n`, false);
+                break;
+            case "dfHealth":
+                commit(healthLine(p), false);
+                break;
+            case "dfHealthNone":
+                commit("HEALTHCHECK NONE\n", false);
+                break;
+            case "dfShell":
+                commit(execLine("SHELL", p), false);
+                break;
+            case "dfCommand":
+                if (cmdSet) {
+                    fail("command has already been set");
+                }
+                cmdSet = true;
+                commit(execLine("CMD", p), false);
+                break;
+            case "dfCommandShell":
+                if (cmdSet) {
+                    fail("command has already been set");
+                }
+                cmdSet = true;
+                commit(shellLine("CMD", p), false);
+                break;
+            case "dfRun":
+                text = runLine(text, p, false, lastRun);
+                body = true;
+                lastRun = true;
+                break;
+            case "dfRunLayer":
+                text = runLine(text, p, true, lastRun);
+                body = true;
+                lastRun = true;
+                break;
+            case "dfRunArgs":
+                text = runArgsLine(text, p, lastRun);
+                body = true;
+                lastRun = true;
+                break;
+            default:
+                fail(`<${child.$$kind}> is not a Dockerfile instruction`);
+        }
+    }
+    return text;
+}
+function runLine(text, p, fresh, lastRun) {
+    const cmd = token(str(p.cmd, "run command"), "run");
+    const flags = runFlags(p);
+    if (lastRun && !fresh && flags === "") {
+        return `${text.replace(/\n$/, "")} && \\\n\t${cmd}\n`;
+    }
+    return text + `RUN ${flags}${cmd}\n`;
+}
+function runArgsLine(text, p, lastRun) {
+    if (!lastRun) {
+        fail("runargs was called but no run command was called before it");
+    }
+    const args = list(p.args, "runargs argument");
+    if (args.length === 0) {
+        fail("runargs requires at least one argument");
+    }
+    for (const arg of args) {
+        token(arg, "runargs");
+    }
+    return `${text.replace(/\n$/, "")} \\\n\t${args.join(" \\\n\t")}\n`;
+}
+function fromLine(p) {
+    const image = str(p.image, "from image").trim();
+    const tag = opt(p.tag).trim();
+    const platform = opt(p.platform).trim();
+    const alias = opt(p.as).trim();
+    if (image === "") {
+        fail("from image is empty");
+    }
+    if (tag !== "" && image.includes(":")) {
+        fail("from tag must be passed separately from the image");
+    }
+    for (const part of [platform, image, tag, alias]) {
+        if (/[ \t\r\n]/.test(part)) {
+            fail("from contains whitespace");
+        }
+    }
+    let line = "FROM ";
+    if (platform !== "") {
+        line += `--platform=${platform} `;
+    }
+    line += image;
+    if (tag !== "") {
+        line += `:${tag}`;
+    }
+    if (alias !== "") {
+        line += ` AS ${alias}`;
+    }
+    return line + "\n";
+}
+function argLine(p) {
+    const name = token(str(p.name, "arg name"), "arg name");
+    if (!("default" in p) || p.default === undefined) {
+        return `ARG ${name}\n`;
+    }
+    return `ARG ${name}=${token(String(p.default), "arg default")}\n`;
+}
+function copyFlags(p) {
+    let flags = "";
+    flags += flag("--from", opt(p.from));
+    flags += flag("--chown", opt(p.chown));
+    flags += flag("--chmod", opt(p.chmod));
+    for (const pattern of many(p.exclude)) {
+        if (pattern === "") {
+            fail("--exclude is empty");
+        }
+        flags += flag("--exclude", pattern);
+    }
+    if (p.parents === true) {
+        flags += "--parents ";
+    }
+    if (p.link === true) {
+        flags += "--link ";
+    }
+    return flags;
+}
+function addFlags(p) {
+    let flags = "";
+    flags += flag("--chown", opt(p.chown));
+    flags += flag("--chmod", opt(p.chmod));
+    flags += flag("--checksum", opt(p.checksum));
+    if (p.keepGitDir === true) {
+        flags += "--keep-git-dir=true ";
+    }
+    for (const pattern of many(p.exclude)) {
+        if (pattern === "") {
+            fail("--exclude is empty");
+        }
+        flags += flag("--exclude", pattern);
+    }
+    if (p.link === true) {
+        flags += "--link ";
+    }
+    return flags;
+}
+function runFlags(p) {
+    let flags = "";
+    for (const mount of many(p.mount)) {
+        if (mount === "") {
+            fail("--mount is empty");
+        }
+        flags += flag("--mount", mount);
+    }
+    flags += flag("--network", opt(p.network));
+    flags += flag("--security", opt(p.security));
+    return flags;
+}
+function fileLine(instrName, flags, p) {
+    const src = str(p.src, `${instrName.toLowerCase()} source`).trim();
+    const dest = str(p.dest, `${instrName.toLowerCase()} destination`).trim();
+    token(src, `${instrName.toLowerCase()} source`);
+    token(dest, `${instrName.toLowerCase()} destination`);
+    if (src.includes(" ") || dest.includes(" ")) {
+        return `${instrName} ${flags}${jsonArray([src, dest])}\n`;
+    }
+    return `${instrName} ${flags}${src} ${dest}\n`;
+}
+function execLine(instrName, p) {
+    const executable = str(p.executable, `${instrName.toLowerCase()} executable`);
+    const args = many(p.args);
+    return `${instrName} ${jsonArray([executable, ...args])}\n`;
+}
+function shellLine(instrName, p) {
+    const executable = token(str(p.executable, `${instrName.toLowerCase()} executable`).trim(), `${instrName.toLowerCase()} executable`);
+    const args = many(p.args).map((arg, i) => token(arg, `${instrName.toLowerCase()} arg[${i}]`));
+    return `${instrName} ${[executable, ...args].join(" ")}\n`;
+}
+function healthLine(p) {
+    const test = list(p.test, "healthcheck test");
+    const cmd = healthCmd(test);
+    if (cmd === "NONE") {
+        return "HEALTHCHECK NONE\n";
+    }
+    const flags = [];
+    if (opt(p.interval)) {
+        flags.push(`--interval=${opt(p.interval)}`);
+    }
+    if (opt(p.timeout)) {
+        flags.push(`--timeout=${opt(p.timeout)}`);
+    }
+    if (opt(p.startPeriod)) {
+        flags.push(`--start-period=${opt(p.startPeriod)}`);
+    }
+    if (typeof p.retries === "number" && p.retries > 0) {
+        flags.push(`--retries=${p.retries}`);
+    }
+    if (flags.length === 0) {
+        return `HEALTHCHECK ${cmd}\n`;
+    }
+    return `HEALTHCHECK ${flags.join(" ")} \\\n\t${cmd}\n`;
+}
+function healthCmd(test) {
+    if (test.length === 0) {
+        fail("healthcheck test is empty");
+    }
+    switch (test[0]) {
+        case "NONE":
+            return "NONE";
+        case "CMD-SHELL":
+            if (test.length !== 2 || test[1].trim() === "") {
+                fail("healthcheck shell command is empty");
+            }
+            token(test[1], "healthcheck shell command");
+            return `CMD ${test[1]}`;
+        case "CMD":
+            if (test.length < 2 || test[1].trim() === "") {
+                fail("healthcheck command is empty");
+            }
+            return `CMD ${jsonArray(test.slice(1))}`;
+        default:
+            fail("healthcheck test must start with CMD, CMD-SHELL, or NONE");
+    }
+}
+function jsonArray(args) {
+    if (args.length === 0) {
+        fail("json array is empty");
+    }
+    return `[${args.map((arg) => JSON.stringify(arg)).join(", ")}]`;
+}
+function flag(name, value) {
+    if (value === "") {
+        return "";
+    }
+    if (/[ \t\r\n]/.test(value)) {
+        fail(`${name} contains whitespace`);
+    }
+    return `${name}=${value} `;
+}
+function escapeChar(value) {
+    if (value !== "\\" && value !== "`") {
+        fail("escape directive must be \\ or `");
+    }
+}
+function token(value, what) {
+    if (value.trim() === "") {
+        fail(`${what} is empty`);
+    }
+    for (let i = 0; i < value.length; i++) {
+        const c = value.charCodeAt(i);
+        if (c === 10 || c === 13) {
+            fail(`${what} contains line break`);
+        }
+        if (c === 0 || c === 0x7f || (c < 0x20 && c !== 9)) {
+            fail(`${what} contains control character`);
+        }
+    }
+    return value;
+}
+function str(v, what) {
+    if (typeof v !== "string") {
+        fail(`${what} is empty`);
+    }
+    return v;
+}
+function opt(v) {
+    return typeof v === "string" ? v : "";
+}
+function many(v) {
+    if (v == null) {
+        return [];
+    }
+    if (typeof v === "string") {
+        return [v];
+    }
+    if (Array.isArray(v)) {
+        return v.map((item) => String(item));
+    }
+    return [];
+}
+function list(v, what) {
+    const items = many(v);
+    for (const item of items) {
+        if (item.trim() === "") {
+            fail(`${what} is empty`);
+        }
+    }
+    return items;
+}
+function fail(msg) {
+    throw new Error(`containerkit/tsx: ${msg}`);
+}

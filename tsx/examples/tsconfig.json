@@ -1,0 +1,19 @@
+{
+  "extends": "../tsconfig.json",
+  "compilerOptions": {
+    "noEmit": false,
+    "declaration": false,
+    "outDir": "../dist-examples",
+    "rootDir": ".",
+    "paths": {
+      "containerkit": ["../dist/index.d.ts"],
+      "containerkit/jsx-runtime": ["../dist/jsx-runtime.d.ts"],
+      "containerkit/jsx-dev-runtime": ["../dist/jsx-dev-runtime.d.ts"],
+      "containerkit/dockerfile": ["../dist/docker-file.d.ts"],
+      "containerkit/live": ["../dist/live/index.d.ts"],
+      "containerkit/vocab": ["../dist/vocab.d.ts"],
+      "containerkit/taskflow": ["../dist/taskflow.d.ts"]
+    }
+  },
+  "include": ["image.tsx", "supabase.tsx", "taskflow.tsx"]
+}

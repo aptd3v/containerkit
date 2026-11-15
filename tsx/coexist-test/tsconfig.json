@@ -1,0 +1,20 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "Node16",
+    "moduleResolution": "Node16",
+    "jsx": "react-jsx",
+    "jsxImportSource": "react",
+    "strict": true,
+    "noEmit": true,
+    "skipLibCheck": true,
+    "verbatimModuleSyntax": true,
+    "paths": {
+      "containerkit": ["../src/index.ts"],
+      "containerkit/jsx-runtime": ["../src/jsx-runtime.ts"],
+      "containerkit/jsx-dev-runtime": ["../src/jsx-dev-runtime.ts"],
+      "containerkit/dockerfile": ["../src/docker-file.ts"]
+    }
+  },
+  "include": ["./**/*.tsx"]
+}
