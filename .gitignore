@@ -24,50 +24,40 @@ profile.cov
 go.work
 go.work.sum
 
-# env file
-.env
+# Swarm e2e cluster runtime (cloud images, disks, pidfiles, seeds)
+e2e/swarm/.cache/
+e2e/swarm/.run/
 
-# Local build and data directories
-/data/
-/bin/
+# Registry e2e runtime (cloud images, disks, pidfiles, htpasswd)
+e2e/registry/.cache/
+e2e/registry/.run/
+
+# Live session memo cache
 .containerkit/
 
-# Not part of this SDK release (daemon/UI trees are unpublished here).
-# Patterns keep accidental local copies of those trees untracked.
-/web/
-/internal/server/
-/api/
-/cmd/
+# Local full TSX application. Not part of the published tree yet.
+/playground/
 
+# Containerkit npm package (TSX)
+tsx/node_modules/
+tsx/dist/
+tsx/dist-test/
+tsx/dist-examples/
+tsx/*.tgz
 
-# Editor/IDE
-# .idea/
-# .vscode/
+# Multi-platform runner archives
+/dist/
 
+# Go binaries copied into the npm platform packages by tools/crossbuild
+npm/@containerkit/*/bin/
+tsx/package.json.publish-backup
 
-#examples 
-examples/wordpress/database/
-examples/wordpress/src/
-examples/wordpress/docker-compose.yaml
-examples/wordpress/haproxy.cfg
-
-examples/mongo_replica/docker-compose.yaml
+# Supabase example runtime (bind mounts + exported compose)
+/volumes/
+/docker-compose.yaml
+examples/supabase/volumes/
 examples/supabase/docker-compose.yaml
-examples/structs/docker-compose.yml
-examples/astronomy_shop/astronomy-shop.compose.yaml
-astronomy-shop.compose.yaml
-docker-compose.yaml
-volumes/
-examples/astronomy_shop/volumes/
 
-# IDE
-.vscode/
+# Python scripts
+scripts/__pycache__/
 
-# macOS
-.DS_Store
-
-# e2e run logs
-e2e/logs/
-e2e/**/logs/
-
-.cursor/

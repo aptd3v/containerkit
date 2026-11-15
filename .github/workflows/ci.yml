@@ -1,0 +1,88 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  version:
+    name: Version sync
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check version sites
+        run: python3 scripts/version.py --check
+
+  go:
+    name: Go test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+
+      - name: Verify dependencies
+        run: |
+          go mod verify
+          go mod download
+
+      - name: Check go mod tidy
+        run: |
+          go mod tidy
+          git diff --exit-code go.mod go.sum
+
+      - name: Build
+        run: go build ./...
+
+      - name: Test
+        run: go test -race -shuffle=on ./...
+
+      - name: Taskflow coverage
+        run: |
+          go test -coverprofile=taskflow.out ./pkg/taskflow
+          go tool cover -func=taskflow.out | awk 'END { gsub("%","",$NF); if ($NF+0 < 100) exit 1 }'
+
+      - name: Multi-platform binaries
+        run: go run ./tools/crossbuild
+
+      - name: Check dist archives
+        run: |
+          test -f dist/checksums.txt
+          test "$(find dist \( -name 'containerkit_*.tar.gz' -o -name 'containerkit_*.zip' \) | wc -l | tr -d ' ')" = "6"
+          (cd dist && sha256sum -c checksums.txt)
+
+  tsx:
+    name: TSX package
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: tsx
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: tsx/package-lock.json
+
+      - name: Install
+        run: npm ci
+
+      - name: Test
+        run: npm test
+
+      - name: Taskflow coverage
+        run: npm run test:taskflow
+
+      - name: Pack dry-run
+        run: npm run pack:check

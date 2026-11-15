@@ -1,0 +1,43 @@
+# Local / future GitHub releases. This file does not publish by itself.
+# Build archives without uploading:
+#   goreleaser release --snapshot --clean --skip=publish
+version: 2
+
+project_name: containerkit
+
+builds:
+  - id: containerkit
+    main: ./cmd/containerkit
+    binary: containerkit
+    env:
+      - CGO_ENABLED=0
+    goos:
+      - linux
+      - darwin
+      - windows
+    goarch:
+      - amd64
+      - arm64
+    flags:
+      - -trimpath
+    ldflags:
+      - -s -w -X main.version={{.Version}} -X main.commit={{.Commit}}
+
+archives:
+  - format: tar.gz
+    name_template: "{{ .ProjectName }}_{{ .Os }}_{{ .Arch }}"
+    format_overrides:
+      - goos: windows
+        format: zip
+
+checksum:
+  name_template: checksums.txt
+
+snapshot:
+  version_template: "{{ incpatch .Version }}-next"
+
+changelog:
+  disable: true
+
+release:
+  disable: true
