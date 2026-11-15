@@ -8,9 +8,9 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"time"
 
-	"github.com/aptd3v/containerkit/pkg/client"
-	"github.com/aptd3v/containerkit/pkg/kit"
+	. "github.com/aptd3v/containerkit/pkg/kit"
 	"github.com/aptd3v/containerkit/pkg/taskflow"
 )
 
@@ -28,14 +28,14 @@ func main() {
 
 func run() error {
 	ctx := context.Background()
-	cli, err := client.NewClient(client.FromEnv(), client.WithAPIVersionNegotiation())
+	cli, err := Connect(FromEnv())
 	if err != nil {
 		return err
 	}
 	defer cli.Close()
 
 	flow := taskflow.New("ci", cli)
-	addTasks(flow, cli, newConfig())
+	addTasks(flow, cli)
 
 	if err := flow.Dump(os.Stdout); err != nil {
 		return err
@@ -53,63 +53,54 @@ func run() error {
 	if err != nil {
 		return err
 	}
-	fmt.Printf("labeled containers: %d\n", len(listed))
+	fmt.Printf("labeled containers: %d\n", len(listed.Items))
 	return runErr
 }
 
-// config is the kit values the graph runs. It does not know about task order.
-type config struct {
-	build       kit.Build
-	db          *kit.Compose
-	unit        *kit.Container
-	integration *kit.Container
-	lint        *kit.Container
-}
-
-func newConfig() config {
-	df := kit.NewDockerFile().
-		From("alpine:latest").
+func addTasks(flow *taskflow.Flow, cli *Client) {
+	df := NewDockerfile().
+		From("alpine", "latest").
 		Run("printf 'ok\\n' > /app").
 		Command("cat", "/app")
 
-	project := kit.NewProject(projectName)
-	project.WithService(kit.NewService("db",
-		kit.NewContainer("ck-taskflow-db").
-			Image("postgres:16-alpine").
-			Env("POSTGRES_PASSWORD", "ci").
-			HealthCheck(kit.NewHealth().
-				CMD("pg_isready", "-U", "postgres").
-				IntervalD("2s").
-				TimeoutD("3s").
-				Retries(20)),
+	db := NewCompose(projectName).WithService(NewService(
+		Name("db"),
+		ContainerName("ck-taskflow-db"),
+		Image("postgres:16-alpine"),
+		Env("POSTGRES_PASSWORD", "ci"),
+		Health(
+			Test("pg_isready", "-U", "postgres"),
+			Interval(2*time.Second),
+			Timeout(3*time.Second),
+			Retries(20),
+		),
 	))
 
-	test := func(name string, cmd ...string) *kit.Container {
-		return kit.NewContainer(name).Image(imageCI).Command(cmd...)
-	}
-	return config{
-		build:       kit.NewBuild().Dockerfile(df),
-		db:          kit.NewCompose(project),
-		unit:        test("ck-taskflow-unit", "test", "-f", "/app"),
-		integration: test("ck-taskflow-integ", "test", "-f", "/app"),
-		lint:        test("ck-taskflow-lint", "true"),
-	}
-}
-
-func addTasks(flow *taskflow.Flow, cli *client.Client, cfg config) {
-	build := flow.Build("build", cfg.build, &client.ImageBuild{Tags: []string{imageCI}})
-	upDB := flow.Compose("up-db", cfg.db, &kit.Up{Detach: true, Wait: true})
+	build := flow.Build("build", df, Tag(imageCI))
+	upDB := flow.Compose("up-db", db, taskflow.Up(Detach(true), Wait(true)))
 	tests := flow.Subflow("tests", func(sf *taskflow.Subflow) {
-		sf.Container("unit", cfg.unit, nil).Priority(taskflow.PriorityHigh)
-		sf.Container("integration", cfg.integration, nil).Retry(2)
-		sf.Container("lint", cfg.lint, &taskflow.ContainerRun{Logs: os.Stdout}).
-			Priority(taskflow.PriorityLow)
+		sf.Container("unit", NewContainer(
+			Name("ck-taskflow-unit"),
+			Image(imageCI),
+			Command("test", "-f", "/app"),
+		), nil).Priority(taskflow.PriorityHigh)
+		sf.Container("integration", NewContainer(
+			Name("ck-taskflow-integ"),
+			Image(imageCI),
+			Command("test", "-f", "/app"),
+		), nil).Retry(2)
+		sf.Container("lint", NewContainer(
+			Name("ck-taskflow-lint"),
+			Image(imageCI),
+			Command("true"),
+		), &taskflow.ContainerRun{Logs: os.Stdout}).Priority(taskflow.PriorityLow)
 	})
 	release := flow.If("release", func(context.Context) bool {
 		return os.Getenv("RELEASE") == "1"
 	})
 	tag := flow.Task("tag", func(ctx context.Context) error {
-		return cli.ImageTag(ctx, imageCI, imageRelease)
+		_, err := TagImage(ctx, cli.Engine(), Source(imageCI), Target(imageRelease))
+		return err
 	})
 
 	build.Precede(upDB)
