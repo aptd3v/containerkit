@@ -8,6 +8,8 @@ import (
 	"math"
 	"strconv"
 	"time"
+
+	ocispec "github.com/opencontainers/image-spec/specs-go/v1"
 )
 
 // Plan is a TSX-encoded connect + compose YAML + action document.
@@ -276,6 +278,18 @@ func asBool(v any) (bool, error) {
 	default:
 		return false, fmt.Errorf("expected bool, got %T", v)
 	}
+}
+
+func asPlatform(v any) (ocispec.Platform, error) {
+	raw, err := json.Marshal(v)
+	if err != nil {
+		return ocispec.Platform{}, err
+	}
+	var p ocispec.Platform
+	if err := json.Unmarshal(raw, &p); err != nil {
+		return ocispec.Platform{}, err
+	}
+	return p, nil
 }
 
 func asString(v any) (string, error) {

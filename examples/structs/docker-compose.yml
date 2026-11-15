@@ -1,0 +1,42 @@
+name: my-project
+services:
+  my-alpine-service:
+    command:
+      - tail
+      - -f
+      - /dev/null
+    environment:
+      ENV1: value1
+      ENV2: value2
+    image: alpine
+    logging:
+      driver: json-file
+      options:
+        max-file: "3"
+        max-size: 10m
+    networks:
+      my-network:
+        aliases:
+          - my-alpine-service
+    platform: linux/arm64
+    expose:
+      - 8080/tcp
+    healthcheck:
+      test:
+        - CMD
+        - curl
+        - -f
+        - http://localhost:8080
+      timeout: 5s
+      interval: 10s
+      retries: 3
+    ports:
+      - mode: ingress
+        host_ip: 0.0.0.0
+        target: 8080
+        published: "8080"
+        protocol: tcp
+networks:
+  my-network:
+    name: my-network
+    driver: bridge

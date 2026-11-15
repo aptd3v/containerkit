@@ -59,7 +59,7 @@ func TestNewEngineClientSettersCompileWithoutEngineSDK(t *testing.T) {
 	_ = func(ctx context.Context, api kit.Engine, id string) kit.ContainerWaitResult {
 		return c.Wait(ctx, api, id, kit.WaitFor(kit.NotRunning))
 	}
-	_ = func(ctx context.Context, api kit.Engine) (kit.ImagePullResponse, error) {
+	_ = func(ctx context.Context, api kit.Engine) error {
 		return kit.PullImage(ctx, api, "alpine:latest", kit.All(true), kit.Platform("linux/amd64"))
 	}
 	_ = func(ctx context.Context, api kit.Engine) (kit.ContainerListResult, error) {

@@ -35,6 +35,12 @@ func writeActions(root string, verbs []verb) error {
 	}
 	buf.WriteString("} from \"./generated-options.js\";\n\n")
 
+	buf.WriteString("export type PlanOp =\n")
+	for _, v := range verbs {
+		fmt.Fprintf(&buf, "\t| %q\n", v.op)
+	}
+	buf.WriteString(";\n\n")
+
 	for _, v := range verbs {
 		writeVerb(&buf, v)
 	}
@@ -55,12 +61,16 @@ func writeVerb(buf *bytes.Buffer, v verb) {
 	for _, p := range v.positionals {
 		args = append(args, p.name+": "+p.tsType)
 	}
-	args = append(args, "options?: "+v.bag)
+	if v.bag != "" {
+		args = append(args, "options?: "+v.bag)
+	}
 
 	fmt.Fprintf(buf, "/** %s encodes kit %s as a plan document. Go ImportPlan / ExecJSON runs it. */\n", v.tsName, v.goName)
 	fmt.Fprintf(buf, "export function %s(%s): PlanDocument {\n", v.tsName, strings.Join(args, ", "))
 	fmt.Fprintf(buf, "\tconst action: PlanAction = { op: %q };\n", v.op)
-	buf.WriteString("\tif (options) {\n\t\taction.options = options;\n\t}\n")
+	if v.bag != "" {
+		buf.WriteString("\tif (options) {\n\t\taction.options = options;\n\t}\n")
+	}
 	for _, p := range v.positionals {
 		fmt.Fprintf(buf, "\taction.%s = %s;\n", p.name, p.name)
 	}

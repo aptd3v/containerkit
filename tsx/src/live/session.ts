@@ -6,7 +6,7 @@ import { ContainerKitError, errorFromFrame, type ErrorFrame } from "./error.js";
 
 export type LiveEvent = {
 	type: "event";
-	kind: string;
+	kind: "log" | "status" | "error";
 	source?: string;
 	stream?: string;
 	line?: string;
@@ -40,6 +40,9 @@ export function openSession(options?: { bin?: string; args?: string[] }): Sessio
 	const bin = options?.bin ?? process.env.CONTAINERKIT_BIN ?? "containerkit";
 	const args = [...(options?.args ?? []), "session"];
 	const child = spawn(bin, args, { stdio: ["pipe", "pipe", "pipe"] }) as ChildProcessWithoutNullStreams;
+	child.stderr.on("data", (chunk: Buffer) => {
+		process.stderr.write(chunk);
+	});
 	return bindChild(child);
 }
 

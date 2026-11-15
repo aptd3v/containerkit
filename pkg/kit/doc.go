@@ -69,8 +69,8 @@
 //	log := NewLogger(Color(true), Progress("auto"))
 //	err = compose.Up(ctx, cli.Composer(), Detach(true), Log(log), Timeout(10*time.Second))
 //	created, err := container.Create(ctx, cli.Engine(), Name("worker"))
-//	_, err = BuildImage(ctx, cli.Engine(), NewDockerfile().From("alpine:latest"), Image("app:dev"), Log(log))
-//	_, err = PullImage(ctx, cli.Engine(), "alpine:latest", Log(log))
+//	err = BuildImage(ctx, cli.Engine(), NewDockerfile().From("alpine:latest"), Image("app:dev"), Log(log))
+//	err = PullImage(ctx, cli.Engine(), "alpine:latest", Log(log))
 //
 // Runtime failures are [Error] values classified onto [ErrNotFound],
 // [ErrConflict], and the other SDK sentinels so [errors.Is] / [IsNotFound]

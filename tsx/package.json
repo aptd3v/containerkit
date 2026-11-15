@@ -82,6 +82,7 @@
     "dockerfile": "tsc -p tsconfig.build.json && tsc -p examples/tsconfig.json && node dist-examples/image.js",
     "supabase": "tsc -p tsconfig.build.json && tsc -p examples/tsconfig.json && node dist-examples/supabase.js",
     "taskflow": "tsc -p tsconfig.build.json && tsc -p examples/tsconfig.json && node dist-examples/taskflow.js",
+    "live": "tsc -p tsconfig.build.json && tsc -p examples/tsconfig.json && go build -C .. -o dist/containerkit ./cmd/containerkit && CONTAINERKIT_BIN=../dist/containerkit node dist-examples/docker.js",
     "pack:check": "npm run build && node scripts/pack-check.mjs",
     "prepack": "node scripts/publish-optional.mjs rewrite",
     "postpack": "node scripts/publish-optional.mjs restore",

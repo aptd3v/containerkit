@@ -1,6 +1,12 @@
 # containerkit
 
-containerkit is the Docker stack as a program. It integrates the Engine SDK and the Compose SDK directly: one client, and a service, a volume, a healthcheck, and a `pull` are the same names in Go and in TSX, so the Compose SDK and the Engine SDK are unified. Instead of a YAML file and various scripts that hopes the names still match. You export that program to Compose or a Dockerfile whenever you want, and a live `docker.ts` keeps the session open and applies the project only when the rendered YAML changes. When Moby or Compose ships a new field, regeneration keeps the bindings aligned with the pinned upstream SDKs.
+[![Go Reference](https://pkg.go.dev/badge/github.com/aptd3v/containerkit.svg)](https://pkg.go.dev/github.com/aptd3v/containerkit)
+[![Go Version](https://img.shields.io/github/go-mod/go-version/aptd3v/containerkit)](https://go.dev/dl/)
+[![License](https://img.shields.io/github/license/aptd3v/containerkit)](./LICENSE)
+
+Containerkit is the Docker stack as a program. Define a stack in Go or TSX, then use one client to pull an image, bring up the Compose project, and inspect its services. Both languages share a Docker vocabulary, and the client covers both the Engine and Compose SDKs.
+
+Export the project as Compose YAML, or the image definition as a Dockerfile. For live development, a `docker.ts` keeps the session open and reapplies the project only when the rendered YAML changes.
 
 ## A project is a component
 
@@ -32,6 +38,8 @@ export default function App() {
 export const yaml = exportYAML(<App />);
 ```
 
+Containerkit generates its bindings from pinned Moby and Compose SDK versions. Updating the pins and regenerating picks up new upstream fields.
+
 `false` disappears. `.map()` repeats a child. A function that returns a node is a component, so a gateway, a database, and a pooler are props on one stack. [`examples/supabase`](examples/supabase) is that stack in Go. [`tsx/examples/supabase.tsx`](tsx/examples/supabase.tsx) is the same project in TSX: Envoy or Kong, Postgres 15 or 17, Supavisor or PgBouncer, file or S3, logs on or off, printed as Compose on stdout.
 
 A Dockerfile is the other tree, in `containerkit/dockerfile`. `<Run>` joins into one layer. `<RunLayer>` starts the next. `exportDockerfile` prints the file. [`tsx/examples/image.tsx`](tsx/examples/image.tsx) is a multi-stage build whose stages and layers follow the environment.
@@ -56,7 +64,7 @@ svc := worker.AsService()
 
 ## It stays open
 
-`docker.ts` default-exports `root()`. The session stays up for the life of the process. A later render applies the project only when the rendered YAML changes. Exporting the file does not stop it.
+`docker.ts` default-exports `root()`. The session stays up for the life of the process. A later render applies the project only when the rendered YAML changes. Exporting the file does not stop it. [`tsx/examples/docker.tsx`](tsx/examples/docker.tsx) is a running copy: from `tsx/`, `npm run live` builds a small image, serves `http://127.0.0.1:18080`, and `onExit: "down"` takes the project down on Ctrl+C.
 
 ```tsx
 import { Compose, Service, Publish, Health } from "containerkit";
@@ -136,23 +144,28 @@ The kit is generated from the modules it wraps: `github.com/moby/moby/api`, `git
 
 ## Start
 
+Go, from `go.mod` (1.26.8 or newer):
+
 ```bash
 go get github.com/aptd3v/containerkit
 ```
 
-Release notes are in [CHANGELOG.md](CHANGELOG.md). Tagging `v0.8.1` publishes this module, the GitHub archives, and the npm packages.
+Node 20 or newer, once `v0.8.1` is on npm:
 
-The TypeScript package lives in [`tsx/`](tsx/README.md). It needs Node 20. A folder that extends `containerkit/tsconfig.jsx.json` compiles `<Compose>` without a per-file pragma. React and containerkit can share a repository. They cannot share a file.
+```bash
+npm install containerkit
+```
 
-Running a live session needs the `containerkit` binary on `PATH`, or `CONTAINERKIT_BIN` pointing at it. Build it for the host, and archives for linux, darwin, and windows, with `go run ./tools/crossbuild`.
+[CHANGELOG.md](CHANGELOG.md) is what 0.8.1 contains.
+
+Read the Go kit in order from [docs/README.md](docs/README.md): define a service, then run it. Read TypeScript from [tsx/docs/README.md](tsx/docs/README.md): trees, the live session, the client, commands, then Dockerfiles.
+
+The TypeScript package lives in [`tsx/`](tsx/README.md). A folder that extends `containerkit/tsconfig.jsx.json` compiles `<Compose>` without a per-file pragma. React and containerkit can share a repository. They cannot share a file.
+
+A live session needs the `containerkit` binary on `PATH`, or `CONTAINERKIT_BIN` pointing at it. [The runner](docs/runner-binary.md) is `validate`, `exec`, and `session`, and `go run ./tools/crossbuild` builds it for linux, darwin, and windows.
 
 - [For coding agents](llms.txt). Emit containerkit instead of a Compose file plus a script.
-- [Publish a port](docs/publish-a-port.md)
-- [Mount a volume](docs/mount-a-volume.md)
-- [Bring a compose file up](docs/bring-a-compose-file-up.md)
-- [Declare config in TSX](docs/tsx-configuration.md)
-- [Runner binary](docs/runner-binary.md)
-- [TypeScript guide](tsx/docs/README.md)
+- [Contributing](CONTRIBUTING.md). Tests, `go generate`, and `VERSION`.
 
 ## License
 

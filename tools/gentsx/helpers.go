@@ -94,7 +94,8 @@ func isSkipExpr(expr ast.Expr) bool {
 		return true
 	case *ast.SelectorExpr:
 		if id, ok := x.X.(*ast.Ident); ok {
-			if id.Name == "time" && x.Sel.Name == "Duration" {
+			switch id.Name + "." + x.Sel.Name {
+			case "time.Duration", "signal.Signal", "oci.Version", "order.Order", "selinux.Label", "ocispec.Platform":
 				return false
 			}
 			switch x.Sel.Name {

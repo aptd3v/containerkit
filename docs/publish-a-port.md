@@ -19,4 +19,4 @@ svc := NewService(
 )
 ```
 
-`Publish` is a port mapping. Publishing the compose application as an OCI artifact is [Compose.PublishOCI](https://pkg.go.dev/github.com/aptd3v/containerkit/pkg/kit#Compose.PublishOCI). `Mode` inside `Publish` is `PortIngress` or `PortHost`. The same setter inside [Deploy](resources-and-deploy.md) is `Replicated` or `Global`.
+`Publish` is a port mapping. Publishing the compose application as an OCI artifact is [Compose.PublishOCI](https://pkg.go.dev/github.com/aptd3v/containerkit/pkg/kit#Compose.PublishOCI). `Mode` inside `Publish` is `PortIngress` or `PortHost`. The same setter inside [Deploy](resources-and-deploy.md) is `Replicated` or `Global`, and `svcmode.ReplicatedJob` or `svcmode.GlobalJob` for a job.

@@ -52,18 +52,18 @@ func TestEngineRegistryAuthentication(t *testing.T) {
 	}
 	t.Logf("login status=%q identity=%t", login.Auth.Status, login.Auth.IdentityToken != "")
 
-	if _, err := kit.PullImage(ctx, api, seedImage, kit.Log(log)); err != nil {
+	if err := kit.PullImage(ctx, api, seedImage, kit.Log(log)); err != nil {
 		t.Fatalf("PullImage %s: %v", seedImage, err)
 	}
 	if _, err := kit.TagImage(ctx, api, kit.Source(seedImage), kit.Target(ref)); err != nil {
 		t.Fatalf("TagImage: %v", err)
 	}
 
-	if _, err := kit.PushImage(ctx, api, ref, kit.Log(log)); err == nil {
+	if err := kit.PushImage(ctx, api, ref, kit.Log(log)); err == nil {
 		t.Fatal("PushImage without credentials succeeded")
 	}
 
-	if _, err := kit.PushImage(ctx, api, ref, auth, kit.Log(log)); err != nil {
+	if err := kit.PushImage(ctx, api, ref, auth, kit.Log(log)); err != nil {
 		t.Fatalf("PushImage with credentials: %v", err)
 	}
 
@@ -71,10 +71,10 @@ func TestEngineRegistryAuthentication(t *testing.T) {
 		t.Fatalf("RemoveImage %s: %v", ref, err)
 	}
 
-	if _, err := kit.PullImage(ctx, api, ref, kit.Log(log)); err == nil {
+	if err := kit.PullImage(ctx, api, ref, kit.Log(log)); err == nil {
 		t.Fatal("PullImage without credentials succeeded")
 	}
-	if _, err := kit.PullImage(ctx, api, ref, auth, kit.Log(log)); err != nil {
+	if err := kit.PullImage(ctx, api, ref, auth, kit.Log(log)); err != nil {
 		t.Fatalf("PullImage with credentials: %v", err)
 	}
 	if _, err := kit.InspectImage(ctx, api, ref); err != nil {
@@ -83,7 +83,7 @@ func TestEngineRegistryAuthentication(t *testing.T) {
 
 	if login.Auth.IdentityToken != "" {
 		tok := kit.RegistryAuth(kit.EncodeRegistryIdentity(login.Auth.IdentityToken, registryHost))
-		if _, err := kit.PushImage(ctx, api, ref, tok, kit.Log(log)); err != nil {
+		if err := kit.PushImage(ctx, api, ref, tok, kit.Log(log)); err != nil {
 			t.Fatalf("PushImage with identity token: %v", err)
 		}
 	}

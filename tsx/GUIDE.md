@@ -122,7 +122,8 @@ Import instruction components from `containerkit/dockerfile`. Those names (`Env`
 | `CommandShell` | `CMD` in shell form: `CMD server --port 80` |
 | `Entrypoint`, `EntrypointShell` | `ENTRYPOINT`, exec or shell |
 | `Shell` | `SHELL` in exec form |
-| `Expose`, `Label`, `Volume`, `User`, `Workdir`, `StopSignal`, `Onbuild`, `Comment` | The matching instruction |
+| `Expose`, `Label`, `Volume`, `User`, `Workdir`, `Onbuild`, `Comment` | The matching instruction |
+| `StopSignal` | `STOPSIGNAL`. `signal` is a POSIX name such as `SIGTERM` |
 | `HealthCheck` | `HEALTHCHECK`. `test` starts with `"CMD"`, `"CMD-SHELL"`, or `"NONE"` |
 | `HealthCheckNone` | `HEALTHCHECK NONE` |
 | `Syntax`, `Escape`, `Check` | Parser directives. They must come before instructions |
@@ -429,23 +430,28 @@ These take `(cli, tree, options?)` unless noted.
 | Command | Arguments |
 | --- | --- |
 | `initSwarm`, `joinSwarm`, `leaveSwarm`, `unlockSwarm`, `updateSwarm` | `(cli, options?)` |
-| `createSwarmService` | `(cli, options?)` |
-| `listSwarmServices` | `(cli, options?)` |
+| `inspectSwarm` | `(cli)` |
+| `createSwarmService`, `listSwarmServices` | `(cli, options?)` |
+| `inspectSwarmService` | `(cli, id)` |
 | `updateSwarmService`, `swarmServiceLogs` | `(cli, id, options?)` |
 | `listNodes` | `(cli, options?)` |
+| `inspectNode` | `(cli, id)` |
 | `updateNode`, `removeNode` | `(cli, id, options?)` |
 | `listTasks` | `(cli, options?)` |
+| `inspectTask` | `(cli, id)` |
 | `taskLogs` | `(cli, id, options?)` |
 | `createEngineConfig`, `listConfigs` | `(cli, options?)` |
+| `inspectConfig` | `(cli, id)` |
 | `updateEngineConfig` | `(cli, id, options?)` |
 | `createEngineSecret`, `listSecrets` | `(cli, options?)` |
+| `inspectSecret` | `(cli, id)` |
 | `updateEngineSecret` | `(cli, id, options?)` |
 
 Node availability is `avail`. Node role is `role`.
 
 ### Plugins
 
-`createPlugin`, `installPlugin(cli, name)`, `enablePlugin(cli, name)`, `disablePlugin(cli, name)`, `listPlugins`, `setPlugin(cli, name)`, `upgradePlugin(cli, name)`, `pushPlugin(cli, name)`, `removePlugin(cli, name)`.
+`createPlugin`, `installPlugin(cli, name)`, `inspectPlugin(cli, name)`, `enablePlugin(cli, name)`, `disablePlugin(cli, name)`, `listPlugins`, `setPlugin(cli, name)`, `upgradePlugin(cli, name)`, `pushPlugin(cli, name)`, `removePlugin(cli, name)`. `inspectPlugin` takes the name and no options.
 
 ### Host
 

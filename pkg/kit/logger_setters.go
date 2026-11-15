@@ -33,7 +33,7 @@ func (o LogOpt) applyUp(a *upAct) error {
 		return cfgErr("", "log", "Log", fmt.Errorf("%w: logger", errRequired))
 	}
 	a.log = o.l
-	if a.start.consumer == nil {
+	if a.start.consumer == nil && !a.detached {
 		a.start.consumer = o.l
 	}
 	return nil

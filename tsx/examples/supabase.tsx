@@ -989,4 +989,4 @@ function configFromArgs(): StackConfig {
 	};
 }
 
-process.stdout.write(exportYAML(<Supabase cfg={configFromArgs()} />));
+console.log(exportYAML(<Supabase cfg={configFromArgs()} />));

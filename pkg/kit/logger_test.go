@@ -308,7 +308,7 @@ func TestLogSetterWiresComposeAndEngine(t *testing.T) {
 
 	pullJSON := `{"status":"Downloading","id":"layer","progressDetail":{"current":1,"total":2}}` + "\n"
 	eng := &fakeEngine{pullResp: jsonPull{ReadCloser: io.NopCloser(strings.NewReader(pullJSON))}}
-	if _, err := PullImage(ctx, eng, "alpine:latest", Log(log)); err != nil {
+	if err := PullImage(ctx, eng, "alpine:latest", Log(log)); err != nil {
 		t.Fatal(err)
 	}
 	if !strings.Contains(buf.String(), "downloading") {
@@ -316,7 +316,7 @@ func TestLogSetterWiresComposeAndEngine(t *testing.T) {
 	}
 	buildJSON := `{"stream":"Step 1/1 : FROM alpine\n"}` + "\n"
 	eng.buildBody = io.NopCloser(strings.NewReader(buildJSON))
-	if _, err := BuildImage(ctx, eng, NewDockerfile().From("alpine:latest"), Image("app:dev"), Log(log)); err != nil {
+	if err := BuildImage(ctx, eng, NewDockerfile().From("alpine:latest"), Image("app:dev"), Log(log)); err != nil {
 		t.Fatal(err)
 	}
 	if !strings.Contains(buf.String(), "FROM alpine") {
@@ -459,7 +459,7 @@ func TestPullAndBuildShowLoadingRow(t *testing.T) {
 		onPull:   func() { pullDuring <- visibleScreen(buf.String()) },
 		pullResp: jsonPull{ReadCloser: io.NopCloser(strings.NewReader(pull))},
 	}
-	if _, err := PullImage(context.Background(), eng, "alpine:latest", Log(log)); err != nil {
+	if err := PullImage(context.Background(), eng, "alpine:latest", Log(log)); err != nil {
 		t.Fatal(err)
 	}
 	gotDuring := <-pullDuring
@@ -477,7 +477,7 @@ func TestPullAndBuildShowLoadingRow(t *testing.T) {
 	buildDuring := make(chan string, 1)
 	eng.onBuild = func() { buildDuring <- visibleScreen(buf.String()) }
 	eng.buildBody = io.NopCloser(strings.NewReader(`{"stream":"Step 1/1 : FROM alpine\n"}` + "\n" + `{"aux":{"ID":"sha256:deadbeef"}}` + "\n"))
-	if _, err := BuildImage(context.Background(), eng, NewDockerfile().From("alpine:latest"), Image("app:dev"), Log(log)); err != nil {
+	if err := BuildImage(context.Background(), eng, NewDockerfile().From("alpine:latest"), Image("app:dev"), Log(log)); err != nil {
 		t.Fatal(err)
 	}
 	gotDuring = <-buildDuring
@@ -499,7 +499,7 @@ func TestPullImageLoadingRowOnError(t *testing.T) {
 	log := NewLogger(OutputStream(&buf), Color(false), Progress("tty"))
 	log.spinEvery = -1
 	eng := &fakeEngine{pullErr: errors.New("denied")}
-	_, err := PullImage(context.Background(), eng, "alpine:latest", Log(log))
+	err := PullImage(context.Background(), eng, "alpine:latest", Log(log))
 	if err == nil {
 		t.Fatal("expected pull error")
 	}

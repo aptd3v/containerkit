@@ -176,9 +176,9 @@ Networks: `createNetwork`, `listNetworks`, `inspectNetwork`, `connectNetwork`, `
 
 Volumes: `createVolume`, `listEngineVolumes`, `removeVolume`, `updateVolume`, `pruneVolumes`.
 
-Swarm: `initSwarm`, `joinSwarm`, `leaveSwarm`, `unlockSwarm`, `updateSwarm`, `createSwarmService`, `listSwarmServices`, `updateSwarmService`, `swarmServiceLogs`, `listNodes`, `updateNode`, `removeNode`, `listTasks`, `taskLogs`, `createEngineConfig`, `listConfigs`, `updateEngineConfig`, `createEngineSecret`, `listSecrets`, `updateEngineSecret`.
+Swarm: `initSwarm`, `joinSwarm`, `leaveSwarm`, `unlockSwarm`, `updateSwarm`, `inspectSwarm`, `createSwarmService`, `listSwarmServices`, `inspectSwarmService`, `updateSwarmService`, `swarmServiceLogs`, `listNodes`, `inspectNode`, `updateNode`, `removeNode`, `listTasks`, `inspectTask`, `taskLogs`, `createEngineConfig`, `listConfigs`, `inspectConfig`, `updateEngineConfig`, `createEngineSecret`, `listSecrets`, `inspectSecret`, `updateEngineSecret`.
 
-Plugins: `createPlugin`, `installPlugin`, `enablePlugin`, `disablePlugin`, `listPlugins`, `setPlugin`, `upgradePlugin`, `pushPlugin`, `removePlugin`.
+Plugins: `createPlugin`, `installPlugin`, `inspectPlugin`, `enablePlugin`, `disablePlugin`, `listPlugins`, `setPlugin`, `upgradePlugin`, `pushPlugin`, `removePlugin`.
 
 Host: `ping`, `login`, `diskUsage`, `inspect`, `listenEvents`, `load`, `pruneBuildCache`, `pruneContainers`.
 

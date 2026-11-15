@@ -68,7 +68,7 @@ func writePlanGo(root string, setters map[string]*setter, bags map[string]*bagIn
 		}
 		sort.Strings(pkgs)
 		for _, p := range pkgs {
-			if p == "time" || p == "json" {
+			if p == "time" || p == "json" || p == "ocispec" {
 				continue
 			}
 			fmt.Fprintf(&buf, "\t%q\n", "github.com/aptd3v/containerkit/pkg/"+p)
@@ -354,6 +354,13 @@ func writeScalarCall(buf *bytes.Buffer, s *setter, raw string) {
 	p := s.goParams[0]
 	buf.WriteString("\t\t")
 	switch {
+	case p.goType == "ocispec.Platform":
+		fmt.Fprintf(buf, "p, err := asPlatform(%s)\n", raw)
+		buf.WriteString("\t\tif err != nil {\n")
+		fmt.Fprintf(buf, "\t\t\terrs = append(errs, fmt.Errorf(%q, err))\n", s.prop+": %w")
+		buf.WriteString("\t\t} else {\n")
+		fmt.Fprintf(buf, "\t\t\topts = append(opts, %s(p))\n", s.name)
+		buf.WriteString("\t\t}\n")
 	case p.goType == "bool" || p.tsType == "boolean":
 		fmt.Fprintf(buf, "b, err := asBool(%s)\n", raw)
 		buf.WriteString("\t\tif err != nil {\n")
@@ -468,7 +475,7 @@ func writeExec(buf *bytes.Buffer, verbs []verb) {
 	buf.WriteString("\tswitch act.Op {\n")
 	seen := map[string]bool{}
 	for _, v := range verbs {
-		if v.bag == "" || v.op == "" || seen[v.op] {
+		if v.op == "" || seen[v.op] || (v.bag == "" && !v.bare) {
 			continue
 		}
 		seen[v.op] = true
@@ -477,8 +484,10 @@ func writeExec(buf *bytes.Buffer, verbs []verb) {
 		if v.needsYAML {
 			fmt.Fprintf(buf, "\t\t\tif compose == nil {\n\t\t\t\treturn nil, fmt.Errorf(\"tsx plan: yaml required for %s\")\n\t\t\t}\n", v.op)
 		}
-		fmt.Fprintf(buf, "\t\t\topts, err := decode%s(act.Options)\n", v.bag)
-		buf.WriteString("\t\t\tif err != nil {\n\t\t\t\treturn nil, err\n\t\t\t}\n")
+		if v.bag != "" {
+			fmt.Fprintf(buf, "\t\t\topts, err := decode%s(act.Options)\n", v.bag)
+			buf.WriteString("\t\t\tif err != nil {\n\t\t\t\treturn nil, err\n\t\t\t}\n")
+		}
 		writeExecCall(buf, v)
 		buf.WriteString("\t\t}\n")
 	}

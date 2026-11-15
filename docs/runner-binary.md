@@ -46,7 +46,37 @@ containerkit session
 
 `validate` calls `ImportPlan.Validate` or `ImportYAML.Validate` and does not dial the daemon. `exec` does: JSON is a TSX plan (`encode(composeUp(...))`); YAML is treated as compose (connect from env, then `composeUp`).
 
-`session` keeps one process open. Stdin and stdout are one JSON object per line. A call is `{"id":1,"type":"exec","plan":...}`. A result is `{"id":1,"type":"result","ok":true,"value":...}`. A failure is `{"id":1,"type":"error","class":"notFound","message":"..."}` with `status`, `hint`, `receiver`, `path`, and `exitCode` when they exist. Log lines are `{"type":"event","kind":"log","source":"...","stream":"stdout","line":"..."}`. The first plan dials the daemon. Later plans reuse that client while `connect` stays the same. `containerkit/live` is the TypeScript side of this pipe.
+`session` keeps one process open until stdin reaches EOF or the process is signaled. Stdin and stdout are JSON, one object per line. A blank line is ignored. Diagnostics go to stderr.
+
+A call:
+
+```json
+{"id": 1, "type": "exec", "plan": {}}
+```
+
+`plan` is the same document `exec` accepts. The reply repeats `id`.
+
+Success:
+
+```json
+{"id": 1, "type": "result", "ok": true, "value": {}}
+```
+
+Failure:
+
+```json
+{"id": 1, "type": "error", "class": "notFound", "message": "no such container"}
+```
+
+`class` is a stable string such as `notFound`, `conflict`, or `invalidArgument`. `status`, `hint`, `receiver`, `path`, and `exitCode` are present only when the error has them.
+
+Progress is an event, not a result. `kind` is `log` or `status`.
+
+```json
+{"type": "event", "kind": "log", "source": "api", "stream": "stdout", "line": "ready"}
+```
+
+The first plan dials the daemon. A later plan reuses that client while its `connect` object is unchanged. `containerkit/live` is the TypeScript side of this pipe.
 
 ## From npm
 

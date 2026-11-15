@@ -7,14 +7,19 @@ import (
 	"fmt"
 
 	"github.com/aptd3v/containerkit/pkg/cgroupns"
+	"github.com/aptd3v/containerkit/pkg/failact"
 	"github.com/aptd3v/containerkit/pkg/ipc"
 	"github.com/aptd3v/containerkit/pkg/isolation"
 	"github.com/aptd3v/containerkit/pkg/netmode"
+	"github.com/aptd3v/containerkit/pkg/oci"
+	"github.com/aptd3v/containerkit/pkg/order"
 	"github.com/aptd3v/containerkit/pkg/pidns"
 	"github.com/aptd3v/containerkit/pkg/progress"
 	"github.com/aptd3v/containerkit/pkg/propagate"
 	"github.com/aptd3v/containerkit/pkg/recursive"
 	"github.com/aptd3v/containerkit/pkg/scheme"
+	"github.com/aptd3v/containerkit/pkg/selinux"
+	"github.com/aptd3v/containerkit/pkg/signal"
 	"github.com/aptd3v/containerkit/pkg/userns"
 	"github.com/aptd3v/containerkit/pkg/uts"
 )
@@ -1882,6 +1887,14 @@ func decodeContainerOptions(v any) ([]ContainerOption, error) {
 			opts = append(opts, StdinOnce(b))
 		}
 	}
+	if raw, ok := m["stopSignal"]; ok {
+		s, err := asString(raw)
+		if err != nil {
+			errs = append(errs, fmt.Errorf("stopSignal: %w", err))
+		} else {
+			opts = append(opts, StopSignal(signal.Signal(s)))
+		}
+	}
 	if raw, ok := m["stopTimeout"]; ok {
 		d, err := asDuration(raw)
 		if err != nil {
@@ -2969,6 +2982,14 @@ func decodeEngineImageAttestOptions(v any) ([]EngineImageAttestOption, error) {
 	}
 	var opts []EngineImageAttestOption
 	var errs []error
+	if raw, ok := m["imagePlatform"]; ok {
+		p, err := asPlatform(raw)
+		if err != nil {
+			errs = append(errs, fmt.Errorf("imagePlatform: %w", err))
+		} else {
+			opts = append(opts, ImagePlatform(p))
+		}
+	}
 	if raw, ok := m["predicateTypes"]; ok {
 		ss, err := asStringSlice(raw)
 		if err != nil {
@@ -2992,8 +3013,21 @@ func decodeEngineImageHistoryOptions(v any) ([]EngineImageHistoryOption, error) 
 	if v == nil {
 		return nil, nil
 	}
-	_, err := asObject(v)
-	return nil, err
+	m, err := asObject(v)
+	if err != nil {
+		return nil, err
+	}
+	var opts []EngineImageHistoryOption
+	var errs []error
+	if raw, ok := m["imagePlatform"]; ok {
+		p, err := asPlatform(raw)
+		if err != nil {
+			errs = append(errs, fmt.Errorf("imagePlatform: %w", err))
+		} else {
+			opts = append(opts, ImagePlatform(p))
+		}
+	}
+	return opts, join(errs...)
 }
 
 func decodeEngineImageInspectOptions(v any) ([]EngineImageInspectOption, error) {
@@ -3006,6 +3040,14 @@ func decodeEngineImageInspectOptions(v any) ([]EngineImageInspectOption, error) 
 	}
 	var opts []EngineImageInspectOption
 	var errs []error
+	if raw, ok := m["imagePlatform"]; ok {
+		p, err := asPlatform(raw)
+		if err != nil {
+			errs = append(errs, fmt.Errorf("imagePlatform: %w", err))
+		} else {
+			opts = append(opts, ImagePlatform(p))
+		}
+	}
 	if raw, ok := m["manifests"]; ok {
 		b, err := asBool(raw)
 		if err != nil {
@@ -3104,8 +3146,21 @@ func decodeEngineImageSaveOptions(v any) ([]EngineImageSaveOption, error) {
 	if v == nil {
 		return nil, nil
 	}
-	_, err := asObject(v)
-	return nil, err
+	m, err := asObject(v)
+	if err != nil {
+		return nil, err
+	}
+	var opts []EngineImageSaveOption
+	var errs []error
+	if raw, ok := m["imagePlatform"]; ok {
+		p, err := asPlatform(raw)
+		if err != nil {
+			errs = append(errs, fmt.Errorf("imagePlatform: %w", err))
+		} else {
+			opts = append(opts, ImagePlatform(p))
+		}
+	}
+	return opts, join(errs...)
 }
 
 func decodeEngineImageSearchOptions(v any) ([]EngineImageSearchOption, error) {
@@ -4519,6 +4574,14 @@ func decodeEngineStopOptions(v any) ([]EngineStopOption, error) {
 	}
 	var opts []EngineStopOption
 	var errs []error
+	if raw, ok := m["stopSignal"]; ok {
+		s, err := asString(raw)
+		if err != nil {
+			errs = append(errs, fmt.Errorf("stopSignal: %w", err))
+		} else {
+			opts = append(opts, StopSignal(signal.Signal(s)))
+		}
+	}
 	if raw, ok := m["timeout"]; ok {
 		d, err := asDuration(raw)
 		if err != nil {
@@ -5302,6 +5365,14 @@ func decodeKillOptions(v any) ([]KillOption, error) {
 			opts = append(opts, Services(ss...))
 		}
 	}
+	if raw, ok := m["stopSignal"]; ok {
+		s, err := asString(raw)
+		if err != nil {
+			errs = append(errs, fmt.Errorf("stopSignal: %w", err))
+		} else {
+			opts = append(opts, StopSignal(signal.Signal(s)))
+		}
+	}
 	return opts, join(errs...)
 }
 
@@ -6035,6 +6106,14 @@ func decodePublishOptions(v any) ([]PublishOption, error) {
 			errs = append(errs, fmt.Errorf("assumeYes: %w", err))
 		} else {
 			opts = append(opts, AssumeYes(b))
+		}
+	}
+	if raw, ok := m["oci"]; ok {
+		s, err := asString(raw)
+		if err != nil {
+			errs = append(errs, fmt.Errorf("oci: %w", err))
+		} else {
+			opts = append(opts, OCI(oci.Version(s)))
 		}
 	}
 	if raw, ok := m["resolveDigests"]; ok {
@@ -6918,6 +6997,71 @@ func decodeUpOptions(v any) ([]UpOption, error) {
 	return opts, join(errs...)
 }
 
+func decodeUpdateOptions(v any) ([]UpdateOption, error) {
+	if v == nil {
+		return nil, nil
+	}
+	m, err := asObject(v)
+	if err != nil {
+		return nil, err
+	}
+	var opts []UpdateOption
+	var errs []error
+	if raw, ok := m["delay"]; ok {
+		d, err := asDuration(raw)
+		if err != nil {
+			errs = append(errs, fmt.Errorf("delay: %w", err))
+		} else {
+			opts = append(opts, Delay(d))
+		}
+	}
+	if raw, ok := m["failureAction"]; ok {
+		s, err := asString(raw)
+		if err != nil {
+			errs = append(errs, fmt.Errorf("failureAction: %w", err))
+		} else {
+			opts = append(opts, FailureAction(failact.Action(s)))
+		}
+	}
+	if raw, ok := m["maxFailureRatio"]; ok {
+		n, err := asInt(raw)
+		if err != nil {
+			errs = append(errs, fmt.Errorf("maxFailureRatio: %w", err))
+		} else if err := fitInt(n, "float32"); err != nil {
+			errs = append(errs, fmt.Errorf("maxFailureRatio: %w", err))
+		} else {
+			opts = append(opts, MaxFailureRatio(float32(n)))
+		}
+	}
+	if raw, ok := m["monitor"]; ok {
+		d, err := asDuration(raw)
+		if err != nil {
+			errs = append(errs, fmt.Errorf("monitor: %w", err))
+		} else {
+			opts = append(opts, Monitor(d))
+		}
+	}
+	if raw, ok := m["order"]; ok {
+		s, err := asString(raw)
+		if err != nil {
+			errs = append(errs, fmt.Errorf("order: %w", err))
+		} else {
+			opts = append(opts, Order(order.Order(s)))
+		}
+	}
+	if raw, ok := m["parallelism"]; ok {
+		n, err := asInt(raw)
+		if err != nil {
+			errs = append(errs, fmt.Errorf("parallelism: %w", err))
+		} else if err := fitInt(n, "uint64"); err != nil {
+			errs = append(errs, fmt.Errorf("parallelism: %w", err))
+		} else {
+			opts = append(opts, Parallelism(uint64(n)))
+		}
+	}
+	return opts, join(errs...)
+}
+
 func decodeVizOptions(v any) ([]VizOption, error) {
 	if v == nil {
 		return nil, nil
@@ -7085,6 +7229,14 @@ func decodeVolumeOptions(v any) ([]VolumeOption, error) {
 			errs = append(errs, fmt.Errorf("recursive: %w", err))
 		} else {
 			opts = append(opts, Recursive(recursive.Mode(s)))
+		}
+	}
+	if raw, ok := m["seLinux"]; ok {
+		s, err := asString(raw)
+		if err != nil {
+			errs = append(errs, fmt.Errorf("seLinux: %w", err))
+		} else {
+			opts = append(opts, SELinux(selinux.Label(s)))
 		}
 	}
 	if raw, ok := m["size"]; ok {
@@ -7763,11 +7915,10 @@ func execKnownAction(ctx context.Context, cli *Client, compose *Compose, act pla
 			if err != nil {
 				return nil, err
 			}
-			out0, err := BuildImage(ctx, cli.Engine(), opts...)
-			if err != nil {
+			if err := BuildImage(ctx, cli.Engine(), opts...); err != nil {
 				return nil, err
 			}
-			return marshalLoose(out0)
+			return []byte(`{"ok":true}`), nil
 		}
 	case "commitContainer":
 		{
@@ -8506,6 +8657,15 @@ func execKnownAction(ctx context.Context, cli *Client, compose *Compose, act pla
 			}
 			return marshalLoose(out0)
 		}
+	case "inspectConfig":
+		{
+			pos2 := act.fieldString("id")
+			out0, err := InspectConfig(ctx, cli.Engine(), pos2)
+			if err != nil {
+				return nil, err
+			}
+			return marshalLoose(out0)
+		}
 	case "inspectImage":
 		{
 			opts, err := decodeEngineImageInspectOptions(act.Options)
@@ -8527,6 +8687,59 @@ func execKnownAction(ctx context.Context, cli *Client, compose *Compose, act pla
 			}
 			pos2 := act.fieldString("name")
 			out0, err := InspectNetwork(ctx, cli.Engine(), pos2, opts...)
+			if err != nil {
+				return nil, err
+			}
+			return marshalLoose(out0)
+		}
+	case "inspectNode":
+		{
+			pos2 := act.fieldString("id")
+			out0, err := InspectNode(ctx, cli.Engine(), pos2)
+			if err != nil {
+				return nil, err
+			}
+			return marshalLoose(out0)
+		}
+	case "inspectPlugin":
+		{
+			pos2 := act.fieldString("name")
+			out0, err := InspectPlugin(ctx, cli.Engine(), pos2)
+			if err != nil {
+				return nil, err
+			}
+			return marshalLoose(out0)
+		}
+	case "inspectSecret":
+		{
+			pos2 := act.fieldString("id")
+			out0, err := InspectSecret(ctx, cli.Engine(), pos2)
+			if err != nil {
+				return nil, err
+			}
+			return marshalLoose(out0)
+		}
+	case "inspectSwarm":
+		{
+			out0, err := InspectSwarm(ctx, cli.Engine())
+			if err != nil {
+				return nil, err
+			}
+			return marshalLoose(out0)
+		}
+	case "inspectSwarmService":
+		{
+			pos2 := act.fieldString("id")
+			out0, err := InspectSwarmService(ctx, cli.Engine(), pos2)
+			if err != nil {
+				return nil, err
+			}
+			return marshalLoose(out0)
+		}
+	case "inspectTask":
+		{
+			pos2 := act.fieldString("id")
+			out0, err := InspectTask(ctx, cli.Engine(), pos2)
 			if err != nil {
 				return nil, err
 			}
@@ -8843,11 +9056,10 @@ func execKnownAction(ctx context.Context, cli *Client, compose *Compose, act pla
 				return nil, err
 			}
 			pos2 := act.fieldString("ref")
-			out0, err := PullImage(ctx, cli.Engine(), pos2, opts...)
-			if err != nil {
+			if err := PullImage(ctx, cli.Engine(), pos2, opts...); err != nil {
 				return nil, err
 			}
-			return marshalLoose(out0)
+			return []byte(`{"ok":true}`), nil
 		}
 	case "pushImage":
 		{
@@ -8856,11 +9068,10 @@ func execKnownAction(ctx context.Context, cli *Client, compose *Compose, act pla
 				return nil, err
 			}
 			pos2 := act.fieldString("ref")
-			out0, err := PushImage(ctx, cli.Engine(), pos2, opts...)
-			if err != nil {
+			if err := PushImage(ctx, cli.Engine(), pos2, opts...); err != nil {
 				return nil, err
 			}
-			return marshalLoose(out0)
+			return []byte(`{"ok":true}`), nil
 		}
 	case "pushPlugin":
 		{

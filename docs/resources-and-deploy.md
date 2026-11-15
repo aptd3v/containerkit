@@ -18,6 +18,6 @@ svc := NewService(
 )
 ```
 
-[Replicas](https://pkg.go.dev/github.com/aptd3v/containerkit/pkg/kit#Replicas) inside `Deploy` is the swarm replica count. On the service itself it is compose `scale`. [Mode](https://pkg.go.dev/github.com/aptd3v/containerkit/pkg/kit#Mode) here is `Replicated` or `Global`. Inside [Publish](publish-a-port.md) it is `PortIngress` or `PortHost`.
+[Replicas](https://pkg.go.dev/github.com/aptd3v/containerkit/pkg/kit#Replicas) inside `Deploy` is the swarm replica count. On the service itself it is compose `scale`. [Mode](https://pkg.go.dev/github.com/aptd3v/containerkit/pkg/kit#Mode) here is `Replicated` or `Global`. `svcmode.ReplicatedJob` and `svcmode.GlobalJob` are the job modes. Inside [Publish](publish-a-port.md) it is `PortIngress` or `PortHost`.
 
-[ShmSize](https://pkg.go.dev/github.com/aptd3v/containerkit/pkg/kit#ShmSize) is `/dev/shm`. [StopSignal](environment-and-command.md) takes `SIGTERM` or `SIGKILL`.
+[ShmSize](https://pkg.go.dev/github.com/aptd3v/containerkit/pkg/kit#ShmSize) is `/dev/shm`. [StopSignal](environment-and-command.md) takes a signal name. The kit re-exports `SIGTERM` and `SIGKILL`. The rest are in `pkg/signal`.

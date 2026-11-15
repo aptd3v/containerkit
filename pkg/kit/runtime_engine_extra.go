@@ -13,12 +13,14 @@ func engineAPI(api Engine, setting string) error {
 }
 
 // PullImage pulls an image through Engine.
-func PullImage(ctx context.Context, api Engine, ref string, opts ...EnginePullOption) (ImagePullResponse, error) {
+// The Engine call returns a progress stream. This function reads that stream
+// to the end, so the pull finishes here and the body is not a result.
+func PullImage(ctx context.Context, api Engine, ref string, opts ...EnginePullOption) error {
 	if err := engineAPI(api, "PullImage"); err != nil {
-		return nil, err
+		return err
 	}
 	if ref == "" {
-		return nil, cfgErr("engine", "ref", "PullImage", fmt.Errorf("%w: image reference", errRequired))
+		return cfgErr("engine", "ref", "PullImage", fmt.Errorf("%w: image reference", errRequired))
 	}
 	var act enginePullAct
 	var errs []error
@@ -30,28 +32,30 @@ func PullImage(ctx context.Context, api Engine, ref string, opts ...EnginePullOp
 		errs = addErr(errs, opt.applyEnginePull(&act))
 	}
 	if err := join(errs...); err != nil {
-		return nil, wrapReceiver("engine", err)
+		return wrapReceiver("engine", err)
 	}
 	adoptLog(ctx, &act.log)
 	emitPhase(act.log, KindPull, "pulling", ref, StatusWorking, "")
 	out, err := api.ImagePull(ctx, ref, act.sdk())
 	if err != nil {
 		failPhase(act.log, KindPull, "pulling", ref, err)
-		return nil, cfgErr("engine", ref, "PullImage", err)
+		return cfgErr("engine", ref, "PullImage", err)
 	}
 	if err := act.log.drainJSON(ctx, out, KindPull, ref); err != nil {
 		failPhase(act.log, KindPull, "pulling", ref, err)
-		return out, cfgErr("engine", ref, "PullImage", err)
+		return cfgErr("engine", ref, "PullImage", err)
 	}
 	finishPhase(act.log, KindPull, "pulled", ref)
-	return out, nil
+	return nil
 }
 
 // BuildImage builds an image through Engine.
 // Supply a [Dockerfile], [Source] context directory, and/or [Tar] archive.
-func BuildImage(ctx context.Context, api Engine, opts ...EngineBuildOption) (ImageBuildResult, error) {
+// The Engine call returns a progress stream. This function reads that stream
+// to the end, so the build finishes here and the body is not a result.
+func BuildImage(ctx context.Context, api Engine, opts ...EngineBuildOption) error {
 	if err := engineAPI(api, "BuildImage"); err != nil {
-		return ImageBuildResult{}, err
+		return err
 	}
 	var act engineBuildAct
 	var errs []error
@@ -63,7 +67,7 @@ func BuildImage(ctx context.Context, api Engine, opts ...EngineBuildOption) (Ima
 		errs = addErr(errs, opt.applyEngineBuild(&act))
 	}
 	if err := join(errs...); err != nil {
-		return ImageBuildResult{}, wrapReceiver("engine", err)
+		return wrapReceiver("engine", err)
 	}
 	id := "image"
 	if len(act.tags) > 0 {
@@ -73,19 +77,19 @@ func BuildImage(ctx context.Context, api Engine, opts ...EngineBuildOption) (Ima
 	buildContext, err := act.reader()
 	if err != nil {
 		failPhase(act.log, KindBuild, "building", id, err)
-		return ImageBuildResult{}, wrapReceiver("engine", err)
+		return wrapReceiver("engine", err)
 	}
 	out, err := api.ImageBuild(ctx, buildContext, act.sdk())
 	if err != nil {
 		failPhase(act.log, KindBuild, "building", id, err)
-		return ImageBuildResult{}, cfgErr("engine", id, "BuildImage", err)
+		return cfgErr("engine", id, "BuildImage", err)
 	}
 	if err := act.log.drainJSON(ctx, out.Body, KindBuild, id); err != nil {
 		failPhase(act.log, KindBuild, "building", id, err)
-		return out, cfgErr("engine", id, "BuildImage", err)
+		return cfgErr("engine", id, "BuildImage", err)
 	}
 	finishPhase(act.log, KindBuild, "built", id)
-	return out, nil
+	return nil
 }
 
 // CreateNetwork creates an Engine network.

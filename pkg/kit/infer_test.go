@@ -102,7 +102,7 @@ var (
 		}
 		df := NewDockerfile().From("alpine:latest").Run("echo ok")
 		_ = NewService(Name("web"), Build(df))
-		_ = func(ctx context.Context, api Engine) (ImageBuildResult, error) {
+		_ = func(ctx context.Context, api Engine) error {
 			return BuildImage(ctx, api, df, Image("web:dev"))
 		}
 	}

@@ -119,6 +119,136 @@ import type {
 	WatchOptions,
 } from "./generated-options.js";
 
+export type PlanOp =
+	| "attachContainer"
+	| "attachExec"
+	| "attestImage"
+	| "buildImage"
+	| "commitContainer"
+	| "composeAttach"
+	| "composeBuild"
+	| "composeCommit"
+	| "composeCopy"
+	| "composeCreate"
+	| "composeDown"
+	| "composeEvents"
+	| "composeExec"
+	| "composeExport"
+	| "composeGenerate"
+	| "composeImages"
+	| "composeKill"
+	| "composeList"
+	| "composeLoadProject"
+	| "composePause"
+	| "composePort"
+	| "composePs"
+	| "composePublishOCI"
+	| "composePull"
+	| "composePush"
+	| "composeRemove"
+	| "composeRestart"
+	| "composeRun"
+	| "composeScale"
+	| "composeStart"
+	| "composeStop"
+	| "composeUnpause"
+	| "composeUp"
+	| "composeViz"
+	| "composeVolumeList"
+	| "composeWait"
+	| "composeWatch"
+	| "connectNetwork"
+	| "containerRun"
+	| "copyFrom"
+	| "copyTo"
+	| "create"
+	| "createCheckpoint"
+	| "createEngineConfig"
+	| "createEngineSecret"
+	| "createExec"
+	| "createNetwork"
+	| "createPlugin"
+	| "createSwarmService"
+	| "createVolume"
+	| "disablePlugin"
+	| "disconnectNetwork"
+	| "diskUsage"
+	| "enablePlugin"
+	| "historyImage"
+	| "initSwarm"
+	| "inspect"
+	| "inspectConfig"
+	| "inspectImage"
+	| "inspectNetwork"
+	| "inspectNode"
+	| "inspectPlugin"
+	| "inspectSecret"
+	| "inspectSwarm"
+	| "inspectSwarmService"
+	| "inspectTask"
+	| "installPlugin"
+	| "joinSwarm"
+	| "kill"
+	| "leaveSwarm"
+	| "listCheckpoints"
+	| "listConfigs"
+	| "listContainers"
+	| "listEngineVolumes"
+	| "listImages"
+	| "listNetworks"
+	| "listNodes"
+	| "listPlugins"
+	| "listSecrets"
+	| "listSwarmServices"
+	| "listTasks"
+	| "listenEvents"
+	| "load"
+	| "login"
+	| "logs"
+	| "ping"
+	| "pruneBuildCache"
+	| "pruneContainers"
+	| "pruneImages"
+	| "pruneNetworks"
+	| "pruneVolumes"
+	| "pullImage"
+	| "pushImage"
+	| "pushPlugin"
+	| "remove"
+	| "removeCheckpoint"
+	| "removeImage"
+	| "removeNode"
+	| "removePlugin"
+	| "removeVolume"
+	| "renameContainer"
+	| "resizeContainer"
+	| "resizeExec"
+	| "restart"
+	| "run"
+	| "saveImages"
+	| "searchImages"
+	| "setPlugin"
+	| "start"
+	| "startExec"
+	| "statPath"
+	| "statsContainer"
+	| "stop"
+	| "swarmServiceLogs"
+	| "tagImage"
+	| "taskLogs"
+	| "topContainer"
+	| "unlockSwarm"
+	| "updateContainer"
+	| "updateEngineConfig"
+	| "updateEngineSecret"
+	| "updateNode"
+	| "updateSwarm"
+	| "updateSwarmService"
+	| "updateVolume"
+	| "upgradePlugin"
+	| "wait"
+;
+
 /** attachContainer encodes kit AttachContainer as a plan document. Go ImportPlan / ExecJSON runs it. */
 export function attachContainer(cli: Client, id: string, options?: EngineAttachOptions): PlanDocument {
 	const action: PlanAction = { op: "attachContainer" };
@@ -744,6 +874,14 @@ export function inspect(cli: Client, id: string, options?: EngineInspectOptions)
 	return doc;
 }
 
+/** inspectConfig encodes kit InspectConfig as a plan document. Go ImportPlan / ExecJSON runs it. */
+export function inspectConfig(cli: Client, id: string): PlanDocument {
+	const action: PlanAction = { op: "inspectConfig" };
+	action.id = id;
+	const doc: PlanDocument = { connect: cli.options, actions: [action] };
+	return doc;
+}
+
 /** inspectImage encodes kit InspectImage as a plan document. Go ImportPlan / ExecJSON runs it. */
 export function inspectImage(cli: Client, ref: string, options?: EngineImageInspectOptions): PlanDocument {
 	const action: PlanAction = { op: "inspectImage" };
@@ -762,6 +900,53 @@ export function inspectNetwork(cli: Client, name: string, options?: EngineNetwor
 		action.options = options;
 	}
 	action.name = name;
+	const doc: PlanDocument = { connect: cli.options, actions: [action] };
+	return doc;
+}
+
+/** inspectNode encodes kit InspectNode as a plan document. Go ImportPlan / ExecJSON runs it. */
+export function inspectNode(cli: Client, id: string): PlanDocument {
+	const action: PlanAction = { op: "inspectNode" };
+	action.id = id;
+	const doc: PlanDocument = { connect: cli.options, actions: [action] };
+	return doc;
+}
+
+/** inspectPlugin encodes kit InspectPlugin as a plan document. Go ImportPlan / ExecJSON runs it. */
+export function inspectPlugin(cli: Client, name: string): PlanDocument {
+	const action: PlanAction = { op: "inspectPlugin" };
+	action.name = name;
+	const doc: PlanDocument = { connect: cli.options, actions: [action] };
+	return doc;
+}
+
+/** inspectSecret encodes kit InspectSecret as a plan document. Go ImportPlan / ExecJSON runs it. */
+export function inspectSecret(cli: Client, id: string): PlanDocument {
+	const action: PlanAction = { op: "inspectSecret" };
+	action.id = id;
+	const doc: PlanDocument = { connect: cli.options, actions: [action] };
+	return doc;
+}
+
+/** inspectSwarm encodes kit InspectSwarm as a plan document. Go ImportPlan / ExecJSON runs it. */
+export function inspectSwarm(cli: Client): PlanDocument {
+	const action: PlanAction = { op: "inspectSwarm" };
+	const doc: PlanDocument = { connect: cli.options, actions: [action] };
+	return doc;
+}
+
+/** inspectSwarmService encodes kit InspectSwarmService as a plan document. Go ImportPlan / ExecJSON runs it. */
+export function inspectSwarmService(cli: Client, id: string): PlanDocument {
+	const action: PlanAction = { op: "inspectSwarmService" };
+	action.id = id;
+	const doc: PlanDocument = { connect: cli.options, actions: [action] };
+	return doc;
+}
+
+/** inspectTask encodes kit InspectTask as a plan document. Go ImportPlan / ExecJSON runs it. */
+export function inspectTask(cli: Client, id: string): PlanDocument {
+	const action: PlanAction = { op: "inspectTask" };
+	action.id = id;
 	const doc: PlanDocument = { connect: cli.options, actions: [action] };
 	return doc;
 }

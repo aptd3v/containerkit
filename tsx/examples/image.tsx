@@ -189,4 +189,4 @@ function Runtime(props: { config: ImageConfig }): DockerfileNode {
 	);
 }
 
-process.stdout.write(exportDockerfile(<LedgerImage config={configFromEnv(process.env)} />));
+console.log(exportDockerfile(<LedgerImage config={configFromEnv(process.env)} />));

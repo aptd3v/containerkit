@@ -183,7 +183,7 @@ func (t *Task) runBuild() error {
 	logger := kit.NewLogger(kit.OutputStream(w), kit.Color(false), kit.Progress("plain"))
 	opts := append([]kit.EngineBuildOption{}, t.build...)
 	opts = append(opts, kit.Log(logger))
-	_, err := kit.BuildImage(ctx, api, opts...)
+	err := kit.BuildImage(ctx, api, opts...)
 	return err
 }
 

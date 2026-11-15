@@ -37,6 +37,27 @@ func TestComposeUpSetters(t *testing.T) {
 	}
 }
 
+func TestDetachWinsOverContextLogger(t *testing.T) {
+	t.Parallel()
+	log := NewLogger(OutputStream(io.Discard), Color(false), Progress("plain"))
+	p := NewCompose("app", AddService(Name("api"), Image("alpine:latest")))
+	ctx := log.Context(context.Background())
+	detached := &fakeComposer{}
+	if err := p.Up(ctx, detached, Detach(true)); err != nil {
+		t.Fatal(err)
+	}
+	if detached.upOpts.Start.Attach != nil {
+		t.Fatal("detach should not attach the session logger")
+	}
+	attached := &fakeComposer{}
+	if err := p.Up(ctx, attached); err != nil {
+		t.Fatal(err)
+	}
+	if attached.upOpts.Start.Attach == nil {
+		t.Fatal("session logger should attach when up is not detached")
+	}
+}
+
 func TestUpStampsComposeIdentity(t *testing.T) {
 	t.Parallel()
 	p := NewCompose("supabase", AddService(Name("imgproxy"), Image("darthsim/imgproxy:v3.30.1"), ContainerName("supabase-imgproxy")))
@@ -321,13 +342,13 @@ func TestEngineImageNetworkVolumeSetters(t *testing.T) {
 	t.Parallel()
 	api := &fakeEngine{}
 	ctx := context.Background()
-	if _, err := PullImage(ctx, api, "alpine:latest", All(true), Platform("linux/amd64"), RegistryAuth("xyz")); err != nil {
+	if err := PullImage(ctx, api, "alpine:latest", All(true), Platform("linux/amd64"), RegistryAuth("xyz")); err != nil {
 		t.Fatal(err)
 	}
 	if api.pullRef != "alpine:latest" || !api.pulled.All || api.pulled.RegistryAuth != "xyz" || len(api.pulled.Platforms) != 1 {
 		t.Fatalf("pull = %s %+v", api.pullRef, api.pulled)
 	}
-	if _, err := BuildImage(ctx, api, Tar(bytes.NewReader(nil)), Image("app:latest"), Quiet(true), NoCache(true), Pull(true), Force(true), Memory(64), DockerfilePath("Dockerfile"), Target("release"), Label("a", "b"), Env("V", "1"), Platform("linux/arm64")); err != nil {
+	if err := BuildImage(ctx, api, Tar(bytes.NewReader(nil)), Image("app:latest"), Quiet(true), NoCache(true), Pull(true), Force(true), Memory(64), DockerfilePath("Dockerfile"), Target("release"), Label("a", "b"), Env("V", "1"), Platform("linux/arm64")); err != nil {
 		t.Fatal(err)
 	}
 	if len(api.built.Tags) != 1 || api.built.Tags[0] != "app:latest" {

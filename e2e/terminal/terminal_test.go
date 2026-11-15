@@ -147,7 +147,7 @@ func liveEngine(t *testing.T, ctx context.Context) kit.Engine {
 	if _, err := kit.Ping(ctx, api); err != nil {
 		t.Skipf("engine not reachable: %v", err)
 	}
-	if _, err := kit.PullImage(ctx, api, clientImage); err != nil {
+	if err := kit.PullImage(ctx, api, clientImage); err != nil {
 		t.Skipf("PullImage %s: %v", clientImage, err)
 	}
 	return api

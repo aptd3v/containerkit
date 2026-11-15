@@ -6,7 +6,7 @@ A self-hosted [Supabase](https://supabase.com/docs/guides/self-hosting/docker) s
 
 ## Requirements
 
-- Go 1.27+
+- Go 1.26.8 or newer, the version in the module `go.mod`
 - Docker Engine
 - `openssl` (key generation)
 - `node` 16+ or Docker (asymmetric API keys)

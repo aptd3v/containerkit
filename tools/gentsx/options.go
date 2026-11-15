@@ -32,6 +32,14 @@ func writeOptions(root string, setters map[string]*setter, bags map[string]*bagI
 	var buf bytes.Buffer
 	fmt.Fprintf(&buf, "// %s\n\n", generatedBy)
 	buf.WriteString("export type Duration = number | string;\n\n")
+	buf.WriteString("/** OCI platform. Same object image inspect returns. */\n")
+	buf.WriteString("export type ImagePlatform = {\n")
+	buf.WriteString("\tarchitecture: string;\n")
+	buf.WriteString("\tos: string;\n")
+	buf.WriteString("\t\"os.version\"?: string;\n")
+	buf.WriteString("\t\"os.features\"?: string[];\n")
+	buf.WriteString("\tvariant?: string;\n")
+	buf.WriteString("};\n\n")
 
 	leafTypes := map[string][]leadParam{}
 	for _, s := range setters {

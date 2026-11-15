@@ -145,6 +145,14 @@ await app.pushImage("ghcr.io/acme/app:dev");
 await app.removeImage("app:dev");
 ```
 
+`listImages` returns `{ Items }`. Each item has `Id`, `RepoTags`, `RepoDigests`, `Size`, and the other fields the Engine lists. A nil list is `null`. `inspectImage` returns the inspect object: `Id`, `Os`, `Architecture`, `Config`, `RootFS`, and the rest of that response. `listContainers` returns `{ Items }` with `Id`, `Names`, `Image`, `State`, and `Ports`. `inspect` returns `{ Container, Raw }`. `Container` is the inspect document (`Id`, `Name`, `State`, `Config`, `HostConfig`, `NetworkSettings`). `historyImage` returns `{ Items }`. `searchImages` returns `{ Items }` whose fields are `name`, `star_count`, `is_official`, `is_automated`, and `description`. `pruneImages` returns `{ Report }` with `ImagesDeleted` and `SpaceReclaimed`. `pruneContainers`, `pruneNetworks`, and `pruneVolumes` return `{ Report }` for the objects they deleted.
+
+`composePs` returns the container rows, or `null` when there are none. `State` is `running`, `exited`, and the other container states. `composeList` returns the stack rows. `composeImages` returns a map of service name to image. `composeVolumeList` returns the project volumes, or `null`. `composeExec` and `composeRun` return the exit code. `composeWait` returns a number. `composePort` returns `[host, port]`. `composeViz` returns the graph. `load` returns `{ name }`. `create` returns `{ ID, Warnings }`. `createExec` and `createNetwork` return `{ ID }`. `createVolume` returns `{ Volume }`. `listNetworks` returns `{ Items }`. `inspectNetwork` returns `{ Network, Raw }`. `listEngineVolumes` returns `{ Items, Warnings }`. `ping` returns `APIVersion`, `OSType`, `Experimental`, `BuilderVersion`, and `SwarmStatus`. `topContainer` returns `{ Titles, Processes }`. `statPath` returns `{ Stat }` with `name`, `size`, `mode`, `mtime`, and `linkTarget`.
+
+`await app.pullImage(...)` finishes when the pull finishes. A successful pull, push, build, or `composeBuild` is `{ ok: true }`, and the TypeScript type stays `unknown`. `logs`, `attachContainer`, `statsContainer`, `copyFrom`, and `saveImages` stay untyped too: they return a stream or a hijacked connection.
+
+`login` returns `{ Auth }` with `Status` and, when the registry issued one, `IdentityToken`. `diskUsage` returns `Containers`, `Images`, `BuildCache`, and `Volumes`, each with counts, sizes, and `Items` (null unless the call was verbose). `removeImage` returns `{ Items }` of deleted and untagged images. `listConfigs`, `listSecrets`, `listPlugins`, `listNodes`, `listSwarmServices`, `listTasks`, and `listCheckpoints` return `{ Items }`. `inspectConfig`, `inspectSecret`, `inspectPlugin`, `inspectNode`, `inspectSwarmService`, and `inspectTask` return the object plus `Raw`. `inspectSwarm` returns `{ Swarm }` with `JoinTokens`. A nil list is `null`.
+
 `buildDockerfile` turns the Dockerfile tree into the build and builds it. `buildImage` points at a Dockerfile that is already on disk. `source` is the build context. `target` selects a stage. The Dockerfile page explains the tree.
 
 `tagImage`, `historyImage`, `searchImages`, `saveImages`, `attestImage`, and `pruneImages` take a reference, a search term, or a list of references, then options. `await app.pruneImages({ all: true, filter })` drops unused images.
@@ -196,9 +204,9 @@ await app.listPlugins();
 
 `diskUsage` uses `images`, `volumes`, and `buildCache` to choose which kinds to include. `usage` narrows the report to one kind: `df.Container`, `df.Image`, `df.Volume`, or `df.BuildCache`. `updateNode` also takes `name` and `versionIndex`.
 
-Swarm services, tasks, configs, and secrets follow the same shape. An id, when the method has one, is the first argument. The names are `createSwarmService`, `listSwarmServices`, `updateSwarmService`, `swarmServiceLogs`, `listTasks`, `taskLogs`, `createEngineConfig`, `listConfigs`, `updateEngineConfig`, `createEngineSecret`, `listSecrets`, and `updateEngineSecret`.
+Swarm services, tasks, configs, and secrets follow the same shape. An id, when the method has one, is the first argument. The names are `createSwarmService`, `listSwarmServices`, `inspectSwarmService`, `updateSwarmService`, `swarmServiceLogs`, `listTasks`, `inspectTask`, `taskLogs`, `createEngineConfig`, `listConfigs`, `inspectConfig`, `updateEngineConfig`, `createEngineSecret`, `listSecrets`, `inspectSecret`, and `updateEngineSecret`. `inspectSwarm` takes no id.
 
-`leaveSwarm`, `joinSwarm`, `unlockSwarm`, and `updateSwarm` take options: `await app.leaveSwarm()`. Plugin methods that name a plugin (`installPlugin`, `enablePlugin`, `disablePlugin`, `setPlugin`, `upgradePlugin`, `pushPlugin`, `removePlugin`) take the plugin name, then options. `createPlugin` and `listPlugins` take options.
+`leaveSwarm`, `joinSwarm`, `unlockSwarm`, and `updateSwarm` take options: `await app.leaveSwarm()`. Plugin methods that name a plugin (`installPlugin`, `enablePlugin`, `disablePlugin`, `setPlugin`, `upgradePlugin`, `pushPlugin`, `removePlugin`) take the plugin name, then options. `inspectPlugin` takes the name and no options. `createPlugin` and `listPlugins` take options.
 
 `pruneContainers` and `pruneBuildCache` take options. `pruneBuildCache` accepts `all` and `filter`.
 

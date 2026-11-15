@@ -10,6 +10,7 @@ import {
 	connect,
 	encode,
 	type Client,
+	type DockerNode,
 	type PlanDocument,
 } from "containerkit";
 import { Command, Dockerfile, From, Label, Run, exportDockerfile } from "containerkit/dockerfile";
@@ -52,7 +53,7 @@ function AppImage() {
 	);
 }
 
-function Stack() {
+function Stack(): DockerNode<Compose> {
 	return (
 		<Compose name="ck-taskflow">
 			<Volume name="pgdata" />
@@ -133,7 +134,7 @@ function pipeline(cli: Client): PlanDocument {
 }
 
 const doc = pipeline(connect({ fromEnv: true }));
-process.stderr.write(
-	"build overlaps up-db. lint waits for the image, then overlaps Postgres. migrate retries. a failed check skips the tag. down waits only for migrate.\n",
+console.error(
+	"build overlaps up-db. lint waits for the image, then overlaps Postgres. migrate retries. a failed check skips the tag. down waits only for migrate.",
 );
-process.stdout.write(encode(doc));
+console.log(encode(doc));

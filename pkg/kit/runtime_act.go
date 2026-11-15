@@ -16,9 +16,10 @@ import (
 )
 
 type upAct struct {
-	create createAct
-	start  startAct
-	log    *Logger
+	create   createAct
+	start    startAct
+	log      *Logger
+	detached bool
 }
 
 func (a upAct) sdk() composeapi.UpOptions {

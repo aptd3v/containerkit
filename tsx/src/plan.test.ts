@@ -3,7 +3,18 @@ import { test } from "node:test";
 import { Compose, Env, Health, Service } from "./generated.js";
 import { composeUp, listImages, pullImage } from "./generated-actions.js";
 import { connect, encode, run, setInvoke, type Client } from "./plan.js";
-import type { ConnectOptions, UpOptions } from "./generated-options.js";
+import type {
+	ConnectOptions,
+	EngineImageInspectOptions,
+	KillOptions,
+	PublishOptions,
+	PullImageOptions,
+	UpOptions,
+	UpdateOptions,
+	VolumeOptions,
+} from "./generated-options.js";
+import type { ServiceProps } from "./generated.js";
+import { oci, order, selinux, signal } from "./vocab.js";
 
 function _scopeTypes(cli: Client) {
 	const connectOpts: ConnectOptions = { fromEnv: true, host: "unix:///var/run/docker.sock", timeout: "10s" };
@@ -26,6 +37,33 @@ function _scopeTypes(cli: Client) {
 	void _badUp;
 }
 void _scopeTypes;
+
+type ExactUnknown<T> = [unknown] extends [T] ? ([T] extends [unknown] ? true : false) : false;
+
+function _vocabOptions() {
+	const kill: KillOptions = { stopSignal: signal.SIGTERM };
+	const published: PublishOptions = { oci: oci.V1_1 };
+	const updated: UpdateOptions = { order: order.StartFirst };
+	const volume: VolumeOptions = { seLinux: selinux.Shared };
+	const inspect: EngineImageInspectOptions = {
+		imagePlatform: { architecture: "amd64", os: "linux", variant: "v8" },
+	};
+	const badKill: KillOptions = {
+		// @ts-expect-error stopSignal is a signal name
+		stopSignal: "nope",
+	};
+	const fromIsUnknown: ExactUnknown<Exclude<ServiceProps["fromContainer"], undefined>> = true;
+	const logIsUnknown: ExactUnknown<Exclude<PullImageOptions["log"], undefined>> = true;
+	void kill;
+	void published;
+	void updated;
+	void volume;
+	void inspect;
+	void badKill;
+	void fromIsUnknown;
+	void logIsUnknown;
+}
+void _vocabOptions;
 
 async function _factoryTakesCli({ cli }: { cli: Client }): Promise<import("./docker-node.js").DockerNode> {
 	await run(listImages(cli, { all: true }));

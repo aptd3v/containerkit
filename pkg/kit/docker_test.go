@@ -219,7 +219,7 @@ func TestBuildImageUsesDockerfile(t *testing.T) {
 	t.Parallel()
 	api := &fakeEngine{}
 	df := NewDockerfile().From("alpine:latest").Run("echo ok").Command("true")
-	if _, err := BuildImage(context.Background(), api, df, Image("app:dev")); err != nil {
+	if err := BuildImage(context.Background(), api, df, Image("app:dev")); err != nil {
 		t.Fatal(err)
 	}
 	if len(api.built.Tags) != 1 || api.built.Tags[0] != "app:dev" || api.built.Dockerfile != "Dockerfile" {

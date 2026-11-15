@@ -75,6 +75,35 @@ func TestDecodeConnectAndUpOptions(t *testing.T) {
 	}
 }
 
+func TestDecodeVocabOptions(t *testing.T) {
+	t.Parallel()
+	kill, err := decodeKillOptions(map[string]any{"stopSignal": "SIGTERM"})
+	if err != nil || len(kill) != 1 {
+		t.Fatalf("stopSignal: %v (%d)", err, len(kill))
+	}
+	published, err := decodePublishOptions(map[string]any{"oci": "1.1"})
+	if err != nil || len(published) != 1 {
+		t.Fatalf("oci: %v (%d)", err, len(published))
+	}
+	updated, err := decodeUpdateOptions(map[string]any{"order": "start-first"})
+	if err != nil || len(updated) != 1 {
+		t.Fatalf("order: %v (%d)", err, len(updated))
+	}
+	volume, err := decodeVolumeOptions(map[string]any{"seLinux": "z"})
+	if err != nil || len(volume) != 1 {
+		t.Fatalf("seLinux: %v (%d)", err, len(volume))
+	}
+	inspected, err := decodeEngineImageInspectOptions(map[string]any{
+		"imagePlatform": map[string]any{"architecture": "amd64", "os": "linux"},
+	})
+	if err != nil || len(inspected) != 1 {
+		t.Fatalf("imagePlatform: %v (%d)", err, len(inspected))
+	}
+	if _, err := decodeEngineImageInspectOptions(map[string]any{"imagePlatform": "linux/amd64"}); err == nil {
+		t.Fatal("imagePlatform string was accepted")
+	}
+}
+
 func TestDockerfileTSXPlan(t *testing.T) {
 	t.Parallel()
 	yml := []byte("name: app\nservices:\n  api:\n    build:\n      dockerfile_inline: \"FROM alpine:latest\\nRUN echo ok\\n\"\n")
@@ -93,6 +122,25 @@ func TestDockerfileTSXPlan(t *testing.T) {
 	plan := ImportPlan([]byte(`{"connect":{"fromEnv":true},"actions":[{"op":"buildImage","options":{"image":"app:dev","parseDockerfile":"FROM alpine:latest\nCMD [\"true\"]\n"}}]}`))
 	if err := plan.Validate(); err != nil {
 		t.Fatal(err)
+	}
+}
+
+func TestDrainedStreamPlansReturnOK(t *testing.T) {
+	t.Parallel()
+	cli := NewClient(&fakeEngine{}, nil)
+	cases := []planAction{
+		{Op: "pullImage", Ref: "alpine:latest"},
+		{Op: "pushImage", Ref: "alpine:latest"},
+		{Op: "buildImage", Options: map[string]any{"parseDockerfile": "FROM alpine:latest\n"}},
+	}
+	for _, act := range cases {
+		out, err := execKnownAction(t.Context(), cli, nil, act)
+		if err != nil {
+			t.Fatalf("%s: %v", act.Op, err)
+		}
+		if string(out) != `{"ok":true}` {
+			t.Fatalf("%s = %s", act.Op, out)
+		}
 	}
 }
 

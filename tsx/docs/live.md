@@ -17,19 +17,47 @@ export default root({ fromEnv: true }, function App() {
 
 `fromEnv: true` means "use the Docker this machine's `docker` command already uses." The client page explains the other ways to point at a daemon.
 
+[`tsx/examples/docker.tsx`](../examples/docker.tsx) is that file as a program you can run. From `tsx/`, `npm run live` builds the runner and starts it. The process builds a small image, publishes `http://127.0.0.1:18080`, prints that address once the port is open, and stays open. `onExit: "down"` takes the project down on Ctrl+C. `LIVE_PORT` changes the host port.
+
 Run it with a loader that compiles JSX. With the `tsx` package, that is `node --import tsx docker.ts`. `root()` starts the session when the file you ran is named `docker.ts`, `docker.tsx`, or `docker.js`. From another program, call `start()` in `containerkit/live`. `start()` loads `docker.ts` by default and also accepts `docker.tsx`. Any other file name throws. A second `root()` throws while the first session is open.
 
 What the function returns is what gets applied:
 
-- A `Compose`, `Service`, `Job`, or `Container` is applied with `composeUp`, detached, so the session does not block on the containers.
+- A `Compose`, `Service`, `Job`, or `Container` is applied with `composeUp`, detached, so the session does not follow the containers' logs.
 - `null` applies nothing. The function is still waiting, or this program has no project right now.
 - The same YAML as last time applies nothing. The containers keep running. The session compares the whole file, not individual fields.
+
+`onExit: "down"` handles Ctrl+C and SIGTERM. `root` waits if an apply is already running, takes down the project it last brought up, and then closes the session. When this file is the program you ran, the process exits. You do not pass the tree to `composeDown`, and you do not register the signals. `close()` still just closes the session, so a caller that stops the root on purpose leaves the project running. Omit `onExit` and the containers stay up when the process exits.
+
+`onUp` runs after an apply. `wait: true` waits until the containers are running, and until a healthcheck passes when the service has one, before `onUp` runs.
+
+## Run once
+
+An `async` function, or a function that takes the session, runs once. It does not render again. `await` finishes before `root` applies the tree you return.
+
+```tsx
+import { Compose, Service } from "containerkit";
+import { root } from "containerkit/live";
+
+export default root({ fromEnv: true, onExit: "down" }, async function App(session) {
+  await session.pullImage("alpine:latest");
+  return (
+    <Compose name="app">
+      <Service name="api" image="alpine:latest" />
+    </Compose>
+  );
+});
+```
+
+A function with no parameters is the render callback above. It runs again when state changes. Hooks (`useState`, `useMemo`, `useEffect`) belong to that callback. The once callback takes the session as an argument instead of calling `useSession()`.
+
+When the once callback throws, or a command it awaits fails, `onError` runs. If this file is the program, the process then exits. The render callback stays open, so a later update can try again.
 
 `exportYAML` is not an apply. It can run on any render, including a render that returns `null`, and it does not stop the session. It is documented below.
 
 ## Other files
 
-Only `docker.ts` calls `root()`. Other files export components and functions. A function that talks to Docker takes the session. `await` runs the next command after the previous one returns.
+The entry file calls `root()`. That file is named `docker.ts`, `docker.tsx`, or `docker.js`. Other files export components and functions. A function that talks to Docker takes the session. `await` runs the next command after the previous one returns.
 
 ```ts
 import { isCKLoginRequiredError, type Session } from "containerkit/live";

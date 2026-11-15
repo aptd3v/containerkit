@@ -96,7 +96,7 @@ export const ipc = {
 	Private: "private",
 	Shareable: "shareable",
 	Host: "host",
-	container(id: string) {
+	container(id: string): `container:${string}` {
 		return `container:${id}`;
 	},
 } as const;
@@ -135,10 +135,10 @@ export const netmode = {
 	Host: "host",
 	None: "none",
 	Default: "default",
-	container(id: string) {
+	container(id: string): `container:${string}` {
 		return `container:${id}`;
 	},
-	service(name: string) {
+	service(name: string): `service:${string}` {
 		return `service:${name}`;
 	},
 } as const;
@@ -155,7 +155,7 @@ export const order = {
 
 export const pidns = {
 	Host: "host",
-	container(id: string) {
+	container(id: string): `container:${string}` {
 		return `container:${id}`;
 	},
 } as const;
@@ -197,7 +197,7 @@ export const pullPolicy = {
 	Refresh: "refresh",
 	Daily: "daily",
 	Weekly: "weekly",
-	every(period: string) {
+	every(period: string): `every_${string}` {
 		return `every_${period}`;
 	},
 } as const;
@@ -270,6 +270,9 @@ export const signal = {
 	SIGPWR: "SIGPWR",
 	SIGSYS: "SIGSYS",
 } as const;
+
+/** POSIX signal name. Dockerfile StopSignal and Compose stopSignal both take this. */
+export type SignalName = (typeof signal)[keyof typeof signal];
 
 export const svcmode = {
 	Replicated: "replicated",

@@ -63,6 +63,7 @@ export type Kind =
 	| "volume"
 	| "watchFiles";
 
+/** AdditionalContext adds a named additional build context inside Build. */
 export type AdditionalContextProps = {
 	name?: string;
 	value?: string;
@@ -72,6 +73,7 @@ export type AdditionalContextProps = {
 export type AdditionalContext<P extends AdditionalContextProps = Omit<AdditionalContextProps, "children">> = Node<"additionalContext", P>;
 export type AdditionalContextNode = AdditionalContext;
 
+/** Annotation adds a runtime annotation. */
 export type AnnotationProps = {
 	name?: string;
 	value?: string;
@@ -81,6 +83,7 @@ export type AnnotationProps = {
 export type Annotation<P extends AnnotationProps = Omit<AnnotationProps, "children">> = Node<"annotation", P>;
 export type AnnotationNode = Annotation;
 
+/** AuxAddress adds Compose networks.ipam.config.aux_addresses inside AddNetwork. */
 export type AuxAddressProps = {
 	host?: string;
 	addr?: string;
@@ -90,6 +93,7 @@ export type AuxAddressProps = {
 export type AuxAddress<P extends AuxAddressProps = Omit<AuxAddressProps, "children">> = Node<"auxAddress", P>;
 export type AuxAddressNode = AuxAddress;
 
+/** BlkioReadBps throttles read bytes/sec on a device. */
 export type BlkioReadBpsProps = {
 	path?: string;
 	rate?: number;
@@ -99,6 +103,7 @@ export type BlkioReadBpsProps = {
 export type BlkioReadBps<P extends BlkioReadBpsProps = Omit<BlkioReadBpsProps, "children">> = Node<"blkioReadBps", P>;
 export type BlkioReadBpsNode = BlkioReadBps;
 
+/** BlkioReadIOps throttles read IOPS on a device. */
 export type BlkioReadIOpsProps = {
 	path?: string;
 	rate?: number;
@@ -108,6 +113,7 @@ export type BlkioReadIOpsProps = {
 export type BlkioReadIOps<P extends BlkioReadIOpsProps = Omit<BlkioReadIOpsProps, "children">> = Node<"blkioReadIOps", P>;
 export type BlkioReadIOpsNode = BlkioReadIOps;
 
+/** BlkioWeightDevice adds a per-device blkio weight. */
 export type BlkioWeightDeviceProps = {
 	path?: string;
 	weight?: number;
@@ -117,6 +123,7 @@ export type BlkioWeightDeviceProps = {
 export type BlkioWeightDevice<P extends BlkioWeightDeviceProps = Omit<BlkioWeightDeviceProps, "children">> = Node<"blkioWeightDevice", P>;
 export type BlkioWeightDeviceNode = BlkioWeightDevice;
 
+/** BlkioWriteBps throttles write bytes/sec on a device. */
 export type BlkioWriteBpsProps = {
 	path?: string;
 	rate?: number;
@@ -126,6 +133,7 @@ export type BlkioWriteBpsProps = {
 export type BlkioWriteBps<P extends BlkioWriteBpsProps = Omit<BlkioWriteBpsProps, "children">> = Node<"blkioWriteBps", P>;
 export type BlkioWriteBpsNode = BlkioWriteBps;
 
+/** BlkioWriteIOps throttles write IOPS on a device. */
 export type BlkioWriteIOpsProps = {
 	path?: string;
 	rate?: number;
@@ -135,25 +143,63 @@ export type BlkioWriteIOpsProps = {
 export type BlkioWriteIOps<P extends BlkioWriteIOpsProps = Omit<BlkioWriteIOpsProps, "children">> = Node<"blkioWriteIOps", P>;
 export type BlkioWriteIOpsNode = BlkioWriteIOps;
 
+/** Build sets Compose build configuration. Service and job only. */
 export type BuildProps = {
+	/** CacheFrom adds a build cache_from entry inside Build. */
 	cacheFrom?: string;
+	/** CacheTo adds a build cache_to entry inside Build. */
 	cacheTo?: string;
+	/** DockerfilePath sets the Dockerfile path on Build and BuildImage. */
 	dockerfilePath?: string;
+	/** Entitlement adds a build entitlement inside Build. */
 	entitlement?: string;
-	isolation?: string;
+	/**
+	 * Isolation sets Windows isolation (default, process, hyperv). Inside Build
+	 * it maps to compose build.isolation.
+	 */
+	isolation?: "default" | "process" | "hyperv";
+	/**
+	 * Memory sets the memory limit in bytes, including explicit 0.
+	 * Inside Deploy it maps to deploy.resources.limits.memory.
+	 */
 	memory?: number;
-	networkMode?: string;
+	/**
+	 * NetworkMode sets Engine NetworkMode / Compose network_mode (bridge, host, none, container:id).
+	 * Inside Build it maps to compose build.network.
+	 */
+	networkMode?: `container:${string}` | `service:${string}` | "bridge" | "host" | "none" | "default";
+	/** NoCache disables layer cache inside Build. */
 	noCache?: boolean;
+	/** NoCacheFilter adds a build no_cache_filter stage inside Build. */
 	noCacheFilter?: string;
+	/** ParseDockerfile wraps existing Dockerfile text. An empty string records a validation error. */
 	parseDockerfile?: string;
+	/** Platform sets the target platform (Compose platform / Engine create, pull, or build). */
 	platform?: string;
+	/**
+	 * Privileged sets privileged mode, including explicit false. Inside Build
+	 * it maps to compose build.privileged.
+	 */
 	privileged?: boolean;
+	/** Provenance sets build provenance inside Build or Compose.Build. */
 	provenance?: string;
+	/** Pull requests a fresh base image inside Build. */
 	pull?: boolean;
+	/** ReadDockerfile reads a Dockerfile from path. Read errors are returned by Validate. */
 	readDockerfile?: string;
+	/** SBOM sets build SBOM attestation inside Build or Compose.Build. */
 	sbom?: string;
+	/**
+	 * Source is the origin: bind path, named-volume name, secret/config file
+	 * source, or build context inside Build.
+	 */
 	source?: string;
+	/** Tag adds an image tag inside Build. */
 	tag?: string;
+	/**
+	 * Target is the destination: mount path, secret/config target, or build stage
+	 * inside Build.
+	 */
 	target?: string;
 	children?: MaybeChild<AdditionalContextNode | EnvNode | ExtraHostNode | LabelNode | SecretNode | SSHNode | UlimitNode | DockerfileNode | Node<"fragment">>;
 };
@@ -161,7 +207,12 @@ export type BuildProps = {
 export type Build<P extends BuildProps = Omit<BuildProps, "children">> = Node<"build", P>;
 export type BuildNode = Build;
 
+/** Compose is a Compose file: name, services, jobs, networks, volumes, secrets, and configs. */
 export type ComposeProps = {
+	/**
+	 * Name sets the receiver's name: container, service, job, project, depends_on,
+	 * volume, network, secret, or config-file.
+	 */
 	name?: string;
 	children?: MaybeChild<ContainerNode | FileConfigNode | IncludeNode | JobNode | ModelNode | NetworkNode | SecretNode | ServiceNode | VolumeNode | Node<"fragment">>;
 };
@@ -169,6 +220,7 @@ export type ComposeProps = {
 export type Compose<P extends ComposeProps = Omit<ComposeProps, "children">> = Node<"compose", P>;
 export type ComposeNode = Compose;
 
+/** ConsoleSize sets the initial console height and width. */
 export type ConsoleSizeProps = {
 	height?: number;
 	width?: number;
@@ -178,82 +230,201 @@ export type ConsoleSizeProps = {
 export type ConsoleSize<P extends ConsoleSizeProps = Omit<ConsoleSizeProps, "children">> = Node<"consoleSize", P>;
 export type ConsoleSizeNode = ConsoleSize;
 
+/**
+ * Container is a standalone Engine container configuration that also converts
+ * to a Compose service when the settings map.
+ */
 export type ContainerProps = {
+	/** ArgsEscaped marks the command as already escaped (Windows). Engine-only. */
 	argsEscaped?: boolean;
+	/** AttachStderr attaches stderr. Engine-only. */
 	attachStderr?: boolean;
+	/** AttachStdin attaches stdin. Engine-only. */
 	attachStdin?: boolean;
+	/** AttachStdout attaches stdout. Engine-only. */
 	attachStdout?: boolean;
+	/**
+	 * AutoRemove removes the container on exit. Engine-only; converting to a
+	 * Compose service reports an unsupported mapping.
+	 */
 	autoRemove?: boolean;
+	/** BlkioWeight sets block IO weight (10–1000). */
 	blkioWeight?: number;
-	capAdd?: string;
-	capDrop?: string;
+	/** CapAdd adds a Linux capability. Pass cap.ALL or a kernel name such as cap.NET_ADMIN. */
+	capAdd?: "ALL" | "CHOWN" | "DAC_OVERRIDE" | "DAC_READ_SEARCH" | "FOWNER" | "FSETID" | "KILL" | "SETGID" | "SETUID" | "SETPCAP" | "LINUX_IMMUTABLE" | "NET_BIND_SERVICE" | "NET_BROADCAST" | "NET_ADMIN" | "NET_RAW" | "IPC_LOCK" | "IPC_OWNER" | "SYS_MODULE" | "SYS_RAWIO" | "SYS_CHROOT" | "SYS_PTRACE" | "SYS_PACCT" | "SYS_ADMIN" | "SYS_BOOT" | "SYS_NICE" | "SYS_RESOURCE" | "SYS_TIME" | "SYS_TTY_CONFIG" | "MKNOD" | "LEASE" | "AUDIT_WRITE" | "AUDIT_CONTROL" | "SETFCAP" | "MAC_OVERRIDE" | "MAC_ADMIN" | "SYSLOG" | "WAKE_ALARM" | "BLOCK_SUSPEND" | "AUDIT_READ" | "PERFMON" | "BPF" | "CHECKPOINT_RESTORE";
+	/** CapDrop drops a Linux capability. Pass cap.ALL or a kernel name such as cap.MKNOD. */
+	capDrop?: "ALL" | "CHOWN" | "DAC_OVERRIDE" | "DAC_READ_SEARCH" | "FOWNER" | "FSETID" | "KILL" | "SETGID" | "SETUID" | "SETPCAP" | "LINUX_IMMUTABLE" | "NET_BIND_SERVICE" | "NET_BROADCAST" | "NET_ADMIN" | "NET_RAW" | "IPC_LOCK" | "IPC_OWNER" | "SYS_MODULE" | "SYS_RAWIO" | "SYS_CHROOT" | "SYS_PTRACE" | "SYS_PACCT" | "SYS_ADMIN" | "SYS_BOOT" | "SYS_NICE" | "SYS_RESOURCE" | "SYS_TIME" | "SYS_TTY_CONFIG" | "MKNOD" | "LEASE" | "AUDIT_WRITE" | "AUDIT_CONTROL" | "SETFCAP" | "MAC_OVERRIDE" | "MAC_ADMIN" | "SYSLOG" | "WAKE_ALARM" | "BLOCK_SUSPEND" | "AUDIT_READ" | "PERFMON" | "BPF" | "CHECKPOINT_RESTORE";
+	/** Cgroup sets the cgroup to join. */
 	cgroup?: string;
-	cgroupNS?: string;
+	/** CgroupNS sets the cgroup namespace mode (host/private). */
+	cgroupNS?: "host" | "private";
+	/** CgroupParent sets the parent cgroup. */
 	cgroupParent?: string;
+	/**
+	 * Command sets the command (argv) for a container, service, job, Compose.Run,
+	 * or CreateExec / ExecTerminal.
+	 */
 	command?: string | string[];
+	/** ContainerIDFile writes the container ID to a file. Engine-only. */
 	containerIDFile?: string;
+	/** CPUCount sets Windows CPU count. */
 	cpuCount?: number;
+	/** CPUPercent sets Windows CPU percent. */
 	cpuPercent?: number;
+	/** CPUPeriod sets CFS period in microseconds. */
 	cpuPeriod?: number;
+	/** CPUQuota sets CFS quota in microseconds. */
 	cpuQuota?: number;
+	/** CPURealtimePeriod sets CPU realtime period in microseconds. */
 	cpuRealtimePeriod?: number;
+	/** CPURealtimeRuntime sets CPU realtime runtime in microseconds. */
 	cpuRealtimeRuntime?: number;
+	/** CPUSet sets CpusetCpus (e.g. "0-3"). */
 	cpuSet?: string;
+	/** CPUSetMems sets CpusetMems. */
 	cpuSetMems?: string;
+	/** CPUShares sets relative CPU weight. */
 	cpuShares?: number;
+	/**
+	 * CPUs sets CPU quota as a fractional count (Compose cpus / Engine NanoCPUs).
+	 * Inside Deploy it maps to deploy.resources.limits.cpus.
+	 */
 	cpus?: number;
+	/** DeviceCgroupRule adds a device cgroup rule. */
 	deviceCgroupRule?: string;
+	/** DNS adds a DNS server. */
 	dns?: string;
+	/** DNSOption adds a DNS resolver option. */
 	dnsOption?: string;
+	/** DNSSearch adds a DNS search domain. */
 	dnsSearch?: string;
+	/** DomainName sets the NIS domain name (Engine Domainname / Compose domainname). */
 	domainName?: string;
+	/** Entrypoint sets the entrypoint (argv). */
 	entrypoint?: string | string[];
+	/** GroupAdd adds a supplementary group. */
 	groupAdd?: string;
+	/** Hostname sets the container hostname. */
 	hostname?: string;
+	/** Image sets the image reference on a container, service, job, or Engine build tag. */
 	image?: string;
+	/** Init runs a signal-forwarding init, including explicit false. */
 	init?: boolean;
+	/** Interactive opens stdin, including explicit false. */
 	interactive?: boolean;
+	/** IOMaximumBandwidth sets Windows system-drive byte/s limit. */
 	ioMaximumBandwidth?: number;
+	/** IOMaximumIOps sets Windows system-drive IOps limit. */
 	ioMaximumIOps?: number;
-	ipc?: string;
-	isolation?: string;
+	/** IPC sets the IPC namespace mode (Engine IpcMode / Compose ipc). */
+	ipc?: `container:${string}` | "none" | "private" | "shareable" | "host";
+	/**
+	 * Isolation sets Windows isolation (default, process, hyperv). Inside Build
+	 * it maps to compose build.isolation.
+	 */
+	isolation?: "default" | "process" | "hyperv";
+	/** Link adds a legacy container link. */
 	link?: string;
+	/** MacAddress sets the container MAC address, or the endpoint MAC inside Network. */
 	macAddress?: string;
+	/** MaskedPath overrides a masked path. Engine-only. */
 	maskedPath?: string;
+	/**
+	 * Memory sets the memory limit in bytes, including explicit 0.
+	 * Inside Deploy it maps to deploy.resources.limits.memory.
+	 */
 	memory?: number;
+	/** MemoryReservation sets the soft memory limit in bytes. */
 	memoryReservation?: number;
+	/** MemorySwap sets memory+swap in bytes. -1 is unlimited. */
 	memorySwap?: number;
+	/** MemorySwappiness sets vm.swappiness (0–100). */
 	memorySwappiness?: number;
+	/**
+	 * Name sets the receiver's name: container, service, job, project, depends_on,
+	 * volume, network, secret, or config-file.
+	 */
 	name?: string;
+	/** NetworkDisabled disables networking (Engine NetworkDisabled, Compose network_mode=none). */
 	networkDisabled?: boolean;
-	networkMode?: string;
+	/**
+	 * NetworkMode sets Engine NetworkMode / Compose network_mode (bridge, host, none, container:id).
+	 * Inside Build it maps to compose build.network.
+	 */
+	networkMode?: `container:${string}` | `service:${string}` | "bridge" | "host" | "none" | "default";
+	/** OnBuild adds image ONBUILD metadata. Engine-only. */
 	onBuild?: string | string[];
+	/** OomKillDisable disables the OOM killer. */
 	oomKillDisable?: boolean;
+	/** OomScoreAdj sets OOM score adjustment. */
 	oomScoreAdj?: number;
+	/** PerReplica sets Compose pre_start.per_replica inside PreStart. */
 	perReplica?: boolean;
-	pid?: string;
+	/** PID sets the PID namespace mode. */
+	pid?: `container:${string}` | "host";
+	/**
+	 * PidsLimit sets the pids cgroup limit. 0 or -1 is unlimited.
+	 * Inside Deploy / Reserve it maps to deploy.resources pids.
+	 */
 	pidsLimit?: number;
+	/** Platform sets the target platform (Compose platform / Engine create, pull, or build). */
 	platform?: string;
+	/**
+	 * Privileged sets privileged mode, including explicit false. Inside Build
+	 * it maps to compose build.privileged.
+	 */
 	privileged?: boolean;
+	/** PublishAll publishes all exposed ports on random host ports. Engine-only. */
 	publishAll?: boolean;
+	/** PullRefreshAfter sets Compose pull_refresh_after (duration such as "24h"). */
 	pullRefreshAfter?: string;
+	/**
+	 * ReadOnly mounts the root filesystem read-only at the outer scope, or the
+	 * nested Volume read-only inside Volume(...).
+	 */
 	readOnly?: boolean;
+	/** ReadonlyPath overrides a readonly path. Engine-only. */
 	readonlyPath?: string;
+	/** Runtime sets the OCI runtime. */
 	runtime?: string;
+	/** SecurityOpt adds a security option (SELinux, apparmor, ...). */
 	securityOpt?: string;
+	/** Shell sets the shell used for shell-form RUN/CMD/ENTRYPOINT. Engine-only. */
 	shell?: string | string[];
+	/** ShmSize sets /dev/shm size in bytes. */
 	shmSize?: number;
+	/** StdinOnce closes stdin after one attached client disconnects. Engine-only. */
 	stdinOnce?: boolean;
-	stopSignal?: string;
+	/** StopSignal sets the signal used to stop or kill the container. */
+	stopSignal?: "SIGHUP" | "SIGINT" | "SIGQUIT" | "SIGILL" | "SIGTRAP" | "SIGABRT" | "SIGBUS" | "SIGFPE" | "SIGKILL" | "SIGUSR1" | "SIGSEGV" | "SIGUSR2" | "SIGPIPE" | "SIGALRM" | "SIGTERM" | "SIGSTKFLT" | "SIGCHLD" | "SIGCONT" | "SIGSTOP" | "SIGTSTP" | "SIGTTIN" | "SIGTTOU" | "SIGURG" | "SIGXCPU" | "SIGXFSZ" | "SIGVTALRM" | "SIGPROF" | "SIGWINCH" | "SIGIO" | "SIGPWR" | "SIGSYS";
+	/**
+	 * StopTimeout sets the stop timeout. Zero is explicit.
+	 * A number is nanoseconds. A string is a Go duration such as "30s".
+	 */
 	stopTimeout?: number | string;
+	/**
+	 * TmpfsMount adds a Compose service-level tmpfs path (short syntax).
+	 * Long syntax uses Volume with Kind(Tmpfs).
+	 */
 	tmpfsMount?: string;
+	/** Tty attaches a TTY, including explicit false. */
 	tty?: boolean;
+	/** Umask sets the process umask. */
 	umask?: number;
+	/** User sets the user the process runs as. */
 	user?: string;
-	userNS?: string;
-	uts?: string;
+	/** UserNS sets the user namespace mode. */
+	userNS?: "host";
+	/** UTS sets the UTS namespace mode. */
+	uts?: "host";
+	/** VolumeDriver sets the volume driver name. */
 	volumeDriver?: string;
+	/** VolumesFrom mounts volumes from another container. */
 	volumesFrom?: string;
+	/**
+	 * WorkingDir sets a container, service, job, or hook working directory.
+	 * Compose project directory on LoadProject is ProjectDirectory.
+	 */
 	workingDir?: string;
 	children?: MaybeChild<AnnotationNode | BlkioReadBpsNode | BlkioReadIOpsNode | BlkioWeightDeviceNode | BlkioWriteBpsNode | BlkioWriteIOpsNode | ConsoleSizeNode | DeviceNode | EnvNode | ExposeNode | ExtraHostNode | GPUNode | HealthNode | LabelNode | LoggingNode | NetworkNode | PublishNode | RestartNode | StorageOptNode | SysctlNode | UlimitNode | VolumeNode | Node<"fragment">>;
 };
@@ -261,6 +432,7 @@ export type ContainerProps = {
 export type Container<P extends ContainerProps = Omit<ContainerProps, "children">> = Node<"container", P>;
 export type ContainerNode = Container;
 
+/** CopyPath sets source and destination for Compose.Copy. */
 export type CopyPathProps = {
 	source?: string;
 	destination?: string;
@@ -270,10 +442,18 @@ export type CopyPathProps = {
 export type CopyPath<P extends CopyPathProps = Omit<CopyPathProps, "children">> = Node<"copyPath", P>;
 export type CopyPathNode = CopyPath;
 
+/** DependsOn adds a service dependency with nested setters (Name, Condition). */
 export type DependsOnProps = {
-	condition?: string;
+	/** Condition sets a depends_on condition in a DependsOn scope. */
+	condition?: "service_started" | "service_healthy" | "service_completed_successfully";
+	/**
+	 * Name sets the receiver's name: container, service, job, project, depends_on,
+	 * volume, network, secret, or config-file.
+	 */
 	name?: string;
+	/** Required sets depends_on.required inside DependsOn, or env_file.required inside EnvFile. */
 	required?: boolean;
+	/** RestartOnFailure marks depends_on restart in a DependsOn scope. */
 	restartOnFailure?: boolean;
 	children?: MaybeChild<never>;
 };
@@ -281,12 +461,32 @@ export type DependsOnProps = {
 export type DependsOn<P extends DependsOnProps = Omit<DependsOnProps, "children">> = Node<"dependsOn", P>;
 export type DependsOnNode = DependsOn;
 
+/** Deploy sets Compose deploy configuration. Service only. */
 export type DeployProps = {
+	/**
+	 * CPUs sets CPU quota as a fractional count (Compose cpus / Engine NanoCPUs).
+	 * Inside Deploy it maps to deploy.resources.limits.cpus.
+	 */
 	cpus?: number;
-	endpointMode?: string;
+	/** EndpointMode sets deploy.endpoint_mode inside Deploy. */
+	endpointMode?: "vip" | "dnsrr";
+	/**
+	 * Memory sets the memory limit in bytes, including explicit 0.
+	 * Inside Deploy it maps to deploy.resources.limits.memory.
+	 */
 	memory?: number;
+	/**
+	 * Mode sets deploy mode inside Deploy (replicated, global, replicated-job, global-job)
+	 * or Compose ports.mode inside Publish (ingress, host). Known values live in
+	 * packages svcmode and portmode.
+	 */
 	mode?: string;
+	/**
+	 * PidsLimit sets the pids cgroup limit. 0 or -1 is unlimited.
+	 * Inside Deploy / Reserve it maps to deploy.resources pids.
+	 */
 	pidsLimit?: number;
+	/** Replicas sets deploy replicas inside Deploy, or service scale at the outer scope. */
 	replicas?: number;
 	children?: MaybeChild<DiscreteNode | GPUNode | LabelNode | PlacementNode | ReserveNode | RestartNode | RollbackNode | UpdateNode | Node<"fragment">>;
 };
@@ -294,6 +494,7 @@ export type DeployProps = {
 export type Deploy<P extends DeployProps = Omit<DeployProps, "children">> = Node<"deploy", P>;
 export type DeployNode = Deploy;
 
+/** Develop sets Compose develop.watch. Service only. */
 export type DevelopProps = {
 	children?: MaybeChild<WatchFilesNode | Node<"fragment">>;
 };
@@ -301,9 +502,19 @@ export type DevelopProps = {
 export type Develop<P extends DevelopProps = Omit<DevelopProps, "children">> = Node<"develop", P>;
 export type DevelopNode = Develop;
 
+/** Device maps a host device into the container (Engine Devices / Compose devices). */
 export type DeviceProps = {
+	/** Perms sets device cgroup permissions inside Device (e.g. "rwm"). */
 	perms?: string;
+	/**
+	 * Source is the origin: bind path, named-volume name, secret/config file
+	 * source, or build context inside Build.
+	 */
 	source?: string;
+	/**
+	 * Target is the destination: mount path, secret/config target, or build stage
+	 * inside Build.
+	 */
 	target?: string;
 	children?: MaybeChild<never>;
 };
@@ -311,6 +522,7 @@ export type DeviceProps = {
 export type Device<P extends DeviceProps = Omit<DeviceProps, "children">> = Node<"device", P>;
 export type DeviceNode = Device;
 
+/** Discrete adds Compose deploy.resources.generic_resources.discrete_resource_spec. */
 export type DiscreteProps = {
 	kind?: string;
 	value?: number;
@@ -320,6 +532,7 @@ export type DiscreteProps = {
 export type Discrete<P extends DiscreteProps = Omit<DiscreteProps, "children">> = Node<"discrete", P>;
 export type DiscreteNode = Discrete;
 
+/** DriverOpt adds a driver option inside Logging, Volume, Network, or project resources. */
 export type DriverOptProps = {
 	name?: string;
 	value?: string;
@@ -329,6 +542,11 @@ export type DriverOptProps = {
 export type DriverOpt<P extends DriverOptProps = Omit<DriverOptProps, "children">> = Node<"driverOpt", P>;
 export type DriverOptNode = DriverOpt;
 
+/**
+ * Env adds an environment variable at the outer scope, a build-arg inside
+ * Build or Compose.Build, or a run-time variable on Compose.Run.
+ * The value is treated as secret in errors.
+ */
 export type EnvProps = {
 	name?: string;
 	value?: string;
@@ -338,9 +556,13 @@ export type EnvProps = {
 export type Env<P extends EnvProps = Omit<EnvProps, "children">> = Node<"env", P>;
 export type EnvNode = Env;
 
+/** EnvFile adds a Compose env_file path. Service, job, AddInclude, and LoadProject. */
 export type EnvFileProps = {
+	/** EnvFile adds a Compose env_file path. Service, job, AddInclude, and LoadProject. */
 	path?: string;
+	/** Format sets Compose env_file.format inside EnvFile (raw or other). */
 	format?: string;
+	/** Required sets depends_on.required inside DependsOn, or env_file.required inside EnvFile. */
 	required?: boolean;
 	children?: MaybeChild<never>;
 };
@@ -348,6 +570,7 @@ export type EnvFileProps = {
 export type EnvFile<P extends EnvFileProps = Omit<EnvFileProps, "children">> = Node<"envFile", P>;
 export type EnvFileNode = EnvFile;
 
+/** Expose publishes a port without a host binding (Engine ExposedPorts / Compose expose). */
 export type ExposeProps = {
 	port?: number;
 	proto?: string | string[];
@@ -357,6 +580,10 @@ export type ExposeProps = {
 export type Expose<P extends ExposeProps = Omit<ExposeProps, "children">> = Node<"expose", P>;
 export type ExposeNode = Expose;
 
+/**
+ * ExtraHost adds a hostname-to-IP mapping (Engine extra_hosts / Compose extra_hosts).
+ * Inside Build it maps to compose build.extra_hosts.
+ */
 export type ExtraHostProps = {
 	hostname?: string;
 	ip?: string;
@@ -366,15 +593,37 @@ export type ExtraHostProps = {
 export type ExtraHost<P extends ExtraHostProps = Omit<ExtraHostProps, "children">> = Node<"extraHost", P>;
 export type ExtraHostNode = ExtraHost;
 
+/**
+ * FileConfig adds a Compose config-file reference on a service/job.
+ * Named FileConfig because Config is the Engine portable config type.
+ */
 export type FileConfigProps = {
+	/** External marks a project network, volume, secret, or config as unmanaged. */
 	external?: boolean;
+	/** FileMode sets tmpfs/secret/config mode (octal file bits). */
 	fileMode?: number;
+	/** FromFile sets the filesystem source of a secret or config object. */
 	fromFile?: string;
+	/** GID sets Compose secret/config gid. */
 	gid?: string;
+	/**
+	 * Name sets the receiver's name: container, service, job, project, depends_on,
+	 * volume, network, secret, or config-file.
+	 */
 	name?: string;
+	/**
+	 * Source is the origin: bind path, named-volume name, secret/config file
+	 * source, or build context inside Build.
+	 */
 	source?: string;
+	/**
+	 * Target is the destination: mount path, secret/config target, or build stage
+	 * inside Build.
+	 */
 	target?: string;
+	/** TemplateDriver sets Compose secrets/configs template_driver. */
 	templateDriver?: string;
+	/** UID sets Compose secret/config uid. */
 	uid?: string;
 	children?: MaybeChild<LabelNode | Node<"fragment">>;
 };
@@ -382,6 +631,7 @@ export type FileConfigProps = {
 export type FileConfig<P extends FileConfigProps = Omit<FileConfigProps, "children">> = Node<"fileConfig", P>;
 export type FileConfigNode = FileConfig;
 
+/** Filter adds an Engine API filter term (list/prune/search/events). */
 export type FilterProps = {
 	term?: string;
 	values?: string | string[];
@@ -391,9 +641,16 @@ export type FilterProps = {
 export type Filter<P extends FilterProps = Omit<FilterProps, "children">> = Node<"filter", P>;
 export type FilterNode = Filter;
 
+/** GPU requests GPUs (Engine DeviceRequests / Compose gpus). */
 export type GPUProps = {
+	/** Capabilities adds a GPU capability (typically "gpu") inside GPU. */
 	capabilities?: string;
+	/** Count sets GPU count inside GPU. -1 means all. */
 	count?: number;
+	/**
+	 * Driver sets the driver name for logging, devices, GPUs, volumes, networks,
+	 * or secrets. Known log drivers live in package logdrv; network drivers in netdrv.
+	 */
 	driver?: string;
 	children?: MaybeChild<DriverOptNode | Node<"fragment">>;
 };
@@ -401,13 +658,41 @@ export type GPUProps = {
 export type GPU<P extends GPUProps = Omit<GPUProps, "children">> = Node<"gpu", P>;
 export type GPUNode = GPU;
 
+/** Health configures a healthcheck with nested setters. */
 export type HealthProps = {
+	/**
+	 * Disabled disables a healthcheck, or leaves a plugin disabled after
+	 * InstallPlugin / UpgradePlugin.
+	 */
 	disabled?: boolean;
+	/**
+	 * Interval sets the healthcheck interval in a Health scope. Zero is explicit.
+	 * A number is nanoseconds. A string is a Go duration such as "30s".
+	 */
 	interval?: number | string;
+	/** Retries sets healthcheck retries in a Health scope. Zero is explicit. */
 	retries?: number;
+	/**
+	 * StartInterval sets Compose healthcheck.start_interval inside Health.
+	 * A number is nanoseconds. A string is a Go duration such as "30s".
+	 */
 	startInterval?: number | string;
+	/**
+	 * StartPeriod sets the healthcheck start period in a Health scope.
+	 * A number is nanoseconds. A string is a Go duration such as "30s".
+	 */
 	startPeriod?: number | string;
+	/**
+	 * Test sets the healthcheck command in a Health scope. Extra strings are
+	 * command arguments, not interval or retries; those are Interval, Timeout,
+	 * and Retries.
+	 */
 	test?: string | string[];
+	/**
+	 * Timeout sets a duration for healthchecks, compose wait/stop, Engine stop,
+	 * and EnablePlugin (seconds). Zero is explicit.
+	 * A number is nanoseconds. A string is a Go duration such as "30s".
+	 */
 	timeout?: number | string;
 	children?: MaybeChild<never>;
 };
@@ -415,6 +700,7 @@ export type HealthProps = {
 export type Health<P extends HealthProps = Omit<HealthProps, "children">> = Node<"health", P>;
 export type HealthNode = Health;
 
+/** HTTPHeader adds a custom HTTP header on Engine requests. */
 export type HTTPHeaderProps = {
 	name?: string;
 	value?: string;
@@ -424,8 +710,14 @@ export type HTTPHeaderProps = {
 export type HTTPHeader<P extends HTTPHeaderProps = Omit<HTTPHeaderProps, "children">> = Node<"httpHeader", P>;
 export type HTTPHeaderNode = HTTPHeader;
 
+/** Include adds a develop.watch include glob inside WatchFiles. */
 export type IncludeProps = {
+	/** Path sets a filesystem path for StatPath. */
 	path?: string;
+	/**
+	 * ProjectDirectory sets Compose include.project_directory inside AddInclude
+	 * or the working directory on LoadProject.
+	 */
 	projectDirectory?: string;
 	children?: MaybeChild<EnvFileNode | Node<"fragment">>;
 };
@@ -433,6 +725,7 @@ export type IncludeProps = {
 export type Include<P extends IncludeProps = Omit<IncludeProps, "children">> = Node<"include", P>;
 export type IncludeNode = Include;
 
+/** IPAMOpt adds Compose networks.ipam.options inside AddNetwork. */
 export type IPAMOptProps = {
 	name?: string;
 	value?: string;
@@ -442,72 +735,175 @@ export type IPAMOptProps = {
 export type IPAMOpt<P extends IPAMOptProps = Omit<IPAMOptProps, "children">> = Node<"ipamOpt", P>;
 export type IPAMOptNode = IPAMOpt;
 
+/** Job is a Compose job: shared spec plus job-only build/secrets/depends. */
 export type JobProps = {
+	/** BlkioWeight sets block IO weight (10–1000). */
 	blkioWeight?: number;
-	capAdd?: string;
-	capDrop?: string;
+	/** CapAdd adds a Linux capability. Pass cap.ALL or a kernel name such as cap.NET_ADMIN. */
+	capAdd?: "ALL" | "CHOWN" | "DAC_OVERRIDE" | "DAC_READ_SEARCH" | "FOWNER" | "FSETID" | "KILL" | "SETGID" | "SETUID" | "SETPCAP" | "LINUX_IMMUTABLE" | "NET_BIND_SERVICE" | "NET_BROADCAST" | "NET_ADMIN" | "NET_RAW" | "IPC_LOCK" | "IPC_OWNER" | "SYS_MODULE" | "SYS_RAWIO" | "SYS_CHROOT" | "SYS_PTRACE" | "SYS_PACCT" | "SYS_ADMIN" | "SYS_BOOT" | "SYS_NICE" | "SYS_RESOURCE" | "SYS_TIME" | "SYS_TTY_CONFIG" | "MKNOD" | "LEASE" | "AUDIT_WRITE" | "AUDIT_CONTROL" | "SETFCAP" | "MAC_OVERRIDE" | "MAC_ADMIN" | "SYSLOG" | "WAKE_ALARM" | "BLOCK_SUSPEND" | "AUDIT_READ" | "PERFMON" | "BPF" | "CHECKPOINT_RESTORE";
+	/** CapDrop drops a Linux capability. Pass cap.ALL or a kernel name such as cap.MKNOD. */
+	capDrop?: "ALL" | "CHOWN" | "DAC_OVERRIDE" | "DAC_READ_SEARCH" | "FOWNER" | "FSETID" | "KILL" | "SETGID" | "SETUID" | "SETPCAP" | "LINUX_IMMUTABLE" | "NET_BIND_SERVICE" | "NET_BROADCAST" | "NET_ADMIN" | "NET_RAW" | "IPC_LOCK" | "IPC_OWNER" | "SYS_MODULE" | "SYS_RAWIO" | "SYS_CHROOT" | "SYS_PTRACE" | "SYS_PACCT" | "SYS_ADMIN" | "SYS_BOOT" | "SYS_NICE" | "SYS_RESOURCE" | "SYS_TIME" | "SYS_TTY_CONFIG" | "MKNOD" | "LEASE" | "AUDIT_WRITE" | "AUDIT_CONTROL" | "SETFCAP" | "MAC_OVERRIDE" | "MAC_ADMIN" | "SYSLOG" | "WAKE_ALARM" | "BLOCK_SUSPEND" | "AUDIT_READ" | "PERFMON" | "BPF" | "CHECKPOINT_RESTORE";
+	/** Cgroup sets the cgroup to join. */
 	cgroup?: string;
-	cgroupNS?: string;
+	/** CgroupNS sets the cgroup namespace mode (host/private). */
+	cgroupNS?: "host" | "private";
+	/** CgroupParent sets the parent cgroup. */
 	cgroupParent?: string;
+	/**
+	 * Command sets the command (argv) for a container, service, job, Compose.Run,
+	 * or CreateExec / ExecTerminal.
+	 */
 	command?: string | string[];
+	/** CPUCount sets Windows CPU count. */
 	cpuCount?: number;
+	/** CPUPercent sets Windows CPU percent. */
 	cpuPercent?: number;
+	/** CPUPeriod sets CFS period in microseconds. */
 	cpuPeriod?: number;
+	/** CPUQuota sets CFS quota in microseconds. */
 	cpuQuota?: number;
+	/** CPURealtimePeriod sets CPU realtime period in microseconds. */
 	cpuRealtimePeriod?: number;
+	/** CPURealtimeRuntime sets CPU realtime runtime in microseconds. */
 	cpuRealtimeRuntime?: number;
+	/** CPUSet sets CpusetCpus (e.g. "0-3"). */
 	cpuSet?: string;
+	/** CPUSetMems sets CpusetMems. */
 	cpuSetMems?: string;
+	/** CPUShares sets relative CPU weight. */
 	cpuShares?: number;
+	/**
+	 * CPUs sets CPU quota as a fractional count (Compose cpus / Engine NanoCPUs).
+	 * Inside Deploy it maps to deploy.resources.limits.cpus.
+	 */
 	cpus?: number;
+	/** DeviceCgroupRule adds a device cgroup rule. */
 	deviceCgroupRule?: string;
+	/** DNS adds a DNS server. */
 	dns?: string;
+	/** DNSOption adds a DNS resolver option. */
 	dnsOption?: string;
+	/** DNSSearch adds a DNS search domain. */
 	dnsSearch?: string;
+	/** DomainName sets the NIS domain name (Engine Domainname / Compose domainname). */
 	domainName?: string;
+	/** Entrypoint sets the entrypoint (argv). */
 	entrypoint?: string | string[];
+	/** GroupAdd adds a supplementary group. */
 	groupAdd?: string;
+	/** Hostname sets the container hostname. */
 	hostname?: string;
+	/** Image sets the image reference on a container, service, job, or Engine build tag. */
 	image?: string;
+	/** Init runs a signal-forwarding init, including explicit false. */
 	init?: boolean;
+	/** Interactive opens stdin, including explicit false. */
 	interactive?: boolean;
+	/** IOMaximumBandwidth sets Windows system-drive byte/s limit. */
 	ioMaximumBandwidth?: number;
+	/** IOMaximumIOps sets Windows system-drive IOps limit. */
 	ioMaximumIOps?: number;
-	ipc?: string;
-	isolation?: string;
+	/** IPC sets the IPC namespace mode (Engine IpcMode / Compose ipc). */
+	ipc?: `container:${string}` | "none" | "private" | "shareable" | "host";
+	/**
+	 * Isolation sets Windows isolation (default, process, hyperv). Inside Build
+	 * it maps to compose build.isolation.
+	 */
+	isolation?: "default" | "process" | "hyperv";
+	/** LabelFile adds a Compose label_file path. Service and job only. */
 	labelFile?: string;
+	/** Link adds a legacy container link. */
 	link?: string;
+	/** MacAddress sets the container MAC address, or the endpoint MAC inside Network. */
 	macAddress?: string;
+	/**
+	 * Memory sets the memory limit in bytes, including explicit 0.
+	 * Inside Deploy it maps to deploy.resources.limits.memory.
+	 */
 	memory?: number;
+	/** MemoryReservation sets the soft memory limit in bytes. */
 	memoryReservation?: number;
+	/** MemorySwap sets memory+swap in bytes. -1 is unlimited. */
 	memorySwap?: number;
+	/** MemorySwappiness sets vm.swappiness (0–100). */
 	memorySwappiness?: number;
+	/**
+	 * Name sets the receiver's name: container, service, job, project, depends_on,
+	 * volume, network, secret, or config-file.
+	 */
 	name?: string;
+	/** NetworkDisabled disables networking (Engine NetworkDisabled, Compose network_mode=none). */
 	networkDisabled?: boolean;
-	networkMode?: string;
+	/**
+	 * NetworkMode sets Engine NetworkMode / Compose network_mode (bridge, host, none, container:id).
+	 * Inside Build it maps to compose build.network.
+	 */
+	networkMode?: `container:${string}` | `service:${string}` | "bridge" | "host" | "none" | "default";
+	/** OomKillDisable disables the OOM killer. */
 	oomKillDisable?: boolean;
+	/** OomScoreAdj sets OOM score adjustment. */
 	oomScoreAdj?: number;
-	pid?: string;
+	/** PID sets the PID namespace mode. */
+	pid?: `container:${string}` | "host";
+	/**
+	 * PidsLimit sets the pids cgroup limit. 0 or -1 is unlimited.
+	 * Inside Deploy / Reserve it maps to deploy.resources pids.
+	 */
 	pidsLimit?: number;
+	/** Platform sets the target platform (Compose platform / Engine create, pull, or build). */
 	platform?: string;
+	/**
+	 * Privileged sets privileged mode, including explicit false. Inside Build
+	 * it maps to compose build.privileged.
+	 */
 	privileged?: boolean;
-	pullPolicy?: string;
+	/** PullPolicy sets Compose pull_policy. Service and job only. */
+	pullPolicy?: `every_${string}` | "always" | "never" | "missing" | "if_not_present" | "build" | "refresh" | "daily" | "weekly";
+	/** PullRefreshAfter sets Compose pull_refresh_after (duration such as "24h"). */
 	pullRefreshAfter?: string;
+	/**
+	 * ReadOnly mounts the root filesystem read-only at the outer scope, or the
+	 * nested Volume read-only inside Volume(...).
+	 */
 	readOnly?: boolean;
+	/** Runtime sets the OCI runtime. */
 	runtime?: string;
+	/** SecurityOpt adds a security option (SELinux, apparmor, ...). */
 	securityOpt?: string;
+	/** ShmSize sets /dev/shm size in bytes. */
 	shmSize?: number;
-	stopSignal?: string;
+	/** StopSignal sets the signal used to stop or kill the container. */
+	stopSignal?: "SIGHUP" | "SIGINT" | "SIGQUIT" | "SIGILL" | "SIGTRAP" | "SIGABRT" | "SIGBUS" | "SIGFPE" | "SIGKILL" | "SIGUSR1" | "SIGSEGV" | "SIGUSR2" | "SIGPIPE" | "SIGALRM" | "SIGTERM" | "SIGSTKFLT" | "SIGCHLD" | "SIGCONT" | "SIGSTOP" | "SIGTSTP" | "SIGTTIN" | "SIGTTOU" | "SIGURG" | "SIGXCPU" | "SIGXFSZ" | "SIGVTALRM" | "SIGPROF" | "SIGWINCH" | "SIGIO" | "SIGPWR" | "SIGSYS";
+	/**
+	 * StopTimeout sets the stop timeout. Zero is explicit.
+	 * A number is nanoseconds. A string is a Go duration such as "30s".
+	 */
 	stopTimeout?: number | string;
+	/**
+	 * TmpfsMount adds a Compose service-level tmpfs path (short syntax).
+	 * Long syntax uses Volume with Kind(Tmpfs).
+	 */
 	tmpfsMount?: string;
+	/** Tty attaches a TTY, including explicit false. */
 	tty?: boolean;
+	/** Umask sets the process umask. */
 	umask?: number;
+	/** UseAPISocket forwards the Docker socket into the service. Compose-only. */
 	useAPISocket?: boolean;
+	/** User sets the user the process runs as. */
 	user?: string;
-	userNS?: string;
-	uts?: string;
+	/** UserNS sets the user namespace mode. */
+	userNS?: "host";
+	/** UTS sets the UTS namespace mode. */
+	uts?: "host";
+	/** VolumeDriver sets the volume driver name. */
 	volumeDriver?: string;
+	/** VolumesFrom mounts volumes from another container. */
 	volumesFrom?: string;
+	/**
+	 * WorkingDir sets a container, service, job, or hook working directory.
+	 * Compose project directory on LoadProject is ProjectDirectory.
+	 */
 	workingDir?: string;
 	children?: MaybeChild<AnnotationNode | BlkioReadBpsNode | BlkioReadIOpsNode | BlkioWeightDeviceNode | BlkioWriteBpsNode | BlkioWriteIOpsNode | BuildNode | ConsoleSizeNode | ContainerNode | DependsOnNode | DeviceNode | EnvNode | EnvFileNode | ExposeNode | ExtraHostNode | FileConfigNode | GPUNode | LabelNode | LoggingNode | ModelNode | NetworkNode | SecretNode | StorageOptNode | SysctlNode | UlimitNode | VolumeNode | Node<"fragment">>;
 };
@@ -515,6 +911,10 @@ export type JobProps = {
 export type Job<P extends JobProps = Omit<JobProps, "children">> = Node<"job", P>;
 export type JobNode = Job;
 
+/**
+ * Label adds a label on the receiver: container/service/job, or nested
+ * volume, network, build, deploy, or project resource.
+ */
 export type LabelProps = {
 	name?: string;
 	value?: string;
@@ -524,7 +924,12 @@ export type LabelProps = {
 export type Label<P extends LabelProps = Omit<LabelProps, "children">> = Node<"label", P>;
 export type LabelNode = Label;
 
+/** Logging sets Engine LogConfig / Compose logging. */
 export type LoggingProps = {
+	/**
+	 * Driver sets the driver name for logging, devices, GPUs, volumes, networks,
+	 * or secrets. Known log drivers live in package logdrv; network drivers in netdrv.
+	 */
 	driver?: string;
 	children?: MaybeChild<DriverOptNode | Node<"fragment">>;
 };
@@ -532,12 +937,22 @@ export type LoggingProps = {
 export type Logging<P extends LoggingProps = Omit<LoggingProps, "children">> = Node<"logging", P>;
 export type LoggingNode = Logging;
 
+/** Model adds a Compose models mapping. Service and job. */
 export type ModelProps = {
+	/** ContextSize sets a top-level Compose model's context_size inside AddModel. */
 	contextSize?: number;
+	/** EndpointVar sets models.*.endpoint_var inside Model. */
 	endpointVar?: string;
+	/** Image sets the image reference on a container, service, job, or Engine build tag. */
 	image?: string;
+	/** ModelVar sets models.*.model_var inside Model. */
 	modelVar?: string;
+	/**
+	 * Name sets the receiver's name: container, service, job, project, depends_on,
+	 * volume, network, secret, or config-file.
+	 */
 	name?: string;
+	/** RuntimeFlag adds a top-level Compose model runtime flag inside AddModel. */
 	runtimeFlag?: string;
 	children?: MaybeChild<never>;
 };
@@ -545,26 +960,53 @@ export type ModelProps = {
 export type Model<P extends ModelProps = Omit<ModelProps, "children">> = Node<"model", P>;
 export type ModelNode = Model;
 
+/** Network attaches a named network (Engine EndpointsConfig / Compose networks). */
 export type NetworkProps = {
+	/** Alias adds a network alias inside Network. */
 	alias?: string;
+	/** Attachable marks a project network as attachable. */
 	attachable?: boolean;
+	/**
+	 * Driver sets the driver name for logging, devices, GPUs, volumes, networks,
+	 * or secrets. Known log drivers live in package logdrv; network drivers in netdrv.
+	 */
 	driver?: string;
+	/** EnableIPv4 sets Compose network enable_ipv4. */
 	enableIPv4?: boolean;
+	/** EnableIPv6 sets Compose network enable_ipv6. */
 	enableIPv6?: boolean;
+	/** External marks a project network, volume, secret, or config as unmanaged. */
 	external?: boolean;
+	/** Gateway sets an IPAM gateway inside AddNetwork. */
 	gateway?: string;
+	/** GatewayPriority sets Compose networks.gw_priority inside Network. */
 	gatewayPriority?: number;
+	/** InterfaceName sets Compose networks.interface_name inside Network. */
 	interfaceName?: string;
+	/** Internal marks a project network as internal. */
 	internal?: boolean;
+	/** IPRange sets Compose networks.ipam.config.ip_range inside AddNetwork. */
 	ipRange?: string;
+	/** IPAMDriver sets Compose networks.ipam.driver inside AddNetwork. */
 	ipamDriver?: string;
+	/** IPv4 sets a static IPv4 address inside Network. */
 	ipv4?: string;
+	/** IPv6 sets a static IPv6 address inside Network. */
 	ipv6?: string;
+	/** LinkLocal adds Compose networks.link_local_ips inside Network. */
 	linkLocal?: string;
+	/** MacAddress sets the container MAC address, or the endpoint MAC inside Network. */
 	macAddress?: string;
+	/**
+	 * Name sets the receiver's name: container, service, job, project, depends_on,
+	 * volume, network, secret, or config-file.
+	 */
 	name?: string;
+	/** Priority sets Compose networks.priority inside Network. */
 	priority?: number;
+	/** Subnet sets an IPAM subnet inside AddNetwork. */
 	subnet?: string;
+	/** UseServiceNameAlias sets Compose networks.use_service_name_alias inside Network. */
 	useServiceNameAlias?: boolean;
 	children?: MaybeChild<AuxAddressNode | DriverOptNode | IPAMOptNode | LabelNode | Node<"fragment">>;
 };
@@ -572,9 +1014,13 @@ export type NetworkProps = {
 export type Network<P extends NetworkProps = Omit<NetworkProps, "children">> = Node<"network", P>;
 export type NetworkNode = Network;
 
+/** Placement sets deploy.placement inside Deploy. */
 export type PlacementProps = {
+	/** Constraint adds a placement constraint inside Placement. */
 	constraint?: string;
+	/** MaxReplicas sets placement max_replicas_per_node inside Placement. */
 	maxReplicas?: number;
+	/** Spread adds a placement spread preference inside Placement. */
 	spread?: string;
 	children?: MaybeChild<never>;
 };
@@ -582,10 +1028,24 @@ export type PlacementProps = {
 export type Placement<P extends PlacementProps = Omit<PlacementProps, "children">> = Node<"placement", P>;
 export type PlacementNode = Placement;
 
+/** PostStart adds a Compose post_start hook. Service only. */
 export type PostStartProps = {
+	/**
+	 * Command sets the command (argv) for a container, service, job, Compose.Run,
+	 * or CreateExec / ExecTerminal.
+	 */
 	command?: string | string[];
+	/**
+	 * Privileged sets privileged mode, including explicit false. Inside Build
+	 * it maps to compose build.privileged.
+	 */
 	privileged?: boolean;
+	/** User sets the user the process runs as. */
 	user?: string;
+	/**
+	 * WorkingDir sets a container, service, job, or hook working directory.
+	 * Compose project directory on LoadProject is ProjectDirectory.
+	 */
 	workingDir?: string;
 	children?: MaybeChild<EnvNode | Node<"fragment">>;
 };
@@ -593,82 +1053,198 @@ export type PostStartProps = {
 export type PostStart<P extends PostStartProps = Omit<PostStartProps, "children">> = Node<"postStart", P>;
 export type PostStartNode = PostStart;
 
+/** PreStart adds a Compose pre_start hook using the same container vocabulary. */
 export type PreStartProps = {
+	/** ArgsEscaped marks the command as already escaped (Windows). Engine-only. */
 	argsEscaped?: boolean;
+	/** AttachStderr attaches stderr. Engine-only. */
 	attachStderr?: boolean;
+	/** AttachStdin attaches stdin. Engine-only. */
 	attachStdin?: boolean;
+	/** AttachStdout attaches stdout. Engine-only. */
 	attachStdout?: boolean;
+	/**
+	 * AutoRemove removes the container on exit. Engine-only; converting to a
+	 * Compose service reports an unsupported mapping.
+	 */
 	autoRemove?: boolean;
+	/** BlkioWeight sets block IO weight (10–1000). */
 	blkioWeight?: number;
-	capAdd?: string;
-	capDrop?: string;
+	/** CapAdd adds a Linux capability. Pass cap.ALL or a kernel name such as cap.NET_ADMIN. */
+	capAdd?: "ALL" | "CHOWN" | "DAC_OVERRIDE" | "DAC_READ_SEARCH" | "FOWNER" | "FSETID" | "KILL" | "SETGID" | "SETUID" | "SETPCAP" | "LINUX_IMMUTABLE" | "NET_BIND_SERVICE" | "NET_BROADCAST" | "NET_ADMIN" | "NET_RAW" | "IPC_LOCK" | "IPC_OWNER" | "SYS_MODULE" | "SYS_RAWIO" | "SYS_CHROOT" | "SYS_PTRACE" | "SYS_PACCT" | "SYS_ADMIN" | "SYS_BOOT" | "SYS_NICE" | "SYS_RESOURCE" | "SYS_TIME" | "SYS_TTY_CONFIG" | "MKNOD" | "LEASE" | "AUDIT_WRITE" | "AUDIT_CONTROL" | "SETFCAP" | "MAC_OVERRIDE" | "MAC_ADMIN" | "SYSLOG" | "WAKE_ALARM" | "BLOCK_SUSPEND" | "AUDIT_READ" | "PERFMON" | "BPF" | "CHECKPOINT_RESTORE";
+	/** CapDrop drops a Linux capability. Pass cap.ALL or a kernel name such as cap.MKNOD. */
+	capDrop?: "ALL" | "CHOWN" | "DAC_OVERRIDE" | "DAC_READ_SEARCH" | "FOWNER" | "FSETID" | "KILL" | "SETGID" | "SETUID" | "SETPCAP" | "LINUX_IMMUTABLE" | "NET_BIND_SERVICE" | "NET_BROADCAST" | "NET_ADMIN" | "NET_RAW" | "IPC_LOCK" | "IPC_OWNER" | "SYS_MODULE" | "SYS_RAWIO" | "SYS_CHROOT" | "SYS_PTRACE" | "SYS_PACCT" | "SYS_ADMIN" | "SYS_BOOT" | "SYS_NICE" | "SYS_RESOURCE" | "SYS_TIME" | "SYS_TTY_CONFIG" | "MKNOD" | "LEASE" | "AUDIT_WRITE" | "AUDIT_CONTROL" | "SETFCAP" | "MAC_OVERRIDE" | "MAC_ADMIN" | "SYSLOG" | "WAKE_ALARM" | "BLOCK_SUSPEND" | "AUDIT_READ" | "PERFMON" | "BPF" | "CHECKPOINT_RESTORE";
+	/** Cgroup sets the cgroup to join. */
 	cgroup?: string;
-	cgroupNS?: string;
+	/** CgroupNS sets the cgroup namespace mode (host/private). */
+	cgroupNS?: "host" | "private";
+	/** CgroupParent sets the parent cgroup. */
 	cgroupParent?: string;
+	/**
+	 * Command sets the command (argv) for a container, service, job, Compose.Run,
+	 * or CreateExec / ExecTerminal.
+	 */
 	command?: string | string[];
+	/** ContainerIDFile writes the container ID to a file. Engine-only. */
 	containerIDFile?: string;
+	/** CPUCount sets Windows CPU count. */
 	cpuCount?: number;
+	/** CPUPercent sets Windows CPU percent. */
 	cpuPercent?: number;
+	/** CPUPeriod sets CFS period in microseconds. */
 	cpuPeriod?: number;
+	/** CPUQuota sets CFS quota in microseconds. */
 	cpuQuota?: number;
+	/** CPURealtimePeriod sets CPU realtime period in microseconds. */
 	cpuRealtimePeriod?: number;
+	/** CPURealtimeRuntime sets CPU realtime runtime in microseconds. */
 	cpuRealtimeRuntime?: number;
+	/** CPUSet sets CpusetCpus (e.g. "0-3"). */
 	cpuSet?: string;
+	/** CPUSetMems sets CpusetMems. */
 	cpuSetMems?: string;
+	/** CPUShares sets relative CPU weight. */
 	cpuShares?: number;
+	/**
+	 * CPUs sets CPU quota as a fractional count (Compose cpus / Engine NanoCPUs).
+	 * Inside Deploy it maps to deploy.resources.limits.cpus.
+	 */
 	cpus?: number;
+	/** DeviceCgroupRule adds a device cgroup rule. */
 	deviceCgroupRule?: string;
+	/** DNS adds a DNS server. */
 	dns?: string;
+	/** DNSOption adds a DNS resolver option. */
 	dnsOption?: string;
+	/** DNSSearch adds a DNS search domain. */
 	dnsSearch?: string;
+	/** DomainName sets the NIS domain name (Engine Domainname / Compose domainname). */
 	domainName?: string;
+	/** Entrypoint sets the entrypoint (argv). */
 	entrypoint?: string | string[];
+	/** GroupAdd adds a supplementary group. */
 	groupAdd?: string;
+	/** Hostname sets the container hostname. */
 	hostname?: string;
+	/** Image sets the image reference on a container, service, job, or Engine build tag. */
 	image?: string;
+	/** Init runs a signal-forwarding init, including explicit false. */
 	init?: boolean;
+	/** Interactive opens stdin, including explicit false. */
 	interactive?: boolean;
+	/** IOMaximumBandwidth sets Windows system-drive byte/s limit. */
 	ioMaximumBandwidth?: number;
+	/** IOMaximumIOps sets Windows system-drive IOps limit. */
 	ioMaximumIOps?: number;
-	ipc?: string;
-	isolation?: string;
+	/** IPC sets the IPC namespace mode (Engine IpcMode / Compose ipc). */
+	ipc?: `container:${string}` | "none" | "private" | "shareable" | "host";
+	/**
+	 * Isolation sets Windows isolation (default, process, hyperv). Inside Build
+	 * it maps to compose build.isolation.
+	 */
+	isolation?: "default" | "process" | "hyperv";
+	/** Link adds a legacy container link. */
 	link?: string;
+	/** MacAddress sets the container MAC address, or the endpoint MAC inside Network. */
 	macAddress?: string;
+	/** MaskedPath overrides a masked path. Engine-only. */
 	maskedPath?: string;
+	/**
+	 * Memory sets the memory limit in bytes, including explicit 0.
+	 * Inside Deploy it maps to deploy.resources.limits.memory.
+	 */
 	memory?: number;
+	/** MemoryReservation sets the soft memory limit in bytes. */
 	memoryReservation?: number;
+	/** MemorySwap sets memory+swap in bytes. -1 is unlimited. */
 	memorySwap?: number;
+	/** MemorySwappiness sets vm.swappiness (0–100). */
 	memorySwappiness?: number;
+	/**
+	 * Name sets the receiver's name: container, service, job, project, depends_on,
+	 * volume, network, secret, or config-file.
+	 */
 	name?: string;
+	/** NetworkDisabled disables networking (Engine NetworkDisabled, Compose network_mode=none). */
 	networkDisabled?: boolean;
-	networkMode?: string;
+	/**
+	 * NetworkMode sets Engine NetworkMode / Compose network_mode (bridge, host, none, container:id).
+	 * Inside Build it maps to compose build.network.
+	 */
+	networkMode?: `container:${string}` | `service:${string}` | "bridge" | "host" | "none" | "default";
+	/** OnBuild adds image ONBUILD metadata. Engine-only. */
 	onBuild?: string | string[];
+	/** OomKillDisable disables the OOM killer. */
 	oomKillDisable?: boolean;
+	/** OomScoreAdj sets OOM score adjustment. */
 	oomScoreAdj?: number;
+	/** PerReplica sets Compose pre_start.per_replica inside PreStart. */
 	perReplica?: boolean;
-	pid?: string;
+	/** PID sets the PID namespace mode. */
+	pid?: `container:${string}` | "host";
+	/**
+	 * PidsLimit sets the pids cgroup limit. 0 or -1 is unlimited.
+	 * Inside Deploy / Reserve it maps to deploy.resources pids.
+	 */
 	pidsLimit?: number;
+	/** Platform sets the target platform (Compose platform / Engine create, pull, or build). */
 	platform?: string;
+	/**
+	 * Privileged sets privileged mode, including explicit false. Inside Build
+	 * it maps to compose build.privileged.
+	 */
 	privileged?: boolean;
+	/** PublishAll publishes all exposed ports on random host ports. Engine-only. */
 	publishAll?: boolean;
+	/** PullRefreshAfter sets Compose pull_refresh_after (duration such as "24h"). */
 	pullRefreshAfter?: string;
+	/**
+	 * ReadOnly mounts the root filesystem read-only at the outer scope, or the
+	 * nested Volume read-only inside Volume(...).
+	 */
 	readOnly?: boolean;
+	/** ReadonlyPath overrides a readonly path. Engine-only. */
 	readonlyPath?: string;
+	/** Runtime sets the OCI runtime. */
 	runtime?: string;
+	/** SecurityOpt adds a security option (SELinux, apparmor, ...). */
 	securityOpt?: string;
+	/** Shell sets the shell used for shell-form RUN/CMD/ENTRYPOINT. Engine-only. */
 	shell?: string | string[];
+	/** ShmSize sets /dev/shm size in bytes. */
 	shmSize?: number;
+	/** StdinOnce closes stdin after one attached client disconnects. Engine-only. */
 	stdinOnce?: boolean;
-	stopSignal?: string;
+	/** StopSignal sets the signal used to stop or kill the container. */
+	stopSignal?: "SIGHUP" | "SIGINT" | "SIGQUIT" | "SIGILL" | "SIGTRAP" | "SIGABRT" | "SIGBUS" | "SIGFPE" | "SIGKILL" | "SIGUSR1" | "SIGSEGV" | "SIGUSR2" | "SIGPIPE" | "SIGALRM" | "SIGTERM" | "SIGSTKFLT" | "SIGCHLD" | "SIGCONT" | "SIGSTOP" | "SIGTSTP" | "SIGTTIN" | "SIGTTOU" | "SIGURG" | "SIGXCPU" | "SIGXFSZ" | "SIGVTALRM" | "SIGPROF" | "SIGWINCH" | "SIGIO" | "SIGPWR" | "SIGSYS";
+	/**
+	 * StopTimeout sets the stop timeout. Zero is explicit.
+	 * A number is nanoseconds. A string is a Go duration such as "30s".
+	 */
 	stopTimeout?: number | string;
+	/**
+	 * TmpfsMount adds a Compose service-level tmpfs path (short syntax).
+	 * Long syntax uses Volume with Kind(Tmpfs).
+	 */
 	tmpfsMount?: string;
+	/** Tty attaches a TTY, including explicit false. */
 	tty?: boolean;
+	/** Umask sets the process umask. */
 	umask?: number;
+	/** User sets the user the process runs as. */
 	user?: string;
-	userNS?: string;
-	uts?: string;
+	/** UserNS sets the user namespace mode. */
+	userNS?: "host";
+	/** UTS sets the UTS namespace mode. */
+	uts?: "host";
+	/** VolumeDriver sets the volume driver name. */
 	volumeDriver?: string;
+	/** VolumesFrom mounts volumes from another container. */
 	volumesFrom?: string;
+	/**
+	 * WorkingDir sets a container, service, job, or hook working directory.
+	 * Compose project directory on LoadProject is ProjectDirectory.
+	 */
 	workingDir?: string;
 	children?: MaybeChild<AnnotationNode | BlkioReadBpsNode | BlkioReadIOpsNode | BlkioWeightDeviceNode | BlkioWriteBpsNode | BlkioWriteIOpsNode | ConsoleSizeNode | DeviceNode | EnvNode | ExposeNode | ExtraHostNode | GPUNode | HealthNode | LabelNode | LoggingNode | NetworkNode | PublishNode | RestartNode | StorageOptNode | SysctlNode | UlimitNode | VolumeNode | Node<"fragment">>;
 };
@@ -676,10 +1252,24 @@ export type PreStartProps = {
 export type PreStart<P extends PreStartProps = Omit<PreStartProps, "children">> = Node<"preStart", P>;
 export type PreStartNode = PreStart;
 
+/** PreStop adds a Compose pre_stop hook. Service only. */
 export type PreStopProps = {
+	/**
+	 * Command sets the command (argv) for a container, service, job, Compose.Run,
+	 * or CreateExec / ExecTerminal.
+	 */
 	command?: string | string[];
+	/**
+	 * Privileged sets privileged mode, including explicit false. Inside Build
+	 * it maps to compose build.privileged.
+	 */
 	privileged?: boolean;
+	/** User sets the user the process runs as. */
 	user?: string;
+	/**
+	 * WorkingDir sets a container, service, job, or hook working directory.
+	 * Compose project directory on LoadProject is ProjectDirectory.
+	 */
 	workingDir?: string;
 	children?: MaybeChild<EnvNode | Node<"fragment">>;
 };
@@ -687,6 +1277,7 @@ export type PreStopProps = {
 export type PreStop<P extends PreStopProps = Omit<PreStopProps, "children">> = Node<"preStop", P>;
 export type PreStopNode = PreStop;
 
+/** ProviderOption adds Compose provider.options. Service only. */
 export type ProviderOptionProps = {
 	name?: string;
 	value?: string;
@@ -696,14 +1287,30 @@ export type ProviderOptionProps = {
 export type ProviderOption<P extends ProviderOptionProps = Omit<ProviderOptionProps, "children">> = Node<"providerOption", P>;
 export type ProviderOptionNode = ProviderOption;
 
+/** Publish adds a published port. Nested setters determine host/container ports. */
 export type PublishProps = {
+	/** AppProtocol sets Compose ports.app_protocol inside Publish. */
 	appProtocol?: string;
+	/** ContainerPort sets the container port in a Publish scope. */
 	containerPort?: number;
+	/** HostIP sets the host bind address in a Publish scope. Empty is explicit. */
 	hostIP?: string;
+	/** HostPort sets the host port in a Publish scope. Zero is explicit. */
 	hostPort?: number;
+	/**
+	 * Mode sets deploy mode inside Deploy (replicated, global, replicated-job, global-job)
+	 * or Compose ports.mode inside Publish (ingress, host). Known values live in
+	 * packages svcmode and portmode.
+	 */
 	mode?: string;
+	/**
+	 * Name sets the receiver's name: container, service, job, project, depends_on,
+	 * volume, network, secret, or config-file.
+	 */
 	name?: string;
-	protocol?: string;
+	/** Protocol sets the published-port protocol in a Publish scope. */
+	protocol?: "tcp" | "udp" | "sctp";
+	/** Published sets Compose ports.published, including ranges such as "8083-9000". */
 	published?: string;
 	children?: MaybeChild<never>;
 };
@@ -711,9 +1318,22 @@ export type PublishProps = {
 export type Publish<P extends PublishProps = Omit<PublishProps, "children">> = Node<"publish", P>;
 export type PublishNode = Publish;
 
+/** Reserve sets deploy.resources.reservations inside Deploy. */
 export type ReserveProps = {
+	/**
+	 * CPUs sets CPU quota as a fractional count (Compose cpus / Engine NanoCPUs).
+	 * Inside Deploy it maps to deploy.resources.limits.cpus.
+	 */
 	cpus?: number;
+	/**
+	 * Memory sets the memory limit in bytes, including explicit 0.
+	 * Inside Deploy it maps to deploy.resources.limits.memory.
+	 */
 	memory?: number;
+	/**
+	 * PidsLimit sets the pids cgroup limit. 0 or -1 is unlimited.
+	 * Inside Deploy / Reserve it maps to deploy.resources pids.
+	 */
 	pidsLimit?: number;
 	children?: MaybeChild<DiscreteNode | GPUNode | Node<"fragment">>;
 };
@@ -721,10 +1341,21 @@ export type ReserveProps = {
 export type Reserve<P extends ReserveProps = Omit<ReserveProps, "children">> = Node<"reserve", P>;
 export type ReserveNode = Reserve;
 
+/** Restart configures the restart policy with nested setters. */
 export type RestartProps = {
+	/**
+	 * Delay sets update delay or deploy restart_policy delay.
+	 * A number is nanoseconds. A string is a Go duration such as "30s".
+	 */
 	delay?: number | string;
+	/** MaxRetries sets on-failure retry count in a Restart scope. Zero is explicit. */
 	maxRetries?: number;
-	policy?: string;
+	/** Policy sets the restart policy name in a Restart scope. */
+	policy?: "no" | "on-failure" | "always" | "unless-stopped";
+	/**
+	 * Window sets deploy restart_policy.window inside Restart.
+	 * A number is nanoseconds. A string is a Go duration such as "30s".
+	 */
 	window?: number | string;
 	children?: MaybeChild<never>;
 };
@@ -732,12 +1363,25 @@ export type RestartProps = {
 export type Restart<P extends RestartProps = Omit<RestartProps, "children">> = Node<"restart", P>;
 export type RestartNode = Restart;
 
+/** Rollback sets deploy.rollback_config inside Deploy. */
 export type RollbackProps = {
+	/**
+	 * Delay sets update delay or deploy restart_policy delay.
+	 * A number is nanoseconds. A string is a Go duration such as "30s".
+	 */
 	delay?: number | string;
-	failureAction?: string;
+	/** FailureAction sets update/rollback failure_action. */
+	failureAction?: "continue" | "pause" | "rollback";
+	/** MaxFailureRatio sets update/rollback max_failure_ratio. */
 	maxFailureRatio?: number;
+	/**
+	 * Monitor sets update/rollback monitor duration.
+	 * A number is nanoseconds. A string is a Go duration such as "30s".
+	 */
 	monitor?: number | string;
-	order?: string;
+	/** Order sets update/rollback order (start-first / stop-first). */
+	order?: "start-first" | "stop-first";
+	/** Parallelism sets update/rollback parallelism. */
 	parallelism?: number;
 	children?: MaybeChild<never>;
 };
@@ -745,16 +1389,39 @@ export type RollbackProps = {
 export type Rollback<P extends RollbackProps = Omit<RollbackProps, "children">> = Node<"rollback", P>;
 export type RollbackNode = Rollback;
 
+/** Secret adds a Compose secret reference on a service/job. */
 export type SecretProps = {
+	/**
+	 * Driver sets the driver name for logging, devices, GPUs, volumes, networks,
+	 * or secrets. Known log drivers live in package logdrv; network drivers in netdrv.
+	 */
 	driver?: string;
+	/** External marks a project network, volume, secret, or config as unmanaged. */
 	external?: boolean;
+	/** FileMode sets tmpfs/secret/config mode (octal file bits). */
 	fileMode?: number;
+	/** FromFile sets the filesystem source of a secret or config object. */
 	fromFile?: string;
+	/** GID sets Compose secret/config gid. */
 	gid?: string;
+	/**
+	 * Name sets the receiver's name: container, service, job, project, depends_on,
+	 * volume, network, secret, or config-file.
+	 */
 	name?: string;
+	/**
+	 * Source is the origin: bind path, named-volume name, secret/config file
+	 * source, or build context inside Build.
+	 */
 	source?: string;
+	/**
+	 * Target is the destination: mount path, secret/config target, or build stage
+	 * inside Build.
+	 */
 	target?: string;
+	/** TemplateDriver sets Compose secrets/configs template_driver. */
 	templateDriver?: string;
+	/** UID sets Compose secret/config uid. */
 	uid?: string;
 	children?: MaybeChild<LabelNode | Node<"fragment">>;
 };
@@ -762,84 +1429,203 @@ export type SecretProps = {
 export type Secret<P extends SecretProps = Omit<SecretProps, "children">> = Node<"secret", P>;
 export type SecretNode = Secret;
 
+/** Service is a Compose service: shared container settings plus Compose-only fields. */
 export type ServiceProps = {
+	/** Attach sets Compose attach. Service only. */
 	attach?: boolean;
+	/** BlkioWeight sets block IO weight (10–1000). */
 	blkioWeight?: number;
-	capAdd?: string;
-	capDrop?: string;
+	/** CapAdd adds a Linux capability. Pass cap.ALL or a kernel name such as cap.NET_ADMIN. */
+	capAdd?: "ALL" | "CHOWN" | "DAC_OVERRIDE" | "DAC_READ_SEARCH" | "FOWNER" | "FSETID" | "KILL" | "SETGID" | "SETUID" | "SETPCAP" | "LINUX_IMMUTABLE" | "NET_BIND_SERVICE" | "NET_BROADCAST" | "NET_ADMIN" | "NET_RAW" | "IPC_LOCK" | "IPC_OWNER" | "SYS_MODULE" | "SYS_RAWIO" | "SYS_CHROOT" | "SYS_PTRACE" | "SYS_PACCT" | "SYS_ADMIN" | "SYS_BOOT" | "SYS_NICE" | "SYS_RESOURCE" | "SYS_TIME" | "SYS_TTY_CONFIG" | "MKNOD" | "LEASE" | "AUDIT_WRITE" | "AUDIT_CONTROL" | "SETFCAP" | "MAC_OVERRIDE" | "MAC_ADMIN" | "SYSLOG" | "WAKE_ALARM" | "BLOCK_SUSPEND" | "AUDIT_READ" | "PERFMON" | "BPF" | "CHECKPOINT_RESTORE";
+	/** CapDrop drops a Linux capability. Pass cap.ALL or a kernel name such as cap.MKNOD. */
+	capDrop?: "ALL" | "CHOWN" | "DAC_OVERRIDE" | "DAC_READ_SEARCH" | "FOWNER" | "FSETID" | "KILL" | "SETGID" | "SETUID" | "SETPCAP" | "LINUX_IMMUTABLE" | "NET_BIND_SERVICE" | "NET_BROADCAST" | "NET_ADMIN" | "NET_RAW" | "IPC_LOCK" | "IPC_OWNER" | "SYS_MODULE" | "SYS_RAWIO" | "SYS_CHROOT" | "SYS_PTRACE" | "SYS_PACCT" | "SYS_ADMIN" | "SYS_BOOT" | "SYS_NICE" | "SYS_RESOURCE" | "SYS_TIME" | "SYS_TTY_CONFIG" | "MKNOD" | "LEASE" | "AUDIT_WRITE" | "AUDIT_CONTROL" | "SETFCAP" | "MAC_OVERRIDE" | "MAC_ADMIN" | "SYSLOG" | "WAKE_ALARM" | "BLOCK_SUSPEND" | "AUDIT_READ" | "PERFMON" | "BPF" | "CHECKPOINT_RESTORE";
+	/** Cgroup sets the cgroup to join. */
 	cgroup?: string;
-	cgroupNS?: string;
+	/** CgroupNS sets the cgroup namespace mode (host/private). */
+	cgroupNS?: "host" | "private";
+	/** CgroupParent sets the parent cgroup. */
 	cgroupParent?: string;
+	/**
+	 * Command sets the command (argv) for a container, service, job, Compose.Run,
+	 * or CreateExec / ExecTerminal.
+	 */
 	command?: string | string[];
+	/** ContainerName sets Compose container_name. Service only. */
 	containerName?: string;
+	/** CPUCount sets Windows CPU count. */
 	cpuCount?: number;
+	/** CPUPercent sets Windows CPU percent. */
 	cpuPercent?: number;
+	/** CPUPeriod sets CFS period in microseconds. */
 	cpuPeriod?: number;
+	/** CPUQuota sets CFS quota in microseconds. */
 	cpuQuota?: number;
+	/** CPURealtimePeriod sets CPU realtime period in microseconds. */
 	cpuRealtimePeriod?: number;
+	/** CPURealtimeRuntime sets CPU realtime runtime in microseconds. */
 	cpuRealtimeRuntime?: number;
+	/** CPUSet sets CpusetCpus (e.g. "0-3"). */
 	cpuSet?: string;
+	/** CPUSetMems sets CpusetMems. */
 	cpuSetMems?: string;
+	/** CPUShares sets relative CPU weight. */
 	cpuShares?: number;
+	/**
+	 * CPUs sets CPU quota as a fractional count (Compose cpus / Engine NanoCPUs).
+	 * Inside Deploy it maps to deploy.resources.limits.cpus.
+	 */
 	cpus?: number;
+	/** CredentialConfig sets Compose credential_spec.config. Service only. */
 	credentialConfig?: string;
+	/** CredentialFile sets Compose credential_spec.file. Service only. */
 	credentialFile?: string;
+	/** CredentialRegistry sets Compose credential_spec.registry. Service only. */
 	credentialRegistry?: string;
+	/** DeviceCgroupRule adds a device cgroup rule. */
 	deviceCgroupRule?: string;
+	/** DNS adds a DNS server. */
 	dns?: string;
+	/** DNSOption adds a DNS resolver option. */
 	dnsOption?: string;
+	/** DNSSearch adds a DNS search domain. */
 	dnsSearch?: string;
+	/** DomainName sets the NIS domain name (Engine Domainname / Compose domainname). */
 	domainName?: string;
+	/** Entrypoint sets the entrypoint (argv). */
 	entrypoint?: string | string[];
+	/** Extends sets Compose extends.service. Service only. */
 	extends?: string;
+	/** ExtendsFile sets Compose extends.file. Service only. */
 	extendsFile?: string;
+	/** ExternalLink adds a Compose external_links entry. Service only. */
 	externalLink?: string;
+	/**
+	 * FromContainer copies compatible container options onto a Compose service.
+	 * Engine-only settings such as AutoRemove are reported as unsupported mappings.
+	 * Passing a [*Container] directly to NewService is equivalent.
+	 */
 	fromContainer?: unknown;
+	/** GroupAdd adds a supplementary group. */
 	groupAdd?: string;
+	/** Hostname sets the container hostname. */
 	hostname?: string;
+	/** Image sets the image reference on a container, service, job, or Engine build tag. */
 	image?: string;
+	/** Init runs a signal-forwarding init, including explicit false. */
 	init?: boolean;
+	/** Interactive opens stdin, including explicit false. */
 	interactive?: boolean;
+	/** IOMaximumBandwidth sets Windows system-drive byte/s limit. */
 	ioMaximumBandwidth?: number;
+	/** IOMaximumIOps sets Windows system-drive IOps limit. */
 	ioMaximumIOps?: number;
-	ipc?: string;
-	isolation?: string;
+	/** IPC sets the IPC namespace mode (Engine IpcMode / Compose ipc). */
+	ipc?: `container:${string}` | "none" | "private" | "shareable" | "host";
+	/**
+	 * Isolation sets Windows isolation (default, process, hyperv). Inside Build
+	 * it maps to compose build.isolation.
+	 */
+	isolation?: "default" | "process" | "hyperv";
+	/** LabelFile adds a Compose label_file path. Service and job only. */
 	labelFile?: string;
+	/** Link adds a legacy container link. */
 	link?: string;
+	/** MacAddress sets the container MAC address, or the endpoint MAC inside Network. */
 	macAddress?: string;
+	/**
+	 * Memory sets the memory limit in bytes, including explicit 0.
+	 * Inside Deploy it maps to deploy.resources.limits.memory.
+	 */
 	memory?: number;
+	/** MemoryReservation sets the soft memory limit in bytes. */
 	memoryReservation?: number;
+	/** MemorySwap sets memory+swap in bytes. -1 is unlimited. */
 	memorySwap?: number;
+	/** MemorySwappiness sets vm.swappiness (0–100). */
 	memorySwappiness?: number;
+	/**
+	 * Name sets the receiver's name: container, service, job, project, depends_on,
+	 * volume, network, secret, or config-file.
+	 */
 	name?: string;
+	/** NetworkDisabled disables networking (Engine NetworkDisabled, Compose network_mode=none). */
 	networkDisabled?: boolean;
-	networkMode?: string;
+	/**
+	 * NetworkMode sets Engine NetworkMode / Compose network_mode (bridge, host, none, container:id).
+	 * Inside Build it maps to compose build.network.
+	 */
+	networkMode?: `container:${string}` | `service:${string}` | "bridge" | "host" | "none" | "default";
+	/** OomKillDisable disables the OOM killer. */
 	oomKillDisable?: boolean;
+	/** OomScoreAdj sets OOM score adjustment. */
 	oomScoreAdj?: number;
-	pid?: string;
+	/** PID sets the PID namespace mode. */
+	pid?: `container:${string}` | "host";
+	/**
+	 * PidsLimit sets the pids cgroup limit. 0 or -1 is unlimited.
+	 * Inside Deploy / Reserve it maps to deploy.resources pids.
+	 */
 	pidsLimit?: number;
+	/** Platform sets the target platform (Compose platform / Engine create, pull, or build). */
 	platform?: string;
+	/**
+	 * Privileged sets privileged mode, including explicit false. Inside Build
+	 * it maps to compose build.privileged.
+	 */
 	privileged?: boolean;
+	/** Profile adds a Compose profile on a service or LoadProject. */
 	profile?: string;
+	/** Provider sets Compose provider.type. Service only. */
 	provider?: string;
-	pullPolicy?: string;
+	/** PullPolicy sets Compose pull_policy. Service and job only. */
+	pullPolicy?: `every_${string}` | "always" | "never" | "missing" | "if_not_present" | "build" | "refresh" | "daily" | "weekly";
+	/** PullRefreshAfter sets Compose pull_refresh_after (duration such as "24h"). */
 	pullRefreshAfter?: string;
+	/**
+	 * ReadOnly mounts the root filesystem read-only at the outer scope, or the
+	 * nested Volume read-only inside Volume(...).
+	 */
 	readOnly?: boolean;
+	/** Replicas sets deploy replicas inside Deploy, or service scale at the outer scope. */
 	replicas?: number;
+	/** Runtime sets the OCI runtime. */
 	runtime?: string;
+	/** SecurityOpt adds a security option (SELinux, apparmor, ...). */
 	securityOpt?: string;
+	/** ShmSize sets /dev/shm size in bytes. */
 	shmSize?: number;
-	stopSignal?: string;
+	/** StopSignal sets the signal used to stop or kill the container. */
+	stopSignal?: "SIGHUP" | "SIGINT" | "SIGQUIT" | "SIGILL" | "SIGTRAP" | "SIGABRT" | "SIGBUS" | "SIGFPE" | "SIGKILL" | "SIGUSR1" | "SIGSEGV" | "SIGUSR2" | "SIGPIPE" | "SIGALRM" | "SIGTERM" | "SIGSTKFLT" | "SIGCHLD" | "SIGCONT" | "SIGSTOP" | "SIGTSTP" | "SIGTTIN" | "SIGTTOU" | "SIGURG" | "SIGXCPU" | "SIGXFSZ" | "SIGVTALRM" | "SIGPROF" | "SIGWINCH" | "SIGIO" | "SIGPWR" | "SIGSYS";
+	/**
+	 * StopTimeout sets the stop timeout. Zero is explicit.
+	 * A number is nanoseconds. A string is a Go duration such as "30s".
+	 */
 	stopTimeout?: number | string;
+	/**
+	 * TmpfsMount adds a Compose service-level tmpfs path (short syntax).
+	 * Long syntax uses Volume with Kind(Tmpfs).
+	 */
 	tmpfsMount?: string;
+	/** Tty attaches a TTY, including explicit false. */
 	tty?: boolean;
+	/** Umask sets the process umask. */
 	umask?: number;
+	/** UseAPISocket forwards the Docker socket into the service. Compose-only. */
 	useAPISocket?: boolean;
+	/** User sets the user the process runs as. */
 	user?: string;
-	userNS?: string;
-	uts?: string;
+	/** UserNS sets the user namespace mode. */
+	userNS?: "host";
+	/** UTS sets the UTS namespace mode. */
+	uts?: "host";
+	/** VolumeDriver sets the volume driver name. */
 	volumeDriver?: string;
+	/** VolumesFrom mounts volumes from another container. */
 	volumesFrom?: string;
+	/**
+	 * WorkingDir sets a container, service, job, or hook working directory.
+	 * Compose project directory on LoadProject is ProjectDirectory.
+	 */
 	workingDir?: string;
 	children?: MaybeChild<AnnotationNode | BlkioReadBpsNode | BlkioReadIOpsNode | BlkioWeightDeviceNode | BlkioWriteBpsNode | BlkioWriteIOpsNode | BuildNode | ConsoleSizeNode | ContainerNode | DependsOnNode | DeployNode | DevelopNode | DeviceNode | EnvNode | EnvFileNode | ExposeNode | ExtraHostNode | FileConfigNode | GPUNode | HealthNode | LabelNode | LoggingNode | ModelNode | NetworkNode | PostStartNode | PreStartNode | PreStopNode | ProviderOptionNode | PublishNode | RestartNode | SecretNode | StorageOptNode | SysctlNode | UlimitNode | VolumeNode | Node<"fragment">>;
 };
@@ -847,6 +1633,7 @@ export type ServiceProps = {
 export type Service<P extends ServiceProps = Omit<ServiceProps, "children">> = Node<"service", P>;
 export type ServiceNode = Service;
 
+/** SSH adds a build SSH mount inside Build or Compose.Build (id, optional path). */
 export type SSHProps = {
 	id?: string;
 	path?: string;
@@ -856,6 +1643,7 @@ export type SSHProps = {
 export type SSH<P extends SSHProps = Omit<SSHProps, "children">> = Node<"ssh", P>;
 export type SSHNode = SSH;
 
+/** StorageOpt sets a storage-driver option. */
 export type StorageOptProps = {
 	name?: string;
 	value?: string;
@@ -865,6 +1653,7 @@ export type StorageOptProps = {
 export type StorageOpt<P extends StorageOptProps = Omit<StorageOptProps, "children">> = Node<"storageOpt", P>;
 export type StorageOptNode = StorageOpt;
 
+/** Sysctl sets a namespaced sysctl. */
 export type SysctlProps = {
 	name?: string;
 	value?: string;
@@ -874,6 +1663,7 @@ export type SysctlProps = {
 export type Sysctl<P extends SysctlProps = Omit<SysctlProps, "children">> = Node<"sysctl", P>;
 export type SysctlNode = Sysctl;
 
+/** TLS configures client TLS. Nested setters are CA, Cert, and Key. */
 export type TLSProps = {
 	children?: MaybeChild<never>;
 };
@@ -881,9 +1671,16 @@ export type TLSProps = {
 export type TLS<P extends TLSProps = Omit<TLSProps, "children">> = Node<"tls", P>;
 export type TLSNode = TLS;
 
+/** Ulimit adds a ulimit shared by Engine Resources.Ulimits and Compose ulimits. */
 export type UlimitProps = {
+	/** Hard sets the hard ulimit inside Ulimit. */
 	hard?: number;
+	/**
+	 * Name sets the receiver's name: container, service, job, project, depends_on,
+	 * volume, network, secret, or config-file.
+	 */
 	name?: string;
+	/** Soft sets the soft ulimit inside Ulimit. */
 	soft?: number;
 	children?: MaybeChild<never>;
 };
@@ -891,12 +1688,25 @@ export type UlimitProps = {
 export type Ulimit<P extends UlimitProps = Omit<UlimitProps, "children">> = Node<"ulimit", P>;
 export type UlimitNode = Ulimit;
 
+/** Update sets deploy.update_config inside Deploy. */
 export type UpdateProps = {
+	/**
+	 * Delay sets update delay or deploy restart_policy delay.
+	 * A number is nanoseconds. A string is a Go duration such as "30s".
+	 */
 	delay?: number | string;
-	failureAction?: string;
+	/** FailureAction sets update/rollback failure_action. */
+	failureAction?: "continue" | "pause" | "rollback";
+	/** MaxFailureRatio sets update/rollback max_failure_ratio. */
 	maxFailureRatio?: number;
+	/**
+	 * Monitor sets update/rollback monitor duration.
+	 * A number is nanoseconds. A string is a Go duration such as "30s".
+	 */
 	monitor?: number | string;
-	order?: string;
+	/** Order sets update/rollback order (start-first / stop-first). */
+	order?: "start-first" | "stop-first";
+	/** Parallelism sets update/rollback parallelism. */
 	parallelism?: number;
 	children?: MaybeChild<never>;
 };
@@ -904,21 +1714,52 @@ export type UpdateProps = {
 export type Update<P extends UpdateProps = Omit<UpdateProps, "children">> = Node<"update", P>;
 export type UpdateNode = Update;
 
+/** Volume adds a mount shared by Engine HostConfig.Mounts and Compose volumes. */
 export type VolumeProps = {
+	/** CreateHostPath sets Compose volumes.bind.create_host_path inside Volume. */
 	createHostPath?: boolean;
+	/**
+	 * Driver sets the driver name for logging, devices, GPUs, volumes, networks,
+	 * or secrets. Known log drivers live in package logdrv; network drivers in netdrv.
+	 */
 	driver?: string;
+	/** External marks a project network, volume, secret, or config as unmanaged. */
 	external?: boolean;
+	/** FileMode sets tmpfs/secret/config mode (octal file bits). */
 	fileMode?: number;
-	kind?: string;
+	/** Kind sets the mount type inside Volume (bind, volume, tmpfs, ...). */
+	kind?: "bind" | "volume" | "tmpfs" | "npipe" | "cluster" | "image";
+	/**
+	 * Name sets the receiver's name: container, service, job, project, depends_on,
+	 * volume, network, secret, or config-file.
+	 */
 	name?: string;
+	/** NoCopy disables copying image content into a named volume. */
 	noCopy?: boolean;
-	propagation?: string;
+	/** Propagation sets bind-mount propagation inside Volume. */
+	propagation?: "private" | "rprivate" | "shared" | "rshared" | "slave" | "rslave";
+	/**
+	 * ReadOnly mounts the root filesystem read-only at the outer scope, or the
+	 * nested Volume read-only inside Volume(...).
+	 */
 	readOnly?: boolean;
-	recursive?: string;
-	seLinux?: string;
+	/** Recursive sets Compose volumes.bind.recursive inside Volume. */
+	recursive?: "enabled" | "disabled" | "writable" | "readonly";
+	/** SELinux sets Compose volumes.bind.selinux inside Volume ("z" or "Z"). */
+	seLinux?: "z" | "Z";
+	/** Size sets tmpfs size in bytes inside Volume. */
 	size?: number;
+	/**
+	 * Source is the origin: bind path, named-volume name, secret/config file
+	 * source, or build context inside Build.
+	 */
 	source?: string;
+	/** SubPath sets a volume subpath inside Volume. */
 	subPath?: string;
+	/**
+	 * Target is the destination: mount path, secret/config target, or build stage
+	 * inside Build.
+	 */
 	target?: string;
 	children?: MaybeChild<DriverOptNode | LabelNode | Node<"fragment">>;
 };
@@ -926,16 +1767,39 @@ export type VolumeProps = {
 export type Volume<P extends VolumeProps = Omit<VolumeProps, "children">> = Node<"volume", P>;
 export type VolumeNode = Volume;
 
+/** WatchFiles adds a develop.watch trigger inside Develop. */
 export type WatchFilesProps = {
-	action?: string;
+	/** Action sets a develop.watch action inside WatchFiles. */
+	action?: "sync" | "rebuild" | "sync+restart" | "sync+exec" | "restart";
+	/**
+	 * Command sets the command (argv) for a container, service, job, Compose.Run,
+	 * or CreateExec / ExecTerminal.
+	 */
 	command?: string | string[];
+	/** Ignore adds a develop.watch ignore glob inside WatchFiles. */
 	ignore?: string;
+	/** Include adds a develop.watch include glob inside WatchFiles. */
 	include?: string;
+	/** InitialSync sets Compose develop.watch.initial_sync inside WatchFiles. */
 	initialSync?: boolean;
+	/** Path sets a filesystem path for StatPath. */
 	path?: string;
+	/**
+	 * Privileged sets privileged mode, including explicit false. Inside Build
+	 * it maps to compose build.privileged.
+	 */
 	privileged?: boolean;
+	/**
+	 * Target is the destination: mount path, secret/config target, or build stage
+	 * inside Build.
+	 */
 	target?: string;
+	/** User sets the user the process runs as. */
 	user?: string;
+	/**
+	 * WorkingDir sets a container, service, job, or hook working directory.
+	 * Compose project directory on LoadProject is ProjectDirectory.
+	 */
 	workingDir?: string;
 	children?: MaybeChild<EnvNode | Node<"fragment">>;
 };
@@ -943,272 +1807,288 @@ export type WatchFilesProps = {
 export type WatchFiles<P extends WatchFilesProps = Omit<WatchFilesProps, "children">> = Node<"watchFiles", P>;
 export type WatchFilesNode = WatchFiles;
 
-// AdditionalContext is the kit additionalContext scope as a TSX component.
+/** AdditionalContext adds a named additional build context inside Build. */
 export function AdditionalContext(props: AdditionalContextProps): AdditionalContext {
 	return element("additionalContext", props);
 }
 
-// Annotation is the kit annotation scope as a TSX component.
+/** Annotation adds a runtime annotation. */
 export function Annotation(props: AnnotationProps): Annotation {
 	return element("annotation", props);
 }
 
-// AuxAddress is the kit auxAddress scope as a TSX component.
+/** AuxAddress adds Compose networks.ipam.config.aux_addresses inside AddNetwork. */
 export function AuxAddress(props: AuxAddressProps): AuxAddress {
 	return element("auxAddress", props);
 }
 
-// BlkioReadBps is the kit blkioReadBps scope as a TSX component.
+/** BlkioReadBps throttles read bytes/sec on a device. */
 export function BlkioReadBps(props: BlkioReadBpsProps): BlkioReadBps {
 	return element("blkioReadBps", props);
 }
 
-// BlkioReadIOps is the kit blkioReadIOps scope as a TSX component.
+/** BlkioReadIOps throttles read IOPS on a device. */
 export function BlkioReadIOps(props: BlkioReadIOpsProps): BlkioReadIOps {
 	return element("blkioReadIOps", props);
 }
 
-// BlkioWeightDevice is the kit blkioWeightDevice scope as a TSX component.
+/** BlkioWeightDevice adds a per-device blkio weight. */
 export function BlkioWeightDevice(props: BlkioWeightDeviceProps): BlkioWeightDevice {
 	return element("blkioWeightDevice", props);
 }
 
-// BlkioWriteBps is the kit blkioWriteBps scope as a TSX component.
+/** BlkioWriteBps throttles write bytes/sec on a device. */
 export function BlkioWriteBps(props: BlkioWriteBpsProps): BlkioWriteBps {
 	return element("blkioWriteBps", props);
 }
 
-// BlkioWriteIOps is the kit blkioWriteIOps scope as a TSX component.
+/** BlkioWriteIOps throttles write IOPS on a device. */
 export function BlkioWriteIOps(props: BlkioWriteIOpsProps): BlkioWriteIOps {
 	return element("blkioWriteIOps", props);
 }
 
-// Build is the kit build scope as a TSX component.
+/** Build sets Compose build configuration. Service and job only. */
 export function Build(props: BuildProps): Build {
 	return element("build", props);
 }
 
-// Compose is the kit compose scope as a TSX component.
+/** Compose is a Compose file: name, services, jobs, networks, volumes, secrets, and configs. */
 export function Compose(props: ComposeProps): Compose {
 	return element("compose", props);
 }
 
-// ConsoleSize is the kit consoleSize scope as a TSX component.
+/** ConsoleSize sets the initial console height and width. */
 export function ConsoleSize(props: ConsoleSizeProps): ConsoleSize {
 	return element("consoleSize", props);
 }
 
-// Container is the kit container scope as a TSX component.
+/**
+ * Container is a standalone Engine container configuration that also converts
+ * to a Compose service when the settings map.
+ */
 export function Container(props: ContainerProps): Container {
 	return element("container", props);
 }
 
-// CopyPath is the kit copyPath scope as a TSX component.
+/** CopyPath sets source and destination for Compose.Copy. */
 export function CopyPath(props: CopyPathProps): CopyPath {
 	return element("copyPath", props);
 }
 
-// DependsOn is the kit dependsOn scope as a TSX component.
+/** DependsOn adds a service dependency with nested setters (Name, Condition). */
 export function DependsOn(props: DependsOnProps): DependsOn {
 	return element("dependsOn", props);
 }
 
-// Deploy is the kit deploy scope as a TSX component.
+/** Deploy sets Compose deploy configuration. Service only. */
 export function Deploy(props: DeployProps): Deploy {
 	return element("deploy", props);
 }
 
-// Develop is the kit develop scope as a TSX component.
+/** Develop sets Compose develop.watch. Service only. */
 export function Develop(props: DevelopProps): Develop {
 	return element("develop", props);
 }
 
-// Device is the kit device scope as a TSX component.
+/** Device maps a host device into the container (Engine Devices / Compose devices). */
 export function Device(props: DeviceProps): Device {
 	return element("device", props);
 }
 
-// Discrete is the kit discrete scope as a TSX component.
+/** Discrete adds Compose deploy.resources.generic_resources.discrete_resource_spec. */
 export function Discrete(props: DiscreteProps): Discrete {
 	return element("discrete", props);
 }
 
-// DriverOpt is the kit driverOpt scope as a TSX component.
+/** DriverOpt adds a driver option inside Logging, Volume, Network, or project resources. */
 export function DriverOpt(props: DriverOptProps): DriverOpt {
 	return element("driverOpt", props);
 }
 
-// Env is the kit env scope as a TSX component.
+/**
+ * Env adds an environment variable at the outer scope, a build-arg inside
+ * Build or Compose.Build, or a run-time variable on Compose.Run.
+ * The value is treated as secret in errors.
+ */
 export function Env(props: EnvInput): Env<{ name?: string; value: string }> {
 	return element("env", resolveEnv(props));
 }
 
-// EnvFile is the kit envFile scope as a TSX component.
+/** EnvFile adds a Compose env_file path. Service, job, AddInclude, and LoadProject. */
 export function EnvFile(props: EnvFileProps): EnvFile {
 	return element("envFile", props);
 }
 
-// Expose is the kit expose scope as a TSX component.
+/** Expose publishes a port without a host binding (Engine ExposedPorts / Compose expose). */
 export function Expose(props: ExposeProps): Expose {
 	return element("expose", props);
 }
 
-// ExtraHost is the kit extraHost scope as a TSX component.
+/**
+ * ExtraHost adds a hostname-to-IP mapping (Engine extra_hosts / Compose extra_hosts).
+ * Inside Build it maps to compose build.extra_hosts.
+ */
 export function ExtraHost(props: ExtraHostProps): ExtraHost {
 	return element("extraHost", props);
 }
 
-// FileConfig is the kit fileConfig scope as a TSX component.
+/**
+ * FileConfig adds a Compose config-file reference on a service/job.
+ * Named FileConfig because Config is the Engine portable config type.
+ */
 export function FileConfig(props: FileConfigProps): FileConfig {
 	return element("fileConfig", props);
 }
 
-// Filter is the kit filter scope as a TSX component.
+/** Filter adds an Engine API filter term (list/prune/search/events). */
 export function Filter(props: FilterProps): Filter {
 	return element("filter", props);
 }
 
-// GPU is the kit gpu scope as a TSX component.
+/** GPU requests GPUs (Engine DeviceRequests / Compose gpus). */
 export function GPU(props: GPUProps): GPU {
 	return element("gpu", props);
 }
 
-// Health is the kit health scope as a TSX component.
+/** Health configures a healthcheck with nested setters. */
 export function Health(props: HealthProps): Health {
 	return element("health", props);
 }
 
-// HTTPHeader is the kit httpHeader scope as a TSX component.
+/** HTTPHeader adds a custom HTTP header on Engine requests. */
 export function HTTPHeader(props: HTTPHeaderProps): HTTPHeader {
 	return element("httpHeader", props);
 }
 
-// Include is the kit include scope as a TSX component.
+/** Include adds a develop.watch include glob inside WatchFiles. */
 export function Include(props: IncludeProps): Include {
 	return element("include", props);
 }
 
-// IPAMOpt is the kit ipamOpt scope as a TSX component.
+/** IPAMOpt adds Compose networks.ipam.options inside AddNetwork. */
 export function IPAMOpt(props: IPAMOptProps): IPAMOpt {
 	return element("ipamOpt", props);
 }
 
-// Job is the kit job scope as a TSX component.
+/** Job is a Compose job: shared spec plus job-only build/secrets/depends. */
 export function Job(props: JobProps): Job {
 	return element("job", props);
 }
 
-// Label is the kit label scope as a TSX component.
+/**
+ * Label adds a label on the receiver: container/service/job, or nested
+ * volume, network, build, deploy, or project resource.
+ */
 export function Label(props: EnvInput): Label<{ name?: string; value: string }> {
 	return element("label", resolveNamedValue(props, "label"));
 }
 
-// Logging is the kit logging scope as a TSX component.
+/** Logging sets Engine LogConfig / Compose logging. */
 export function Logging(props: LoggingProps): Logging {
 	return element("logging", props);
 }
 
-// Model is the kit model scope as a TSX component.
+/** Model adds a Compose models mapping. Service and job. */
 export function Model(props: ModelProps): Model {
 	return element("model", props);
 }
 
-// Network is the kit network scope as a TSX component.
+/** Network attaches a named network (Engine EndpointsConfig / Compose networks). */
 export function Network(props: NetworkProps): Network {
 	return element("network", props);
 }
 
-// Placement is the kit placement scope as a TSX component.
+/** Placement sets deploy.placement inside Deploy. */
 export function Placement(props: PlacementProps): Placement {
 	return element("placement", props);
 }
 
-// PostStart is the kit postStart scope as a TSX component.
+/** PostStart adds a Compose post_start hook. Service only. */
 export function PostStart(props: PostStartProps): PostStart {
 	return element("postStart", props);
 }
 
-// PreStart is the kit preStart scope as a TSX component.
+/** PreStart adds a Compose pre_start hook using the same container vocabulary. */
 export function PreStart(props: PreStartProps): PreStart {
 	return element("preStart", props);
 }
 
-// PreStop is the kit preStop scope as a TSX component.
+/** PreStop adds a Compose pre_stop hook. Service only. */
 export function PreStop(props: PreStopProps): PreStop {
 	return element("preStop", props);
 }
 
-// ProviderOption is the kit providerOption scope as a TSX component.
+/** ProviderOption adds Compose provider.options. Service only. */
 export function ProviderOption(props: ProviderOptionProps): ProviderOption {
 	return element("providerOption", props);
 }
 
-// Publish is the kit publish scope as a TSX component.
+/** Publish adds a published port. Nested setters determine host/container ports. */
 export function Publish(props: PublishProps): Publish {
 	return element("publish", props);
 }
 
-// Reserve is the kit reserve scope as a TSX component.
+/** Reserve sets deploy.resources.reservations inside Deploy. */
 export function Reserve(props: ReserveProps): Reserve {
 	return element("reserve", props);
 }
 
-// Restart is the kit restart scope as a TSX component.
+/** Restart configures the restart policy with nested setters. */
 export function Restart(props: RestartProps): Restart {
 	return element("restart", props);
 }
 
-// Rollback is the kit rollback scope as a TSX component.
+/** Rollback sets deploy.rollback_config inside Deploy. */
 export function Rollback(props: RollbackProps): Rollback {
 	return element("rollback", props);
 }
 
-// Secret is the kit secret scope as a TSX component.
+/** Secret adds a Compose secret reference on a service/job. */
 export function Secret(props: SecretProps): Secret {
 	return element("secret", props);
 }
 
-// Service is the kit service scope as a TSX component.
+/** Service is a Compose service: shared container settings plus Compose-only fields. */
 export function Service(props: ServiceProps): Service {
 	return element("service", props);
 }
 
-// SSH is the kit ssh scope as a TSX component.
+/** SSH adds a build SSH mount inside Build or Compose.Build (id, optional path). */
 export function SSH(props: SSHProps): SSH {
 	return element("ssh", props);
 }
 
-// StorageOpt is the kit storageOpt scope as a TSX component.
+/** StorageOpt sets a storage-driver option. */
 export function StorageOpt(props: StorageOptProps): StorageOpt {
 	return element("storageOpt", props);
 }
 
-// Sysctl is the kit sysctl scope as a TSX component.
+/** Sysctl sets a namespaced sysctl. */
 export function Sysctl(props: SysctlProps): Sysctl {
 	return element("sysctl", props);
 }
 
-// TLS is the kit tls scope as a TSX component.
+/** TLS configures client TLS. Nested setters are CA, Cert, and Key. */
 export function TLS(props: TLSProps): TLS {
 	return element("tls", props);
 }
 
-// Ulimit is the kit ulimit scope as a TSX component.
+/** Ulimit adds a ulimit shared by Engine Resources.Ulimits and Compose ulimits. */
 export function Ulimit(props: UlimitProps): Ulimit {
 	return element("ulimit", props);
 }
 
-// Update is the kit update scope as a TSX component.
+/** Update sets deploy.update_config inside Deploy. */
 export function Update(props: UpdateProps): Update {
 	return element("update", props);
 }
 
-// Volume is the kit volume scope as a TSX component.
+/** Volume adds a mount shared by Engine HostConfig.Mounts and Compose volumes. */
 export function Volume(props: VolumeProps): Volume {
 	return element("volume", props);
 }
 
-// WatchFiles is the kit watchFiles scope as a TSX component.
+/** WatchFiles adds a develop.watch trigger inside Develop. */
 export function WatchFiles(props: WatchFilesProps): WatchFiles {
 	return element("watchFiles", props);
 }

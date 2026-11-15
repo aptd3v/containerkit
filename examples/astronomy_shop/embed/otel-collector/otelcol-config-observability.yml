@@ -1,0 +1,19 @@
+# Observability exporters. Arrays replace (do not append) when OTel merges configs.
+exporters:
+  otlp/jaeger:
+    endpoint: "jaeger:4317"
+    tls:
+      insecure: true
+  otlphttp/prometheus:
+    endpoint: "http://prometheus:9090/api/v1/otlp"
+    tls:
+      insecure: true
+
+service:
+  pipelines:
+    traces:
+      exporters: [debug, otlp/jaeger]
+    metrics:
+      exporters: [debug, otlphttp/prometheus]
+    logs:
+      exporters: [debug]

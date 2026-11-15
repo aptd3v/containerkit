@@ -795,13 +795,15 @@ func ListImages(ctx context.Context, api Engine, opts ...EngineImageListOption) 
 	return out, nil
 }
 
-// PushImage wraps the corresponding Engine client method.
-func PushImage(ctx context.Context, api Engine, ref string, opts ...EngineImagePushOption) (ImagePushResponse, error) {
+// PushImage pushes an image through Engine.
+// The Engine call returns a progress stream. This function reads that stream
+// to the end, so the push finishes here and the body is not a result.
+func PushImage(ctx context.Context, api Engine, ref string, opts ...EngineImagePushOption) error {
 	if err := engineAPI(api, "PushImage"); err != nil {
-		return nil, err
+		return err
 	}
 	if ref == "" {
-		return nil, cfgErr("engine", "ref", "PushImage", fmt.Errorf("%w: image reference", errRequired))
+		return cfgErr("engine", "ref", "PushImage", fmt.Errorf("%w: image reference", errRequired))
 	}
 	var act engineImagePushAct
 	var errs []error
@@ -813,16 +815,16 @@ func PushImage(ctx context.Context, api Engine, ref string, opts ...EngineImageP
 		errs = addErr(errs, opt.applyEngineImagePushOption(&act))
 	}
 	if err := join(errs...); err != nil {
-		return nil, wrapReceiver("engine", err)
+		return wrapReceiver("engine", err)
 	}
 	out, err := api.ImagePush(ctx, ref, act.opts)
 	if err != nil {
-		return nil, cfgErr("engine", ref, "PushImage", err)
+		return cfgErr("engine", ref, "PushImage", err)
 	}
 	if err := act.log.drainJSON(ctx, out, KindPush, ref); err != nil {
-		return out, cfgErr("engine", ref, "PushImage", err)
+		return cfgErr("engine", ref, "PushImage", err)
 	}
-	return out, nil
+	return nil
 }
 
 // RemoveImage wraps the corresponding Engine client method.

@@ -10,6 +10,7 @@ import (
 	"go/token"
 	"os"
 	"path/filepath"
+	"regexp"
 	"sort"
 	"strings"
 	"unicode"
@@ -96,6 +97,7 @@ type setter struct {
 	leaf        bool
 	prop        string
 	tsType      string
+	doc         string
 	scopes      map[string]bool
 	actionBags  map[string]bool
 	variadic    bool
@@ -139,6 +141,7 @@ type verb struct {
 	recv        string
 	needsYAML   bool
 	engine      bool
+	bare        bool
 	positionals []leadParam
 	slots       []callSlot
 	results     []string
@@ -154,7 +157,7 @@ func main() {
 	pkgs, err := parser.ParseDir(fset, filepath.Join(root, "pkg", "kit"), func(info os.FileInfo) bool {
 		n := info.Name()
 		return strings.HasSuffix(n, ".go") && !strings.HasSuffix(n, "_test.go")
-	}, 0)
+	}, parser.ParseComments)
 	if err != nil {
 		fatal(err)
 	}
@@ -169,6 +172,7 @@ func main() {
 	applyBag := map[string]string{}
 	bags := map[string]*bagInfo{}
 	optionIfaces := map[string]bool{}
+	typeDocs := map[string]string{}
 
 	for _, file := range pkg.Files {
 		for _, decl := range file.Decls {
@@ -181,6 +185,9 @@ func main() {
 					ts, ok := spec.(*ast.TypeSpec)
 					if !ok {
 						continue
+					}
+					if doc := typeDoc(d, ts); doc != "" && typeDocs[ts.Name.Name] == "" {
+						typeDocs[ts.Name.Name] = doc
 					}
 					iface, ok := ts.Type.(*ast.InterfaceType)
 					if !ok || iface.Methods == nil {
@@ -243,6 +250,7 @@ func main() {
 			}
 			s := classify(d.Name.Name, d.Type.Params, optionKind, optionIfaces)
 			s.name = d.Name.Name
+			s.doc = commentText(d.Doc)
 			s.ret = ret
 			rewriteGenericParams(s, d.Type.TypeParams)
 			setters[d.Name.Name] = s
@@ -378,11 +386,14 @@ func main() {
 			continue
 		}
 		ident := identOf(identByKind, k)
+		doc := componentDoc(ident, k, setters, typeDocs)
+		writeJSDoc(&buf, "", doc)
 		fmt.Fprintf(&buf, "export type %sProps = {\n", ident)
 		seenProp := map[string]bool{}
 		for _, src := range propSources(k, propAlias) {
 			if lead, ok := leadByKind[src]; ok && lead.prop != "" && !seenProp[lead.prop] {
 				seenProp[lead.prop] = true
+				writeJSDoc(&buf, "\t", propDoc(lead))
 				fmt.Fprintf(&buf, "\t%s?: %s;\n", lead.prop, lead.tsType)
 			}
 			for _, f := range leafFields[src] {
@@ -400,6 +411,7 @@ func main() {
 				continue
 			}
 			seenProp[s.prop] = true
+			writeJSDoc(&buf, "\t", propDoc(s))
 			fmt.Fprintf(&buf, "\t%s?: %s;\n", s.prop, s.tsType)
 		}
 		kids := mergedKids(k, propAlias, nestedByScope, leafByScope)
@@ -426,7 +438,7 @@ func main() {
 			continue
 		}
 		ident := identOf(identByKind, k)
-		fmt.Fprintf(&buf, "// %s is the kit %s scope as a TSX component.\n", ident, k)
+		writeJSDoc(&buf, "", componentDoc(ident, k, setters, typeDocs))
 		switch k {
 		case "env":
 			buf.WriteString("export function Env(props: EnvInput): Env<{ name?: string; value: string }> {\n")
@@ -606,9 +618,15 @@ func tsType(expr ast.Expr) string {
 		case "float32", "float64":
 			return "number"
 		default:
+			if u, ok := vocabType(x.Name); ok {
+				return u
+			}
 			return "string"
 		}
 	case *ast.SelectorExpr:
+		if u, ok := vocabType(typeName(x)); ok {
+			return u
+		}
 		if id, ok := x.X.(*ast.Ident); ok && id.Name == "time" && x.Sel.Name == "Duration" {
 			return "number | string"
 		}
@@ -689,6 +707,84 @@ func jsIdent(s string) string {
 		runes[j] = unicode.ToLower(runes[j])
 	}
 	return string(runes)
+}
+
+var docLink = regexp.MustCompile(`\[([A-Za-z0-9_./]+)\]`)
+
+func commentText(g *ast.CommentGroup) string {
+	if g == nil {
+		return ""
+	}
+	text := strings.TrimSpace(g.Text())
+	text = docLink.ReplaceAllString(text, "$1")
+	return strings.ReplaceAll(text, "*/", "* /")
+}
+
+func typeDoc(d *ast.GenDecl, ts *ast.TypeSpec) string {
+	if ts != nil && ts.Doc != nil {
+		return commentText(ts.Doc)
+	}
+	if d != nil && d.Doc != nil && len(d.Specs) == 1 {
+		return commentText(d.Doc)
+	}
+	return ""
+}
+
+func componentDoc(ident, kind string, setters map[string]*setter, typeDocs map[string]string) string {
+	if s := setters[ident]; s != nil && s.doc != "" {
+		return s.doc
+	}
+	if doc := typeDocs[ident]; doc != "" {
+		return doc
+	}
+	return fmt.Sprintf("%s is the %s scope as a TSX component.", ident, kind)
+}
+
+func propDoc(s *setter) string {
+	if s == nil {
+		return ""
+	}
+	if !isDuration(s) {
+		return s.doc
+	}
+	const note = "A number is nanoseconds. A string is a Go duration such as \"30s\"."
+	if s.doc == "" {
+		return note
+	}
+	return s.doc + "\n" + note
+}
+
+func isDuration(s *setter) bool {
+	if s.tsType != "number | string" {
+		return false
+	}
+	for _, p := range s.goParams {
+		if p.goType == "time.Duration" {
+			return true
+		}
+	}
+	return false
+}
+
+func writeJSDoc(buf *bytes.Buffer, indent, doc string) {
+	doc = strings.TrimSpace(doc)
+	if doc == "" {
+		return
+	}
+	lines := strings.Split(doc, "\n")
+	if len(lines) == 1 {
+		fmt.Fprintf(buf, "%s/** %s */\n", indent, lines[0])
+		return
+	}
+	fmt.Fprintf(buf, "%s/**\n", indent)
+	for _, line := range lines {
+		if strings.TrimSpace(line) == "" {
+			fmt.Fprintf(buf, "%s *\n", indent)
+			continue
+		}
+		fmt.Fprintf(buf, "%s * %s\n", indent, strings.TrimRight(line, " \t"))
+	}
+	fmt.Fprintf(buf, "%s */\n", indent)
 }
 
 func identOf(idents map[string]string, kind string) string {

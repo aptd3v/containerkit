@@ -152,8 +152,12 @@ func classifyVerb(d *ast.FuncDecl, recv string, ifaceBag map[string]string) (ver
 		slots = append(slots, callSlot{kind: "pos", name: n, goType: tn})
 	}
 
+	bare := false
 	if bag == "" {
-		return verb{}, false
+		if !bareInspect(d.Name.Name) {
+			return verb{}, false
+		}
+		bare = true
 	}
 	if !sawCtx && !engine {
 		return verb{}, false
@@ -186,10 +190,23 @@ func classifyVerb(d *ast.FuncDecl, recv string, ifaceBag map[string]string) (ver
 		recv:        recv,
 		needsYAML:   needsYAML,
 		engine:      engine && recv == "",
+		bare:        bare,
 		positionals: positionals,
 		slots:       slots,
 		results:     resultTypes(d),
 	}, true
+}
+
+// bareInspect is an Engine read that returns JSON and takes no option bag.
+// The generator otherwise drops a command that has nothing to decode.
+func bareInspect(name string) bool {
+	switch name {
+	case "InspectSwarm", "InspectPlugin", "InspectNode", "InspectSwarmService",
+		"InspectTask", "InspectSecret", "InspectConfig":
+		return true
+	default:
+		return false
+	}
 }
 
 func verbScore(v verb) int {

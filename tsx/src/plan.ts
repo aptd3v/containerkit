@@ -1,4 +1,6 @@
+import type { PlanOp } from "./generated-actions.js";
 import type { ConnectOptions } from "./generated-options.js";
+import type { FlowStep } from "./taskflow.js";
 
 // Client is a session token. Client setters live on connect(), never on DockerNode.
 export type Client = {
@@ -7,7 +9,7 @@ export type Client = {
 };
 
 export type PlanAction = {
-	op: string;
+	op: PlanOp;
 	options?: object;
 	ref?: string;
 	service?: string;
@@ -22,7 +24,7 @@ export type PlanDocument = {
 	actions?: PlanAction[];
 	flow?: {
 		name: string;
-		steps: unknown[];
+		steps: FlowStep[];
 	};
 };
 

@@ -80,7 +80,7 @@ func upProject(ctx context.Context, api Composer, proj *composetypes.Project, na
 	if err := join(errs...); err != nil {
 		return wrapReceiver("compose", err)
 	}
-	if log := adoptLog(ctx, &act.log); log != nil && act.start.consumer == nil {
+	if log := adoptLog(ctx, &act.log); log != nil && act.start.consumer == nil && !act.detached {
 		act.start.consumer = log
 	}
 	stampComposeIdentity(proj)

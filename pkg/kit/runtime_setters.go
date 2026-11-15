@@ -60,6 +60,7 @@ func (o DetachOpt) applyRun(a *runAct) error { a.detach = o.v; return nil }
 func (o DetachOpt) applyUp(a *upAct) error {
 	if o.v {
 		a.start.consumer = nil
+		a.detached = true
 	}
 	return nil
 }

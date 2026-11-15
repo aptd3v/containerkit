@@ -2,6 +2,15 @@
 
 export type Duration = number | string;
 
+/** OCI platform. Same object image inspect returns. */
+export type ImagePlatform = {
+	architecture: string;
+	os: string;
+	"os.version"?: string;
+	"os.features"?: string[];
+	variant?: string;
+};
+
 export type AdditionalContextInput = {
 	name?: string;
 	value?: string;
@@ -157,9 +166,9 @@ export type BuildOptions = {
 	cacheTo?: string;
 	dockerfilePath?: string;
 	entitlement?: string;
-	isolation?: string;
+	isolation?: "default" | "process" | "hyperv";
 	memory?: number;
-	networkMode?: string;
+	networkMode?: `container:${string}` | `service:${string}` | "bridge" | "host" | "none" | "default";
 	noCache?: boolean;
 	noCacheFilter?: string;
 	parseDockerfile?: string;
@@ -187,7 +196,7 @@ export type ClientOptions = {
 	httpRequestHook?: unknown;
 	httpResponseHook?: unknown;
 	negotiateAPIVersion?: boolean;
-	scheme?: string;
+	scheme?: "unix" | "npipe" | "tcp" | "http" | "https" | "ssh" | "fd";
 	timeout?: number | string;
 	tlsFromEnv?: boolean;
 	traceOptions?: unknown;
@@ -217,7 +226,7 @@ export type ComposeBuildOptions = {
 	noCache?: boolean;
 	outputStream?: unknown;
 	print?: boolean;
-	progress?: string;
+	progress?: "auto" | "plain" | "tty" | "quiet" | "json";
 	provenance?: string;
 	pull?: boolean;
 	push?: boolean;
@@ -241,7 +250,7 @@ export type ComposeCreateOptions = {
 	noCache?: boolean;
 	outputStream?: unknown;
 	print?: boolean;
-	progress?: string;
+	progress?: "auto" | "plain" | "tty" | "quiet" | "json";
 	provenance?: string;
 	pull?: boolean;
 	push?: boolean;
@@ -293,7 +302,7 @@ export type ComposeOptions = {
 
 export type ComposePortOptions = {
 	index?: number;
-	protocol?: string;
+	protocol?: "tcp" | "udp" | "sctp";
 };
 
 export type ComposeRestartOptions = {
@@ -356,7 +365,7 @@ export type ConnectOptions = {
 	maxConcurrency?: number;
 	negotiateAPIVersion?: boolean;
 	outputStream?: unknown;
-	scheme?: string;
+	scheme?: "unix" | "npipe" | "tcp" | "http" | "https" | "ssh" | "fd";
 	timeout?: number | string;
 	tlsFromEnv?: boolean;
 	traceOptions?: unknown;
@@ -393,10 +402,10 @@ export type ContainerOptions = {
 	attachStdout?: boolean;
 	autoRemove?: boolean;
 	blkioWeight?: number;
-	capAdd?: string;
-	capDrop?: string;
+	capAdd?: "ALL" | "CHOWN" | "DAC_OVERRIDE" | "DAC_READ_SEARCH" | "FOWNER" | "FSETID" | "KILL" | "SETGID" | "SETUID" | "SETPCAP" | "LINUX_IMMUTABLE" | "NET_BIND_SERVICE" | "NET_BROADCAST" | "NET_ADMIN" | "NET_RAW" | "IPC_LOCK" | "IPC_OWNER" | "SYS_MODULE" | "SYS_RAWIO" | "SYS_CHROOT" | "SYS_PTRACE" | "SYS_PACCT" | "SYS_ADMIN" | "SYS_BOOT" | "SYS_NICE" | "SYS_RESOURCE" | "SYS_TIME" | "SYS_TTY_CONFIG" | "MKNOD" | "LEASE" | "AUDIT_WRITE" | "AUDIT_CONTROL" | "SETFCAP" | "MAC_OVERRIDE" | "MAC_ADMIN" | "SYSLOG" | "WAKE_ALARM" | "BLOCK_SUSPEND" | "AUDIT_READ" | "PERFMON" | "BPF" | "CHECKPOINT_RESTORE";
+	capDrop?: "ALL" | "CHOWN" | "DAC_OVERRIDE" | "DAC_READ_SEARCH" | "FOWNER" | "FSETID" | "KILL" | "SETGID" | "SETUID" | "SETPCAP" | "LINUX_IMMUTABLE" | "NET_BIND_SERVICE" | "NET_BROADCAST" | "NET_ADMIN" | "NET_RAW" | "IPC_LOCK" | "IPC_OWNER" | "SYS_MODULE" | "SYS_RAWIO" | "SYS_CHROOT" | "SYS_PTRACE" | "SYS_PACCT" | "SYS_ADMIN" | "SYS_BOOT" | "SYS_NICE" | "SYS_RESOURCE" | "SYS_TIME" | "SYS_TTY_CONFIG" | "MKNOD" | "LEASE" | "AUDIT_WRITE" | "AUDIT_CONTROL" | "SETFCAP" | "MAC_OVERRIDE" | "MAC_ADMIN" | "SYSLOG" | "WAKE_ALARM" | "BLOCK_SUSPEND" | "AUDIT_READ" | "PERFMON" | "BPF" | "CHECKPOINT_RESTORE";
 	cgroup?: string;
-	cgroupNS?: string;
+	cgroupNS?: "host" | "private";
 	cgroupParent?: string;
 	command?: string | string[];
 	containerIDFile?: string;
@@ -423,8 +432,8 @@ export type ContainerOptions = {
 	interactive?: boolean;
 	ioMaximumBandwidth?: number;
 	ioMaximumIOps?: number;
-	ipc?: string;
-	isolation?: string;
+	ipc?: `container:${string}` | "none" | "private" | "shareable" | "host";
+	isolation?: "default" | "process" | "hyperv";
 	link?: string;
 	macAddress?: string;
 	maskedPath?: string;
@@ -434,12 +443,12 @@ export type ContainerOptions = {
 	memorySwappiness?: number;
 	name?: string;
 	networkDisabled?: boolean;
-	networkMode?: string;
+	networkMode?: `container:${string}` | `service:${string}` | "bridge" | "host" | "none" | "default";
 	onBuild?: string | string[];
 	oomKillDisable?: boolean;
 	oomScoreAdj?: number;
 	perReplica?: boolean;
-	pid?: string;
+	pid?: `container:${string}` | "host";
 	pidsLimit?: number;
 	platform?: string;
 	privileged?: boolean;
@@ -452,14 +461,14 @@ export type ContainerOptions = {
 	shell?: string | string[];
 	shmSize?: number;
 	stdinOnce?: boolean;
-	stopSignal?: unknown;
+	stopSignal?: "SIGHUP" | "SIGINT" | "SIGQUIT" | "SIGILL" | "SIGTRAP" | "SIGABRT" | "SIGBUS" | "SIGFPE" | "SIGKILL" | "SIGUSR1" | "SIGSEGV" | "SIGUSR2" | "SIGPIPE" | "SIGALRM" | "SIGTERM" | "SIGSTKFLT" | "SIGCHLD" | "SIGCONT" | "SIGSTOP" | "SIGTSTP" | "SIGTTIN" | "SIGTTOU" | "SIGURG" | "SIGXCPU" | "SIGXFSZ" | "SIGVTALRM" | "SIGPROF" | "SIGWINCH" | "SIGIO" | "SIGPWR" | "SIGSYS";
 	stopTimeout?: number | string;
 	tmpfsMount?: string;
 	tty?: boolean;
 	umask?: number;
 	user?: string;
-	userNS?: string;
-	uts?: string;
+	userNS?: "host";
+	uts?: "host";
 	volumeDriver?: string;
 	volumesFrom?: string;
 	workingDir?: string;
@@ -474,7 +483,7 @@ export type CopyOptions = {
 };
 
 export type DependOptions = {
-	condition?: string;
+	condition?: "service_started" | "service_healthy" | "service_completed_successfully";
 	name?: string;
 	required?: boolean;
 	restartOnFailure?: boolean;
@@ -490,7 +499,7 @@ export type DeployOptions = {
 	rollback?: UpdateOptions;
 	update?: UpdateOptions;
 	cpus?: number;
-	endpointMode?: string;
+	endpointMode?: "vip" | "dnsrr";
 	memory?: number;
 	mode?: string;
 	pidsLimit?: number;
@@ -627,26 +636,26 @@ export type EngineExecStartOptions = {
 };
 
 export type EngineImageAttestOptions = {
-	imagePlatform?: unknown;
+	imagePlatform?: ImagePlatform;
 	predicateTypes?: string | string[];
 	statement?: boolean;
 };
 
 export type EngineImageHistoryOptions = {
-	imagePlatform?: unknown;
+	imagePlatform?: ImagePlatform;
 };
 
 export type EngineImageImportOptions = {
 };
 
 export type EngineImageInspectOptions = {
-	imagePlatform?: unknown;
+	imagePlatform?: ImagePlatform;
 	manifests?: boolean;
 	rawResponse?: unknown;
 };
 
 export type EngineImageLoadOptions = {
-	imagePlatform?: unknown;
+	imagePlatform?: ImagePlatform;
 	quiet?: boolean;
 };
 
@@ -665,7 +674,7 @@ export type EngineImageRemoveOptions = {
 };
 
 export type EngineImageSaveOptions = {
-	imagePlatform?: unknown;
+	imagePlatform?: ImagePlatform;
 };
 
 export type EngineImageSearchOptions = {
@@ -871,7 +880,7 @@ export type EngineStatsOptions = {
 };
 
 export type EngineStopOptions = {
-	stopSignal?: unknown;
+	stopSignal?: "SIGHUP" | "SIGINT" | "SIGQUIT" | "SIGILL" | "SIGTRAP" | "SIGABRT" | "SIGBUS" | "SIGFPE" | "SIGKILL" | "SIGUSR1" | "SIGSEGV" | "SIGUSR2" | "SIGPIPE" | "SIGALRM" | "SIGTERM" | "SIGSTKFLT" | "SIGCHLD" | "SIGCONT" | "SIGSTOP" | "SIGTSTP" | "SIGTTIN" | "SIGTTOU" | "SIGURG" | "SIGXCPU" | "SIGXFSZ" | "SIGVTALRM" | "SIGPROF" | "SIGWINCH" | "SIGIO" | "SIGPWR" | "SIGSYS";
 	timeout?: number | string;
 };
 
@@ -945,7 +954,7 @@ export type EngineVolumeUpdateOptions = {
 };
 
 export type EngineWaitOptions = {
-	waitFor?: string;
+	waitFor?: "not-running" | "next-exit" | "removed";
 };
 
 export type EnvFileOptions = {
@@ -1052,10 +1061,10 @@ export type JobOptions = {
 	ulimit?: UlimitOptions;
 	volume?: VolumeOptions;
 	blkioWeight?: number;
-	capAdd?: string;
-	capDrop?: string;
+	capAdd?: "ALL" | "CHOWN" | "DAC_OVERRIDE" | "DAC_READ_SEARCH" | "FOWNER" | "FSETID" | "KILL" | "SETGID" | "SETUID" | "SETPCAP" | "LINUX_IMMUTABLE" | "NET_BIND_SERVICE" | "NET_BROADCAST" | "NET_ADMIN" | "NET_RAW" | "IPC_LOCK" | "IPC_OWNER" | "SYS_MODULE" | "SYS_RAWIO" | "SYS_CHROOT" | "SYS_PTRACE" | "SYS_PACCT" | "SYS_ADMIN" | "SYS_BOOT" | "SYS_NICE" | "SYS_RESOURCE" | "SYS_TIME" | "SYS_TTY_CONFIG" | "MKNOD" | "LEASE" | "AUDIT_WRITE" | "AUDIT_CONTROL" | "SETFCAP" | "MAC_OVERRIDE" | "MAC_ADMIN" | "SYSLOG" | "WAKE_ALARM" | "BLOCK_SUSPEND" | "AUDIT_READ" | "PERFMON" | "BPF" | "CHECKPOINT_RESTORE";
+	capDrop?: "ALL" | "CHOWN" | "DAC_OVERRIDE" | "DAC_READ_SEARCH" | "FOWNER" | "FSETID" | "KILL" | "SETGID" | "SETUID" | "SETPCAP" | "LINUX_IMMUTABLE" | "NET_BIND_SERVICE" | "NET_BROADCAST" | "NET_ADMIN" | "NET_RAW" | "IPC_LOCK" | "IPC_OWNER" | "SYS_MODULE" | "SYS_RAWIO" | "SYS_CHROOT" | "SYS_PTRACE" | "SYS_PACCT" | "SYS_ADMIN" | "SYS_BOOT" | "SYS_NICE" | "SYS_RESOURCE" | "SYS_TIME" | "SYS_TTY_CONFIG" | "MKNOD" | "LEASE" | "AUDIT_WRITE" | "AUDIT_CONTROL" | "SETFCAP" | "MAC_OVERRIDE" | "MAC_ADMIN" | "SYSLOG" | "WAKE_ALARM" | "BLOCK_SUSPEND" | "AUDIT_READ" | "PERFMON" | "BPF" | "CHECKPOINT_RESTORE";
 	cgroup?: string;
-	cgroupNS?: string;
+	cgroupNS?: "host" | "private";
 	cgroupParent?: string;
 	command?: string | string[];
 	cpuCount?: number;
@@ -1081,8 +1090,8 @@ export type JobOptions = {
 	interactive?: boolean;
 	ioMaximumBandwidth?: number;
 	ioMaximumIOps?: number;
-	ipc?: string;
-	isolation?: string;
+	ipc?: `container:${string}` | "none" | "private" | "shareable" | "host";
+	isolation?: "default" | "process" | "hyperv";
 	labelFile?: string;
 	link?: string;
 	macAddress?: string;
@@ -1092,29 +1101,29 @@ export type JobOptions = {
 	memorySwappiness?: number;
 	name?: string;
 	networkDisabled?: boolean;
-	networkMode?: string;
+	networkMode?: `container:${string}` | `service:${string}` | "bridge" | "host" | "none" | "default";
 	oomKillDisable?: boolean;
 	oomScoreAdj?: number;
 	envFile?: ({ path?: string } & EnvFileOptions) | Array<{ path?: string } & EnvFileOptions>;
-	pid?: string;
+	pid?: `container:${string}` | "host";
 	pidsLimit?: number;
 	platform?: string;
 	privileged?: boolean;
-	pullPolicy?: string;
+	pullPolicy?: `every_${string}` | "always" | "never" | "missing" | "if_not_present" | "build" | "refresh" | "daily" | "weekly";
 	pullRefreshAfter?: string;
 	readOnly?: boolean;
 	runtime?: string;
 	securityOpt?: string;
 	shmSize?: number;
-	stopSignal?: unknown;
+	stopSignal?: "SIGHUP" | "SIGINT" | "SIGQUIT" | "SIGILL" | "SIGTRAP" | "SIGABRT" | "SIGBUS" | "SIGFPE" | "SIGKILL" | "SIGUSR1" | "SIGSEGV" | "SIGUSR2" | "SIGPIPE" | "SIGALRM" | "SIGTERM" | "SIGSTKFLT" | "SIGCHLD" | "SIGCONT" | "SIGSTOP" | "SIGTSTP" | "SIGTTIN" | "SIGTTOU" | "SIGURG" | "SIGXCPU" | "SIGXFSZ" | "SIGVTALRM" | "SIGPROF" | "SIGWINCH" | "SIGIO" | "SIGPWR" | "SIGSYS";
 	stopTimeout?: number | string;
 	tmpfsMount?: string;
 	tty?: boolean;
 	umask?: number;
 	useAPISocket?: boolean;
 	user?: string;
-	userNS?: string;
-	uts?: string;
+	userNS?: "host";
+	uts?: "host";
 	volumeDriver?: string;
 	volumesFrom?: string;
 	workingDir?: string;
@@ -1124,7 +1133,7 @@ export type KillOptions = {
 	all?: boolean;
 	removeOrphans?: boolean;
 	services?: string | string[];
-	stopSignal?: unknown;
+	stopSignal?: "SIGHUP" | "SIGINT" | "SIGQUIT" | "SIGILL" | "SIGTRAP" | "SIGABRT" | "SIGBUS" | "SIGFPE" | "SIGKILL" | "SIGUSR1" | "SIGSEGV" | "SIGUSR2" | "SIGPIPE" | "SIGALRM" | "SIGTERM" | "SIGSTKFLT" | "SIGCHLD" | "SIGCONT" | "SIGSTOP" | "SIGTSTP" | "SIGTTIN" | "SIGTTOU" | "SIGURG" | "SIGXCPU" | "SIGXFSZ" | "SIGVTALRM" | "SIGPROF" | "SIGWINCH" | "SIGIO" | "SIGPWR" | "SIGSYS";
 };
 
 export type ListContainersOptions = {
@@ -1179,7 +1188,7 @@ export type LogOptions = {
 export type LoggerOptions = {
 	color?: boolean;
 	outputStream?: unknown;
-	progress?: string;
+	progress?: "auto" | "plain" | "tty" | "quiet" | "json";
 	quiet?: boolean;
 	timestamps?: boolean;
 };
@@ -1234,7 +1243,7 @@ export type PortOptions = {
 	hostPort?: number;
 	mode?: string;
 	name?: string;
-	protocol?: string;
+	protocol?: "tcp" | "udp" | "sctp";
 	published?: string;
 };
 
@@ -1246,7 +1255,7 @@ export type PsOptions = {
 export type PublishOptions = {
 	application?: boolean;
 	assumeYes?: boolean;
-	oci?: unknown;
+	oci?: "1.0" | "1.1";
 	resolveDigests?: boolean;
 	withEnvironment?: boolean;
 };
@@ -1291,7 +1300,7 @@ export type ReserveOptions = {
 export type RestartOptions = {
 	delay?: number | string;
 	maxRetries?: number;
-	policy?: string;
+	policy?: "no" | "on-failure" | "always" | "unless-stopped";
 	window?: number | string;
 };
 
@@ -1301,8 +1310,8 @@ export type RunOptions = {
 	assumeYes?: boolean;
 	attach?: boolean;
 	autoRemove?: boolean;
-	capAdd?: string;
-	capDrop?: string;
+	capAdd?: "ALL" | "CHOWN" | "DAC_OVERRIDE" | "DAC_READ_SEARCH" | "FOWNER" | "FSETID" | "KILL" | "SETGID" | "SETUID" | "SETPCAP" | "LINUX_IMMUTABLE" | "NET_BIND_SERVICE" | "NET_BROADCAST" | "NET_ADMIN" | "NET_RAW" | "IPC_LOCK" | "IPC_OWNER" | "SYS_MODULE" | "SYS_RAWIO" | "SYS_CHROOT" | "SYS_PTRACE" | "SYS_PACCT" | "SYS_ADMIN" | "SYS_BOOT" | "SYS_NICE" | "SYS_RESOURCE" | "SYS_TIME" | "SYS_TTY_CONFIG" | "MKNOD" | "LEASE" | "AUDIT_WRITE" | "AUDIT_CONTROL" | "SETFCAP" | "MAC_OVERRIDE" | "MAC_ADMIN" | "SYSLOG" | "WAKE_ALARM" | "BLOCK_SUSPEND" | "AUDIT_READ" | "PERFMON" | "BPF" | "CHECKPOINT_RESTORE";
+	capDrop?: "ALL" | "CHOWN" | "DAC_OVERRIDE" | "DAC_READ_SEARCH" | "FOWNER" | "FSETID" | "KILL" | "SETGID" | "SETUID" | "SETPCAP" | "LINUX_IMMUTABLE" | "NET_BIND_SERVICE" | "NET_BROADCAST" | "NET_ADMIN" | "NET_RAW" | "IPC_LOCK" | "IPC_OWNER" | "SYS_MODULE" | "SYS_RAWIO" | "SYS_CHROOT" | "SYS_PTRACE" | "SYS_PACCT" | "SYS_ADMIN" | "SYS_BOOT" | "SYS_NICE" | "SYS_RESOURCE" | "SYS_TIME" | "SYS_TTY_CONFIG" | "MKNOD" | "LEASE" | "AUDIT_WRITE" | "AUDIT_CONTROL" | "SETFCAP" | "MAC_OVERRIDE" | "MAC_ADMIN" | "SYSLOG" | "WAKE_ALARM" | "BLOCK_SUSPEND" | "AUDIT_READ" | "PERFMON" | "BPF" | "CHECKPOINT_RESTORE";
 	command?: string | string[];
 	detach?: boolean;
 	entrypoint?: string | string[];
@@ -1381,10 +1390,10 @@ export type ServiceOptions = {
 	volume?: VolumeOptions;
 	attach?: boolean;
 	blkioWeight?: number;
-	capAdd?: string;
-	capDrop?: string;
+	capAdd?: "ALL" | "CHOWN" | "DAC_OVERRIDE" | "DAC_READ_SEARCH" | "FOWNER" | "FSETID" | "KILL" | "SETGID" | "SETUID" | "SETPCAP" | "LINUX_IMMUTABLE" | "NET_BIND_SERVICE" | "NET_BROADCAST" | "NET_ADMIN" | "NET_RAW" | "IPC_LOCK" | "IPC_OWNER" | "SYS_MODULE" | "SYS_RAWIO" | "SYS_CHROOT" | "SYS_PTRACE" | "SYS_PACCT" | "SYS_ADMIN" | "SYS_BOOT" | "SYS_NICE" | "SYS_RESOURCE" | "SYS_TIME" | "SYS_TTY_CONFIG" | "MKNOD" | "LEASE" | "AUDIT_WRITE" | "AUDIT_CONTROL" | "SETFCAP" | "MAC_OVERRIDE" | "MAC_ADMIN" | "SYSLOG" | "WAKE_ALARM" | "BLOCK_SUSPEND" | "AUDIT_READ" | "PERFMON" | "BPF" | "CHECKPOINT_RESTORE";
+	capDrop?: "ALL" | "CHOWN" | "DAC_OVERRIDE" | "DAC_READ_SEARCH" | "FOWNER" | "FSETID" | "KILL" | "SETGID" | "SETUID" | "SETPCAP" | "LINUX_IMMUTABLE" | "NET_BIND_SERVICE" | "NET_BROADCAST" | "NET_ADMIN" | "NET_RAW" | "IPC_LOCK" | "IPC_OWNER" | "SYS_MODULE" | "SYS_RAWIO" | "SYS_CHROOT" | "SYS_PTRACE" | "SYS_PACCT" | "SYS_ADMIN" | "SYS_BOOT" | "SYS_NICE" | "SYS_RESOURCE" | "SYS_TIME" | "SYS_TTY_CONFIG" | "MKNOD" | "LEASE" | "AUDIT_WRITE" | "AUDIT_CONTROL" | "SETFCAP" | "MAC_OVERRIDE" | "MAC_ADMIN" | "SYSLOG" | "WAKE_ALARM" | "BLOCK_SUSPEND" | "AUDIT_READ" | "PERFMON" | "BPF" | "CHECKPOINT_RESTORE";
 	cgroup?: string;
-	cgroupNS?: string;
+	cgroupNS?: "host" | "private";
 	cgroupParent?: string;
 	command?: string | string[];
 	containerName?: string;
@@ -1418,8 +1427,8 @@ export type ServiceOptions = {
 	interactive?: boolean;
 	ioMaximumBandwidth?: number;
 	ioMaximumIOps?: number;
-	ipc?: string;
-	isolation?: string;
+	ipc?: `container:${string}` | "none" | "private" | "shareable" | "host";
+	isolation?: "default" | "process" | "hyperv";
 	labelFile?: string;
 	link?: string;
 	macAddress?: string;
@@ -1429,32 +1438,32 @@ export type ServiceOptions = {
 	memorySwappiness?: number;
 	name?: string;
 	networkDisabled?: boolean;
-	networkMode?: string;
+	networkMode?: `container:${string}` | `service:${string}` | "bridge" | "host" | "none" | "default";
 	oomKillDisable?: boolean;
 	oomScoreAdj?: number;
 	envFile?: ({ path?: string } & EnvFileOptions) | Array<{ path?: string } & EnvFileOptions>;
-	pid?: string;
+	pid?: `container:${string}` | "host";
 	pidsLimit?: number;
 	platform?: string;
 	privileged?: boolean;
 	profile?: string;
 	provider?: string;
-	pullPolicy?: string;
+	pullPolicy?: `every_${string}` | "always" | "never" | "missing" | "if_not_present" | "build" | "refresh" | "daily" | "weekly";
 	pullRefreshAfter?: string;
 	readOnly?: boolean;
 	replicas?: number;
 	runtime?: string;
 	securityOpt?: string;
 	shmSize?: number;
-	stopSignal?: unknown;
+	stopSignal?: "SIGHUP" | "SIGINT" | "SIGQUIT" | "SIGILL" | "SIGTRAP" | "SIGABRT" | "SIGBUS" | "SIGFPE" | "SIGKILL" | "SIGUSR1" | "SIGSEGV" | "SIGUSR2" | "SIGPIPE" | "SIGALRM" | "SIGTERM" | "SIGSTKFLT" | "SIGCHLD" | "SIGCONT" | "SIGSTOP" | "SIGTSTP" | "SIGTTIN" | "SIGTTOU" | "SIGURG" | "SIGXCPU" | "SIGXFSZ" | "SIGVTALRM" | "SIGPROF" | "SIGWINCH" | "SIGIO" | "SIGPWR" | "SIGSYS";
 	stopTimeout?: number | string;
 	tmpfsMount?: string;
 	tty?: boolean;
 	umask?: number;
 	useAPISocket?: boolean;
 	user?: string;
-	userNS?: string;
-	uts?: string;
+	userNS?: "host";
+	uts?: "host";
 	volumeDriver?: string;
 	volumesFrom?: string;
 	workingDir?: string;
@@ -1493,7 +1502,7 @@ export type UpOptions = {
 	onExit?: unknown;
 	outputStream?: unknown;
 	print?: boolean;
-	progress?: string;
+	progress?: "auto" | "plain" | "tty" | "quiet" | "json";
 	provenance?: string;
 	pull?: boolean;
 	push?: boolean;
@@ -1510,10 +1519,10 @@ export type UpOptions = {
 
 export type UpdateOptions = {
 	delay?: number | string;
-	failureAction?: string;
+	failureAction?: "continue" | "pause" | "rollback";
 	maxFailureRatio?: number;
 	monitor?: number | string;
-	order?: unknown;
+	order?: "start-first" | "stop-first";
 	parallelism?: number;
 };
 
@@ -1530,13 +1539,13 @@ export type VolumeOptions = {
 	createHostPath?: boolean;
 	driver?: string;
 	fileMode?: number;
-	kind?: string;
+	kind?: "bind" | "volume" | "tmpfs" | "npipe" | "cluster" | "image";
 	name?: string;
 	noCopy?: boolean;
-	propagation?: string;
+	propagation?: "private" | "rprivate" | "shared" | "rshared" | "slave" | "rslave";
 	readOnly?: boolean;
-	recursive?: string;
-	seLinux?: unknown;
+	recursive?: "enabled" | "disabled" | "writable" | "readonly";
+	seLinux?: "z" | "Z";
 	size?: number;
 	source?: string;
 	subPath?: string;
@@ -1565,7 +1574,7 @@ export type WatchOptions = {
 	noCache?: boolean;
 	outputStream?: unknown;
 	print?: boolean;
-	progress?: string;
+	progress?: "auto" | "plain" | "tty" | "quiet" | "json";
 	provenance?: string;
 	prune?: boolean;
 	pull?: boolean;
@@ -1577,7 +1586,7 @@ export type WatchOptions = {
 
 export type WatchTriggerOptions = {
 	env?: EnvInput | EnvInput[];
-	action?: string;
+	action?: "sync" | "rebuild" | "sync+restart" | "sync+exec" | "restart";
 	command?: string | string[];
 	ignore?: string;
 	include?: string;
