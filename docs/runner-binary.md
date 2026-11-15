@@ -2,7 +2,7 @@
 
 `containerkit` (`cmd/containerkit`) runs a plan JSON or a compose YAML against a Docker daemon. Authoring TSX still needs Node; executing a plan does not need the Go toolchain once this binary is on `PATH`.
 
-This repo does not git-tag, GitHub-release, or npm-publish the binary yet. Build archives locally.
+Pushing a tag `vX.Y.Z` that matches `VERSION` runs `.github/workflows/release.yml`. That workflow tests, builds the six archives, publishes `containerkit` and `@containerkit/<os>-<arch>` to npm, then opens the GitHub release. The repository secret `NPM_TOKEN` is the npm auth token. A local build does not publish.
 
 ## Build all platforms
 
@@ -23,13 +23,15 @@ Writes `dist/`:
 
 Archives are named `containerkit_<os>_<arch>`. The file inside each archive is `containerkit` (`containerkit.exe` on Windows).
 
-`CGO_ENABLED=0`. Builds without ldflags stamp `cmd/containerkit`'s `main.version`. `scripts/version.py` keeps that fallback, `VERSION`, and the TSX package on the same semver (`patch`, `minor`, `major`, or an explicit version). `tools/crossbuild` reads `VERSION` unless `CONTAINERKIT_VERSION` is set. `CONTAINERKIT_COMMIT` overrides the commit stamp.
+`CGO_ENABLED=0`. Builds without ldflags stamp `cmd/containerkit`'s `main.version`. `scripts/version.py` keeps that fallback, `VERSION`, and the TSX package on the same semver (`patch`, `minor`, `major`, or an explicit version). `tools/crossbuild` reads `VERSION` unless `CONTAINERKIT_VERSION` is set, and stamps `git rev-parse HEAD` unless `CONTAINERKIT_COMMIT` is set.
 
-If GoReleaser is installed, the same matrix is in `.goreleaser.yaml` (`release.disable: true`):
+GoReleaser uses the same matrix. A snapshot stays on this machine:
 
 ```bash
 goreleaser release --snapshot --clean --skip=publish
 ```
+
+`node tsx/scripts/publish-optional.mjs check` confirms `VERSION`, `tsx/package.json`, and the six platform binaries agree. `publish` sends those packages to npm and needs `NODE_AUTH_TOKEN` or `NPM_TOKEN`. The tag workflow is the path that publishes.
 
 ## Commands
 

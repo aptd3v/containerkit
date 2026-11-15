@@ -49,7 +49,7 @@ func main() {
 	if err != nil {
 		fatal(err)
 	}
-	commit := getenv("CONTAINERKIT_COMMIT", "none")
+	commit := commitFromRepo(root)
 	ld := fmt.Sprintf("-s -w -X main.version=%s -X main.commit=%s", version, commit)
 	pkg := "./cmd/containerkit"
 
@@ -256,6 +256,22 @@ func moduleRoot() (string, error) {
 	}
 }
 
+func commitFromRepo(root string) string {
+	if v := strings.TrimSpace(os.Getenv("CONTAINERKIT_COMMIT")); v != "" {
+		return v
+	}
+	cmd := exec.Command("git", "-C", root, "rev-parse", "HEAD")
+	out, err := cmd.Output()
+	if err != nil {
+		return "none"
+	}
+	commit := strings.TrimSpace(string(out))
+	if commit == "" {
+		return "none"
+	}
+	return commit
+}
+
 func versionFromRepo(root string) (string, error) {
 	if v := strings.TrimSpace(os.Getenv("CONTAINERKIT_VERSION")); v != "" {
 		return v, nil
@@ -269,13 +285,6 @@ func versionFromRepo(root string) (string, error) {
 		return "", fmt.Errorf("VERSION must be a single version")
 	}
 	return v, nil
-}
-
-func getenv(k, fallback string) string {
-	if v := os.Getenv(k); v != "" {
-		return v
-	}
-	return fallback
 }
 
 func fatal(v any) {

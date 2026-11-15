@@ -1,0 +1,68 @@
+name: Release
+
+on:
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    name: Release
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          registry-url: https://registry.npmjs.org
+          cache: npm
+          cache-dependency-path: tsx/package-lock.json
+
+      - name: Check the tag against VERSION
+        run: |
+          tag="${GITHUB_REF_NAME#v}"
+          test "$tag" = "$(tr -d '[:space:]' < VERSION)"
+
+      - name: Check version sites
+        run: python3 scripts/version.py --check
+
+      - name: Test
+        run: go test -race -shuffle=on ./...
+
+      - name: Install and test TSX
+        working-directory: tsx
+        run: |
+          npm ci
+          npm test
+          npm run test:taskflow
+
+      - name: Build platform binaries
+        run: go run ./tools/crossbuild
+        env:
+          CONTAINERKIT_COMMIT: ${{ github.sha }}
+
+      - name: Publish npm packages
+        working-directory: tsx
+        run: node scripts/publish-optional.mjs publish
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      - name: GitHub release
+        uses: goreleaser/goreleaser-action@v6
+        with:
+          distribution: goreleaser
+          version: "~> v2"
+          args: release --clean
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

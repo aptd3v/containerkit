@@ -1,5 +1,6 @@
-# Local / future GitHub releases. This file does not publish by itself.
-# Build archives without uploading:
+# GitHub release for a v* tag. .github/workflows/release.yml runs:
+#   goreleaser release --clean
+# A local snapshot still skips the upload:
 #   goreleaser release --snapshot --clean --skip=publish
 version: 2
 
@@ -37,7 +38,11 @@ snapshot:
   version_template: "{{ incpatch .Version }}-next"
 
 changelog:
-  disable: true
-
-release:
-  disable: true
+  sort: asc
+  filters:
+    exclude:
+      - "^docs:"
+      - "^test:"
+      - "^chore:"
+      - "^ci:"
+      - "^style:"

@@ -140,6 +140,8 @@ The kit is generated from the modules it wraps: `github.com/moby/moby/api`, `git
 go get github.com/aptd3v/containerkit
 ```
 
+Release notes are in [CHANGELOG.md](CHANGELOG.md). Tagging `v0.8.1` publishes this module, the GitHub archives, and the npm packages.
+
 The TypeScript package lives in [`tsx/`](tsx/README.md). It needs Node 20. A folder that extends `containerkit/tsconfig.jsx.json` compiles `<Compose>` without a per-file pragma. React and containerkit can share a repository. They cannot share a file.
 
 Running a live session needs the `containerkit` binary on `PATH`, or `CONTAINERKIT_BIN` pointing at it. Build it for the host, and archives for linux, darwin, and windows, with `go run ./tools/crossbuild`.

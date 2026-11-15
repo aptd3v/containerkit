@@ -104,6 +104,25 @@ func TestArchiveRoundTrip(t *testing.T) {
 	}
 }
 
+func TestCommitFromRepo(t *testing.T) {
+	t.Setenv("CONTAINERKIT_COMMIT", "abc123")
+	if got := commitFromRepo(t.TempDir()); got != "abc123" {
+		t.Fatalf("override: got %q", got)
+	}
+	t.Setenv("CONTAINERKIT_COMMIT", "")
+	if got := commitFromRepo(t.TempDir()); got != "none" {
+		t.Fatalf("missing git: got %q", got)
+	}
+	root, err := moduleRoot()
+	if err != nil {
+		t.Fatal(err)
+	}
+	got := commitFromRepo(root)
+	if got == "none" || len(got) < 7 {
+		t.Fatalf("HEAD: got %q", got)
+	}
+}
+
 func TestVersionFromRepo(t *testing.T) {
 	dir := t.TempDir()
 	path := filepath.Join(dir, "VERSION")

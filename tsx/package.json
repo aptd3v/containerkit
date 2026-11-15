@@ -1,7 +1,6 @@
 {
   "name": "containerkit",
   "version": "0.8.1",
-  "private": true,
   "description": "Write Compose files, Dockerfiles, and container actions as TSX.",
   "type": "module",
   "license": "MIT",
@@ -86,7 +85,7 @@
     "pack:check": "npm run build && node scripts/pack-check.mjs",
     "prepack": "node scripts/publish-optional.mjs rewrite",
     "postpack": "node scripts/publish-optional.mjs restore",
-    "prepublishOnly": "node -e \"if (require('./package.json').private) { console.error('package is private; not publishing'); process.exit(1) }\""
+    "prepublishOnly": "node scripts/publish-optional.mjs check"
   },
   "optionalDependencies": {
     "@containerkit/darwin-amd64": "file:../npm/@containerkit/darwin-amd64",
