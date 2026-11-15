@@ -10,8 +10,6 @@ import (
 	"sync"
 	"testing"
 	"time"
-
-	"github.com/stretchr/testify/require"
 )
 
 func TestNewSessionRejectsNil(t *testing.T) {
@@ -35,7 +33,9 @@ func TestNewSessionRejectsNil(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 			_, err := NewSession(tc.in, tc.out, tc.conn, tc.reader)
-			require.EqualError(t, err, tc.want)
+			if err == nil || err.Error() != tc.want {
+				t.Fatalf("err = %v, want %q", err, tc.want)
+			}
 		})
 	}
 }
@@ -44,22 +44,34 @@ func TestSizeRequiresTerminal(t *testing.T) {
 	t.Parallel()
 	s := newPipeSession(t, io.Discard)
 	_, err := s.Size()
-	require.EqualError(t, err, "terminal: stdin is not a terminal")
+	if err == nil || err.Error() != "terminal: stdin is not a terminal" {
+		t.Fatalf("err = %v", err)
+	}
 }
 
 func TestCloseIsIdempotent(t *testing.T) {
 	t.Parallel()
 	s := newPipeSession(t, io.Discard)
-	require.NoError(t, s.Close())
-	require.NoError(t, s.Close())
-	require.ErrorIs(t, s.Start(context.Background(), nil), ErrClosed)
-	require.NoError(t, (*Session)(nil).Close())
+	if err := s.Close(); err != nil {
+		t.Fatal(err)
+	}
+	if err := s.Close(); err != nil {
+		t.Fatal(err)
+	}
+	if err := s.Start(context.Background(), nil); !errors.Is(err, ErrClosed) {
+		t.Fatalf("Start after Close = %v, want ErrClosed", err)
+	}
+	if err := (*Session)(nil).Close(); err != nil {
+		t.Fatal(err)
+	}
 }
 
 func TestStartRejectsNilContext(t *testing.T) {
 	t.Parallel()
 	s := newPipeSession(t, io.Discard)
-	require.EqualError(t, s.Start(nil, nil), "terminal: nil context")
+	if err := s.Start(nil, nil); err == nil || err.Error() != "terminal: nil context" {
+		t.Fatalf("err = %v", err)
+	}
 }
 
 func TestStartCopiesOutputUntilRemoteCloses(t *testing.T) {
@@ -75,9 +87,15 @@ func TestStartCopiesOutputUntilRemoteCloses(t *testing.T) {
 
 	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
 	defer cancel()
-	require.NoError(t, s.Start(ctx, nil))
-	require.Equal(t, "hello", out.String())
-	require.NoError(t, s.Close())
+	if err := s.Start(ctx, nil); err != nil {
+		t.Fatal(err)
+	}
+	if out.String() != "hello" {
+		t.Fatalf("out = %q, want hello", out.String())
+	}
+	if err := s.Close(); err != nil {
+		t.Fatal(err)
+	}
 }
 
 func TestStartHalfClosesOnStdinEOF(t *testing.T) {
@@ -87,7 +105,9 @@ func TestStartHalfClosesOnStdinEOF(t *testing.T) {
 	writeClosed := make(chan struct{})
 	conn := &halfCloser{Conn: local, closed: writeClosed}
 	s, err := NewSession(inR, io.Discard, conn, local)
-	require.NoError(t, err)
+	if err != nil {
+		t.Fatal(err)
+	}
 
 	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
 	defer cancel()
@@ -105,9 +125,12 @@ func TestStartHalfClosesOnStdinEOF(t *testing.T) {
 		got <- append([]byte(nil), buf[:n]...)
 	}()
 
-	_, err = inW.Write([]byte("ping"))
-	require.NoError(t, err)
-	require.NoError(t, inW.Close())
+	if _, err := inW.Write([]byte("ping")); err != nil {
+		t.Fatal(err)
+	}
+	if err := inW.Close(); err != nil {
+		t.Fatal(err)
+	}
 
 	select {
 	case <-writeClosed:
@@ -116,15 +139,21 @@ func TestStartHalfClosesOnStdinEOF(t *testing.T) {
 	}
 	select {
 	case buf := <-got:
-		require.Equal(t, "ping", string(buf))
+		if string(buf) != "ping" {
+			t.Fatalf("forwarded = %q, want ping", buf)
+		}
 	case <-ctx.Done():
 		t.Fatal("stdin bytes were not forwarded")
 	}
 
-	require.NoError(t, peer.Close())
+	if err := peer.Close(); err != nil {
+		t.Fatal(err)
+	}
 	select {
 	case err := <-done:
-		require.NoError(t, err)
+		if err != nil {
+			t.Fatal(err)
+		}
 	case <-ctx.Done():
 		t.Fatal("Start did not return after the remote closed")
 	}
@@ -136,7 +165,9 @@ func TestStartStopsWhenContextCanceled(t *testing.T) {
 	inR, _ := pipeFiles(t)
 	local, _ := netPipe(t)
 	s, err := NewSession(inR, io.Discard, local, &signalReader{Reader: local, reading: reading})
-	require.NoError(t, err)
+	if err != nil {
+		t.Fatal(err)
+	}
 
 	ctx, cancel := context.WithCancel(context.Background())
 	done := make(chan error, 1)
@@ -149,7 +180,9 @@ func TestStartStopsWhenContextCanceled(t *testing.T) {
 	cancel()
 	select {
 	case err := <-done:
-		require.ErrorIs(t, err, context.Canceled)
+		if !errors.Is(err, context.Canceled) {
+			t.Fatalf("Start = %v, want context.Canceled", err)
+		}
 	case <-time.After(2 * time.Second):
 		t.Fatal("Start did not return after cancel")
 	}
@@ -161,7 +194,9 @@ func TestCloseUnblocksStart(t *testing.T) {
 	inR, _ := pipeFiles(t)
 	local, _ := netPipe(t)
 	s, err := NewSession(inR, io.Discard, local, &signalReader{Reader: local, reading: reading})
-	require.NoError(t, err)
+	if err != nil {
+		t.Fatal(err)
+	}
 
 	done := make(chan error, 1)
 	go func() { done <- s.Start(context.Background(), nil) }()
@@ -170,10 +205,14 @@ func TestCloseUnblocksStart(t *testing.T) {
 	case <-time.After(2 * time.Second):
 		t.Fatal("Start did not read output")
 	}
-	require.NoError(t, s.Close())
+	if err := s.Close(); err != nil {
+		t.Fatal(err)
+	}
 	select {
 	case err := <-done:
-		require.ErrorIs(t, err, ErrClosed)
+		if !errors.Is(err, ErrClosed) {
+			t.Fatalf("Start = %v, want ErrClosed", err)
+		}
 	case <-time.After(2 * time.Second):
 		t.Fatal("Close did not unblock Start")
 	}
@@ -185,7 +224,9 @@ func TestStartOnce(t *testing.T) {
 	inR, _ := pipeFiles(t)
 	local, _ := netPipe(t)
 	s, err := NewSession(inR, io.Discard, local, &signalReader{Reader: local, reading: reading})
-	require.NoError(t, err)
+	if err != nil {
+		t.Fatal(err)
+	}
 	t.Cleanup(func() { _ = s.Close() })
 
 	ctx, cancel := context.WithCancel(context.Background())
@@ -197,7 +238,9 @@ func TestStartOnce(t *testing.T) {
 	case <-time.After(2 * time.Second):
 		t.Fatal("Start did not read output")
 	}
-	require.EqualError(t, s.Start(context.Background(), nil), "terminal: session already started")
+	if err := s.Start(context.Background(), nil); err == nil || err.Error() != "terminal: session already started" {
+		t.Fatalf("second Start = %v", err)
+	}
 	cancel()
 	select {
 	case <-done:
@@ -214,8 +257,12 @@ func TestStartResizeRequiresTerminal(t *testing.T) {
 		called = true
 		return nil
 	})
-	require.ErrorContains(t, err, "stdin is not a terminal")
-	require.False(t, called)
+	if err == nil || !bytes.Contains([]byte(err.Error()), []byte("stdin is not a terminal")) {
+		t.Fatalf("err = %v", err)
+	}
+	if called {
+		t.Fatal("resize called")
+	}
 }
 
 func TestStartReturnsOutputError(t *testing.T) {
@@ -223,12 +270,16 @@ func TestStartReturnsOutputError(t *testing.T) {
 	inR, _ := pipeFiles(t)
 	local, _ := netPipe(t)
 	s, err := NewSession(inR, io.Discard, local, errReader{err: errors.New("boom")})
-	require.NoError(t, err)
+	if err != nil {
+		t.Fatal(err)
+	}
 
 	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
 	defer cancel()
 	err = s.Start(ctx, nil)
-	require.ErrorContains(t, err, "boom")
+	if err == nil || !bytes.Contains([]byte(err.Error()), []byte("boom")) {
+		t.Fatalf("err = %v", err)
+	}
 }
 
 func TestWatchResizeReturnsWhenContextCanceled(t *testing.T) {
@@ -245,7 +296,9 @@ func TestWatchResizeReturnsWhenContextCanceled(t *testing.T) {
 	}()
 	select {
 	case err := <-done:
-		require.NoError(t, err)
+		if err != nil {
+			t.Fatal(err)
+		}
 	case <-time.After(2 * time.Second):
 		t.Fatal("watchResize did not return")
 	}
@@ -256,13 +309,21 @@ func TestStartCanceledContextDoesNotConsumeSession(t *testing.T) {
 	s, inW, peer := newPipeSessionEnds(t, io.Discard)
 	ctx, cancel := context.WithCancel(context.Background())
 	cancel()
-	require.ErrorIs(t, s.Start(ctx, nil), context.Canceled)
+	if err := s.Start(ctx, nil); !errors.Is(err, context.Canceled) {
+		t.Fatalf("Start = %v, want context.Canceled", err)
+	}
 
-	require.NoError(t, inW.Close())
-	require.NoError(t, peer.Close())
+	if err := inW.Close(); err != nil {
+		t.Fatal(err)
+	}
+	if err := peer.Close(); err != nil {
+		t.Fatal(err)
+	}
 	ctx, cancel = context.WithTimeout(context.Background(), 2*time.Second)
 	defer cancel()
-	require.NoError(t, s.Start(ctx, nil))
+	if err := s.Start(ctx, nil); err != nil {
+		t.Fatal(err)
+	}
 }
 
 func newPipeSession(t *testing.T, out io.Writer) *Session {
@@ -280,14 +341,18 @@ func newPipeSessionEnds(t *testing.T, out io.Writer) (*Session, *os.File, net.Co
 	inR, inW := pipeFiles(t)
 	local, peer := netPipe(t)
 	s, err := NewSession(inR, out, local, local)
-	require.NoError(t, err)
+	if err != nil {
+		t.Fatal(err)
+	}
 	return s, inW, peer
 }
 
 func pipeFiles(t *testing.T) (*os.File, *os.File) {
 	t.Helper()
 	r, w, err := os.Pipe()
-	require.NoError(t, err)
+	if err != nil {
+		t.Fatal(err)
+	}
 	t.Cleanup(func() {
 		r.Close()
 		w.Close()
