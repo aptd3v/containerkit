@@ -1,0 +1,14 @@
+{
+  "name": "@containerkit/linux-arm64",
+  "version": "0.8.1",
+  "description": "containerkit command for Linux on arm64.",
+  "license": "MIT",
+  "author": "aptd3v",
+  "os": ["linux"],
+  "cpu": ["arm64"],
+  "preferUnplugged": true,
+  "files": ["bin"],
+  "publishConfig": {
+    "access": "public"
+  }
+}
