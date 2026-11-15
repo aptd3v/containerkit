@@ -7,19 +7,11 @@ import (
 	"os"
 	"strings"
 
-	"github.com/docker/docker/api/types/container"
+	"github.com/aptd3v/containerkit/pkg/signal"
 )
 
-// DockerFile is the contract consumed by Build.Dockerfile.
-// *Dockerfile from NewDockerFile, ParseDockerfile, and ReadDockerfile implements it.
-type DockerFile interface {
-	String() string
-	Validate() error
-}
-
 // Dockerfile is a fluent Dockerfile builder.
-//
-// Not safe for concurrent use.
+// Pass it to [Build] or [BuildImage]. Not safe for concurrent use.
 type Dockerfile struct {
 	builder      strings.Builder
 	errs         []error
@@ -31,9 +23,23 @@ type Dockerfile struct {
 	checkSet     bool
 }
 
-var _ DockerFile = (*Dockerfile)(nil)
+// DockerFile is the contract consumed by [Build] and [BuildImage].
+// *Dockerfile from [NewDockerfile], [ParseDockerfile], and [ReadDockerfile] implements it.
+type DockerFile interface {
+	String() string
+	Validate() error
+}
 
-// CopyOpts are optional flags on a COPY instruction.
+var (
+	_ DockerFile        = (*Dockerfile)(nil)
+	_ BuildOption       = (*Dockerfile)(nil)
+	_ EngineBuildOption = (*Dockerfile)(nil)
+)
+
+// NewDockerFile is [NewDockerfile].
+func NewDockerFile() *Dockerfile { return NewDockerfile() }
+
+// CopyOpts are optional flags on a Dockerfile COPY instruction.
 type CopyOpts struct {
 	From    string
 	Chown   string
@@ -43,7 +49,7 @@ type CopyOpts struct {
 	Parents bool
 }
 
-// AddOpts are optional flags on an ADD instruction.
+// AddOpts are optional flags on a Dockerfile ADD instruction.
 type AddOpts struct {
 	Chown      string
 	Chmod      string
@@ -53,7 +59,7 @@ type AddOpts struct {
 	Exclude    []string
 }
 
-// RunOpts are BuildKit flags on a RUN instruction.
+// RunOpts are BuildKit flags on a Dockerfile RUN instruction.
 // Setting any flag starts a new RUN. Later Run calls with empty options still
 // fold into that instruction.
 type RunOpts struct {
@@ -62,8 +68,8 @@ type RunOpts struct {
 	Security string
 }
 
-// NewDockerFile creates a fluent Dockerfile builder.
-func NewDockerFile() *Dockerfile {
+// NewDockerfile creates a fluent Dockerfile builder.
+func NewDockerfile() *Dockerfile {
 	return &Dockerfile{}
 }
 
@@ -132,7 +138,7 @@ func (d *Dockerfile) directive(name, value string, seen *bool) *Dockerfile {
 
 // From sets the FROM instruction. Pass the tag in image ("alpine:latest") or as the second argument.
 func (d *Dockerfile) From(image string, tag ...string) *Dockerfile {
-	t, err := oneOpt("from tag", tag)
+	t, err := oneDockerfileOpt("from tag", tag)
 	if err != nil {
 		return d.fail(err)
 	}
@@ -144,7 +150,7 @@ func (d *Dockerfile) FromPlatform(platform, image string, tag ...string) *Docker
 	if strings.TrimSpace(platform) == "" {
 		return d.fail(fmt.Errorf("from platform is empty"))
 	}
-	t, err := oneOpt("from tag", tag)
+	t, err := oneDockerfileOpt("from tag", tag)
 	if err != nil {
 		return d.fail(err)
 	}
@@ -230,7 +236,7 @@ func (d *Dockerfile) Arg(name string, defaultValue ...string) *Dockerfile {
 }
 
 // Env sets an ENV instruction.
-func (d *Dockerfile) Env(key string, value string) *Dockerfile {
+func (d *Dockerfile) Env(key, value string) *Dockerfile {
 	if strings.TrimSpace(key) == "" {
 		return d.fail(fmt.Errorf("env name is empty"))
 	}
@@ -245,8 +251,8 @@ func (d *Dockerfile) Env(key string, value string) *Dockerfile {
 }
 
 // Copy sets a COPY instruction. At most one CopyOpts value is accepted.
-func (d *Dockerfile) Copy(src string, dest string, opts ...CopyOpts) *Dockerfile {
-	o, err := oneOpt("copy", opts)
+func (d *Dockerfile) Copy(src, dest string, opts ...CopyOpts) *Dockerfile {
+	o, err := oneDockerfileOpt("copy", opts)
 	if err != nil {
 		return d.fail(err)
 	}
@@ -263,8 +269,8 @@ func (d *Dockerfile) Copy(src string, dest string, opts ...CopyOpts) *Dockerfile
 }
 
 // Add sets an ADD instruction. At most one AddOpts value is accepted.
-func (d *Dockerfile) Add(src string, dest string, opts ...AddOpts) *Dockerfile {
-	o, err := oneOpt("add", opts)
+func (d *Dockerfile) Add(src, dest string, opts ...AddOpts) *Dockerfile {
+	o, err := oneDockerfileOpt("add", opts)
 	if err != nil {
 		return d.fail(err)
 	}
@@ -369,7 +375,7 @@ func (d *Dockerfile) Expose(port string) *Dockerfile {
 }
 
 // Label sets a LABEL instruction.
-func (d *Dockerfile) Label(key string, value string) *Dockerfile {
+func (d *Dockerfile) Label(key, value string) *Dockerfile {
 	if strings.TrimSpace(key) == "" {
 		return d.fail(fmt.Errorf("label name is empty"))
 	}
@@ -408,14 +414,14 @@ func (d *Dockerfile) Workdir(path string) *Dockerfile {
 }
 
 // StopSignal sets a STOPSIGNAL instruction.
-func (d *Dockerfile) StopSignal(signal string) *Dockerfile {
-	if strings.TrimSpace(signal) == "" {
+func (d *Dockerfile) StopSignal(sig signal.Signal) *Dockerfile {
+	if strings.TrimSpace(string(sig)) == "" {
 		return d.fail(fmt.Errorf("stopsignal is empty"))
 	}
-	if err := dockerfileToken(signal); err != nil {
+	if err := dockerfileToken(string(sig)); err != nil {
 		return d.fail(fmt.Errorf("stopsignal: %w", err))
 	}
-	d.commit("STOPSIGNAL "+signal+"\n", false)
+	d.commit("STOPSIGNAL "+string(sig)+"\n", false)
 	return d
 }
 
@@ -458,22 +464,24 @@ func (d *Dockerfile) Volumes(volumes ...string) *Dockerfile {
 	return d
 }
 
-// HealthCheck sets a HEALTHCHECK instruction from a container Health value.
-// Zero interval, timeout, start period, and retries are omitted.
-func (d *Dockerfile) HealthCheck(h Health) *Dockerfile {
-	if len(h.test) > 0 && h.test[0] == "NONE" {
+// HealthCheck sets a HEALTHCHECK instruction from nested [HealthOption] setters.
+func (d *Dockerfile) HealthCheck(opts ...HealthOption) *Dockerfile {
+	var h health
+	for i, opt := range opts {
+		if opt == nil {
+			return d.fail(cfgErr("dockerfile", fmt.Sprintf("health.option[%d]", i), "option", errNilOption))
+		}
+		if err := opt.applyHealth(&h); err != nil {
+			return d.fail(err)
+		}
+	}
+	if h.disabled.ok() && h.disabled.val {
 		return d.HealthCheckNone()
 	}
-	c := NewContainer().HealthCheck(h)
-	d.errs = append(d.errs, c.Errors...)
-	if len(c.Errors) > 0 {
-		return d
+	if !h.test.ok() {
+		return d.fail(fmt.Errorf("healthcheck test is empty"))
 	}
-	hc := container.HealthConfig{}
-	if c.Config != nil && c.Config.Container != nil && c.Config.Container.Healthcheck != nil {
-		hc = *c.Config.Container.Healthcheck
-	}
-	cmd, err := formatHealthCmd(hc.Test)
+	cmd, err := formatHealthCmd(h.test.val)
 	if err != nil {
 		return d.fail(err)
 	}
@@ -481,17 +489,17 @@ func (d *Dockerfile) HealthCheck(h Health) *Dockerfile {
 		return d.HealthCheckNone()
 	}
 	var flags []string
-	if hc.Interval > 0 {
-		flags = append(flags, "--interval="+hc.Interval.String())
+	if h.interval.ok() && h.interval.val > 0 {
+		flags = append(flags, "--interval="+h.interval.val.String())
 	}
-	if hc.Timeout > 0 {
-		flags = append(flags, "--timeout="+hc.Timeout.String())
+	if h.timeout.ok() && h.timeout.val > 0 {
+		flags = append(flags, "--timeout="+h.timeout.val.String())
 	}
-	if hc.StartPeriod > 0 {
-		flags = append(flags, "--start-period="+hc.StartPeriod.String())
+	if h.startPeriod.ok() && h.startPeriod.val > 0 {
+		flags = append(flags, "--start-period="+h.startPeriod.val.String())
 	}
-	if hc.Retries > 0 {
-		flags = append(flags, fmt.Sprintf("--retries=%d", hc.Retries))
+	if h.retries.ok() && h.retries.val > 0 {
+		flags = append(flags, fmt.Sprintf("--retries=%d", h.retries.val))
 	}
 	line := "HEALTHCHECK "
 	if len(flags) > 0 {
@@ -558,7 +566,7 @@ func (d *Dockerfile) RunLayer(cmd string, opts ...RunOpts) *Dockerfile {
 }
 
 func (d *Dockerfile) run(cmd string, fresh bool, opts ...RunOpts) *Dockerfile {
-	o, err := oneOpt("run", opts)
+	o, err := oneDockerfileOpt("run", opts)
 	if err != nil {
 		return d.fail(err)
 	}
@@ -609,8 +617,6 @@ func (d *Dockerfile) RunArgs(args ...string) *Dockerfile {
 }
 
 // Format substitutes %s placeholders in the current dockerfile text.
-// Only %s is replaced (in order). %% writes a literal %. Other % sequences
-// stay literal so prior content such as "100%" is not reinterpreted as printf.
 func (d *Dockerfile) Format(args ...any) *Dockerfile {
 	for i, arg := range args {
 		if err := dockerfileToken(fmt.Sprint(arg)); err != nil {
@@ -632,6 +638,9 @@ func (d *Dockerfile) Format(args ...any) *Dockerfile {
 
 // String returns the dockerfile text.
 func (d *Dockerfile) String() string {
+	if d == nil {
+		return ""
+	}
 	return d.builder.String()
 }
 
@@ -645,9 +654,32 @@ func (d *Dockerfile) Export(path string, mode os.FileMode) error {
 
 // Validate returns any errors recorded while building the dockerfile.
 func (d *Dockerfile) Validate() error {
+	if d == nil {
+		return fmt.Errorf("%w: dockerfile", errRequired)
+	}
 	if len(d.errs) > 0 {
 		return errors.Join(d.errs...)
 	}
+	return nil
+}
+
+func (d *Dockerfile) applyBuild(b *build) error {
+	if err := d.Validate(); err != nil {
+		return wrapPath("dockerfile", err)
+	}
+	text := d.String()
+	if strings.TrimSpace(text) == "" {
+		return cfgErr("", "dockerfile", "Dockerfile", fmt.Errorf("%w: dockerfile", errEmpty))
+	}
+	b.inline.assign(text)
+	return nil
+}
+
+func (d *Dockerfile) applyEngineBuild(a *engineBuildAct) error {
+	if err := d.Validate(); err != nil {
+		return wrapPath("dockerfile", err)
+	}
+	a.df = d
 	return nil
 }
 
@@ -664,7 +696,7 @@ func (d *Dockerfile) commit(line string, run bool) {
 	d.builder.WriteString(line)
 }
 
-func oneOpt[T any](kind string, opts []T) (T, error) {
+func oneDockerfileOpt[T any](kind string, opts []T) (T, error) {
 	var zero T
 	switch len(opts) {
 	case 0:
@@ -676,10 +708,6 @@ func oneOpt[T any](kind string, opts []T) (T, error) {
 	}
 }
 
-// dockerfileToken rejects scalars that would break out of a single Dockerfile
-// instruction line. CR/LF start a new instruction; other C0 controls (except
-// tab) and NUL/DEL are rejected. Spaces and tabs are allowed so shell-form
-// commands and values like "hello world" remain valid.
 func dockerfileToken(s string) error {
 	for i := 0; i < len(s); i++ {
 		c := s[i]
@@ -697,9 +725,6 @@ func dockerfileToken(s string) error {
 	return nil
 }
 
-// formatDockerfilePlaceholders replaces %s in order. %% is a literal %.
-// Any other % is left as a literal percent so content like ENV PCT=100% is
-// preserved when Format runs.
 func formatDockerfilePlaceholders(tmpl string, args ...any) (string, error) {
 	var b strings.Builder
 	b.Grow(len(tmpl))

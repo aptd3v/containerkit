@@ -11,32 +11,14 @@ import (
 	"strings"
 )
 
-// Reader returns the tar build context client.ImageBuild reads.
-// Context is the directory to pack. A Dockerfile passed to Build.Dockerfile is
-// written as Dockerfile over any Dockerfile already in that directory. When only
-// Context or DockerfilePath is set, the file is read from disk (default "Dockerfile").
-// A .dockerignore in Context is honored. An empty Context packs only the Dockerfile.
-func (b Build) Reader() (io.Reader, error) {
-	if b.spec.err != nil {
-		return nil, b.spec.err
+// Archive returns a tar build context for [BuildImage].
+// contextDir is packed when non-empty; an empty directory packs only this Dockerfile.
+// A .dockerignore in contextDir is honored. The fluent Dockerfile is written as "Dockerfile".
+func (d *Dockerfile) Archive(contextDir string) (io.Reader, error) {
+	if err := d.Validate(); err != nil {
+		return nil, wrapPath("dockerfile", err)
 	}
-	dockerfile := b.spec.DockerfileInline
-	if dockerfile == "" {
-		rel := b.spec.Dockerfile
-		if rel == "" {
-			rel = "Dockerfile"
-		}
-		path := rel
-		if b.spec.Context != "" && !filepath.IsAbs(rel) {
-			path = filepath.Join(b.spec.Context, rel)
-		}
-		data, err := os.ReadFile(path)
-		if err != nil {
-			return nil, fmt.Errorf("read dockerfile %s: %w", path, err)
-		}
-		dockerfile = string(data)
-	}
-	return packBuildContext([]byte(dockerfile), b.spec.Context)
+	return packBuildContext([]byte(d.String()), contextDir)
 }
 
 func packBuildContext(dockerfile []byte, src string) (io.Reader, error) {
@@ -182,7 +164,7 @@ func readDockerignore(dir string) (ignoreRules, error) {
 		return ignoreRules{}, fmt.Errorf("read .dockerignore: %w", err)
 	}
 	var rules ignoreRules
-	for line := range strings.SplitSeq(string(raw), "\n") {
+	for _, line := range strings.Split(string(raw), "\n") {
 		pattern, ok := parseIgnoreLine(line)
 		if !ok {
 			continue

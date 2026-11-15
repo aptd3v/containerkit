@@ -1,218 +1,225 @@
 package kit
 
-import "github.com/compose-spec/compose-go/v2/types"
+import "fmt"
 
-// Build is a fluent Compose service build spec.
-// Pass it to Service.Build. A later Build call is applied after earlier ones.
-type Build struct {
-	spec BuildSpec
-}
-
-// NewBuild starts an empty build spec.
-func NewBuild() Build {
-	return Build{}
-}
-
-// NewBuildFrom starts a build spec from an existing BuildSpec value.
-func NewBuildFrom(spec BuildSpec) Build {
-	return Build{spec: spec}
-}
-
-// Apply writes the build spec onto a Compose service.
-func (b Build) Apply(cfg *types.ServiceConfig) error {
-	return b.spec.Apply(cfg)
-}
-
-// Context sets the build context directory.
-func (b Build) Context(path string) Build {
-	b.spec.Context = path
-	return b
-}
-
-// DockerfilePath sets the Dockerfile path inside the context.
-func (b Build) DockerfilePath(path string) Build {
-	b.spec.Dockerfile = path
-	return b
-}
-
-// Dockerfile sets the Dockerfile text from a DockerFile builder.
-// A nil file is ignored. When validation fails, WithService reports the error
-// and does not apply the spec.
-func (b Build) Dockerfile(file DockerFile) Build {
-	if file == nil {
-		return b
+func (b *build) setSource(s string) error {
+	if s == "" {
+		return cfgErr("", "source", "Source", fmt.Errorf("%w: build context", errEmpty))
 	}
-	b.spec.DockerfileInline = file.String()
-	if err := file.Validate(); err != nil {
-		b.spec.err = err
+	b.source.assign(s)
+	return nil
+}
+
+func (b *build) setTarget(t string) error {
+	b.target.assign(t)
+	return nil
+}
+
+func (b *build) setDockerfile(p string) error {
+	if p == "" {
+		return cfgErr("", "file", "File", fmt.Errorf("%w: dockerfile", errEmpty))
 	}
-	return b
+	b.dockerfile.assign(p)
+	return nil
 }
 
-// Arg sets one build arg.
-func (b Build) Arg(key, value string) Build {
-	if b.spec.Args == nil {
-		b.spec.Args = map[string]string{}
+func (b *build) setPrivileged(v bool) error {
+	b.privileged.assign(v)
+	return nil
+}
+
+func (b *build) setShmSize(n int64) error {
+	if n < 0 {
+		return cfgErr("", "memory", "Memory", fmt.Errorf("%w: build shm size", errInvalid))
 	}
-	b.spec.Args[key] = value
-	return b
+	b.shmSize.assign(n)
+	return nil
 }
 
-// Args merges build args into the spec.
-func (b Build) Args(args map[string]string) Build {
-	for key, value := range args {
-		b = b.Arg(key, value)
+func (b *build) addArg(key, value string) error {
+	if key == "" {
+		return secretErr("", "env", "Env", fmt.Errorf("%w: build arg key", errEmpty))
 	}
-	return b
+	b.args = append(b.args, envVar{key: key, value: field[string]{set: true, val: value}})
+	return nil
 }
 
-// Label sets one build label.
-func (b Build) Label(key, value string) Build {
-	if b.spec.Labels == nil {
-		b.spec.Labels = map[string]string{}
+func (b *build) addLabel(k, val string) error {
+	if k == "" {
+		return cfgErr("", "label", "Label", fmt.Errorf("%w: label key", errEmpty))
 	}
-	b.spec.Labels[key] = value
-	return b
-}
-
-// Labels merges build labels into the spec.
-func (b Build) Labels(labels map[string]string) Build {
-	for key, value := range labels {
-		b = b.Label(key, value)
+	if b.labels == nil {
+		b.labels = map[string]string{}
 	}
-	return b
+	b.labels[k] = val
+	return nil
 }
 
-// Tag appends image tags applied to the built image.
-func (b Build) Tag(tags ...string) Build {
-	b.spec.Tags = append(b.spec.Tags, tags...)
-	return b
+// PullOpt is the value returned by [Pull].
+// It implements [BuildOption], [ComposeBuildOption], [ComposeCreateOption],
+// [EngineBuildOption], [RunOption], [UpOption], and [WatchOption].
+type PullOpt struct{ v bool }
+
+// Pull requests a fresh base image inside [Build].
+func Pull(v bool) PullOpt { return PullOpt{v: v} }
+
+func (o PullOpt) applyBuild(b *build) error {
+	b.pull.assign(o.v)
+	return nil
 }
 
-// Target sets the Dockerfile target stage.
-func (b Build) Target(name string) Build {
-	b.spec.Target = name
-	return b
+// NoCacheOpt is the value returned by [NoCache].
+// It implements [BuildOption], [ComposeBuildOption], [ComposeCreateOption],
+// [EngineBuildOption], [RunOption], [UpOption], and [WatchOption].
+type NoCacheOpt struct{ v bool }
+
+// NoCache disables layer cache inside [Build].
+func NoCache(v bool) NoCacheOpt { return NoCacheOpt{v: v} }
+
+func (o NoCacheOpt) applyBuild(b *build) error {
+	b.noCache.assign(o.v)
+	return nil
 }
 
-// Network sets the network mode used during the build.
-func (b Build) Network(name string) Build {
-	b.spec.Network = name
-	return b
-}
+// TagOpt is the value returned by [Tag].
+// It implements [BuildOption] and [EngineBuildOption].
+type TagOpt struct{ t string }
 
-// NoCache disables the build cache.
-func (b Build) NoCache() Build {
-	b.spec.NoCache = true
-	return b
-}
+// Tag adds an image tag inside [Build].
+func Tag(t string) TagOpt { return TagOpt{t: t} }
 
-// Pull pulls newer versions of the base image.
-func (b Build) Pull() Build {
-	b.spec.Pull = true
-	return b
-}
-
-// Privileged enables privileged mode for the build.
-func (b Build) Privileged() Build {
-	b.spec.Privileged = true
-	return b
-}
-
-// Platform appends target platforms.
-func (b Build) Platform(platforms ...string) Build {
-	b.spec.Platforms = append(b.spec.Platforms, platforms...)
-	return b
-}
-
-// CacheFrom appends cache import sources.
-func (b Build) CacheFrom(sources ...string) Build {
-	b.spec.CacheFrom = append(b.spec.CacheFrom, sources...)
-	return b
-}
-
-// CacheTo appends cache export destinations.
-func (b Build) CacheTo(destinations ...string) Build {
-	b.spec.CacheTo = append(b.spec.CacheTo, destinations...)
-	return b
-}
-
-// SSH appends an SSH agent socket or key available to the build.
-func (b Build) SSH(id, path string) Build {
-	b.spec.SSH = append(b.spec.SSH, BuildSSH{ID: id, Path: path})
-	return b
-}
-
-// AdditionalContext sets one named additional build context.
-func (b Build) AdditionalContext(name, value string) Build {
-	if b.spec.AdditionalContexts == nil {
-		b.spec.AdditionalContexts = map[string]string{}
+func (o TagOpt) applyBuild(b *build) error {
+	if o.t == "" {
+		return cfgErr("", "tag", "Tag", fmt.Errorf("%w: tag", errEmpty))
 	}
-	b.spec.AdditionalContexts[name] = value
-	return b
+	b.tags = append(b.tags, o.t)
+	return nil
 }
 
-// AdditionalContexts merges named additional build contexts.
-func (b Build) AdditionalContexts(contexts map[string]string) Build {
-	for name, value := range contexts {
-		b = b.AdditionalContext(name, value)
+// BuildOpt is the value returned by [Build].
+// It implements [JobOption] and [ServiceOption].
+type BuildOpt struct{ opts []BuildOption }
+
+// Build sets Compose build configuration. Service and job only.
+func Build(opts ...BuildOption) BuildOpt { return BuildOpt{opts: opts} }
+
+func (o BuildOpt) applyService(s *Service) error { return o.apply(s) }
+func (o BuildOpt) applyJob(j *Job) error {
+	var b build
+	if err := o.collect(&b); err != nil {
+		return err
 	}
-	return b
+	j.build.assign(b)
+	return nil
 }
 
-// ExtraHost appends an extra host entry in "name:ip" form.
-func (b Build) ExtraHost(host string) Build {
-	b.spec.ExtraHosts = append(b.spec.ExtraHosts, host)
-	return b
-}
-
-// Isolation sets the build isolation mode.
-func (b Build) Isolation(mode string) Build {
-	b.spec.Isolation = mode
-	return b
-}
-
-// ShmSize sets /dev/shm size in bytes.
-func (b Build) ShmSize(size int64) Build {
-	b.spec.ShmSize = size
-	return b
-}
-
-// Entitlement appends build entitlements.
-func (b Build) Entitlement(names ...string) Build {
-	b.spec.Entitlements = append(b.spec.Entitlements, names...)
-	return b
-}
-
-// Ulimit sets one build ulimit.
-func (b Build) Ulimit(name string, soft, hard int) Build {
-	if b.spec.Ulimits == nil {
-		b.spec.Ulimits = map[string]BuildUlimit{}
+func (o BuildOpt) apply(s *Service) error {
+	var b build
+	if err := o.collect(&b); err != nil {
+		return err
 	}
-	b.spec.Ulimits[name] = BuildUlimit{Soft: soft, Hard: hard}
-	return b
+	s.build.assign(b)
+	return nil
 }
 
-// Secret appends a build-time secret reference.
-func (b Build) Secret(secret BuildSecret) Build {
-	b.spec.Secrets = append(b.spec.Secrets, secret)
-	return b
+func (o BuildOpt) collect(b *build) error {
+	var errs []error
+	for i, opt := range o.opts {
+		if opt == nil {
+			errs = append(errs, cfgErr("", fmt.Sprintf("build.option[%d]", i), "option", errNilOption))
+			continue
+		}
+		if err := opt.applyBuild(b); err != nil {
+			errs = append(errs, wrapPath("build", err))
+		}
+	}
+	if err := join(errs...); err != nil {
+		return err
+	}
+	if b.inline.ok() && b.dockerfile.ok() {
+		return cfgErr("", "build.file", "File", fmt.Errorf("%w: File and Dockerfile cannot both be set", errInvalid))
+	}
+	if !b.source.ok() {
+		if b.inline.ok() {
+			b.source.assign(".")
+		} else {
+			return cfgErr("", "build.source", "Source", fmt.Errorf("%w: build context", errRequired))
+		}
+	}
+	return nil
 }
 
-// Provenance sets the provenance attestation mode.
-func (b Build) Provenance(mode string) Build {
-	b.spec.Provenance = mode
-	return b
+// PullPolicyOpt is the value returned by [PullPolicy].
+// It implements [JobOption] and [ServiceOption].
+type PullPolicyOpt struct{ p PullMode }
+
+// PullPolicy sets Compose pull_policy. Service and job only.
+func PullPolicy(p PullMode) PullPolicyOpt { return PullPolicyOpt{p: p} }
+
+func (o PullPolicyOpt) applyService(s *Service) error {
+	s.pullPolicy.assign(string(o.p))
+	return nil
+}
+func (o PullPolicyOpt) applyJob(j *Job) error {
+	j.pullPolicy.assign(string(o.p))
+	return nil
 }
 
-// SBOM sets the SBOM attestation mode.
-func (b Build) SBOM(mode string) Build {
-	b.spec.SBOM = mode
-	return b
+// EnvFileOpt is the value returned by [EnvFile].
+// It implements [IncludeOption], [JobOption], [LoadProjectOption], and [ServiceOption].
+type EnvFileOpt struct {
+	path string
+	opts []EnvFileOption
 }
 
-// NoCacheFilter appends cache filters that skip the cache.
-func (b Build) NoCacheFilter(filters ...string) Build {
-	b.spec.NoCacheFilter = append(b.spec.NoCacheFilter, filters...)
-	return b
+// EnvFile adds a Compose env_file path. Service, job, [AddInclude], and [LoadProject].
+func EnvFile(path string, opts ...EnvFileOption) EnvFileOpt {
+	return EnvFileOpt{path: path, opts: opts}
+}
+
+func (o EnvFileOpt) applyService(s *Service) error {
+	ref, err := o.ref()
+	if err != nil {
+		return err
+	}
+	s.envFiles = append(s.envFiles, ref)
+	return nil
+}
+func (o EnvFileOpt) applyJob(j *Job) error {
+	ref, err := o.ref()
+	if err != nil {
+		return err
+	}
+	j.envFiles = append(j.envFiles, ref)
+	return nil
+}
+
+func (o EnvFileOpt) applyInclude(inc *includeRef) error {
+	if o.path == "" {
+		return cfgErr("", "env_file", "EnvFile", fmt.Errorf("%w: env file", errEmpty))
+	}
+	inc.envFiles = append(inc.envFiles, o.path)
+	return nil
+}
+
+func (o EnvFileOpt) ref() (envFileRef, error) {
+	if o.path == "" {
+		return envFileRef{}, cfgErr("", "env_file", "EnvFile", fmt.Errorf("%w: env file", errEmpty))
+	}
+	ref := envFileRef{}
+	ref.path.assign(o.path)
+	var errs []error
+	for i, opt := range o.opts {
+		if opt == nil {
+			errs = append(errs, cfgErr("", fmt.Sprintf("env_file.option[%d]", i), "option", errNilOption))
+			continue
+		}
+		if err := opt.applyEnvFile(&ref); err != nil {
+			errs = append(errs, wrapPath("env_file", err))
+		}
+	}
+	if err := join(errs...); err != nil {
+		return envFileRef{}, err
+	}
+	return ref, nil
 }

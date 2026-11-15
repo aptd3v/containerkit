@@ -1,0 +1,110 @@
+package kit
+
+import (
+	"bytes"
+	"context"
+	"encoding/json"
+	"errors"
+	"strings"
+	"testing"
+)
+
+func TestErrorClassNotFound(t *testing.T) {
+	t.Parallel()
+	err := cfgErr("engine", "alpine:latest", "pullImage", ErrNotFound)
+	if got := ErrorClass(err); got != "notFound" {
+		t.Fatalf("class = %q", got)
+	}
+	rep := errorReport(err)
+	if rep.Receiver != "engine" {
+		t.Fatalf("receiver = %q", rep.Receiver)
+	}
+	if rep.Path != "alpine:latest" {
+		t.Fatalf("path = %q", rep.Path)
+	}
+	if strings.Contains(rep.Message, "supersecret") {
+		t.Fatal(rep.Message)
+	}
+}
+
+func TestErrorReportExitAndSecret(t *testing.T) {
+	t.Parallel()
+	err := cfgErr("container", "wait", "Wait", &ExitError{StatusCode: 2})
+	rep := errorReport(err)
+	if rep.Class != "internal" {
+		t.Fatalf("class = %q", rep.Class)
+	}
+	if rep.ExitCode == nil || *rep.ExitCode != 2 {
+		t.Fatalf("exit = %v", rep.ExitCode)
+	}
+	secret := secretErr("engine", "login", "Login", errors.New("supersecret"))
+	rep = errorReport(secret)
+	if strings.Contains(rep.Message, "supersecret") {
+		t.Fatalf("secret leaked: %s", rep.Message)
+	}
+}
+
+func TestServeSessionInvalidPlan(t *testing.T) {
+	t.Parallel()
+	var out, errw bytes.Buffer
+	in := strings.NewReader("{\"id\":1,\"type\":\"exec\",\"plan\":{\"actions\":[{\"op\":\"\"}]}}\n")
+	code := ServeSession(context.Background(), in, &out, &errw)
+	if code != 0 {
+		t.Fatalf("code = %d, err = %s", code, errw.String())
+	}
+	var frame sessionError
+	if err := json.Unmarshal(out.Bytes(), &frame); err != nil {
+		t.Fatal(err)
+	}
+	if frame.Type != "error" || frame.Class != "invalidArgument" {
+		t.Fatalf("frame = %+v", frame)
+	}
+	if string(frame.ID) != "1" {
+		t.Fatalf("id = %s", frame.ID)
+	}
+}
+
+func TestServeLogAndResult(t *testing.T) {
+	t.Parallel()
+	var out, errw bytes.Buffer
+	w := &frameWriter{enc: json.NewEncoder(&out)}
+	log := NewFrameLogger(func(e LogEvent) {
+		if err := w.write(eventFrame(e)); err != nil {
+			t.Error(err)
+		}
+	})
+	in := strings.NewReader("{\"id\":7,\"type\":\"exec\",\"plan\":{}}\n")
+	code := serve(context.Background(), in, &errw, w, func(ctx context.Context, _ []byte) ([]byte, error) {
+		loggerFrom(log.Context(ctx)).Log("api", "hello")
+		loggerFrom(log.Context(ctx)).Status("api", "started")
+		return []byte(`{"ok":true}`), nil
+	})
+	if code != 0 {
+		t.Fatalf("code = %d, err = %s", code, errw.String())
+	}
+	lines := strings.Split(strings.TrimSpace(out.String()), "\n")
+	if len(lines) != 3 {
+		t.Fatalf("lines = %q", lines)
+	}
+	var logFrame map[string]any
+	if err := json.Unmarshal([]byte(lines[0]), &logFrame); err != nil {
+		t.Fatal(err)
+	}
+	if logFrame["kind"] != "log" || logFrame["source"] != "api" || logFrame["stream"] != "stdout" || logFrame["line"] != "hello" {
+		t.Fatalf("log = %#v", logFrame)
+	}
+	var status map[string]any
+	if err := json.Unmarshal([]byte(lines[1]), &status); err != nil {
+		t.Fatal(err)
+	}
+	if status["kind"] != "status" || status["line"] != "started" {
+		t.Fatalf("status = %#v", status)
+	}
+	var result sessionResult
+	if err := json.Unmarshal([]byte(lines[2]), &result); err != nil {
+		t.Fatal(err)
+	}
+	if result.Type != "result" || !result.OK || string(result.ID) != "7" {
+		t.Fatalf("result = %+v", result)
+	}
+}

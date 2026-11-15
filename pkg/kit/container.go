@@ -1,66 +1,97 @@
 package kit
 
-import (
-	"errors"
-	"fmt"
-	"strings"
+import "fmt"
 
-	"github.com/aptd3v/containerkit/pkg/kit/types"
-	"github.com/docker/docker/api/types/container"
-	"github.com/docker/docker/api/types/network"
-	ocispec "github.com/opencontainers/image-spec/specs-go/v1"
-)
-
+// Container is a standalone Engine container configuration that also converts
+// to a Compose service when the settings map.
 type Container struct {
-	Name   string              // the name of the container
-	Config *types.MergedConfig // merged docker sdk configuration for container creation
-	Errors []error             // errors encountered during configuration
-	// mountNotes carries Compose mount fields the engine mount type does not store.
-	mountNotes map[string]mountNote
+	spec
+	autoRemove    field[bool]
+	stdinOnce     field[bool]
+	argsEscaped   field[bool]
+	attachStdin   field[bool]
+	attachStdout  field[bool]
+	attachStderr  field[bool]
+	publishAll    field[bool]
+	idFile        field[string]
+	shell         []string
+	onBuild       []string
+	maskedPaths   []string
+	readonlyPaths []string
+	errs          []error
 }
 
-// mountNote carries Compose mount fields the engine mount type does not store.
-type mountNote struct {
-	selinux        string
-	createHostPath *bool
-}
-
-// NewContainer creates a new container with the given name.
-// It will return a container with empty configurations ready to be set.
-// a container is a wrapper around the docker sdk container configuration.
-// but it can be used as a service config in a compose project
-//
-// parameters:
-//   - name: the name of the container
-//
-// Note: 'name' is optional when using this container as a Compose service config.
-// It is required when using the Docker SDK directly.
-// If multiple strings are passed as the name, they will be joined with hyphens (e.g., "foo", "bar" -> "foo-bar").
-func NewContainer(name ...string) *Container {
-	cName := ""
-	if len(name) > 0 {
-		cName = strings.Join(name, "-")
+// NewContainer applies typed options and always returns a container.
+// Option and validation errors accumulate; call [Container.Validate] to inspect them.
+func NewContainer(opts ...ContainerOption) *Container {
+	c := &Container{}
+	for i, opt := range opts {
+		if opt == nil {
+			c.errs = addErr(c.errs, cfgErr("container", fmt.Sprintf("option[%d]", i), "option", errNilOption))
+			continue
+		}
+		if err := opt.applyContainer(c); err != nil {
+			c.errs = addErr(c.errs, wrapReceiver("container", err))
+		}
 	}
-	return &Container{
-		Name: cName,
-		Config: &types.MergedConfig{
-			Container: &container.Config{},
-			Host:      &container.HostConfig{},
-			Network:   &network.NetworkingConfig{},
-			Platform:  &ocispec.Platform{},
-		},
-		Errors: []error{},
-	}
+	return c
 }
 
-// Validate reports accumulated container config errors.
-// A nil receiver returns an error (it does not panic).
-func (c *Container) Validate() error {
+func (c *Container) setAutoRemove(v bool) error {
+	c.autoRemove.assign(v)
+	return nil
+}
+
+func (c *Container) validate() error {
 	if c == nil {
-		return errors.New("container is nil")
+		return cfgErr("container", ".", "", errRequired)
 	}
-	if len(c.Errors) > 0 {
-		return fmt.Errorf("container config has errors: %w", errors.Join(c.Errors...))
+	if !c.image.ok() {
+		return cfgErr("container", "image", "Image", fmt.Errorf("%w: image", errRequired))
 	}
 	return nil
+}
+
+// Validate reports accumulated option errors and missing required fields.
+func (c *Container) Validate() error {
+	if c == nil {
+		return cfgErr("container", ".", "", errRequired)
+	}
+	return join(append(append([]error(nil), c.errs...), c.validate())...)
+}
+
+// Name returns the configured container name, or empty if omitted.
+func (c *Container) Name() string {
+	if c == nil || !c.name.ok() {
+		return ""
+	}
+	return c.name.val
+}
+
+// Image returns the configured image, or empty if omitted.
+func (c *Container) Image() string {
+	if c == nil || !c.image.ok() {
+		return ""
+	}
+	return c.image.val
+}
+
+// Apply adds options to an existing container. Errors join the container's
+// accumulated set and are also returned.
+func (c *Container) Apply(opts ...ContainerOption) error {
+	if c == nil {
+		return cfgErr("container", ".", "Apply", fmt.Errorf("%w: container", errRequired))
+	}
+	var errs []error
+	for i, opt := range opts {
+		if opt == nil {
+			errs = addErr(errs, cfgErr("container", fmt.Sprintf("option[%d]", i), "option", errNilOption))
+			continue
+		}
+		if err := opt.applyContainer(c); err != nil {
+			errs = addErr(errs, wrapReceiver("container", err))
+		}
+	}
+	c.errs = append(c.errs, errs...)
+	return join(errs...)
 }

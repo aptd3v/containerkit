@@ -3,139 +3,137 @@ package kit
 import (
 	"fmt"
 	"time"
-
-	"github.com/aptd3v/containerkit/pkg/kit/errdefs"
-	"github.com/docker/docker/api/types/container"
 )
 
-// Health is a fluent container healthcheck.
-// Pass it to [Container.HealthCheck] and [Dockerfile.HealthCheck].
-//
-// Timeout, Interval, and StartPeriod are seconds. Prefer TimeoutD, IntervalD,
-// and StartPeriodD for duration strings ("2s", "1m"). An empty Health becomes
-// HEALTHCHECK NONE when applied. [Container.DisabledHealthCheck] is equivalent
-// to HealthCheck(NewHealth().None()).
-type Health struct {
-	test         []string
-	timeout      int
-	interval     int
-	startPeriod  int
-	retries      int
-	timeoutD     string
-	intervalD    string
-	startPeriodD string
-}
-
-// NewHealth starts an empty healthcheck.
-func NewHealth() Health {
-	return Health{}
-}
-
-// Test sets the healthcheck command, including the CMD / CMD-SHELL / NONE prefix.
-func (h Health) Test(args ...string) Health {
-	h.test = append([]string(nil), args...)
-	return h
-}
-
-// CMD sets a CMD healthcheck (exec form).
-func (h Health) CMD(args ...string) Health {
-	return h.Test(append([]string{"CMD"}, args...)...)
-}
-
-// CMDShell sets a CMD-SHELL healthcheck.
-func (h Health) CMDShell(cmd string) Health {
-	return h.Test(append([]string{"CMD-SHELL"}, cmd)...)
-}
-
-// None disables the healthcheck (HEALTHCHECK NONE).
-func (h Health) None() Health {
-	return h.Test("NONE")
-}
-
-// Timeout sets the healthcheck timeout in seconds.
-func (h Health) Timeout(seconds int) Health {
-	h.timeout = seconds
-	return h
-}
-
-// TimeoutD sets the healthcheck timeout from a duration string ("5s").
-func (h Health) TimeoutD(d string) Health {
-	h.timeoutD = d
-	return h
-}
-
-// Interval sets the healthcheck interval in seconds.
-func (h Health) Interval(seconds int) Health {
-	h.interval = seconds
-	return h
-}
-
-// IntervalD sets the healthcheck interval from a duration string ("10s").
-func (h Health) IntervalD(d string) Health {
-	h.intervalD = d
-	return h
-}
-
-// StartPeriod sets the start-period in seconds.
-func (h Health) StartPeriod(seconds int) Health {
-	h.startPeriod = seconds
-	return h
-}
-
-// StartPeriodD sets the start-period from a duration string ("0s").
-func (h Health) StartPeriodD(d string) Health {
-	h.startPeriodD = d
-	return h
-}
-
-// Retries sets the number of consecutive failures needed to mark the container unhealthy.
-func (h Health) Retries(n int) Health {
-	h.retries = n
-	return h
-}
-
-func (h Health) healthConfig() (*container.HealthConfig, error) {
-	timeout, err := healthDuration(h.timeout, h.timeoutD, "timeout")
-	if err != nil {
-		return nil, err
+func (h *health) setTest(cmd []string) error {
+	if len(cmd) == 0 {
+		return cfgErr("", "test", "Test", fmt.Errorf("%w: health test", errEmpty))
 	}
-	interval, err := healthDuration(h.interval, h.intervalD, "interval")
-	if err != nil {
-		return nil, err
-	}
-	start, err := healthDuration(h.startPeriod, h.startPeriodD, "start period")
-	if err != nil {
-		return nil, err
-	}
-	if h.retries < 0 {
-		return nil, errdefs.NewContainerConfigError("healthcheck", "retries must be greater than or equal to 0")
-	}
-	test := h.test
-	if len(test) == 0 {
-		test = []string{"NONE"}
-	}
-	return &container.HealthConfig{
-		Test:        test,
-		Timeout:     timeout,
-		Interval:    interval,
-		StartPeriod: start,
-		Retries:     h.retries,
-	}, nil
+	h.test.assign(append([]string(nil), cmd...))
+	return nil
 }
 
-func healthDuration(seconds int, raw, field string) (time.Duration, error) {
-	var duration time.Duration
-	if raw != "" {
-		parsed, err := time.ParseDuration(raw)
-		if err != nil {
-			return 0, errdefs.NewContainerConfigError("healthcheck", fmt.Sprintf("error parsing %s: %s", field, err))
+func (h *health) setInterval(d time.Duration) error {
+	if d < 0 {
+		return cfgErr("", "interval", "Interval", fmt.Errorf("%w: interval", errInvalid))
+	}
+	h.interval.assign(d)
+	return nil
+}
+
+func (h *health) setTimeout(d time.Duration) error {
+	if d < 0 {
+		return cfgErr("", "timeout", "Timeout", fmt.Errorf("%w: timeout", errInvalid))
+	}
+	h.timeout.assign(d)
+	return nil
+}
+
+func (h *health) setRetries(n int) error {
+	if n < 0 {
+		return cfgErr("", "retries", "Retries", fmt.Errorf("%w: retries", errInvalid))
+	}
+	h.retries.assign(n)
+	return nil
+}
+
+func (h *health) setStartPeriod(d time.Duration) error {
+	if d < 0 {
+		return cfgErr("", "start_period", "StartPeriod", fmt.Errorf("%w: start period", errInvalid))
+	}
+	h.startPeriod.assign(d)
+	return nil
+}
+
+func (h *health) setDisabled(v bool) error {
+	h.disabled.assign(v)
+	return nil
+}
+
+// TestOpt is the value returned by [Test].
+// It implements [HealthOption].
+type TestOpt struct{ cmd []string }
+
+// IntervalOpt is the value returned by [Interval].
+// It implements [HealthOption].
+type IntervalOpt struct{ d time.Duration }
+
+// TimeoutOpt is the value returned by [Timeout].
+// It implements [ClientOption], [ComposeCreateOption], [ComposeRestartOption],
+// [ComposeStartOption], [ComposeStopOption], [ComposerClientOption], [DownOption],
+// [EnginePluginEnableOption], [EngineStopOption], [HealthOption], [RunOption], and [UpOption].
+type TimeoutOpt struct{ d time.Duration }
+
+// RetriesOpt is the value returned by [Retries].
+// It implements [HealthOption].
+type RetriesOpt struct{ n int }
+
+// StartPeriodOpt is the value returned by [StartPeriod].
+// It implements [HealthOption].
+type StartPeriodOpt struct{ d time.Duration }
+
+// DisabledOpt is the value returned by [Disabled].
+// It implements [EnginePluginInstallOption], [EnginePluginUpgradeOption], and [HealthOption].
+type DisabledOpt struct{ v bool }
+
+// Test sets the healthcheck command in a [Health] scope. Extra strings are
+// command arguments, not interval or retries; those are [Interval], [Timeout],
+// and [Retries].
+func Test(cmd ...string) TestOpt { return TestOpt{cmd: cmd} }
+
+func (o TestOpt) applyHealth(h *health) error { return h.setTest(o.cmd) }
+
+// Interval sets the healthcheck interval in a [Health] scope. Zero is explicit.
+func Interval(d time.Duration) IntervalOpt { return IntervalOpt{d: d} }
+
+func (o IntervalOpt) applyHealth(h *health) error { return h.setInterval(o.d) }
+
+// Timeout sets a duration for healthchecks, compose wait/stop, Engine stop,
+// and [EnablePlugin] (seconds). Zero is explicit.
+func Timeout(d time.Duration) TimeoutOpt { return TimeoutOpt{d: d} }
+
+func (o TimeoutOpt) applyHealth(h *health) error { return h.setTimeout(o.d) }
+
+// Retries sets healthcheck retries in a [Health] scope. Zero is explicit.
+func Retries(n int) RetriesOpt { return RetriesOpt{n: n} }
+
+func (o RetriesOpt) applyHealth(h *health) error { return h.setRetries(o.n) }
+
+// StartPeriod sets the healthcheck start period in a [Health] scope.
+func StartPeriod(d time.Duration) StartPeriodOpt { return StartPeriodOpt{d: d} }
+
+func (o StartPeriodOpt) applyHealth(h *health) error { return h.setStartPeriod(o.d) }
+
+// Disabled disables a healthcheck, or leaves a plugin disabled after
+// [InstallPlugin] / [UpgradePlugin].
+func Disabled(v bool) DisabledOpt { return DisabledOpt{v: v} }
+
+func (o DisabledOpt) applyHealth(h *health) error { return h.setDisabled(o.v) }
+
+// HealthOpt is the value returned by [Health].
+// It implements [ContainerOption] and [ServiceOption].
+type HealthOpt struct{ opts []HealthOption }
+
+// Health configures a healthcheck with nested setters.
+func Health(opts ...HealthOption) HealthOpt { return HealthOpt{opts: opts} }
+
+func (o HealthOpt) applyContainer(c *Container) error { return o.apply(&c.spec) }
+func (o HealthOpt) applyService(s *Service) error     { return o.apply(&s.spec) }
+
+func (o HealthOpt) apply(s *spec) error {
+	var h health
+	var errs []error
+	for i, opt := range o.opts {
+		if opt == nil {
+			errs = append(errs, cfgErr("", fmt.Sprintf("health.option[%d]", i), "option", errNilOption))
+			continue
 		}
-		duration = parsed
-	} else {
-		duration = time.Duration(seconds) * time.Second
+		if err := opt.applyHealth(&h); err != nil {
+			errs = append(errs, wrapPath("health", err))
+		}
 	}
-	if duration < 0 {
-		return 0, errdefs.NewContainerConfigError("healthcheck", field+" must be non-negative")
+	if err := join(errs...); err != nil {
+		return err
 	}
-	return duration, nil
+	return wrapPath("health", s.setHealth(h))
 }
