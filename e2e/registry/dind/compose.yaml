@@ -1,0 +1,58 @@
+name: containerkit-registry
+
+services:
+  engine:
+    image: docker:27.5.1-dind
+    hostname: engine
+    privileged: true
+    cgroup: host
+    restart: "no"
+    environment:
+      DOCKER_TLS_CERTDIR: ""
+    command:
+      - --host=unix:///var/run/docker.sock
+      - --host=tcp://0.0.0.0:2375
+      - --tls=false
+      - --insecure-registry=registry:5000
+      - --insecure-registry=127.0.0.1:5000
+    ports:
+      - "127.0.0.1:23755:2375"
+    networks:
+      regnet:
+        ipv4_address: 10.0.50.11
+    healthcheck:
+      test: ["CMD", "docker", "info"]
+      interval: 2s
+      timeout: 3s
+      retries: 30
+      start_period: 8s
+    depends_on:
+      - registry
+
+  registry:
+    image: registry:2
+    hostname: registry
+    restart: "no"
+    environment:
+      REGISTRY_AUTH: htpasswd
+      REGISTRY_AUTH_HTPASSWD_REALM: Registry
+      REGISTRY_AUTH_HTPASSWD_PATH: /auth/htpasswd
+      REGISTRY_STORAGE_DELETE_ENABLED: "true"
+    volumes:
+      - type: bind
+        source: ../.run/htpasswd
+        target: /auth/htpasswd
+        read_only: true
+    ports:
+      - "127.0.0.1:50005:5000"
+    networks:
+      regnet:
+        ipv4_address: 10.0.50.12
+
+networks:
+  regnet:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 10.0.50.0/24
+          gateway: 10.0.50.1

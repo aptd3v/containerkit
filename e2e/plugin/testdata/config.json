@@ -1,0 +1,27 @@
+{
+  "description": "containerkit e2e volume plugin",
+  "documentation": "https://docs.docker.com/engine/extend/#developing-a-plugin",
+  "entrypoint": ["/plugin"],
+  "workdir": "/",
+  "interface": {
+    "types": ["docker.volumedriver/1.0"],
+    "socket": "containerkit.sock"
+  },
+  "network": {
+    "type": "host"
+  },
+  "propagatedmount": "/data",
+  "env": [
+    {
+      "name": "DEBUG",
+      "description": "Enable debug logging",
+      "settable": ["value"],
+      "value": "0"
+    }
+  ],
+  "linux": {
+    "capabilities": [],
+    "allowAllDevices": false,
+    "devices": []
+  }
+}

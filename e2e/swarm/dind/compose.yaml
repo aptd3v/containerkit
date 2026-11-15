@@ -1,0 +1,106 @@
+name: containerkit-swarm
+
+services:
+  mgr:
+    image: docker:27.5.1-dind
+    hostname: mgr
+    privileged: true
+    cgroup: host
+    restart: "no"
+    environment:
+      DOCKER_TLS_CERTDIR: ""
+    command:
+      - --host=unix:///var/run/docker.sock
+      - --host=tcp://0.0.0.0:2375
+      - --tls=false
+    ports:
+      - "127.0.0.1:23751:2375"
+    networks:
+      swarmnet:
+        ipv4_address: 10.0.0.11
+    healthcheck:
+      test: ["CMD", "docker", "info"]
+      interval: 2s
+      timeout: 3s
+      retries: 30
+      start_period: 8s
+
+  w1:
+    image: docker:27.5.1-dind
+    hostname: w1
+    privileged: true
+    cgroup: host
+    restart: "no"
+    environment:
+      DOCKER_TLS_CERTDIR: ""
+    command:
+      - --host=unix:///var/run/docker.sock
+      - --host=tcp://0.0.0.0:2375
+      - --tls=false
+    ports:
+      - "127.0.0.1:23752:2375"
+    networks:
+      swarmnet:
+        ipv4_address: 10.0.0.12
+    healthcheck:
+      test: ["CMD", "docker", "info"]
+      interval: 2s
+      timeout: 3s
+      retries: 30
+      start_period: 8s
+
+  w2:
+    image: docker:27.5.1-dind
+    hostname: w2
+    privileged: true
+    cgroup: host
+    restart: "no"
+    environment:
+      DOCKER_TLS_CERTDIR: ""
+    command:
+      - --host=unix:///var/run/docker.sock
+      - --host=tcp://0.0.0.0:2375
+      - --tls=false
+    ports:
+      - "127.0.0.1:23753:2375"
+    networks:
+      swarmnet:
+        ipv4_address: 10.0.0.13
+    healthcheck:
+      test: ["CMD", "docker", "info"]
+      interval: 2s
+      timeout: 3s
+      retries: 30
+      start_period: 8s
+
+  w3:
+    image: docker:27.5.1-dind
+    hostname: w3
+    privileged: true
+    cgroup: host
+    restart: "no"
+    environment:
+      DOCKER_TLS_CERTDIR: ""
+    command:
+      - --host=unix:///var/run/docker.sock
+      - --host=tcp://0.0.0.0:2375
+      - --tls=false
+    ports:
+      - "127.0.0.1:23754:2375"
+    networks:
+      swarmnet:
+        ipv4_address: 10.0.0.14
+    healthcheck:
+      test: ["CMD", "docker", "info"]
+      interval: 2s
+      timeout: 3s
+      retries: 30
+      start_period: 8s
+
+networks:
+  swarmnet:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 10.0.0.0/24
+          gateway: 10.0.0.1
