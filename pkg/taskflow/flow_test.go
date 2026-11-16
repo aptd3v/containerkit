@@ -6,6 +6,7 @@ import (
 	"errors"
 	"io"
 	"os"
+	"strings"
 	"sync"
 	"testing"
 
@@ -312,6 +313,70 @@ func TestDumpProfileTrace(t *testing.T) {
 type failWriter struct{}
 
 func (failWriter) Write([]byte) (int, error) { return 0, errors.New("full") }
+
+func TestCycle(t *testing.T) {
+	ctx := context.Background()
+	f := New("loop", nil)
+	ran := 0
+	a := f.Task("a", func(context.Context) error {
+		ran++
+		return nil
+	})
+	b := f.Task("b", func(context.Context) error {
+		ran++
+		return nil
+	})
+	a.DependsOn(b)
+	b.DependsOn(a)
+	err := f.Run(ctx, discardRun())
+	if err == nil || !cycleNames(err, "a", "b") || ran != 0 {
+		t.Fatalf("run %v ran %d", err, ran)
+	}
+
+	f = New("sub", nil)
+	f.Subflow("outer", func(sf *Subflow) {
+		left := sf.Task("left", func(context.Context) error {
+			ran++
+			return nil
+		})
+		right := sf.Task("right", func(context.Context) error {
+			ran++
+			return nil
+		})
+		left.DependsOn(right)
+		right.DependsOn(left)
+	})
+	err = f.Run(ctx, discardRun())
+	if err == nil || !cycleNames(err, "left", "right") || ran != 0 {
+		t.Fatalf("subflow %v ran %d", err, ran)
+	}
+
+	f = New("out", nil)
+	f.Subflow("sf", func(sf *Subflow) {
+		inner := sf.Task("inner", func(context.Context) error { return nil })
+		inner.succs = append(inner.succs, nil)
+	})
+	if err = f.Run(ctx, discardRun()); err != nil {
+		t.Fatal(err)
+	}
+
+	prev := runIDEntropy
+	runIDEntropy = bytes.NewReader(nil)
+	t.Cleanup(func() { runIDEntropy = prev })
+	f = New("id", nil)
+	f.Task("a", func(context.Context) error { return nil })
+	if err := f.Run(ctx, discardRun()); err == nil {
+		t.Fatal("run id")
+	}
+}
+
+func cycleNames(err error, a, b string) bool {
+	if err == nil {
+		return false
+	}
+	msg := err.Error()
+	return strings.Contains(msg, a+" -> "+b+" -> "+a) || strings.Contains(msg, b+" -> "+a+" -> "+b)
+}
 
 func TestLoggerEvents(t *testing.T) {
 	var got []kit.LogEvent

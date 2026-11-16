@@ -456,11 +456,10 @@ async function runOnce(rt: Runtime, fn: OnceRoot): Promise<"failed" | "ok"> {
 		await report(rt, err);
 		return "failed";
 	}
-	rt.lastYAML = yaml;
-	return applyProject(rt, unit);
+	return applyProject(rt, unit, yaml);
 }
 
-async function applyProject(rt: Runtime, node: DockerNode): Promise<"failed" | "ok"> {
+async function applyProject(rt: Runtime, node: DockerNode, yaml: string): Promise<"failed" | "ok"> {
 	const options = rt.wait ? { detach: true as const, wait: true as const } : { detach: true as const };
 	try {
 		await rt.session.call(composeUp(rt.session.client, node, options));
@@ -468,6 +467,7 @@ async function applyProject(rt: Runtime, node: DockerNode): Promise<"failed" | "
 		await report(rt, err);
 		return "failed";
 	}
+	rt.lastYAML = yaml;
 	rt.project = node;
 	if (rt.stopped) {
 		return "ok";
@@ -587,8 +587,7 @@ async function commit(rt: Runtime, renderRoot: () => DockerNode | null | undefin
 			return;
 		}
 		if (yaml !== rt.lastYAML) {
-			rt.lastYAML = yaml;
-			if ((await applyProject(rt, node)) === "failed") {
+			if ((await applyProject(rt, node, yaml)) === "failed") {
 				return;
 			}
 		}

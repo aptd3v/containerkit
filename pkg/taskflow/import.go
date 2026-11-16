@@ -149,7 +149,63 @@ func validateSteps(steps []stepDoc) error {
 			return err
 		}
 	}
+	return stepCycles(steps)
+}
+
+func stepCycles(steps []stepDoc) error {
+	index := make(map[string]int, len(steps))
+	succ := make(map[string][]string, len(steps))
+	order := make([]string, 0, len(steps))
+	for i, st := range steps {
+		index[st.Name] = i
+		order = append(order, st.Name)
+		for _, name := range st.Precede {
+			succ[st.Name] = append(succ[st.Name], name)
+		}
+		for _, name := range st.DependsOn {
+			succ[name] = append(succ[name], st.Name)
+		}
+	}
+	color := make([]int, len(steps))
+	var path []string
+	var walk func(string) error
+	walk = func(name string) error {
+		i := index[name]
+		switch color[i] {
+		case 2:
+			return nil
+		case 1:
+			return fmt.Errorf("taskflow: cycle: %s", joinCycle(path, name))
+		}
+		color[i] = 1
+		path = append(path, name)
+		for _, next := range succ[name] {
+			if err := walk(next); err != nil {
+				return err
+			}
+		}
+		path = path[:len(path)-1]
+		color[i] = 2
+		return nil
+	}
+	for _, name := range order {
+		if err := walk(name); err != nil {
+			return err
+		}
+	}
 	return nil
+}
+
+func joinCycle(path []string, back string) string {
+	start := 0
+	for i, name := range path {
+		if name == back {
+			start = i
+			break
+		}
+	}
+	names := append(append([]string{}, path[start:]...), back)
+	return strings.Join(names, " -> ")
 }
 
 func knownEdges(step string, edges []string, names map[string]bool, kind string) error {

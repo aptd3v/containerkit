@@ -25,7 +25,7 @@ What the function returns is what gets applied:
 
 - A `Compose`, `Service`, `Job`, or `Container` is applied with `composeUp`, detached, so the session does not follow the containers' logs.
 - `null` applies nothing. The function is still waiting, or this program has no project right now.
-- The same YAML as last time applies nothing. The containers keep running. The session compares the whole file, not individual fields.
+- The same YAML as the last successful apply applies nothing. A failed apply is not remembered. The containers keep running. The session compares the whole file, not individual fields.
 
 `onExit: "down"` handles Ctrl+C and SIGTERM. `root` waits if an apply is already running, takes down the project it last brought up, and then closes the session. When this file is the program you ran, the process exits. You do not pass the tree to `composeDown`, and you do not register the signals. `close()` still just closes the session, so a caller that stops the root on purpose leaves the project running. Omit `onExit` and the containers stay up when the process exits.
 

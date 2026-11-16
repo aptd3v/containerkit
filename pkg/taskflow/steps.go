@@ -144,8 +144,11 @@ func (t *Task) runContainer() error {
 		return err
 	}
 	ctx := f.context()
-	name := t.container.Name()
-	if err := t.container.Remove(ctx, api, name, kit.Force(true)); err != nil && !kit.IsNotFound(err) {
+	remove := t.container.Name()
+	if id := t.ID(); id != "" {
+		remove = id
+	}
+	if err := t.container.Remove(ctx, api, remove, kit.Force(true)); err != nil && !kit.IsNotFound(err) {
 		return err
 	}
 	created, err := t.container.Create(ctx, api)

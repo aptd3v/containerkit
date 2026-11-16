@@ -137,6 +137,58 @@ func TestContainerFailures(t *testing.T) {
 	}
 }
 
+func TestContainerOwnership(t *testing.T) {
+	ctx := context.Background()
+	eng := &scriptedEngine{}
+	cli := newClient(eng, nil)
+	one := New("one", cli)
+	one.Container("migrate", kit.NewContainer(kit.Image("app")), nil)
+	if err := one.Run(ctx, discardRun()); err != nil {
+		t.Fatal(err)
+	}
+	firstName := eng.created.Name
+	if !strings.HasPrefix(firstName, "one-migrate-") || firstName == "migrate" {
+		t.Fatal(firstName)
+	}
+	eng.removed = nil
+	two := New("two", cli)
+	two.Container("migrate", kit.NewContainer(kit.Image("app")), nil)
+	if err := two.Run(ctx, discardRun()); err != nil {
+		t.Fatal(err)
+	}
+	for _, id := range eng.removed {
+		if id == firstName || id == "ctr-1" {
+			t.Fatalf("removed %s from %v", id, eng.removed)
+		}
+	}
+	if eng.created.Name == firstName || !strings.HasPrefix(eng.created.Name, "two-migrate-") {
+		t.Fatal(eng.created.Name)
+	}
+
+	eng = &scriptedEngine{id: "made", startErr: errors.New("start")}
+	f := New("job", newClient(eng, nil))
+	f.Container("c", kit.NewContainer(kit.Image("app")), nil).Retry(1)
+	if err := f.Run(ctx, discardRun()); err == nil {
+		t.Fatal("start")
+	}
+	if len(eng.removed) != 2 || eng.removed[1] != "made" || !strings.HasPrefix(eng.removed[0], "job-c-") {
+		t.Fatalf("retry removes %v", eng.removed)
+	}
+
+	eng = &scriptedEngine{}
+	f = New("edge", newClient(eng, nil))
+	earlier := f.Container("a", kit.NewContainer(kit.Image("app")), nil)
+	f.Container("b", kit.NewContainer(kit.Image("app")), nil)
+	earlier.Precede(f.taskList()[1])
+	if err := f.Run(ctx, discardRun()); err != nil {
+		t.Fatal(err)
+	}
+	cfg, _, _, err := earlier.container.EngineConfig()
+	if err != nil || !strings.Contains(cfg.Labels[LabelPrecedes], "edge-b-") {
+		t.Fatalf("precedes %v %v", err, cfg)
+	}
+}
+
 func TestWaitStatus(t *testing.T) {
 	ctx := context.Background()
 	if _, err := waitStatus(ctx, kit.ContainerWaitResult{}); err == nil {

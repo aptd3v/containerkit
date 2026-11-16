@@ -48,7 +48,7 @@ func (t *Task) stampContainer() error {
 	}
 	var opts []kit.ContainerOption
 	if t.container.Name() == "" && t.name != "" {
-		opts = append(opts, kit.Name(t.name))
+		opts = append(opts, kit.Name(t.implicitName()))
 	}
 	opts = append(opts, kit.Label(LabelFlow, t.flow.name), kit.Label(LabelTask, t.name))
 	if deps := strings.Join(t.nearestNames(false), ","); deps != "" {
@@ -78,6 +78,13 @@ func (t *Task) alreadyCreated() bool {
 	return t.id != ""
 }
 
+func (t *Task) implicitName() string {
+	if t == nil || t.flow == nil || t.flow.runID == "" || t.name == "" {
+		return ""
+	}
+	return t.flow.name + "-" + t.name + "-" + t.flow.runID
+}
+
 func (t *Task) containerName() string {
 	if t == nil || t.kind != kindContainer {
 		return ""
@@ -85,10 +92,10 @@ func (t *Task) containerName() string {
 	if t.container != nil && t.container.Name() != "" {
 		return t.container.Name()
 	}
-	if t.name != "" {
-		return t.name
+	if name := t.implicitName(); name != "" {
+		return name
 	}
-	return ""
+	return t.name
 }
 
 func (t *Task) composeContainerNames() []string {

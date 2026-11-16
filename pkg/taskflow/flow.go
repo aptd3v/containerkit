@@ -2,11 +2,14 @@ package taskflow
 
 import (
 	"context"
+	"crypto/rand"
+	"encoding/hex"
 	"errors"
 	"fmt"
 	"io"
 	"os"
 	"runtime"
+	"strings"
 	"sync"
 	"time"
 
@@ -61,6 +64,7 @@ type Flow struct {
 	ctx     context.Context
 	writer  io.Writer
 	ran     bool
+	runID   string
 	watch   func(Event)
 	logfn   func(string, []byte)
 }
@@ -295,7 +299,7 @@ func (sc scope) subflow(name string, instantiate func(*Subflow) error) *Task {
 				c.addFallback()
 			}
 			f.stamp()
-			return nil
+			return cycleTasks(t.childList())
 		})
 	})
 	return t
@@ -599,11 +603,11 @@ func (t *Task) begin() {
 	t.mu.Unlock()
 }
 
-// resetResult clears per-attempt container state between retries.
+// resetResult clears the exit code between retries. The container id stays so
+// the next attempt removes the container this step created.
 func (t *Task) resetResult() {
 	t.mu.Lock()
 	t.exitCode = 0
-	t.id = ""
 	t.mu.Unlock()
 }
 
@@ -758,12 +762,20 @@ func (f *Flow) Run(ctx context.Context, opt *Run) error {
 	if opt == nil {
 		opt = &Run{}
 	}
+	if err := f.cycle(); err != nil {
+		return err
+	}
+	runID, err := newRunID()
+	if err != nil {
+		return err
+	}
 	f.mu.Lock()
 	if f.ran {
 		f.mu.Unlock()
 		return ErrAlreadyRun
 	}
 	f.ran = true
+	f.runID = runID
 	f.ctx = ctx
 	f.writer = opt.Writer
 	if f.writer == nil {
@@ -807,6 +819,77 @@ func (f *Flow) Run(ctx context.Context, opt *Run) error {
 		}
 	}
 	return errors.Join(errs...)
+}
+
+// runIDEntropy supplies the bytes for a run-scoped container name.
+var runIDEntropy io.Reader = rand.Reader
+
+func newRunID() (string, error) {
+	var b [4]byte
+	if _, err := io.ReadFull(runIDEntropy, b[:]); err != nil {
+		return "", err
+	}
+	return hex.EncodeToString(b[:]), nil
+}
+
+// cycle reports a loop in the tasks that exist before Run. The error names the tasks in order.
+func (f *Flow) cycle() error {
+	return cycleTasks(f.taskList())
+}
+
+// cycleTasks reports a loop among tasks. An edge that leaves the set is not followed.
+func cycleTasks(tasks []*Task) error {
+	index := make(map[*Task]int, len(tasks))
+	for i, t := range tasks {
+		index[t] = i
+	}
+	color := make([]int, len(tasks))
+	var path []*Task
+	var walk func(*Task) error
+	walk = func(t *Task) error {
+		i := index[t]
+		switch color[i] {
+		case 2:
+			return nil
+		case 1:
+			return cycleError(path, t)
+		}
+		color[i] = 1
+		path = append(path, t)
+		for _, next := range t.succs {
+			if _, ok := index[next]; !ok {
+				continue
+			}
+			if err := walk(next); err != nil {
+				return err
+			}
+		}
+		path = path[:len(path)-1]
+		color[i] = 2
+		return nil
+	}
+	for _, t := range tasks {
+		if err := walk(t); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func cycleError(path []*Task, back *Task) error {
+	start := 0
+	for i, t := range path {
+		if t == back {
+			start = i
+			break
+		}
+	}
+	names := make([]string, 0, len(path)-start+1)
+	for _, t := range path[start:] {
+		names = append(names, t.name)
+	}
+	names = append(names, back.name)
+	return fmt.Errorf("taskflow: cycle: %s", strings.Join(names, " -> "))
 }
 
 func (f *Flow) taskErrors() []error {
