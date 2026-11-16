@@ -188,6 +188,22 @@ func TestWaitStatus(t *testing.T) {
 	if _, err := waitStatus(stopCtx, kit.ContainerWaitResult{Result: block}); err == nil {
 		t.Fatal("cancel on result")
 	}
+	if _, err := waitStatus(cancel, kit.ContainerWaitResult{Error: make(chan error)}); err == nil {
+		t.Fatal("cancel while only the error channel is open")
+	}
+	if _, err := waitStatus(cancel, kit.ContainerWaitResult{Error: make(chan error), Result: make(chan container.WaitResponse)}); err == nil {
+		t.Fatal("cancel while both channels are open")
+	}
+	engineErr := make(chan error, 1)
+	engineErr <- errors.New("engine")
+	if _, err := waitStatus(ctx, kit.ContainerWaitResult{Error: engineErr, Result: make(chan container.WaitResponse)}); err == nil || err.Error() != "engine" {
+		t.Fatalf("error beside an unread result: %v", err)
+	}
+	closedBeside := make(chan container.WaitResponse)
+	close(closedBeside)
+	if _, err := waitStatus(ctx, kit.ContainerWaitResult{Error: make(chan error), Result: closedBeside}); err == nil || err.Error() != "wait: result channel closed" {
+		t.Fatalf("closed result beside an open error: %v", err)
+	}
 	if msg := exitMessage(nil); msg != "" {
 		t.Fatal(msg)
 	}
