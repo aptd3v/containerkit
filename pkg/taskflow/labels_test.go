@@ -15,7 +15,7 @@ func TestListAndRemove(t *testing.T) {
 	if _, err := List(ctx, nil, "ci"); !errors.Is(err, ErrNoClient) {
 		t.Fatal(err)
 	}
-	if _, err := List(nil, kit.NewClient(nil, nil), "ci"); !errors.Is(err, ErrNoClient) {
+	if _, err := List(ctx, kit.NewClient(nil, nil), "ci"); !errors.Is(err, ErrNoClient) {
 		t.Fatal(err)
 	}
 	eng := &scriptedEngine{id: "made"}
@@ -84,12 +84,9 @@ func TestListAndRemove(t *testing.T) {
 	if err := f.Remove(ctx); !errors.Is(err, ErrNoClient) {
 		t.Fatal(err)
 	}
-	if err := f.Remove(nil); !errors.Is(err, ErrNoClient) {
-		t.Fatal(err)
-	}
 
 	bare := New("bare", nil)
-	if err := bare.Remove(nil); err != nil {
+	if err := bare.Remove(ctx); err != nil {
 		t.Fatal(err)
 	}
 	comp = &fakeComposer{}

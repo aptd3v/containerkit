@@ -160,7 +160,7 @@ func TestSkipAlwaysRetryPanicCancel(t *testing.T) {
 	if err := f.Run(doneCtx, &Run{Writer: io.Discard}); err == nil || called {
 		t.Fatalf("precancel %v called %v", err, called)
 	}
-	if err := f.Run(nil, discardRun()); !errors.Is(err, ErrAlreadyRun) {
+	if err := f.Run(ctx, discardRun()); !errors.Is(err, ErrAlreadyRun) {
 		t.Fatal(err)
 	}
 }
@@ -295,7 +295,7 @@ func TestDumpProfileTrace(t *testing.T) {
 	}
 
 	var prof, trace bytes.Buffer
-	if err := f.Run(nil, &Run{Writer: io.Discard, Profile: &prof, Trace: &trace}); err != nil {
+	if err := f.Run(context.Background(), &Run{Writer: io.Discard, Profile: &prof, Trace: &trace}); err != nil {
 		t.Fatal(err)
 	}
 	if prof.Len() == 0 || trace.Len() == 0 {

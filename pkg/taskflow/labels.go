@@ -26,9 +26,6 @@ func List(ctx context.Context, cli *kit.Client, flowName string) (kit.ContainerL
 	if cli == nil || cli.Engine() == nil {
 		return kit.ContainerListResult{}, ErrNoClient
 	}
-	if ctx == nil {
-		ctx = context.Background()
-	}
 	return kit.ListContainers(ctx, cli.Engine(), kit.All(true), kit.Filter("label", LabelFlow+"="+flowName))
 }
 
@@ -158,9 +155,6 @@ func (f *Flow) List(ctx context.Context) (kit.ContainerListResult, error) {
 func (f *Flow) Remove(ctx context.Context) error {
 	if f == nil {
 		return errors.New("flow is nil")
-	}
-	if ctx == nil {
-		ctx = context.Background()
 	}
 	var errs []error
 	apps := f.composeList()

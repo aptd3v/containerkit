@@ -756,9 +756,6 @@ func (f *Flow) Run(ctx context.Context, opt *Run) error {
 	if f == nil {
 		return errors.New("flow is nil")
 	}
-	if ctx == nil {
-		ctx = context.Background()
-	}
 	if opt == nil {
 		opt = &Run{}
 	}
