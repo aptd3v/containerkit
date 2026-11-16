@@ -1,6 +1,6 @@
 {
   "name": "@aptd3v/containerkit-darwin-arm64",
-  "version": "0.8.2",
+  "version": "0.8.3",
   "description": "containerkit command for macOS on arm64.",
   "license": "Apache-2.0",
   "author": "aptd3v",
