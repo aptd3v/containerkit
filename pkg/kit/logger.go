@@ -288,8 +288,21 @@ func (l *Logger) retireProjectUpLocked() {
 
 // sealPlainLocked prints a working build row as finished when a later event
 // for the same image replaces it. A finished image also settles its layers.
+// A non-build event, such as compose up, prints the step that was still held.
 func (l *Logger) sealPlainLocked(next LogEvent) {
 	if next.Kind != KindBuild {
+		var keys []string
+		for key, prev := range l.rows {
+			if prev.Kind == KindBuild && prev.Status == StatusWorking {
+				keys = append(keys, key)
+			}
+		}
+		for _, key := range keys {
+			prev := l.rows[key]
+			prev.Status = StatusDone
+			delete(l.rows, key)
+			_, _ = io.WriteString(l.out, l.format(prev)+"\n")
+		}
 		return
 	}
 	keys := []string{eventKey(next)}

@@ -67,7 +67,7 @@ func TestSessionConnectCarriesLogger(t *testing.T) {
 	if display != eventDisplay(saw) {
 		t.Fatalf("display = %q", display)
 	}
-	if !strings.Contains(display, "compose") || !strings.Contains(display, "supabase-im…") || !strings.Contains(display, "recreated") {
+	if !strings.Contains(display, "compose") || !strings.Contains(display, "Container s…e-imgproxy") || !strings.Contains(display, "recreated") {
 		t.Fatalf("column line = %q", display)
 	}
 	if strings.Contains(display, "supabase-imgproxy") {
