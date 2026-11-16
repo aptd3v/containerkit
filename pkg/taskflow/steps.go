@@ -7,7 +7,6 @@ import (
 	"io"
 
 	"github.com/aptd3v/containerkit/pkg/kit"
-	"github.com/moby/moby/api/pkg/stdcopy"
 	containertypes "github.com/moby/moby/api/types/container"
 )
 
@@ -219,17 +218,32 @@ func waitStatus(ctx context.Context, res kit.ContainerWaitResult) (int64, error)
 	if res.Error == nil {
 		return readWait(ctx, res.Result)
 	}
+	if res.Result == nil {
+		select {
+		case <-ctx.Done():
+			return 0, ctx.Err()
+		case err, ok := <-res.Error:
+			if !ok || err == nil {
+				return 0, errors.New("wait: error channel closed")
+			}
+			return 0, err
+		}
+	}
+	// The engine sends the exit on Result and leaves Error open. Waiting only
+	// on Error deadlocks that send.
 	select {
 	case <-ctx.Done():
 		return 0, ctx.Err()
 	case err, ok := <-res.Error:
-		if !ok {
-			return 0, errors.New("wait: error channel closed")
-		}
-		if err != nil {
+		if ok && err != nil {
 			return 0, err
 		}
 		return readWait(ctx, res.Result)
+	case w, ok := <-res.Result:
+		if !ok {
+			return 0, errors.New("wait: result channel closed")
+		}
+		return waitCode(w.StatusCode, exitMessage(w.Error))
 	}
 }
 
@@ -268,6 +282,6 @@ func copyLogs(ctx context.Context, c *kit.Container, api kit.Engine, id string, 
 		return nil
 	}
 	defer rc.Close()
-	_, err = stdcopy.StdCopy(w, w, rc)
+	_, err = kit.CopyMultiplexed(w, w, rc)
 	return err
 }

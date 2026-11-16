@@ -161,7 +161,14 @@ func TestWaitStatus(t *testing.T) {
 	okErr <- nil
 	res := make(chan container.WaitResponse, 1)
 	res <- container.WaitResponse{StatusCode: 4}
-	code, err := waitStatus(ctx, kit.ContainerWaitResult{Error: okErr, Result: res})
+	openErr := make(chan error)
+	ready := make(chan container.WaitResponse, 1)
+	ready <- container.WaitResponse{StatusCode: 0}
+	code, err := waitStatus(ctx, kit.ContainerWaitResult{Error: openErr, Result: ready})
+	if err != nil || code != 0 {
+		t.Fatalf("result while error stays open: %v %d", err, code)
+	}
+	code, err = waitStatus(ctx, kit.ContainerWaitResult{Error: okErr, Result: res})
 	if err != nil || code != 4 {
 		t.Fatalf("follow %v %d", err, code)
 	}

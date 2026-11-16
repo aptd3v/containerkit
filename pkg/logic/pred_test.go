@@ -34,6 +34,21 @@ func TestAndOr(t *testing.T) {
 			pred: logic.OrFn(logic.And(false, true), logic.Or(true)),
 			want: true,
 		},
+		{
+			name: "not flips",
+			pred: logic.Not(func() bool { return true }),
+			want: false,
+		},
+		{
+			name: "not nil is true",
+			pred: logic.Not(nil),
+			want: true,
+		},
+		{
+			name: "andfn with not",
+			pred: logic.AndFn(func() bool { return true }, logic.Not(func() bool { return false })),
+			want: true,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {

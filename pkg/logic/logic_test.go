@@ -178,6 +178,9 @@ func TestEachMap(t *testing.T) {
 		logic.Map([]string{"C"}, func(k string) any {
 			return kit.Env(k, "2")
 		}),
+		logic.EachKV(map[string]string{"D": "3", "E": "4"}, func(k, v string) any {
+			return kit.Env(k, v)
+		}),
 	)
 	if err := c.Validate(); err != nil {
 		t.Fatal(err)
@@ -186,7 +189,7 @@ func TestEachMap(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	for _, want := range []string{"A=1", "B=1", "C=2"} {
+	for _, want := range []string{"A=1", "B=1", "C=2", "D=3", "E=4"} {
 		if !slices.Contains(cfg.Env, want) {
 			t.Fatalf("env %v missing %s", cfg.Env, want)
 		}
@@ -224,6 +227,15 @@ func TestSwitch(t *testing.T) {
 				logic.CaseFn(func() bool { return true }, kit.Name("d")),
 			),
 			wantName: "d",
+		},
+		{
+			name: "on equality",
+			opt: logic.Switch(
+				logic.On("nginx", "caddy", kit.Name("caddy")),
+				logic.On("nginx", "nginx", kit.Name("nginx")),
+				logic.Default(kit.Name("envoy")),
+			),
+			wantName: "nginx",
 		},
 	}
 	for _, tt := range tests {

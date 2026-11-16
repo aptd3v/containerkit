@@ -64,7 +64,8 @@ func Or(preds ...bool) Predicate {
 	}
 }
 
-func not(pred Predicate) Predicate {
+// Not is true when pred is false. A nil predicate is false, so Not of it is true.
+func Not(pred Predicate) Predicate {
 	return func() bool {
 		if pred == nil {
 			return true
