@@ -13,7 +13,7 @@ jobs:
     name: Version sync
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - name: Check version sites
         run: python3 scripts/version.py --check
@@ -22,10 +22,10 @@ jobs:
     name: Go test
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - name: Set up Go
-        uses: actions/setup-go@v5
+        uses: actions/setup-go@v7
         with:
           go-version-file: go.mod
 
@@ -48,7 +48,7 @@ jobs:
       - name: Taskflow coverage
         run: |
           go test -coverprofile=taskflow.out ./pkg/taskflow
-          go tool cover -func=taskflow.out | awk 'END { gsub("%","",$NF); if ($NF+0 < 100) exit 1 }'
+          go tool cover -func=taskflow.out | awk '{ gsub("%","",$NF); if ($NF+0 < 100) { print; bad=1 } } END { if (bad) exit 1 }'
 
       - name: Multi-platform binaries
         run: go run ./tools/crossbuild
@@ -66,10 +66,10 @@ jobs:
       run:
         working-directory: tsx
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - name: Set up Node
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v7
         with:
           node-version: "22"
           cache: npm
@@ -85,7 +85,7 @@ jobs:
         run: npm run test:taskflow
 
       - name: Set up Go
-        uses: actions/setup-go@v5
+        uses: actions/setup-go@v7
         with:
           go-version-file: go.mod
 
