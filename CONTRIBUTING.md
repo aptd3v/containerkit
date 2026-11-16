@@ -56,4 +56,4 @@ python3 scripts/version.py patch
 
 `.gitignore` already excludes `playground/`, `dist/`, `tsx/node_modules/`, `tsx/dist/`, the platform binaries under `npm/@aptd3v/containerkit-*/bin/`, and `.containerkit/`. `go run ./tools/crossbuild` fills `dist/` and those `bin/` directories. Do not commit them.
 
-Publishing is the tag workflow in `.github/workflows/release.yml`. The tag must equal `VERSION` with a leading `v`. The repository secret `NPM_TOKEN` is what the workflow uses for npm.
+Publishing is the tag workflow in `.github/workflows/release.yml`. The tag must equal `VERSION` with a leading `v`. The workflow authenticates to npm with GitHub's OIDC token.
