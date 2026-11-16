@@ -41,6 +41,33 @@ export const yaml = exportYAML(stack());
 
 `exportYAML` reads the `Compose` node and returns the file text. The node must be `Compose` and it must have `name`. Nothing is started, stopped, or restarted. A session that is already running keeps running. Running the stack is the live session in [Live session](docs/live.md).
 
+## When the callback is async
+
+A function with no parameters renders again when state changes. Return the tree. `root` applies it when the YAML changed.
+
+```tsx
+import { Compose, Service } from "containerkit";
+import { useShutdown } from "containerkit/hooks";
+import { root } from "containerkit/live";
+
+export default root({ fromEnv: true, onExit: "down", wait: true }, function App() {
+  useShutdown({ removeOrphans: true });
+  return (
+    <Compose name="app">
+      <Service name="api" image="alpine:latest" />
+    </Compose>
+  );
+});
+```
+
+Make the callback `async`, or give it a `session` parameter, when the steps have to be awaited in order. That callback runs once. `useState` does not render again, and `useEffect` does not run. Return the tree to apply it after the awaits, or return `null` when you already called `session.composeUp`.
+
+`useShutdown()` takes down the project `root` last applied. A later render that returns a larger tree is the one Ctrl+C removes. Pass a tree only for an async callback that applied that tree before returning.
+
+A fragment must hold one `Compose`, `Service`, `Job`, or `Container`. Several roots is an error. `null` applies nothing.
+
+`wait` and `onUp` are `root` options. `recreate`, `removeOrphans`, and `services` are `session.composeUp` options. `root` itself applies with `detach: true`, plus `wait: true` when `wait` is set.
+
 `connect` does not open a connection by itself. It records how the runner should connect. Do not put `cli` on a `DockerNode`. Pass it only to commands.
 
 ## Several calls, one client

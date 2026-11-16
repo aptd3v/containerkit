@@ -1,6 +1,6 @@
 # Run a container
 
-[Client.Run](https://pkg.go.dev/github.com/aptd3v/containerkit/pkg/kit#Client.Run) creates and starts a container on the client's Engine. [Run](https://pkg.go.dev/github.com/aptd3v/containerkit/pkg/kit#Run) dials [Connect](bring-a-compose-file-up.md), runs, and closes.
+[Run](https://pkg.go.dev/github.com/aptd3v/containerkit/pkg/kit#Run) dials [Connect](bring-a-compose-file-up.md), creates the container, starts it, and closes the client. It returns the [Created](https://pkg.go.dev/github.com/aptd3v/containerkit/pkg/kit#Created) value from create, including when start fails. [Client.Run](https://pkg.go.dev/github.com/aptd3v/containerkit/pkg/kit#Client.Run) does the same on a client you already have.
 
 ```go
 import (
@@ -9,16 +9,16 @@ import (
     . "github.com/aptd3v/containerkit/pkg/kit"
 )
 
-func start(ctx context.Context) error {
+func start(ctx context.Context) (Created, error) {
     return Run(ctx,
         Name("web"),
         Image("nginx:latest"),
-        Publish(HostPort(8080), ContainerPort(80), Protocol(TCP)),
+        Publish(Protocol(TCP), HostPort(8080), ContainerPort(80)),
     )
 }
 ```
 
-[Container.Create](https://pkg.go.dev/github.com/aptd3v/containerkit/pkg/kit#Container.Create) returns the id when you need it before start.
+[Container.Create](https://pkg.go.dev/github.com/aptd3v/containerkit/pkg/kit#Container.Create) returns the id when you need it before start. [Container.Start](https://pkg.go.dev/github.com/aptd3v/containerkit/pkg/kit#Container.Start) takes that id.
 
 ```go
 import (
@@ -34,13 +34,13 @@ func create(ctx context.Context, cli *Client) (string, error) {
         return "", err
     }
     if err := worker.Start(ctx, cli.Engine(), created.ID); err != nil {
-        return "", err
+        return created.ID, err
     }
     return created.ID, nil
 }
 ```
 
-[PullImage](https://pkg.go.dev/github.com/aptd3v/containerkit/pkg/kit#PullImage) and [BuildImage](https://pkg.go.dev/github.com/aptd3v/containerkit/pkg/kit#BuildImage) take the Engine from the same client. A [Logger](logging.md) is the progress stream.
+[PullImage](https://pkg.go.dev/github.com/aptd3v/containerkit/pkg/kit#PullImage) and [BuildImage](https://pkg.go.dev/github.com/aptd3v/containerkit/pkg/kit#BuildImage) take the Engine from the same client. Both return only an error. The pull stream is read to the end inside `PullImage`. A [Logger](logging.md) is the progress stream.
 
 ```go
 import (
@@ -50,14 +50,13 @@ import (
 )
 
 func images(ctx context.Context, cli *Client, log *Logger) error {
-    if _, err := PullImage(ctx, cli.Engine(), "alpine:latest", Log(log)); err != nil {
+    if err := PullImage(ctx, cli.Engine(), "alpine:latest", Log(log)); err != nil {
         return err
     }
-    _, err := BuildImage(ctx, cli.Engine(),
+    return BuildImage(ctx, cli.Engine(),
         NewDockerfile().From("alpine", "latest"),
         Image("app:dev"),
         Log(log),
     )
-    return err
 }
 ```

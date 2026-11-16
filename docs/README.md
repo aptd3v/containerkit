@@ -1,12 +1,14 @@
 # Go kit
 
-Examples in this folder dot-import the kit, so a setter is `Name`, not `kit.Name`.
+This folder is the Go API. Snippets dot-import the kit, so a setter is `Name`, not `kit.Name`.
 
 ```go
 import . "github.com/aptd3v/containerkit/pkg/kit"
 ```
 
-Vocabulary that is not re-exported (`cap.NET_ADMIN`, `logic.When`) stays a normal import. `ctx` in a snippet is a `context.Context` the caller already has.
+A name that is not re-exported (`cap.NET_ADMIN`, `logic.When`) stays a normal import. `ctx` in a snippet is a `context.Context` the caller already has.
+
+Read Define, then Run. The last two pages are the `containerkit` binary, and how a TSX file becomes a document this package loads.
 
 ## Define
 
@@ -14,9 +16,9 @@ Vocabulary that is not re-exported (`cap.NET_ADMIN`, `logic.When`) stays a norma
 - [Environment and command](environment-and-command.md): `Command`, `Entrypoint`, `Env`, `Label`, `User`, `WorkingDir`.
 - [Publish a port](publish-a-port.md): `Publish` and `Expose`.
 - [Mount a volume](mount-a-volume.md): bind, named volume, tmpfs, and a project volume.
-- [Networks](networks.md): attachments, project networks, aliases, and `network_mode`.
+- [Networks](networks.md): attachments, project networks, aliases, and `NetworkMode`.
 - [Secrets and configs](secrets-and-configs.md): `Secret`, `FileConfig`, `FromFile`.
-- [Healthcheck](healthcheck.md): `Test`, `Interval`, `Timeout`, `Retries`.
+- [Healthcheck](healthcheck.md): `Test`, `Interval`, `Timeout`, `Retries`, `StartPeriod`.
 - [Restart and depends_on](restart-and-depends.md): `Restart`, `DependsOn`, `Condition`.
 - [Build and Dockerfile](build-and-dockerfile.md): `Build`, `NewDockerfile`.
 - [Resources and deploy](resources-and-deploy.md): `Memory`, `Deploy`, `Replicas`.
@@ -34,7 +36,7 @@ Vocabulary that is not re-exported (`cap.NET_ADMIN`, `logic.When`) stays a norma
 - [Errors](errors.md): `Validate` and `IsNotFound`.
 - [Taskflow](taskflow.md): a DAG of container, build, and Compose steps.
 
-## TSX and the binary
+## The binary
 
-- [Declare config in TSX](tsx-configuration.md): JSX that encodes a plan, then Go runs it.
-- [Runner binary](runner-binary.md): `containerkit validate`, `exec`, and `session`.
+- [Runner binary](runner-binary.md): `containerkit version`, `validate`, `exec`, `session`, and `terminal`.
+- [A TSX plan, run from Go](tsx-configuration.md): JSX becomes YAML or plan JSON. `ImportYAML` and `ImportPlan` load it.

@@ -1,6 +1,6 @@
 # Import and export
 
-[ImportYAML](https://pkg.go.dev/github.com/aptd3v/containerkit/pkg/kit#ImportYAML) and [ImportFile](https://pkg.go.dev/github.com/aptd3v/containerkit/pkg/kit#ImportFile) parse Compose with no daemon. [Env](environment-and-command.md) on import interpolates `${VAR}`. [File](https://pkg.go.dev/github.com/aptd3v/containerkit/pkg/kit#File) adds another YAML path. [Name](https://pkg.go.dev/github.com/aptd3v/containerkit/pkg/kit#Name) overrides the project name.
+[ImportYAML](https://pkg.go.dev/github.com/aptd3v/containerkit/pkg/kit#ImportYAML) and [ImportFile](https://pkg.go.dev/github.com/aptd3v/containerkit/pkg/kit#ImportFile) parse Compose with no daemon. [Env](environment-and-command.md) on import interpolates `${VAR}`. [File](https://pkg.go.dev/github.com/aptd3v/containerkit/pkg/kit#File) adds another YAML path. [Name](https://pkg.go.dev/github.com/aptd3v/containerkit/pkg/kit#Name) overrides the project name. [Profile](resources-and-deploy.md) keeps the services in that profile and clears the profile tags, so a later `Up` does not hide them again.
 
 ```go
 import . "github.com/aptd3v/containerkit/pkg/kit"
@@ -22,16 +22,16 @@ import (
 )
 
 func writeCompose(compose *Compose) error {
-    yml, err := compose.ExportYAML()
-    if err != nil {
+    if _, err := compose.ExportYAML(); err != nil {
         return err
     }
-    _ = yml
     return compose.Write(Export{Writer: os.Stdout})
 }
 ```
 
-`os.Stdout` needs a normal `os` import next to the dot import. Bringing that file up on a daemon is [Load](bring-a-compose-file-up.md) or [Client.Up](bring-a-compose-file-up.md). A TSX plan JSON is [ImportPlan](https://pkg.go.dev/github.com/aptd3v/containerkit/pkg/kit#ImportPlan), then `Run`.
+`os.Stdout` needs a normal `os` import next to the dot import. Bringing that file up on a daemon is [Load](bring-a-compose-file-up.md) or [Client.Up](bring-a-compose-file-up.md).
+
+A TSX plan is JSON. [ImportPlan](https://pkg.go.dev/github.com/aptd3v/containerkit/pkg/kit#ImportPlan) parses it. [Plan.Run](https://pkg.go.dev/github.com/aptd3v/containerkit/pkg/kit#Plan.Run) executes it. [Plan.Validate](https://pkg.go.dev/github.com/aptd3v/containerkit/pkg/kit#Plan.Validate) does not dial.
 
 ```go
 import (

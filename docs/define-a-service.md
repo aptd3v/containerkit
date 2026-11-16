@@ -1,6 +1,6 @@
 # A service
 
-[NewContainer](https://pkg.go.dev/github.com/aptd3v/containerkit/pkg/kit#NewContainer), [NewService](https://pkg.go.dev/github.com/aptd3v/containerkit/pkg/kit#NewService), and [NewCompose](https://pkg.go.dev/github.com/aptd3v/containerkit/pkg/kit#NewCompose) take the same setters. A `*Container` is a `ServiceOption`, so the service keeps the container's name and image.
+[NewContainer](https://pkg.go.dev/github.com/aptd3v/containerkit/pkg/kit#NewContainer), [NewService](https://pkg.go.dev/github.com/aptd3v/containerkit/pkg/kit#NewService), and [NewCompose](https://pkg.go.dev/github.com/aptd3v/containerkit/pkg/kit#NewCompose) take the same setters. A `*Container` is a `ServiceOption`. [FromContainer](https://pkg.go.dev/github.com/aptd3v/containerkit/pkg/kit#FromContainer) is that copy under its own name. Passing the container itself does the same thing.
 
 ```go
 import . "github.com/aptd3v/containerkit/pkg/kit"
@@ -18,7 +18,7 @@ if err := compose.Validate(); err != nil {
 }
 ```
 
-`NewService` without a container still takes the setters directly:
+`NewService` also takes the setters directly:
 
 ```go
 import . "github.com/aptd3v/containerkit/pkg/kit"
@@ -29,6 +29,8 @@ svc := NewService(
 )
 ```
 
-[Container.AsService](https://pkg.go.dev/github.com/aptd3v/containerkit/pkg/kit#Container.AsService) is the same copy. Engine-only fields (`AutoRemove`, `PublishAll`, `ContainerIDFile`, `Shell`, `OnBuild`, `MaskedPath`, `ReadonlyPath`) stay on the container. `Validate` on the service reports each one.
+[Container.AsService](https://pkg.go.dev/github.com/aptd3v/containerkit/pkg/kit#Container.AsService) returns the service. Extra service options apply after the copy.
 
-Constructors always return a value. `Validate` is how you read the errors before a daemon call. `Up`, `Create`, `ExportYAML`, and `Write` validate on their own.
+`AutoRemove`, `PublishAll`, `ContainerIDFile`, `Shell`, `OnBuild`, `MaskedPath`, and `ReadonlyPath` exist only on the Engine create call. They stay on the container. `Validate` on the service names each one as an unsupported mapping.
+
+Constructors always return a value and keep configuration errors on it. `Validate` reads those errors before a daemon call. `Up`, `Create`, `ExportYAML`, and `Write` validate on their own.

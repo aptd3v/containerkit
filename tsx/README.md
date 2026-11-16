@@ -51,6 +51,41 @@ A React file in a project pointed at containerkit opts back with `/** @jsxImport
 
 Put `containerkit` on `PATH`, or set `CONTAINERKIT_BIN` to the binary. [Runner binary](https://github.com/aptd3v/containerkit/blob/main/docs/runner-binary.md).
 
+## ESLint
+
+TypeScript checks props and the import source. It does not check which component may contain which child, so this typechecks:
+
+```tsx
+<Service name="api" image="alpine">
+  <Dockerfile>
+    <From image="nginx" tag="alpine" />
+  </Dockerfile>
+</Service>
+```
+
+Building that tree throws `containerkit/tsx: <dockerfile> is not valid inside <service>`. The names in the throw are the internal kinds, and the throw happens when the tree is built, not while you are editing. The `containerkit/nesting` rule marks the tag you wrote: `<Dockerfile> is not valid inside <Service>`. It also marks a second child where the parent accepts one, such as a second `<Health>` on a service.
+
+The rule only sees a tag written inline. A child kept in a variable, returned from a helper, or spread onto the parent is invisible to it, and building the tree still throws. Installing containerkit does not enable the rule.
+
+ESLint 10 is an optional peer. `typescript-eslint` supplies the parser that reads TSX. Both are dev dependencies:
+
+```bash
+npm install --save-dev eslint typescript-eslint
+```
+
+`recommended` turns `containerkit/nesting` on for `**/*.{jsx,tsx}`. The parser config has to cover those files:
+
+```js
+import { defineConfig } from "eslint/config";
+import tseslint from "typescript-eslint";
+import { recommended } from "containerkit/eslint";
+
+export default defineConfig(
+  { files: ["**/*.{jsx,tsx}"], languageOptions: { parser: tseslint.parser } },
+  ...recommended,
+);
+```
+
 ## Example
 
 ```tsx
@@ -85,6 +120,19 @@ export const yaml = exportYAML(<App />);
 ```
 
 `exportYAML` needs a `Compose` node with a `name`. It does not start or stop anything. A session is `useSession()` inside `docker.ts`. Never put that session on a `DockerNode`.
+
+## Programs you can run
+
+These programs are in the git repository. They are not part of the npm package. Clone the repo, `cd tsx`, and run the script. Docker has to be running.
+
+| Script | Program |
+| --- | --- |
+| `npm run nginx` | [nginx](https://github.com/aptd3v/containerkit/blob/main/tsx/examples/nginx/docker.tsx) builds a site and publishes `http://127.0.0.1:8080` |
+| `npm run wordpress` | [WordPress](https://github.com/aptd3v/containerkit/blob/main/tsx/examples/wordpress/docker.tsx) runs WordPress and MySQL |
+| `npm run mongo-replica` | [MongoDB](https://github.com/aptd3v/containerkit/blob/main/tsx/examples/mongo-replica/docker.tsx) starts eight members, initiates the set, then adds Mongo Express |
+| `npm run terminal` | [terminal](https://github.com/aptd3v/containerkit/blob/main/tsx/examples/terminal/terminal.tsx) attaches a shell to an Alpine container |
+
+The first three are render callbacks: the function returns the tree, and a later state change applies again. `terminal` is `async` because attaching the shell has to be awaited. Ctrl+C on the first three takes the project down.
 
 Control flow is ordinary JavaScript: `&&`, `.map()`, function components and props.
 

@@ -17,9 +17,9 @@ export default root({ fromEnv: true }, function App() {
 
 `fromEnv: true` means "use the Docker this machine's `docker` command already uses." The client page explains the other ways to point at a daemon.
 
-[`tsx/examples/docker.tsx`](../examples/docker.tsx) is that file as a program you can run. From `tsx/`, `npm run live` builds the runner and starts it. The process builds a small image, publishes `http://127.0.0.1:18080`, prints that address once the port is open, and stays open. `onExit: "down"` takes the project down on Ctrl+C. `LIVE_PORT` changes the host port.
+[nginx/docker.tsx](../examples/nginx/docker.tsx) is that file as a program you can run. From `tsx/`, `npm run nginx` builds the runner and starts it. The process builds an nginx image, publishes `http://127.0.0.1:8080`, prints that address once the healthcheck passes, and stays open. `onExit: "down"` takes the project down on Ctrl+C. `npm run wordpress` and `npm run mongo-replica` are the same kind of file. `npm run terminal` is not: that file is named `terminal.tsx`.
 
-Run it with a loader that compiles JSX. With the `tsx` package, that is `node --import tsx docker.ts`. `root()` starts the session when the file you ran is named `docker.ts`, `docker.tsx`, or `docker.js`. From another program, call `start()` in `containerkit/live`. `start()` loads `docker.ts` by default and also accepts `docker.tsx`. Any other file name throws. A second `root()` throws while the first session is open.
+`root()` starts the session on its own when the file you ran is named `docker.ts`, `docker.tsx`, or `docker.js`. Any other name returns the handle and waits. Call `runIfMain(live, import.meta.url)` so `node` on that file starts it, and an import of the same file does not. `start()` loads a path. The default is `docker.ts`. It also accepts `docker.tsx`. Any other file name throws, including `docker.js`. A second `root()` throws while the first session is open.
 
 What the function returns is what gets applied:
 
@@ -30,6 +30,14 @@ What the function returns is what gets applied:
 `onExit: "down"` handles Ctrl+C and SIGTERM. `root` waits if an apply is already running, takes down the project it last brought up, and then closes the session. When this file is the program you ran, the process exits. You do not pass the tree to `composeDown`, and you do not register the signals. `close()` still just closes the session, so a caller that stops the root on purpose leaves the project running. Omit `onExit` and the containers stay up when the process exits.
 
 `onUp` runs after an apply. `wait: true` waits until the containers are running, and until a healthcheck passes when the service has one, before `onUp` runs.
+
+`useShutdown({ removeOrphans: true })` from `containerkit/hooks` stores those down options on the same Ctrl+C path. Do not pass the tree. The project taken down is the one `root` last applied, including a later render that added a service. Pass a tree only when an async callback applied it with `session.composeUp` before `root` has applied a return value. Call it during render, or before the first `await` in an async root. The function it returns removes the listeners. When `onExit` is already `"down"`, that function only clears the options.
+
+`useEnv`, `useLiveLog`, and `useServiceState` are in the same package, and they also belong to the render callback. `useEnv("IMAGE", "nginx:alpine")` reads the variable once. A later change to `process.env` is not seen. An empty string stays empty. An unset variable uses the fallback. `useLiveLog` subscribes to log and status events after the render settles, and removes that subscription when the session closes. It does not receive error events. `useServiceState("web")` is the latest status event whose source is that service, or `undefined` until one arrives. An async once callback does not run effects, so these three stay in the render callback.
+
+A fragment return is applied only when it holds one `Compose`, `Service`, `Job`, or `Container`. Several roots is an error: `fragment root must have a single Compose, Service, Job, or Container`. `null` still applies nothing.
+
+`recreate`, `removeOrphans`, and `services` are arguments of `session.composeUp`. They are not fields of `root`. `root` always applies with `detach: true`, and adds `wait: true` when `wait` is set. An async callback that needs the other options calls `session.composeUp` itself and returns `null`, so `root` does not apply the tree a second time.
 
 ## Run once
 
@@ -57,7 +65,7 @@ When the once callback throws, or a command it awaits fails, `onError` runs. If 
 
 ## Other files
 
-The entry file calls `root()`. That file is named `docker.ts`, `docker.tsx`, or `docker.js`. Other files export components and functions. A function that talks to Docker takes the session. `await` runs the next command after the previous one returns.
+The entry file calls `root()`. A file named `docker.ts`, `docker.tsx`, or `docker.js` starts on its own. Any other entry calls `runIfMain`. Other files export components and functions. A function that talks to Docker takes the session. `await` runs the next command after the previous one returns.
 
 ```ts
 import { isCKLoginRequiredError, type Session } from "containerkit/live";
@@ -123,7 +131,7 @@ export default root({ fromEnv: true }, function App() {
 
 ## Calls that must not repeat
 
-`useMemo(fn, deps)` saves what `fn` returns so a later render does not do that work again. Use it for a pull, a login, a `containerRun` that should happen once, a list, or a file read. The dependency list is the array after `fn`. The saved value can be anything, including a node.
+`useMemo(fn, deps)` saves what `fn` returns so a later render does not do that work again. Use it for a pull, a login, an `app.run` that should happen once, a list, or a file read. The dependency list is the array after `fn`. The saved value can be anything, including a node.
 
 ```tsx
 import { Compose, Service } from "containerkit";
@@ -135,7 +143,7 @@ export default root({ fromEnv: true }, function App() {
   const [replicas, setReplicas] = useState(1);
   const image = useMemo(() => pullBase(app, "alpine:latest"), ["alpine:latest"]);
   const seeded = useMemo(
-    () => app.containerRun({
+    () => app.run({
       image: "alpine:latest",
       command: ["echo", "ok"],
     }),
@@ -150,7 +158,7 @@ export default root({ fromEnv: true }, function App() {
 });
 ```
 
-`setReplicas(2)` renders again, uses both saved results, and applies the project with two replicas. `pullBase` and `containerRun` do not run again. Changing a dependency, such as the image name, finds no saved result for that list, runs that call once, and applies the project with the new tree.
+`setReplicas(2)` renders again, uses both saved results, and applies the project with two replicas. `pullBase` and `app.run` do not run again. `app.containerRun` takes the same options. The `run` you import from `"containerkit"` is the one-shot plan runner, not this method. Changing a dependency, such as the image name, finds no saved result for that list, runs that call once, and applies the project with the new tree.
 
 The saved result is a file, `.containerkit/memo/<hash>.json`, in the working directory. The hash is the text of `fn` plus the dependency list. The next process, and the next `root()`, reads the file and skips `fn` when both still match. Closing the session does not delete the files. Add `.containerkit/` to `.gitignore`. It is a local cache, not part of the project.
 
@@ -203,10 +211,14 @@ useEffect(() => app.on("log", (event) => {
 
 ## Errors
 
-A failed command rejects with `ContainerKitError`. Check it with the function for that failure. `message` has secrets removed. `hint` is a short suggestion when there is one. `status` is a numeric code when the daemon sent one. `receiver` names the area that failed, such as a container or a network. `path` is the setting or file involved, when there is one. `exitCode` is the container's exit status.
+A failed command rejects with `ContainerKitError`. `class` is an `ErrorClass`, so a `switch` on it is exhaustive. `message` has secrets removed. `hint` is a short suggestion when there is one. `status` is a numeric code when the daemon sent one. `receiver` names the area that failed, such as a container or a network. `path` is the setting or file involved, when there is one. `exitCode` is the container's exit status. A class string the session does not know becomes `"unknown"`.
 
 ```ts
-import { isCKNotFoundError } from "containerkit/live";
+import { isCKNotFoundError, isContainerKitError } from "containerkit/live";
+
+if (isContainerKitError(err, "notFound")) {
+  err.class; // "notFound"
+}
 
 if (isCKNotFoundError(err)) {
   // that image, container, network, or volume is not there

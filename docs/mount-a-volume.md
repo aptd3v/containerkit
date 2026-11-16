@@ -1,6 +1,6 @@
 # Mount a volume
 
-[Volume](https://pkg.go.dev/github.com/aptd3v/containerkit/pkg/kit#Volume) is a bind, a named volume, or tmpfs on a container, a service, and a job. [ReadOnly](https://pkg.go.dev/github.com/aptd3v/containerkit/pkg/kit#ReadOnly) inside `Volume` is that mount. At the top level it is the container root filesystem.
+[Volume](https://pkg.go.dev/github.com/aptd3v/containerkit/pkg/kit#Volume) is one mount on a container, a service, or a job: a bind, a named volume, or tmpfs. [ReadOnly](https://pkg.go.dev/github.com/aptd3v/containerkit/pkg/kit#ReadOnly) inside `Volume` applies to that mount. At the top level it is the container root filesystem.
 
 ```go
 import . "github.com/aptd3v/containerkit/pkg/kit"
@@ -26,7 +26,7 @@ svc := NewService(
 )
 ```
 
-A top-level compose `volumes:` entry is [Compose.WithVolume](https://pkg.go.dev/github.com/aptd3v/containerkit/pkg/kit#Compose.WithVolume), not this setter. [VolumesFrom](https://pkg.go.dev/github.com/aptd3v/containerkit/pkg/kit#VolumesFrom) mounts another container's volumes. [VolumeDriver](https://pkg.go.dev/github.com/aptd3v/containerkit/pkg/kit#VolumeDriver) sets the engine volume driver name.
+A project-level `volumes:` entry is not this setter. Pass [AddVolume](https://pkg.go.dev/github.com/aptd3v/containerkit/pkg/kit#AddVolume) to `NewCompose`, or call [Compose.WithVolume](https://pkg.go.dev/github.com/aptd3v/containerkit/pkg/kit#Compose.WithVolume) on the value. The service then mounts that name.
 
 ```go
 import . "github.com/aptd3v/containerkit/pkg/kit"
@@ -39,3 +39,5 @@ compose := NewCompose("app",
     Volume(Name("cache"), Target("/cache")),
 ))
 ```
+
+[VolumesFrom](https://pkg.go.dev/github.com/aptd3v/containerkit/pkg/kit#VolumesFrom) mounts another container's volumes. [VolumeDriver](https://pkg.go.dev/github.com/aptd3v/containerkit/pkg/kit#VolumeDriver) sets the engine volume driver name.

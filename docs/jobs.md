@@ -1,6 +1,6 @@
 # Jobs
 
-[NewJob](https://pkg.go.dev/github.com/aptd3v/containerkit/pkg/kit#NewJob) is a compose job: the same container setters as a service, plus build, secrets, and depends_on. [Compose.WithJob](https://pkg.go.dev/github.com/aptd3v/containerkit/pkg/kit#Compose.WithJob) adds it to the file.
+[NewJob](https://pkg.go.dev/github.com/aptd3v/containerkit/pkg/kit#NewJob) is a compose job. It takes the container setters a service takes, plus build, secrets, configs, and `depends_on`. [Compose.WithJob](https://pkg.go.dev/github.com/aptd3v/containerkit/pkg/kit#Compose.WithJob) adds it to the file.
 
 ```go
 import . "github.com/aptd3v/containerkit/pkg/kit"
@@ -17,4 +17,4 @@ compose := NewCompose("app").
     WithService(NewService(Name("api"), Image("alpine:latest")))
 ```
 
-A job does not take [Publish](publish-a-port.md) or [Deploy](resources-and-deploy.md). Those stay on services.
+A job does not take [Publish](publish-a-port.md) or [Deploy](resources-and-deploy.md). Those setters are not `JobOption`s, so the compiler rejects them. A job needs a name, and either an image or a build.

@@ -1,6 +1,6 @@
 # Client
 
-A client is the answer to "which Docker?". `connect` stores that answer. It does not open a connection.
+A client is the answer to "which Docker?". `connect` stores that answer. It does not open a connection. The programs under `tsx/examples` pass the same answer as `root({ fromEnv: true }, App)`.
 
 ```ts
 import { connect } from "containerkit";

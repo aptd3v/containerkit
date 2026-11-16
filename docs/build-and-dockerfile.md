@@ -1,6 +1,6 @@
 # Build and Dockerfile
 
-[NewDockerfile](https://pkg.go.dev/github.com/aptd3v/containerkit/pkg/kit#NewDockerfile) builds the file in code. Pass it to [Build](https://pkg.go.dev/github.com/aptd3v/containerkit/pkg/kit#Build). An inline file uses `.` as the context when [Source](https://pkg.go.dev/github.com/aptd3v/containerkit/pkg/kit#Source) is omitted.
+[NewDockerfile](https://pkg.go.dev/github.com/aptd3v/containerkit/pkg/kit#NewDockerfile) builds the file in code. Pass that value to [Build](https://pkg.go.dev/github.com/aptd3v/containerkit/pkg/kit#Build). An inline file uses `.` as the context when [Source](https://pkg.go.dev/github.com/aptd3v/containerkit/pkg/kit#Source) is omitted.
 
 ```go
 import . "github.com/aptd3v/containerkit/pkg/kit"
@@ -16,7 +16,7 @@ svc := NewService(
 )
 ```
 
-A directory on disk uses `Source` and [DockerfilePath](https://pkg.go.dev/github.com/aptd3v/containerkit/pkg/kit#DockerfilePath). [Env](environment-and-command.md) inside `Build` is a build-arg. [Pull](https://pkg.go.dev/github.com/aptd3v/containerkit/pkg/kit#Pull) inside `Build` is pull-during-build. [PullPolicy](https://pkg.go.dev/github.com/aptd3v/containerkit/pkg/kit#PullPolicy) on the service is `PullAlways`, `PullMissing`, `PullNever`, `PullBuild`, or [PullEvery](https://pkg.go.dev/github.com/aptd3v/containerkit/pkg/kit#PullEvery).
+A directory on disk uses `Source` and [DockerfilePath](https://pkg.go.dev/github.com/aptd3v/containerkit/pkg/kit#DockerfilePath). [Env](environment-and-command.md) inside `Build` is a build-arg. [Pull](https://pkg.go.dev/github.com/aptd3v/containerkit/pkg/kit#Pull) inside `Build` pulls the base image during the build. [PullPolicy](https://pkg.go.dev/github.com/aptd3v/containerkit/pkg/kit#PullPolicy) on the service is `PullAlways`, `PullMissing`, `PullNever`, `PullBuild`, or [PullEvery](https://pkg.go.dev/github.com/aptd3v/containerkit/pkg/kit#PullEvery).
 
 ```go
 import . "github.com/aptd3v/containerkit/pkg/kit"

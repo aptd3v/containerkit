@@ -1,19 +1,19 @@
-# Declare config in TSX
+# A TSX plan, run from Go
 
-Write a compose file as JSX. A module exports a function that returns a `DockerNode`. `render` at the edge emits compose-spec YAML. `connect` / `up` / `pullImage` / `listImages` encode client and verb setters as a plan JSON document. Go loads YAML with `ImportYAML` or the plan with `ImportPlan`, then `Connect` / `Up` / `Run`.
+A TSX module is a document this package loads. `exportYAML` on a named `Compose` is compose text, and [ImportYAML](import-and-export.md) reads it with no daemon. `encode(composeUp(...))` is plan JSON, and [ImportPlan](import-and-export.md) reads it. Neither call dials. [Plan.Run](https://pkg.go.dev/github.com/aptd3v/containerkit/pkg/kit#Plan.Run) is what dials.
 
-This is not a React app, not a browser Docker client, and not a workflow store.
+This is not a React app and not a browser Docker client. One file has one JSX import source, so `<div>` and `<Compose>` do not share a file.
 
 ```tsx
 /** @jsxImportSource containerkit */
-import { Compose, Service, Publish, Env, connect, encode, composeUp, type DockerNode } from "containerkit";
+import { Compose, Env, Publish, Service, composeUp, connect, encode, type DockerNode } from "containerkit";
 
 export default function App(): DockerNode {
   return (
     <Compose name="app">
       <Service name="api" image="alpine:latest">
         <Publish hostPort={8080} containerPort={80} />
-        <Env name="APP">1</Env>
+        <Env name="APP" value="1" />
       </Service>
     </Compose>
   );
@@ -23,13 +23,15 @@ const cli = connect({ fromEnv: true, timeout: "10s" });
 export const encoded = encode(composeUp(cli, <App />, { detach: true }));
 ```
 
-Same word, three types:
+The same word is a different value in each place:
 
-- `<Health timeout="5s" />` — define / healthcheck
-- `connect({ timeout: "10s" })` — Engine HTTP client
-- `composeUp(cli, node, { timeout: "30s" })` — compose wait/stop
+- `<Health timeout="5s" />` is the healthcheck probe.
+- `connect({ timeout: "10s" })` is the Engine HTTP client.
+- `composeUp(cli, node, { timeout: "30s" })` is the compose wait.
 
-`cli` as a factory prop marks I/O. It is not serialized onto `DockerNode`.
+`cli` marks I/O. It is not serialized onto the node.
+
+Go loads whichever document you kept:
 
 ```go
 import (
@@ -40,29 +42,21 @@ import (
 
 func upYAML(ctx context.Context, yaml []byte) error {
     compose := ImportYAML(yaml)
-    cli, err := Connect()
+    cli, err := Connect(FromEnv())
     if err != nil {
         return err
     }
     defer cli.Close()
     return cli.Up(ctx, compose)
 }
-```
-
-```go
-import (
-    "context"
-
-    . "github.com/aptd3v/containerkit/pkg/kit"
-)
 
 func upPlan(ctx context.Context, json []byte) error {
     return ImportPlan(json).Run(ctx)
 }
 ```
 
-Leave a React app's `jsxImportSource` on `react`. Containerkit files use `/** @jsxImportSource containerkit */`, or a folder `tsconfig` that extends `containerkit/tsconfig.jsx.json` and is excluded from the app config. One file has one import source, so `<div>` and `<Compose>` cannot share a file. `jsx: "react-jsx"` is the transform's name; the language server uses the `JSX` namespace from that file's import source. If the source does not resolve, TypeScript falls back to a global namespace named `React`.
+Leave a React app's `jsxImportSource` on `react`. A containerkit file uses `/** @jsxImportSource containerkit */`, or a folder tsconfig that extends `containerkit/tsconfig.jsx.json` and is excluded from the app config. `jsx: "react-jsx"` is the transform's name. The language server uses the `JSX` namespace from that file's import source.
 
-The TypeScript package is `containerkit` on npm. A checkout that has not been published yet can depend on the local build with `"containerkit": "file:../containerkit/tsx"` after `npm --prefix tsx run build`. Components and option bags are generated from `pkg/kit` (`go run ./tools/gentsx`). Nested kit scopes are children; scalars are props. `<Network>` / `<Volume>` under `<Compose>` are project resources; under `<Service>` they are attachments. Dockerfile instructions are `containerkit/dockerfile`: `<Dockerfile>` under `<Build>` renders `dockerfile_inline`, and `buildDockerfile` sends the same text as `parseDockerfile`.
+Components and option bags are generated from `pkg/kit` (`go run ./tools/gentsx`). Nested kit scopes are children. Scalars are props. `<Network>` and `<Volume>` under `<Compose>` are project resources. Under `<Service>` they are attachments. Dockerfile instructions are `containerkit/dockerfile`.
 
-`run()` spawns `containerkit` (`cmd/containerkit`) when `CONTAINERKIT_BIN` or `PATH` has the binary. See [runner-binary.md](runner-binary.md), [tsx/README.md](../tsx/README.md), and [tsx/examples/supabase.tsx](../tsx/examples/supabase.tsx).
+`run()` spawns the [runner](runner-binary.md) when `CONTAINERKIT_BIN` or `PATH` has the binary. The programs you can run are under `tsx/examples`: [nginx](../tsx/examples/nginx/docker.tsx), WordPress, a MongoDB replica set, and an interactive shell. From `tsx/`, `npm run nginx` builds the binary and starts the nginx session.

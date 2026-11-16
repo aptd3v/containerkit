@@ -19,4 +19,4 @@ svc := NewService(
 )
 ```
 
-[Privileged](https://pkg.go.dev/github.com/aptd3v/containerkit/pkg/kit#Privileged) is the container flag. Inside [Build](build-and-dockerfile.md) it is `build.privileged`. [ReadOnly](mount-a-volume.md) here is the root filesystem. [Tty](https://pkg.go.dev/github.com/aptd3v/containerkit/pkg/kit#Tty) and [Interactive](https://pkg.go.dev/github.com/aptd3v/containerkit/pkg/kit#Interactive) are stdin and a TTY.
+[Privileged](https://pkg.go.dev/github.com/aptd3v/containerkit/pkg/kit#Privileged) on the service is the container flag. Inside [Build](build-and-dockerfile.md) it is `build.privileged`. [ReadOnly](mount-a-volume.md) here is the root filesystem. [Tty](https://pkg.go.dev/github.com/aptd3v/containerkit/pkg/kit#Tty) allocates a TTY. [Interactive](https://pkg.go.dev/github.com/aptd3v/containerkit/pkg/kit#Interactive) keeps stdin open.

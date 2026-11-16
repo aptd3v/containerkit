@@ -1,6 +1,6 @@
 # Conditional stacks
 
-[logic.Group](https://pkg.go.dev/github.com/aptd3v/containerkit/pkg/logic#Group), [logic.When](https://pkg.go.dev/github.com/aptd3v/containerkit/pkg/logic#When), and [logic.Switch](https://pkg.go.dev/github.com/aptd3v/containerkit/pkg/logic#Switch) pick setters before they are applied. [AddService](https://pkg.go.dev/github.com/aptd3v/containerkit/pkg/kit#AddService), [AddNetwork](https://pkg.go.dev/github.com/aptd3v/containerkit/pkg/kit#AddNetwork), and [AddVolume](https://pkg.go.dev/github.com/aptd3v/containerkit/pkg/kit#AddVolume) are the compose options those groups carry. [Compose.WithService](define-a-service.md) remains the call when you already have a `*Service`.
+[logic.Group](https://pkg.go.dev/github.com/aptd3v/containerkit/pkg/logic#Group), [logic.When](https://pkg.go.dev/github.com/aptd3v/containerkit/pkg/logic#When), and [logic.Switch](https://pkg.go.dev/github.com/aptd3v/containerkit/pkg/logic#Switch) choose setters before they are applied. [AddService](https://pkg.go.dev/github.com/aptd3v/containerkit/pkg/kit#AddService), [AddNetwork](https://pkg.go.dev/github.com/aptd3v/containerkit/pkg/kit#AddNetwork), and [AddVolume](https://pkg.go.dev/github.com/aptd3v/containerkit/pkg/kit#AddVolume) are the compose options those groups carry. [Compose.WithService](define-a-service.md) remains the call when you already have a `*Service`.
 
 ```go
 import (
@@ -21,4 +21,4 @@ compose := NewCompose("app", logic.Group(
 ))
 ```
 
-`logic` stays a named import. The setters inside it come from the dot import.
+`logic` stays a named import. The setters inside it come from the dot import. `logic.WhenElse` takes the true setter and the false setter. `logic.Unless` applies setters when the condition is false. `pkg/kit` does not import `pkg/logic`. A program that never imports it never links that package.

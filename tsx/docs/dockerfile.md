@@ -23,7 +23,7 @@ const stack = (
 );
 ```
 
-`image` is not a project. `exportYAML` will not accept it. Nest it under `<Build>` inside a named `<Compose>`, as `stack` does, and the live session applies that project like any other tree. The build block stores the Dockerfile text inline. A build accepts one Dockerfile. It rejects a second source when `dockerfilePath`, `parseDockerfile`, or `readDockerfile` is already set on that build.
+`image` is not a project. `exportYAML` will not accept it. Nest it under `<Build>` inside a named `<Compose>`, as `stack` does, and the live session applies that project like any other tree. [nginx/docker.tsx](../examples/nginx/docker.tsx) is that shape as a program: the Dockerfile is built from the files next to the Go nginx example, and the service publishes port 8080. The build block stores the Dockerfile text inline. A build accepts one Dockerfile. It rejects a second source when `dockerfilePath`, `parseDockerfile`, or `readDockerfile` is already set on that build.
 
 `exportDockerfile`, from `containerkit/dockerfile`, returns the Dockerfile as text and does not build it:
 

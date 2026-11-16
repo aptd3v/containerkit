@@ -123,7 +123,7 @@ function api(): DockerNode<Service<{ name?: string; image?: string }>> {
 
 On that annotation, `props.image` is `string | undefined`. A prop you left out of the `{ ... }`, such as `command`, is rejected on `props` even though `<Service command={...}>` is legal at the tag. With no type argument, `DockerNode` means any of the four roots.
 
-JSX checks each attribute. `<Compose image="alpine" />` is a type error because `image` is not a Compose prop. `<div />` is a type error in a containerkit file because these components are not HTML. A React file and a containerkit file stay separate. The package README shows the `tsconfig` for that split. Once the containerkit folder extends `containerkit/tsconfig.jsx.json`, you do not put a JSX comment at the top of each file.
+JSX checks each attribute. `<Compose image="alpine" />` is a type error because `image` is not a Compose prop. `<div />` is a type error in a containerkit file because these components are not HTML. A React file and a containerkit file stay separate. The package README shows the `tsconfig` for that split. Once the containerkit folder extends `containerkit/tsconfig.jsx.json`, you do not put a JSX comment at the top of each file. An optional ESLint config, `containerkit/eslint`, marks an illegal inline tag. The package README shows how a project turns it on. Building the tree still throws when the tag is hidden from the linter.
 
 ## Printing the file
 

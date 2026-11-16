@@ -1,6 +1,6 @@
 # Healthcheck
 
-[Health](https://pkg.go.dev/github.com/aptd3v/containerkit/pkg/kit#Health) takes [Test](https://pkg.go.dev/github.com/aptd3v/containerkit/pkg/kit#Test), [Interval](https://pkg.go.dev/github.com/aptd3v/containerkit/pkg/kit#Interval), [Timeout](https://pkg.go.dev/github.com/aptd3v/containerkit/pkg/kit#Timeout), [Retries](https://pkg.go.dev/github.com/aptd3v/containerkit/pkg/kit#Retries), and [StartPeriod](https://pkg.go.dev/github.com/aptd3v/containerkit/pkg/kit#StartPeriod). `Test` is only the command. Extra strings are arguments.
+[Health](https://pkg.go.dev/github.com/aptd3v/containerkit/pkg/kit#Health) takes [Test](https://pkg.go.dev/github.com/aptd3v/containerkit/pkg/kit#Test), [Interval](https://pkg.go.dev/github.com/aptd3v/containerkit/pkg/kit#Interval), [Timeout](https://pkg.go.dev/github.com/aptd3v/containerkit/pkg/kit#Timeout), [Retries](https://pkg.go.dev/github.com/aptd3v/containerkit/pkg/kit#Retries), and [StartPeriod](https://pkg.go.dev/github.com/aptd3v/containerkit/pkg/kit#StartPeriod). `Test` is the command. Extra strings are arguments. The check has to be a program that exists in the image.
 
 ```go
 import (
@@ -22,4 +22,6 @@ svc := NewService(
 )
 ```
 
-[Disabled](https://pkg.go.dev/github.com/aptd3v/containerkit/pkg/kit#Disabled) turns the healthcheck off. The same setter, passed to plugin install, leaves the plugin disabled. `Timeout` outside `Health` is a compose wait, an engine stop, or a client deadline.
+`Timeout` inside `Health` is how long one check may run. `StartPeriod` is the time during which a failing check does not count toward `Retries`. `Timeout` on [Up](bring-a-compose-file-up.md) is a different clock: how long Compose waits for a `depends_on` condition such as `Healthy`. A database that needs half a minute to accept connections needs that wait set in minutes.
+
+[Disabled](https://pkg.go.dev/github.com/aptd3v/containerkit/pkg/kit#Disabled) turns the healthcheck off. The same setter, passed to plugin install, leaves the plugin disabled.

@@ -40,11 +40,9 @@ export const yaml = exportYAML(<App />);
 
 Containerkit generates its bindings from pinned Moby and Compose SDK versions. Updating the pins and regenerating picks up new upstream fields.
 
-`false` disappears. `.map()` repeats a child. A function that returns a node is a component, so a gateway, a database, and a pooler are props on one stack. [`examples/supabase`](examples/supabase) is that stack in Go. [`tsx/examples/supabase.tsx`](tsx/examples/supabase.tsx) is the same project in TSX: Envoy or Kong, Postgres 15 or 17, Supavisor or PgBouncer, file or S3, logs on or off, printed as Compose on stdout.
+`false` disappears. `.map()` repeats a child. A function that returns a node is a component. [`examples/supabase`](examples/supabase) is that stack in Go. The TypeScript programs you can run are under [`tsx/examples`](tsx/examples): nginx, WordPress and MySQL, a MongoDB replica set, and an interactive shell.
 
-A Dockerfile is the other tree, in `containerkit/dockerfile`. `<Run>` joins into one layer. `<RunLayer>` starts the next. `exportDockerfile` prints the file. [`tsx/examples/image.tsx`](tsx/examples/image.tsx) is a multi-stage build whose stages and layers follow the environment.
-
-[`tsx/examples/taskflow.tsx`](tsx/examples/taskflow.tsx) orders those pieces as a graph. The image build overlaps Postgres coming up. Lint waits for that image, then overlaps the database. Migrate can be tried again. A failed check skips the tag. Down waits only for migrate, because unit and lint do not use Postgres, and the project is still taken down when migrate fails. Stdout is the plan document.
+A Dockerfile is the other tree, in `containerkit/dockerfile`. `<Run>` joins into one layer. `<RunLayer>` starts the next. `exportDockerfile` prints the file. [`tsx/examples/nginx/docker.tsx`](tsx/examples/nginx/docker.tsx) builds that kind of file and publishes the site.
 
 ## A container becomes a service
 
@@ -64,7 +62,7 @@ svc := worker.AsService()
 
 ## It stays open
 
-`docker.ts` default-exports `root()`. The session stays up for the life of the process. A later render applies the project only when the rendered YAML changes. Exporting the file does not stop it. [`tsx/examples/docker.tsx`](tsx/examples/docker.tsx) is a running copy: from `tsx/`, `npm run live` builds a small image, serves `http://127.0.0.1:18080`, and `onExit: "down"` takes the project down on Ctrl+C.
+`docker.ts` default-exports `root()`. The session stays up for the life of the process. A later render applies the project only when the rendered YAML changes. Exporting the file does not stop it. [`tsx/examples/nginx/docker.tsx`](tsx/examples/nginx/docker.tsx) is a running copy: from `tsx/`, `npm run nginx` builds an nginx image, serves `http://127.0.0.1:8080`, and `onExit: "down"` takes the project down on Ctrl+C.
 
 ```tsx
 import { Compose, Service, Publish, Health } from "containerkit";
@@ -169,4 +167,4 @@ A live session needs the `containerkit` binary on `PATH`, or `CONTAINERKIT_BIN` 
 
 ## License
 
-MIT. See [LICENSE](LICENSE).
+Apache 2.0. See [LICENSE](LICENSE).

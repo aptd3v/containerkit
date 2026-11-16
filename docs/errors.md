@@ -1,6 +1,6 @@
 # Errors
 
-Constructors return the object and keep configuration errors on it. [Validate](https://pkg.go.dev/github.com/aptd3v/containerkit/pkg/kit#Compose.Validate) reports them. Runtime calls (`Up`, `Create`, `ExportYAML`, `Write`) validate before they talk to the daemon.
+Constructors return the object and keep configuration errors on it. [Validate](https://pkg.go.dev/github.com/aptd3v/containerkit/pkg/kit#Compose.Validate) reports them. `Up`, `Create`, `ExportYAML`, and `Write` validate before they talk to the daemon, so a bad name fails before a socket is used.
 
 ```go
 import . "github.com/aptd3v/containerkit/pkg/kit"
@@ -11,7 +11,7 @@ if err := compose.Validate(); err != nil {
 }
 ```
 
-A daemon failure is an [Error](https://pkg.go.dev/github.com/aptd3v/containerkit/pkg/kit#Error). Its class is one of `ErrNotFound`, `ErrConflict`, `ErrUnauthorized`, `ErrPermissionDenied`, `ErrAlreadyExists`, `ErrUnavailable`, `ErrNotImplemented`, `ErrCanceled`, `ErrInvalidArgument`, and the other sentinels. [IsNotFound](https://pkg.go.dev/github.com/aptd3v/containerkit/pkg/kit#IsNotFound) matches a classified not-found without importing Engine or Compose.
+A missing image on that service is a configuration error: a service needs an image or a build. A daemon failure is an [Error](https://pkg.go.dev/github.com/aptd3v/containerkit/pkg/kit#Error). Its class is one of `ErrNotFound`, `ErrConflict`, `ErrUnauthorized`, `ErrPermissionDenied`, `ErrAlreadyExists`, `ErrUnavailable`, `ErrNotImplemented`, `ErrCanceled`, `ErrInvalidArgument`, and the other sentinels. [IsNotFound](https://pkg.go.dev/github.com/aptd3v/containerkit/pkg/kit#IsNotFound) matches a classified not-found without importing Engine or Compose.
 
 ```go
 import (
@@ -34,4 +34,4 @@ if errors.As(err, &kitErr) {
 }
 ```
 
-Secret values are redacted on `Error`. `Unwrap` still carries the original cause.
+Secret values are redacted on `Error`. `Unwrap` still carries the original cause. `Hint` is empty when the failure has no suggestion. `StatusCode` is the HTTP status for the class. It stays zero only when the error has no class and the daemon did not send one.

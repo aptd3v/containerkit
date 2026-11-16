@@ -1,6 +1,6 @@
 # Resources and deploy
 
-[Memory](https://pkg.go.dev/github.com/aptd3v/containerkit/pkg/kit#Memory) on a service is `mem_limit`. The same setter inside [Deploy](https://pkg.go.dev/github.com/aptd3v/containerkit/pkg/kit#Deploy) is `deploy.resources.limits.memory`.
+[Memory](https://pkg.go.dev/github.com/aptd3v/containerkit/pkg/kit#Memory) on a service is `mem_limit`. The same setter inside [Deploy](https://pkg.go.dev/github.com/aptd3v/containerkit/pkg/kit#Deploy) is `deploy.resources.limits.memory`. The value is bytes. `512 << 20` is 512 MiB.
 
 ```go
 import . "github.com/aptd3v/containerkit/pkg/kit"
@@ -18,6 +18,8 @@ svc := NewService(
 )
 ```
 
-[Replicas](https://pkg.go.dev/github.com/aptd3v/containerkit/pkg/kit#Replicas) inside `Deploy` is the swarm replica count. On the service itself it is compose `scale`. [Mode](https://pkg.go.dev/github.com/aptd3v/containerkit/pkg/kit#Mode) here is `Replicated` or `Global`. `svcmode.ReplicatedJob` and `svcmode.GlobalJob` are the job modes. Inside [Publish](publish-a-port.md) it is `PortIngress` or `PortHost`.
+[Replicas](https://pkg.go.dev/github.com/aptd3v/containerkit/pkg/kit#Replicas) on the service is compose `scale`. Inside `Deploy` it is the Swarm replica count. [Mode](https://pkg.go.dev/github.com/aptd3v/containerkit/pkg/kit#Mode) here is `Replicated` or `Global`. `svcmode.ReplicatedJob` and `svcmode.GlobalJob` are the Swarm job modes. Inside [Publish](publish-a-port.md) the same setter is `PortIngress` or `PortHost`.
+
+[Profile](https://pkg.go.dev/github.com/aptd3v/containerkit/pkg/kit#Profile) on a service hides it until that profile is selected. On [ImportYAML](import-and-export.md) or [Client.Load](bring-a-compose-file-up.md) it is the profile to keep. After a profiled import, the loader has already dropped the other services, and the profile tags are cleared so a later `Up` does not hide them again.
 
 [ShmSize](https://pkg.go.dev/github.com/aptd3v/containerkit/pkg/kit#ShmSize) is `/dev/shm`. [StopSignal](environment-and-command.md) takes a signal name. The kit re-exports `SIGTERM` and `SIGKILL`. The rest are in `pkg/signal`.

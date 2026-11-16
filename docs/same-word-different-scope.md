@@ -28,12 +28,16 @@ Names that only look alike are different setters:
 | Dockerfile path | [DockerfilePath](build-and-dockerfile.md) |
 | Export archive | [OutputFile](https://pkg.go.dev/github.com/aptd3v/containerkit/pkg/kit#OutputFile) |
 | Port mapping | [Publish](publish-a-port.md) |
-| OCI artifact of the app | [Compose.PublishOCI](https://pkg.go.dev/github.com/aptd3v/containerkit/pkg/kit#Compose.PublishOCI) |
+| OCI artifact of the project | [Compose.PublishOCI](https://pkg.go.dev/github.com/aptd3v/containerkit/pkg/kit#Compose.PublishOCI) |
 | Progress logger | [Log](logging.md) |
 | Container log driver | [Logging](logging.md) |
-| Container working directory | [WorkingDir](environment-and-command.md) |
+| Directory inside the container | [WorkingDir](environment-and-command.md) |
 | Compose project directory | [ProjectDirectory](https://pkg.go.dev/github.com/aptd3v/containerkit/pkg/kit#ProjectDirectory) |
 | Include stopped containers in a list | [All](https://pkg.go.dev/github.com/aptd3v/containerkit/pkg/kit#All) |
 | LoadProject resource filter | [AllResources](https://pkg.go.dev/github.com/aptd3v/containerkit/pkg/kit#AllResources) |
 | Daemon address | [Host](bring-a-compose-file-up.md) |
 | Host network namespace | `NetworkHost` in [NetworkMode](networks.md) |
+| One healthcheck probe | `Timeout` inside [Health](healthcheck.md) |
+| Wait for `depends_on` | `Timeout` on [Up](bring-a-compose-file-up.md) |
+
+`Test` is the healthcheck command. `Interval`, `Timeout`, and `Retries` beside it are the timing of that check.

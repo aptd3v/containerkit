@@ -78,12 +78,14 @@ await app.composeDown(tree, { volumes: true, removeOrphans: true, timeout: "20s"
 
 ## Containers
 
-`containerRun` describes one container from options: `image`, `command`, `env`, `publish`, `volume`, `restart`, and the other container fields. It does not take a tree. The session does not keep it running across renders unless you remember the call with `useMemo`.
+`app.run` creates and starts one container. It does not take a tree. The options are `image`, `command`, `env`, `publish`, `volume`, `restart`, and the other container fields. It returns `{ ID, Warnings }`. `app.containerRun` takes the same options and returns the same shape. The session does not keep that container running across renders unless you remember the call with `useMemo`.
+
+`run` imported from `"containerkit"` is a different function. It sends one plan and returns. It is not `app.run`.
 
 ```ts
 import { cap, proto, restartPolicy } from "containerkit/vocab";
 
-await app.containerRun({
+const created = await app.run({
   image: "alpine:latest",
   name: "once",
   command: ["echo", "ok"],
@@ -92,6 +94,10 @@ await app.containerRun({
   restart: { policy: restartPolicy.No },
 });
 ```
+
+`app.terminal(id)` attaches this process's stdin and stdout to a shell in that container and blocks until the shell exits. The default command is `/bin/sh`. Pass `{ command: ["bash"] }` to choose another. When stdin is a terminal, the session is raw and the exec is resized with the window. [terminal.tsx](../examples/terminal/terminal.tsx) starts an Alpine container with `app.run`, then calls `app.terminal`.
+
+`app.flow({ name, steps })` runs the document `Flow` from `containerkit/taskflow` would build. You do not pass a client. The session already has one. Step events arrive on `app.on("log")` and `app.on("status")`.
 
 A container you already have is addressed by id:
 
@@ -212,7 +218,7 @@ Swarm services, tasks, configs, and secrets follow the same shape. An id, when t
 
 ## One command, then exit
 
-`run` sends one description and returns the result, without a live session. A test or a short script can use it. A program that stays up uses `await app.pullImage(...)` and the other session methods.
+`run`, imported from `"containerkit"`, sends one description and returns the result, without a live session. A test or a short script can use it. A program that stays up uses `await app.pullImage(...)` and the other session methods. That imported `run` is not `app.run`. `app.run` creates and starts a container.
 
 ```ts
 import { connect, pullImage, run } from "containerkit";
