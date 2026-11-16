@@ -29,7 +29,7 @@ func TestNilReceivers(t *testing.T) {
 	if task.Priority(PriorityHigh) != nil || task.Always() != nil || task.Retry(1) != nil {
 		t.Fatal("nil task props")
 	}
-	if task.Name() != "" || task.ID() != "" || task.ExitCode() != 0 || task.Err() != nil {
+	if task.Name() != "" || task.ID() != "" || task.ExitCode() != 0 || task.Err() != nil || task.Status() != "" {
 		t.Fatal("nil task readers")
 	}
 	if sf.Task("a", nil) != nil || sf.Subflow("a", nil) != nil || sf.Condition("a", nil) != nil || sf.If("a", nil) != nil {
@@ -92,11 +92,15 @@ func TestTaskGraph(t *testing.T) {
 func TestSkipAlwaysRetryPanicCancel(t *testing.T) {
 	ctx := context.Background()
 	f := New("g", nil)
-	var events []EventKind
+	type snap struct {
+		kind   EventKind
+		status Status
+	}
+	var events []snap
 	var mu sync.Mutex
 	watch := func(e Event) {
 		mu.Lock()
-		events = append(events, e.Kind)
+		events = append(events, snap{e.Kind, e.Task.Status()})
 		mu.Unlock()
 	}
 	bad := f.Task("bad", func(context.Context) error { return errors.New("no") })
@@ -108,12 +112,27 @@ func TestSkipAlwaysRetryPanicCancel(t *testing.T) {
 	if err := f.Run(ctx, &Run{Writer: io.Discard, Concurrency: 1, Watch: watch}); err == nil {
 		t.Fatal("expected failure")
 	}
-	if skipped.Err() != nil || always.Err() != nil || after.Err() != nil {
-		t.Fatalf("skip %v always %v after %v", skipped.Err(), always.Err(), after.Err())
+	if skipped.Err() != nil || skipped.ExitCode() != 0 || skipped.Status() != StatusSkip || always.Status() != StatusDone || after.Status() != StatusSkip || bad.Status() != StatusError {
+		t.Fatalf("skip %v/%s always %s after %s bad %s", skipped.Err(), skipped.Status(), always.Status(), after.Status(), bad.Status())
+	}
+	for _, e := range events {
+		want := Status("")
+		switch e.kind {
+		case EventDone:
+			want = StatusDone
+		case EventSkip:
+			want = StatusSkip
+		case EventError:
+			want = StatusError
+		}
+		if e.status != want {
+			t.Fatalf("%s status %s", e.kind, e.status)
+		}
 	}
 
 	f = New("retry", nil)
 	n := 0
+	var during Status = "unset"
 	step := f.Task("flaky", func(context.Context) error {
 		n++
 		if n < 3 {
@@ -121,8 +140,12 @@ func TestSkipAlwaysRetryPanicCancel(t *testing.T) {
 		}
 		return nil
 	}).Retry(2)
-	if err := f.Run(ctx, discardRun()); err != nil || step.Err() != nil || n != 3 {
-		t.Fatalf("retry %v n %d err %v", err, n, step.Err())
+	if err := f.Run(ctx, &Run{Writer: io.Discard, Watch: func(e Event) {
+		if e.Kind == EventRetry {
+			during = e.Task.Status()
+		}
+	}}); err != nil || step.Err() != nil || step.Status() != StatusDone || during != "" || n != 3 {
+		t.Fatalf("retry %v n %d err %v status %s during %q", err, n, step.Err(), step.Status(), during)
 	}
 
 	f = New("exhaust", nil)
@@ -133,7 +156,7 @@ func TestSkipAlwaysRetryPanicCancel(t *testing.T) {
 
 	f = New("panic", nil)
 	p := f.Task("boom", func(context.Context) error { panic("boom") }).Retry(4)
-	if err := f.Run(ctx, discardRun()); err == nil || p.Err() == nil {
+	if err := f.Run(ctx, discardRun()); err == nil || p.Err() == nil || p.Status() != StatusError {
 		t.Fatal(err)
 	}
 
@@ -153,11 +176,11 @@ func TestSkipAlwaysRetryPanicCancel(t *testing.T) {
 	done()
 	f = New("precancel", nil)
 	called := false
-	f.Task("c", func(context.Context) error {
+	pre := f.Task("c", func(context.Context) error {
 		called = true
 		return nil
 	}).Retry(2)
-	if err := f.Run(doneCtx, &Run{Writer: io.Discard}); err == nil || called {
+	if err := f.Run(doneCtx, &Run{Writer: io.Discard}); err == nil || called || pre.Status() != StatusError {
 		t.Fatalf("precancel %v called %v", err, called)
 	}
 	if err := f.Run(ctx, discardRun()); !errors.Is(err, ErrAlreadyRun) {
@@ -173,8 +196,8 @@ func TestIfAndCondition(t *testing.T) {
 	yes := f.Task("yes", func(context.Context) error { yesRan = true; return nil })
 	no := f.Task("no", func(context.Context) error { noRan = true; return nil })
 	iff.Then(yes).Else(no)
-	if err := f.Run(ctx, discardRun()); err != nil || !yesRan || noRan {
-		t.Fatalf("then %v yes %v no %v", err, yesRan, noRan)
+	if err := f.Run(ctx, discardRun()); err != nil || !yesRan || noRan || no.Status() != "" || yes.Status() != StatusDone {
+		t.Fatalf("then %v yes %v/%s no %v/%s", err, yesRan, yes.Status(), noRan, no.Status())
 	}
 
 	f = New("else", nil)
@@ -212,8 +235,8 @@ func TestIfAndCondition(t *testing.T) {
 	a := f.Task("a", func(context.Context) error { got = "a"; return nil })
 	b := f.Task("b", func(context.Context) error { got = "b"; return nil })
 	cond.Precede(a, b)
-	if err := f.Run(ctx, discardRun()); err != nil || got != "b" {
-		t.Fatalf("cond %v got %s", err, got)
+	if err := f.Run(ctx, discardRun()); err != nil || got != "b" || a.Status() != "" || b.Status() != StatusDone {
+		t.Fatalf("cond %v got %s a %s b %s", err, got, a.Status(), b.Status())
 	}
 
 	f = New("cond-range", nil)
@@ -367,6 +390,73 @@ func TestCycle(t *testing.T) {
 	f.Task("a", func(context.Context) error { return nil })
 	if err := f.Run(ctx, discardRun()); err == nil {
 		t.Fatal("run id")
+	}
+}
+
+func TestForeignEdge(t *testing.T) {
+	ctx := context.Background()
+	left := New("ci", nil)
+	right := New("other", nil)
+	leftRan, rightRan := false, false
+	a := left.Task("a", func(context.Context) error { leftRan = true; return nil })
+	b := right.Task("b", func(context.Context) error { rightRan = true; return nil })
+	a.DependsOn(b)
+	errLeft := left.Run(ctx, discardRun())
+	errRight := right.Run(ctx, discardRun())
+	const want = "other/b -> ci/a"
+	if errLeft == nil || errRight == nil || !strings.Contains(errLeft.Error(), want) || !strings.Contains(errRight.Error(), want) || leftRan || rightRan {
+		t.Fatalf("left %v right %v ran %v %v", errLeft, errRight, leftRan, rightRan)
+	}
+
+	other := New("other", nil)
+	foreign := other.Task("b", func(context.Context) error { t.Error("foreign"); return nil })
+	f := New("ci", nil)
+	var inst, sib int
+	var child, always, gate, pick *Task
+	var events []Event
+	var mu sync.Mutex
+	f.Task("early", func(context.Context) error { return nil }).Precede(f.Subflow("sf", func(sf *Subflow) {
+		inst++
+		child = sf.Task("child", func(context.Context) error { t.Error("child"); return nil })
+		child.DependsOn(foreign)
+		extra := sf.Task("extra", func(context.Context) error { t.Error("extra"); return nil })
+		extra.Precede(foreign)
+		always = sf.Task("keep", func(context.Context) error { t.Error("always"); return nil }).Always()
+		gate = sf.If("gate", func(context.Context) bool { t.Error("if"); return true })
+		pick = sf.Condition("pick", func(context.Context) uint { t.Error("cond"); return 0 })
+	}).Retry(1))
+	f.Subflow("ok", func(sf *Subflow) {
+		sf.Task("sib", func(context.Context) error { sib++; return nil })
+	})
+	err := f.Run(ctx, &Run{Writer: io.Discard, Watch: func(e Event) {
+		mu.Lock()
+		events = append(events, e)
+		mu.Unlock()
+	}})
+	if inst != 1 || sib != 1 {
+		t.Fatalf("inst %d sib %d err %v", inst, sib, err)
+	}
+	const dynamic = "other/b -> ci/child"
+	if err == nil || !strings.Contains(err.Error(), dynamic) {
+		t.Fatal(err)
+	}
+	for _, step := range []*Task{child, always, gate, pick} {
+		if step == nil || step.Status() != "" {
+			t.Fatalf("%v", step)
+		}
+	}
+	mu.Lock()
+	defer mu.Unlock()
+	for _, e := range events {
+		switch e.Name {
+		case "child", "extra", "keep", "gate", "pick":
+			if e.Kind == EventStart || e.Kind == EventDone {
+				t.Fatalf("event %s %s", e.Name, e.Kind)
+			}
+		}
+	}
+	if err := other.Run(ctx, discardRun()); err == nil || !strings.Contains(err.Error(), dynamic) {
+		t.Fatal(err)
 	}
 }
 

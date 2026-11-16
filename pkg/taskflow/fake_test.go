@@ -4,7 +4,9 @@ import (
 	"bytes"
 	"context"
 	"encoding/binary"
+	"fmt"
 	"io"
+	"strings"
 
 	"github.com/aptd3v/containerkit/pkg/kit"
 	composetypes "github.com/compose-spec/compose-go/v2/types"
@@ -29,7 +31,15 @@ type scriptedEngine struct {
 	tagErr    error
 	created   clienttypes.ContainerCreateOptions
 	id        string
+	seq       int
 	removed   []string
+	lists     int
+	live      []scriptedContainer
+}
+
+type scriptedContainer struct {
+	id     string
+	labels map[string]string
 }
 
 func (s *scriptedEngine) ContainerCreate(_ context.Context, options clienttypes.ContainerCreateOptions) (clienttypes.ContainerCreateResult, error) {
@@ -39,8 +49,16 @@ func (s *scriptedEngine) ContainerCreate(_ context.Context, options clienttypes.
 	}
 	id := s.id
 	if id == "" {
-		id = "ctr-1"
+		s.seq++
+		id = fmt.Sprintf("ctr-%d", s.seq)
 	}
+	labels := map[string]string{}
+	if options.Config != nil {
+		for k, v := range options.Config.Labels {
+			labels[k] = v
+		}
+	}
+	s.live = append(s.live, scriptedContainer{id: id, labels: labels})
 	return clienttypes.ContainerCreateResult{ID: id}, nil
 }
 
@@ -50,7 +68,17 @@ func (s *scriptedEngine) ContainerStart(context.Context, string, clienttypes.Con
 
 func (s *scriptedEngine) ContainerRemove(_ context.Context, id string, _ clienttypes.ContainerRemoveOptions) (clienttypes.ContainerRemoveResult, error) {
 	s.removed = append(s.removed, id)
-	return clienttypes.ContainerRemoveResult{}, s.removeErr
+	if s.removeErr != nil {
+		return clienttypes.ContainerRemoveResult{}, s.removeErr
+	}
+	kept := s.live[:0]
+	for _, c := range s.live {
+		if c.id != id {
+			kept = append(kept, c)
+		}
+	}
+	s.live = kept
+	return clienttypes.ContainerRemoveResult{}, nil
 }
 
 func (s *scriptedEngine) ContainerLogs(context.Context, string, clienttypes.ContainerLogsOptions) (clienttypes.ContainerLogsResult, error) {
@@ -66,8 +94,31 @@ func (s *scriptedEngine) ContainerWait(context.Context, string, clienttypes.Cont
 	return s.wait
 }
 
-func (s *scriptedEngine) ContainerList(context.Context, clienttypes.ContainerListOptions) (clienttypes.ContainerListResult, error) {
-	return s.list, s.listErr
+func (s *scriptedEngine) ContainerList(_ context.Context, opts clienttypes.ContainerListOptions) (clienttypes.ContainerListResult, error) {
+	s.lists++
+	if s.listErr != nil {
+		return clienttypes.ContainerListResult{}, s.listErr
+	}
+	if s.list.Items != nil {
+		return s.list, nil
+	}
+	var items []container.Summary
+	for _, c := range s.live {
+		if labelMatch(c.labels, opts.Filters) {
+			items = append(items, container.Summary{ID: c.id, Labels: c.labels})
+		}
+	}
+	return clienttypes.ContainerListResult{Items: items}, nil
+}
+
+func labelMatch(labels map[string]string, filters clienttypes.Filters) bool {
+	for expr := range filters["label"] {
+		key, val, ok := strings.Cut(expr, "=")
+		if !ok || labels[key] != val {
+			return false
+		}
+	}
+	return true
 }
 
 func (s *scriptedEngine) ImageBuild(context.Context, io.Reader, clienttypes.ImageBuildOptions) (clienttypes.ImageBuildResult, error) {

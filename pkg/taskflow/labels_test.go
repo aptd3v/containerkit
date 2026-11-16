@@ -89,6 +89,14 @@ func TestListAndRemove(t *testing.T) {
 	if err := bare.Remove(ctx); err != nil {
 		t.Fatal(err)
 	}
+	ran := New("ran", nil)
+	ran.Task("a", func(context.Context) error { return nil })
+	if err := ran.Run(ctx, discardRun()); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := ran.List(ctx); !errors.Is(err, ErrNoClient) {
+		t.Fatal(err)
+	}
 	comp = &fakeComposer{}
 	f = New("down", newClient(&scriptedEngine{}, comp))
 	f.Compose("up", sampleApp(), Up())

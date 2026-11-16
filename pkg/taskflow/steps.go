@@ -10,9 +10,10 @@ import (
 	containertypes "github.com/moby/moby/api/types/container"
 )
 
-// Container adds a one-shot container step: remove by name, create, start,
-// wait for exit. A non-zero exit fails the step. Restart policies
-// (always, unless-stopped, on-failure) and AutoRemove are rejected.
+// Container adds a one-shot container step: create, start, and wait for exit.
+// A non-zero exit fails the step. A name that already exists is a create
+// conflict. A retry removes the container id this step created. Restart
+// policies (always, unless-stopped, on-failure) and AutoRemove are rejected.
 func (f *Flow) Container(name string, ctr *kit.Container, opt *ContainerRun) *Task {
 	if f == nil {
 		return nil
@@ -70,7 +71,7 @@ func (sc scope) container(name string, ctr *kit.Container, opt *ContainerRun) *T
 	t.container = ctr
 	t.containerRun = opt
 	t.gtf = sc.adder.NewTask(name, func() {
-		t.observe(t.runContainer)
+		t.guarded(func() { t.observe(t.runContainer) })
 	})
 	return t
 }
@@ -79,7 +80,7 @@ func (sc scope) build(name string, opts []kit.EngineBuildOption) *Task {
 	t := sc.newTask(name, kindBuild)
 	t.build = append([]kit.EngineBuildOption(nil), opts...)
 	t.gtf = sc.adder.NewTask(name, func() {
-		t.observe(t.runBuild)
+		t.guarded(func() { t.observe(t.runBuild) })
 	})
 	return t
 }
@@ -94,14 +95,16 @@ func (sc scope) compose(name string, app *kit.Compose, cmd any) *Task {
 	}
 	t.composeFn = fn
 	t.gtf = sc.adder.NewTask(name, func() {
-		t.observe(func() error {
-			if t.composeApp == nil {
-				return errors.New("compose is nil")
-			}
-			if t.composeFn == nil {
-				return errors.New("compose func is nil")
-			}
-			return t.composeFn(t.flow.context(), t.composeApp, t.flow.composer())
+		t.guarded(func() {
+			t.observe(func() error {
+				if t.composeApp == nil {
+					return errors.New("compose is nil")
+				}
+				if t.composeFn == nil {
+					return errors.New("compose func is nil")
+				}
+				return t.composeFn(t.flow.context(), t.composeApp, t.flow.composer())
+			})
 		})
 	})
 	return t
@@ -144,12 +147,10 @@ func (t *Task) runContainer() error {
 		return err
 	}
 	ctx := f.context()
-	remove := t.container.Name()
 	if id := t.ID(); id != "" {
-		remove = id
-	}
-	if err := t.container.Remove(ctx, api, remove, kit.Force(true)); err != nil && !kit.IsNotFound(err) {
-		return err
+		if err := t.container.Remove(ctx, api, id, kit.Force(true)); err != nil && !kit.IsNotFound(err) {
+			return err
+		}
 	}
 	created, err := t.container.Create(ctx, api)
 	if err != nil {

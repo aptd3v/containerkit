@@ -6,6 +6,19 @@ import (
 	"github.com/aptd3v/containerkit/pkg/kit"
 )
 
+// Status is the terminal outcome of a step. The zero value means the step has
+// not finished, including while it is running or retrying.
+type Status string
+
+const (
+	// StatusDone means the step finished without error.
+	StatusDone Status = "done"
+	// StatusSkip means the step did not run because a predecessor failed.
+	StatusSkip Status = "skip"
+	// StatusError means the step failed, panicked, or its context was already canceled.
+	StatusError Status = "error"
+)
+
 // EventKind is a step lifecycle signal sent to Run.Watch.
 type EventKind string
 
