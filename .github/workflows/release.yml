@@ -61,7 +61,7 @@ jobs:
         run: node scripts/publish-optional.mjs publish
 
       - name: GitHub release
-        uses: goreleaser/goreleaser-action@v6
+        uses: goreleaser/goreleaser-action@v7
         with:
           distribution: goreleaser
           version: "~> v2"
