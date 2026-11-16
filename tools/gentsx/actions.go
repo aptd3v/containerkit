@@ -35,6 +35,7 @@ func writeActions(root string, verbs []verb) error {
 	}
 	buf.WriteString("} from \"./generated-options.js\";\n\n")
 
+	writeJSDoc(&buf, "", "Name of one session action.\n\n@remarks\nThis is the `op` of a plan action. Each name has a function of the same name in this file.")
 	buf.WriteString("export type PlanOp =\n")
 	for _, v := range verbs {
 		fmt.Fprintf(&buf, "\t| %q\n", v.op)
@@ -65,7 +66,7 @@ func writeVerb(buf *bytes.Buffer, v verb) {
 		args = append(args, "options?: "+v.bag)
 	}
 
-	fmt.Fprintf(buf, "/** %s encodes kit %s as a plan document. Go ImportPlan / ExecJSON runs it. */\n", v.tsName, v.goName)
+	writeJSDoc(buf, "", verbDoc(v))
 	fmt.Fprintf(buf, "export function %s(%s): PlanDocument {\n", v.tsName, strings.Join(args, ", "))
 	fmt.Fprintf(buf, "\tconst action: PlanAction = { op: %q };\n", v.op)
 	if v.bag != "" {
@@ -80,4 +81,73 @@ func writeVerb(buf *bytes.Buffer, v verb) {
 	}
 	buf.WriteString("\treturn doc;\n")
 	buf.WriteString("}\n\n")
+}
+
+func verbDoc(v verb) string {
+	var b strings.Builder
+	fmt.Fprintf(&b, "%s builds a plan for kit %s.\n", v.tsName, v.goName)
+	b.WriteString("\n@remarks\nGo ImportPlan runs the plan. A session sends it as one action.\n")
+	b.WriteString("\n@param cli - Connected client. `connect({ fromEnv: true })` reads the local Docker host.\n")
+	if v.needsYAML {
+		b.WriteString("@param node - Compose, service, job, or container tree. Its YAML is rendered onto the plan.\n")
+	}
+	for _, p := range v.positionals {
+		fmt.Fprintf(&b, "@param %s - %s\n", p.name, paramNote(p))
+	}
+	if v.bag != "" {
+		fmt.Fprintf(&b, "@param options - %s. Omit it to keep the kit defaults.\n", v.bag)
+	}
+	b.WriteString("@returns The plan. Pass it to `run` or `session.call`.\n")
+	if v.needsYAML {
+		b.WriteString("@throws Error when the tree cannot be rendered.\n")
+	}
+	b.WriteString("\n@example\n```ts\n")
+	fmt.Fprintf(&b, "%s(cli", v.tsName)
+	if v.needsYAML {
+		b.WriteString(", tree")
+	}
+	for _, p := range v.positionals {
+		fmt.Fprintf(&b, ", %s", exampleArg(p))
+	}
+	if v.bag != "" {
+		b.WriteString(", {}")
+	}
+	b.WriteString(");\n```")
+	return b.String()
+}
+
+func paramNote(p leadParam) string {
+	switch p.name {
+	case "id":
+		return "Container, image, network, volume, or other object id"
+	case "ref", "refs":
+		return "Image reference"
+	case "service":
+		return "Compose service name"
+	case "name":
+		return "Object name"
+	case "port":
+		return "Container port"
+	case "repository":
+		return "Registry repository"
+	case "path":
+		return "Path inside the container or on the host"
+	default:
+		return p.name + ", typed " + p.tsType
+	}
+}
+
+func exampleArg(p leadParam) string {
+	switch {
+	case strings.Contains(p.tsType, "string[]"):
+		return `["example"]`
+	case strings.Contains(p.tsType, "string"):
+		return `"example"`
+	case strings.Contains(p.tsType, "number"):
+		return "1"
+	case strings.Contains(p.tsType, "boolean"):
+		return "true"
+	default:
+		return "value"
+	}
 }

@@ -31,6 +31,7 @@ func writeOptions(root string, setters map[string]*setter, bags map[string]*bagI
 
 	var buf bytes.Buffer
 	fmt.Fprintf(&buf, "// %s\n\n", generatedBy)
+	writeJSDoc(&buf, "", "A Go duration.\n\n@remarks\nA number is nanoseconds. A string is a Go duration such as `\"30s\"`.")
 	buf.WriteString("export type Duration = number | string;\n\n")
 	buf.WriteString("/** OCI platform. Same object image inspect returns. */\n")
 	buf.WriteString("export type ImagePlatform = {\n")
@@ -41,10 +42,16 @@ func writeOptions(root string, setters map[string]*setter, bags map[string]*bagI
 	buf.WriteString("\tvariant?: string;\n")
 	buf.WriteString("};\n\n")
 
-	leafTypes := map[string][]leadParam{}
+	leafTypes := map[string]inputShape{}
 	for _, s := range setters {
 		if s.leaf && len(s.fields) > 0 {
-			leafTypes[exportedIdent(s.kind)+"Input"] = s.fields
+			name := exportedIdent(s.kind) + "Input"
+			cur := leafTypes[name]
+			if cur.doc == "" {
+				cur.doc = s.doc
+			}
+			cur.fields = s.fields
+			leafTypes[name] = cur
 		}
 	}
 	leafNames := make([]string, 0, len(leafTypes))
@@ -53,8 +60,10 @@ func writeOptions(root string, setters map[string]*setter, bags map[string]*bagI
 	}
 	sort.Strings(leafNames)
 	for _, n := range leafNames {
+		shape := leafTypes[n]
+		writeJSDoc(&buf, "", inputDoc(n, shape.doc))
 		fmt.Fprintf(&buf, "export type %s = {\n", n)
-		for _, f := range leafTypes[n] {
+		for _, f := range shape.fields {
 			fmt.Fprintf(&buf, "\t%s?: %s;\n", f.name, f.tsType)
 		}
 		buf.WriteString("};\n\n")
@@ -65,6 +74,7 @@ func writeOptions(root string, setters map[string]*setter, bags map[string]*bagI
 		sort.Slice(fs, func(i, j int) bool {
 			return fs[i].prop < fs[j].prop || (fs[i].prop == fs[j].prop && fs[i].name < fs[j].name)
 		})
+		writeJSDoc(&buf, "", bagDoc(bags[name]))
 		fmt.Fprintf(&buf, "export type %s = {\n", name)
 		seen := map[string]bool{}
 		for _, s := range fs {
@@ -84,6 +94,26 @@ func writeOptions(root string, setters map[string]*setter, bags map[string]*bagI
 	}
 	fmt.Printf("wrote %s (%d option bags)\n", out, len(names))
 	return nil
+}
+
+type inputShape struct {
+	doc    string
+	fields []leadParam
+}
+
+func inputDoc(name, setterDoc string) string {
+	doc := name + " is the object form of one nested element inside an options bag."
+	if strings.TrimSpace(setterDoc) != "" {
+		doc += "\n\n@remarks\n" + strings.TrimSpace(setterDoc)
+	}
+	return doc
+}
+
+func bagDoc(b *bagInfo) string {
+	if b == nil {
+		return "Options object. Every field is optional."
+	}
+	return fmt.Sprintf("%s is the options object for kit %s.\n\n@remarks\nEvery field is optional. An omitted field keeps the kit default.", b.tsName, b.iface)
 }
 
 func bagField(s *setter, kindToBag map[string]string) (key, ts string, ok bool) {
@@ -111,8 +141,8 @@ func bagField(s *setter, kindToBag map[string]string) (key, ts string, ok bool) 
 		input := exportedIdent(s.kind) + "Input"
 		return key, input + " | " + input + "[]", true
 	case s.jsonSkip:
-		key = jsIdent(s.name)
-		return key, "unknown", true
+		// Go-only values are not plan fields. Omit them instead of typing them unknown.
+		return "", "", false
 	case len(s.goParams) == 0:
 		return jsIdent(s.name), "boolean", true
 	default:

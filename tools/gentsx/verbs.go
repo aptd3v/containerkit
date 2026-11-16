@@ -31,20 +31,14 @@ var tsReserved = map[string]bool{
 	"private": true, "protected": true, "public": true,
 }
 
-func parseVerbs(pkg *ast.Package, bags map[string]*bagInfo) []verb {
+func parseVerbs(files []*ast.File, bags map[string]*bagInfo) []verb {
 	ifaceBag := map[string]string{}
 	for _, b := range bags {
 		ifaceBag[b.iface] = b.tsName
 	}
 
 	byName := map[string]verb{}
-	files := make([]string, 0, len(pkg.Files))
-	for name := range pkg.Files {
-		files = append(files, name)
-	}
-	sort.Strings(files)
-	for _, name := range files {
-		file := pkg.Files[name]
+	for _, file := range files {
 		for _, decl := range file.Decls {
 			d, ok := decl.(*ast.FuncDecl)
 			if !ok || d.Name == nil || !d.Name.IsExported() || d.Type.Params == nil {

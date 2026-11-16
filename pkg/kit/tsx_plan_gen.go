@@ -8426,10 +8426,11 @@ func execKnownAction(ctx context.Context, cli *Client, compose *Compose, act pla
 			if err != nil {
 				return nil, err
 			}
-			if err := cli.Run(ctx, opts...); err != nil {
+			out0, err := cli.Run(ctx, opts...)
+			if err != nil {
 				return nil, err
 			}
-			return []byte(`{"ok":true}`), nil
+			return marshalLoose(out0)
 		}
 	case "copyFrom":
 		{
@@ -9220,10 +9221,11 @@ func execKnownAction(ctx context.Context, cli *Client, compose *Compose, act pla
 			if err != nil {
 				return nil, err
 			}
-			if err := Run(ctx, opts...); err != nil {
+			out0, err := Run(ctx, opts...)
+			if err != nil {
 				return nil, err
 			}
-			return []byte(`{"ok":true}`), nil
+			return marshalLoose(out0)
 		}
 	case "saveImages":
 		{

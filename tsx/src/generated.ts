@@ -4,8 +4,20 @@ import { element, type MaybeChild, type Node } from "./node.js";
 import { resolveEnv, resolveNamedValue, type EnvInput } from "./env.js";
 import type { DockerfileNode } from "./docker-file.js";
 
+/**
+ * Child list and element shape used by every component in this file.
+ *
+ * @see {@link MaybeChild}
+ * @see {@link Node}
+ */
 export type { MaybeChild, Node };
 
+/**
+ * Element kind stored on `$$kind`.
+ *
+ * @remarks
+ * `fragment` is a list of elements. Every other name is a component in this file.
+ */
 export type Kind =
 	| "additionalContext"
 	| "annotation"
@@ -63,87 +75,224 @@ export type Kind =
 	| "volume"
 	| "watchFiles";
 
-/** AdditionalContext adds a named additional build context inside Build. */
+/**
+ * AdditionalContext adds a named additional build context inside Build.
+ *
+ * Parent: Build
+ *
+ * @example
+ * ```tsx
+ * <AdditionalContext name="app" value="1" />
+ * ```
+ */
 export type AdditionalContextProps = {
 	name?: string;
 	value?: string;
 	children?: MaybeChild<never>;
 };
 
+/**
+ * A AdditionalContext element.
+ *
+ * @remarks
+ * Props are {@link AdditionalContextProps} without `children`. Nested elements are stored on the node.
+ */
 export type AdditionalContext<P extends AdditionalContextProps = Omit<AdditionalContextProps, "children">> = Node<"additionalContext", P>;
+/** AdditionalContext when it is the child of another element. */
 export type AdditionalContextNode = AdditionalContext;
 
-/** Annotation adds a runtime annotation. */
+/**
+ * Annotation adds a runtime annotation.
+ *
+ * Parent: Container, Job, PreStart, Service
+ *
+ * @example
+ * ```tsx
+ * <Annotation name="app" value="1" />
+ * ```
+ */
 export type AnnotationProps = {
 	name?: string;
 	value?: string;
 	children?: MaybeChild<never>;
 };
 
+/**
+ * A Annotation element.
+ *
+ * @remarks
+ * Props are {@link AnnotationProps} without `children`. Nested elements are stored on the node.
+ */
 export type Annotation<P extends AnnotationProps = Omit<AnnotationProps, "children">> = Node<"annotation", P>;
+/** Annotation when it is the child of another element. */
 export type AnnotationNode = Annotation;
 
-/** AuxAddress adds Compose networks.ipam.config.aux_addresses inside AddNetwork. */
+/**
+ * AuxAddress adds Compose networks.ipam.config.aux_addresses inside AddNetwork.
+ *
+ * Parent: Network
+ *
+ * @example
+ * ```tsx
+ * <AuxAddress host="example" addr="example" />
+ * ```
+ */
 export type AuxAddressProps = {
 	host?: string;
 	addr?: string;
 	children?: MaybeChild<never>;
 };
 
+/**
+ * A AuxAddress element.
+ *
+ * @remarks
+ * Props are {@link AuxAddressProps} without `children`. Nested elements are stored on the node.
+ */
 export type AuxAddress<P extends AuxAddressProps = Omit<AuxAddressProps, "children">> = Node<"auxAddress", P>;
+/** AuxAddress when it is the child of another element. */
 export type AuxAddressNode = AuxAddress;
 
-/** BlkioReadBps throttles read bytes/sec on a device. */
+/**
+ * BlkioReadBps throttles read bytes/sec on a device.
+ *
+ * Parent: Container, Job, PreStart, Service
+ *
+ * @example
+ * ```tsx
+ * <BlkioReadBps path="/tmp" />
+ * ```
+ */
 export type BlkioReadBpsProps = {
 	path?: string;
 	rate?: number;
 	children?: MaybeChild<never>;
 };
 
+/**
+ * A BlkioReadBps element.
+ *
+ * @remarks
+ * Props are {@link BlkioReadBpsProps} without `children`. Nested elements are stored on the node.
+ */
 export type BlkioReadBps<P extends BlkioReadBpsProps = Omit<BlkioReadBpsProps, "children">> = Node<"blkioReadBps", P>;
+/** BlkioReadBps when it is the child of another element. */
 export type BlkioReadBpsNode = BlkioReadBps;
 
-/** BlkioReadIOps throttles read IOPS on a device. */
+/**
+ * BlkioReadIOps throttles read IOPS on a device.
+ *
+ * Parent: Container, Job, PreStart, Service
+ *
+ * @example
+ * ```tsx
+ * <BlkioReadIOps path="/tmp" />
+ * ```
+ */
 export type BlkioReadIOpsProps = {
 	path?: string;
 	rate?: number;
 	children?: MaybeChild<never>;
 };
 
+/**
+ * A BlkioReadIOps element.
+ *
+ * @remarks
+ * Props are {@link BlkioReadIOpsProps} without `children`. Nested elements are stored on the node.
+ */
 export type BlkioReadIOps<P extends BlkioReadIOpsProps = Omit<BlkioReadIOpsProps, "children">> = Node<"blkioReadIOps", P>;
+/** BlkioReadIOps when it is the child of another element. */
 export type BlkioReadIOpsNode = BlkioReadIOps;
 
-/** BlkioWeightDevice adds a per-device blkio weight. */
+/**
+ * BlkioWeightDevice adds a per-device blkio weight.
+ *
+ * Parent: Container, Job, PreStart, Service
+ *
+ * @example
+ * ```tsx
+ * <BlkioWeightDevice path="/tmp" />
+ * ```
+ */
 export type BlkioWeightDeviceProps = {
 	path?: string;
 	weight?: number;
 	children?: MaybeChild<never>;
 };
 
+/**
+ * A BlkioWeightDevice element.
+ *
+ * @remarks
+ * Props are {@link BlkioWeightDeviceProps} without `children`. Nested elements are stored on the node.
+ */
 export type BlkioWeightDevice<P extends BlkioWeightDeviceProps = Omit<BlkioWeightDeviceProps, "children">> = Node<"blkioWeightDevice", P>;
+/** BlkioWeightDevice when it is the child of another element. */
 export type BlkioWeightDeviceNode = BlkioWeightDevice;
 
-/** BlkioWriteBps throttles write bytes/sec on a device. */
+/**
+ * BlkioWriteBps throttles write bytes/sec on a device.
+ *
+ * Parent: Container, Job, PreStart, Service
+ *
+ * @example
+ * ```tsx
+ * <BlkioWriteBps path="/tmp" />
+ * ```
+ */
 export type BlkioWriteBpsProps = {
 	path?: string;
 	rate?: number;
 	children?: MaybeChild<never>;
 };
 
+/**
+ * A BlkioWriteBps element.
+ *
+ * @remarks
+ * Props are {@link BlkioWriteBpsProps} without `children`. Nested elements are stored on the node.
+ */
 export type BlkioWriteBps<P extends BlkioWriteBpsProps = Omit<BlkioWriteBpsProps, "children">> = Node<"blkioWriteBps", P>;
+/** BlkioWriteBps when it is the child of another element. */
 export type BlkioWriteBpsNode = BlkioWriteBps;
 
-/** BlkioWriteIOps throttles write IOPS on a device. */
+/**
+ * BlkioWriteIOps throttles write IOPS on a device.
+ *
+ * Parent: Container, Job, PreStart, Service
+ *
+ * @example
+ * ```tsx
+ * <BlkioWriteIOps path="/tmp" />
+ * ```
+ */
 export type BlkioWriteIOpsProps = {
 	path?: string;
 	rate?: number;
 	children?: MaybeChild<never>;
 };
 
+/**
+ * A BlkioWriteIOps element.
+ *
+ * @remarks
+ * Props are {@link BlkioWriteIOpsProps} without `children`. Nested elements are stored on the node.
+ */
 export type BlkioWriteIOps<P extends BlkioWriteIOpsProps = Omit<BlkioWriteIOpsProps, "children">> = Node<"blkioWriteIOps", P>;
+/** BlkioWriteIOps when it is the child of another element. */
 export type BlkioWriteIOpsNode = BlkioWriteIOps;
 
-/** Build sets Compose build configuration. Service and job only. */
+/**
+ * Build sets Compose build configuration. Service and job only.
+ *
+ * Parent: Job, Service
+ *
+ * @example
+ * ```tsx
+ * <Build source="." target="/data" />
+ * ```
+ */
 export type BuildProps = {
 	/** CacheFrom adds a build cache_from entry inside Build. */
 	cacheFrom?: string;
@@ -204,10 +353,24 @@ export type BuildProps = {
 	children?: MaybeChild<AdditionalContextNode | EnvNode | ExtraHostNode | LabelNode | SecretNode | SSHNode | UlimitNode | DockerfileNode | Node<"fragment">>;
 };
 
+/**
+ * A Build element.
+ *
+ * @remarks
+ * Props are {@link BuildProps} without `children`. Nested elements are stored on the node.
+ */
 export type Build<P extends BuildProps = Omit<BuildProps, "children">> = Node<"build", P>;
+/** Build when it is the child of another element. */
 export type BuildNode = Build;
 
-/** Compose is a Compose file: name, services, jobs, networks, volumes, secrets, and configs. */
+/**
+ * Compose is a Compose file: name, services, jobs, networks, volumes, secrets, and configs.
+ *
+ * @example
+ * ```tsx
+ * <Compose name="app" />
+ * ```
+ */
 export type ComposeProps = {
 	/**
 	 * Name sets the receiver's name: container, service, job, project, depends_on,
@@ -217,22 +380,52 @@ export type ComposeProps = {
 	children?: MaybeChild<ContainerNode | FileConfigNode | IncludeNode | JobNode | ModelNode | NetworkNode | SecretNode | ServiceNode | VolumeNode | Node<"fragment">>;
 };
 
+/**
+ * A Compose element.
+ *
+ * @remarks
+ * Props are {@link ComposeProps} without `children`. Nested elements are stored on the node.
+ */
 export type Compose<P extends ComposeProps = Omit<ComposeProps, "children">> = Node<"compose", P>;
+/** Compose when it is the child of another element. */
 export type ComposeNode = Compose;
 
-/** ConsoleSize sets the initial console height and width. */
+/**
+ * ConsoleSize sets the initial console height and width.
+ *
+ * Parent: Container, Job, PreStart, Service
+ *
+ * @example
+ * ```tsx
+ * <ConsoleSize height={1} width={1} />
+ * ```
+ */
 export type ConsoleSizeProps = {
 	height?: number;
 	width?: number;
 	children?: MaybeChild<never>;
 };
 
+/**
+ * A ConsoleSize element.
+ *
+ * @remarks
+ * Props are {@link ConsoleSizeProps} without `children`. Nested elements are stored on the node.
+ */
 export type ConsoleSize<P extends ConsoleSizeProps = Omit<ConsoleSizeProps, "children">> = Node<"consoleSize", P>;
+/** ConsoleSize when it is the child of another element. */
 export type ConsoleSizeNode = ConsoleSize;
 
 /**
  * Container is a standalone Engine container configuration that also converts
  * to a Compose service when the settings map.
+ *
+ * Parent: Compose, Job, Service
+ *
+ * @example
+ * ```tsx
+ * <Container name="app" image="alpine" />
+ * ```
  */
 export type ContainerProps = {
 	/** ArgsEscaped marks the command as already escaped (Windows). Engine-only. */
@@ -292,7 +485,10 @@ export type ContainerProps = {
 	cpus?: number;
 	/** DeviceCgroupRule adds a device cgroup rule. */
 	deviceCgroupRule?: string;
-	/** DNS adds a DNS server. */
+	/**
+	 * DNS adds one DNS server, such as 1.1.1.1.
+	 * Put it on the service or container. Repeat it for another server.
+	 */
 	dns?: string;
 	/** DNSOption adds a DNS resolver option. */
 	dnsOption?: string;
@@ -304,7 +500,10 @@ export type ContainerProps = {
 	entrypoint?: string | string[];
 	/** GroupAdd adds a supplementary group. */
 	groupAdd?: string;
-	/** Hostname sets the container hostname. */
+	/**
+	 * Hostname sets the name the container uses for itself.
+	 * It belongs on the service or container, not on a Network.
+	 */
 	hostname?: string;
 	/** Image sets the image reference on a container, service, job, or Engine build tag. */
 	image?: string;
@@ -325,7 +524,15 @@ export type ContainerProps = {
 	isolation?: "default" | "process" | "hyperv";
 	/** Link adds a legacy container link. */
 	link?: string;
-	/** MacAddress sets the container MAC address, or the endpoint MAC inside Network. */
+	/**
+	 * MacAddress sets a MAC address.
+	 *
+	 * On a Service, Job, or Container it is that container's MAC. On a Network
+	 * child it is the MAC of that one endpoint. Use the Network form when the
+	 * container joins a network you defined.
+	 *
+	 * 	<Network name="backend" macAddress="02:42:0a:00:00:0a" />
+	 */
 	macAddress?: string;
 	/** MaskedPath overrides a masked path. Engine-only. */
 	maskedPath?: string;
@@ -429,20 +636,50 @@ export type ContainerProps = {
 	children?: MaybeChild<AnnotationNode | BlkioReadBpsNode | BlkioReadIOpsNode | BlkioWeightDeviceNode | BlkioWriteBpsNode | BlkioWriteIOpsNode | ConsoleSizeNode | DeviceNode | EnvNode | ExposeNode | ExtraHostNode | GPUNode | HealthNode | LabelNode | LoggingNode | NetworkNode | PublishNode | RestartNode | StorageOptNode | SysctlNode | UlimitNode | VolumeNode | Node<"fragment">>;
 };
 
+/**
+ * A Container element.
+ *
+ * @remarks
+ * Props are {@link ContainerProps} without `children`. Nested elements are stored on the node.
+ */
 export type Container<P extends ContainerProps = Omit<ContainerProps, "children">> = Node<"container", P>;
+/** Container when it is the child of another element. */
 export type ContainerNode = Container;
 
-/** CopyPath sets source and destination for Compose.Copy. */
+/**
+ * CopyPath sets source and destination for Compose.Copy.
+ *
+ * @example
+ * ```tsx
+ * <CopyPath source="." />
+ * ```
+ */
 export type CopyPathProps = {
 	source?: string;
 	destination?: string;
 	children?: MaybeChild<never>;
 };
 
+/**
+ * A CopyPath element.
+ *
+ * @remarks
+ * Props are {@link CopyPathProps} without `children`. Nested elements are stored on the node.
+ */
 export type CopyPath<P extends CopyPathProps = Omit<CopyPathProps, "children">> = Node<"copyPath", P>;
+/** CopyPath when it is the child of another element. */
 export type CopyPathNode = CopyPath;
 
-/** DependsOn adds a service dependency with nested setters (Name, Condition). */
+/**
+ * DependsOn adds a service dependency with nested setters (Name, Condition).
+ *
+ * Parent: Job, Service
+ *
+ * @example
+ * ```tsx
+ * <DependsOn name="app" />
+ * ```
+ */
 export type DependsOnProps = {
 	/** Condition sets a depends_on condition in a DependsOn scope. */
 	condition?: "service_started" | "service_healthy" | "service_completed_successfully";
@@ -458,10 +695,26 @@ export type DependsOnProps = {
 	children?: MaybeChild<never>;
 };
 
+/**
+ * A DependsOn element.
+ *
+ * @remarks
+ * Props are {@link DependsOnProps} without `children`. Nested elements are stored on the node.
+ */
 export type DependsOn<P extends DependsOnProps = Omit<DependsOnProps, "children">> = Node<"dependsOn", P>;
+/** DependsOn when it is the child of another element. */
 export type DependsOnNode = DependsOn;
 
-/** Deploy sets Compose deploy configuration. Service only. */
+/**
+ * Deploy sets Compose deploy configuration. Service only.
+ *
+ * Parent: Service
+ *
+ * @example
+ * ```tsx
+ * <Deploy cpus={1} endpointMode="vip" />
+ * ```
+ */
 export type DeployProps = {
 	/**
 	 * CPUs sets CPU quota as a fractional count (Compose cpus / Engine NanoCPUs).
@@ -491,18 +744,50 @@ export type DeployProps = {
 	children?: MaybeChild<DiscreteNode | GPUNode | LabelNode | PlacementNode | ReserveNode | RestartNode | RollbackNode | UpdateNode | Node<"fragment">>;
 };
 
+/**
+ * A Deploy element.
+ *
+ * @remarks
+ * Props are {@link DeployProps} without `children`. Nested elements are stored on the node.
+ */
 export type Deploy<P extends DeployProps = Omit<DeployProps, "children">> = Node<"deploy", P>;
+/** Deploy when it is the child of another element. */
 export type DeployNode = Deploy;
 
-/** Develop sets Compose develop.watch. Service only. */
+/**
+ * Develop sets Compose develop.watch. Service only.
+ *
+ * Parent: Service
+ *
+ * @example
+ * ```tsx
+ * <Develop />
+ * ```
+ */
 export type DevelopProps = {
 	children?: MaybeChild<WatchFilesNode | Node<"fragment">>;
 };
 
+/**
+ * A Develop element.
+ *
+ * @remarks
+ * Props are {@link DevelopProps} without `children`. Nested elements are stored on the node.
+ */
 export type Develop<P extends DevelopProps = Omit<DevelopProps, "children">> = Node<"develop", P>;
+/** Develop when it is the child of another element. */
 export type DevelopNode = Develop;
 
-/** Device maps a host device into the container (Engine Devices / Compose devices). */
+/**
+ * Device maps a host device into the container (Engine Devices / Compose devices).
+ *
+ * Parent: Container, Job, PreStart, Service
+ *
+ * @example
+ * ```tsx
+ * <Device source="." target="/data" />
+ * ```
+ */
 export type DeviceProps = {
 	/** Perms sets device cgroup permissions inside Device (e.g. "rwm"). */
 	perms?: string;
@@ -519,33 +804,79 @@ export type DeviceProps = {
 	children?: MaybeChild<never>;
 };
 
+/**
+ * A Device element.
+ *
+ * @remarks
+ * Props are {@link DeviceProps} without `children`. Nested elements are stored on the node.
+ */
 export type Device<P extends DeviceProps = Omit<DeviceProps, "children">> = Node<"device", P>;
+/** Device when it is the child of another element. */
 export type DeviceNode = Device;
 
-/** Discrete adds Compose deploy.resources.generic_resources.discrete_resource_spec. */
+/**
+ * Discrete adds Compose deploy.resources.generic_resources.discrete_resource_spec.
+ *
+ * Parent: Deploy, Reserve
+ *
+ * @example
+ * ```tsx
+ * <Discrete value={1} />
+ * ```
+ */
 export type DiscreteProps = {
 	kind?: string;
 	value?: number;
 	children?: MaybeChild<never>;
 };
 
+/**
+ * A Discrete element.
+ *
+ * @remarks
+ * Props are {@link DiscreteProps} without `children`. Nested elements are stored on the node.
+ */
 export type Discrete<P extends DiscreteProps = Omit<DiscreteProps, "children">> = Node<"discrete", P>;
+/** Discrete when it is the child of another element. */
 export type DiscreteNode = Discrete;
 
-/** DriverOpt adds a driver option inside Logging, Volume, Network, or project resources. */
+/**
+ * DriverOpt adds a driver option inside Logging, Volume, Network, or project resources.
+ *
+ * Parent: GPU, Logging, Network, Volume
+ *
+ * @example
+ * ```tsx
+ * <DriverOpt name="app" value="1" />
+ * ```
+ */
 export type DriverOptProps = {
 	name?: string;
 	value?: string;
 	children?: MaybeChild<never>;
 };
 
+/**
+ * A DriverOpt element.
+ *
+ * @remarks
+ * Props are {@link DriverOptProps} without `children`. Nested elements are stored on the node.
+ */
 export type DriverOpt<P extends DriverOptProps = Omit<DriverOptProps, "children">> = Node<"driverOpt", P>;
+/** DriverOpt when it is the child of another element. */
 export type DriverOptNode = DriverOpt;
 
 /**
  * Env adds an environment variable at the outer scope, a build-arg inside
  * Build or Compose.Build, or a run-time variable on Compose.Run.
  * The value is treated as secret in errors.
+ *
+ * Parent: Build, Container, Job, PostStart, PreStart, PreStop, Service, WatchFiles
+ *
+ * @example
+ * ```tsx
+ * <Env name="app" value="1" />
+ * ```
  */
 export type EnvProps = {
 	name?: string;
@@ -553,10 +884,26 @@ export type EnvProps = {
 	children?: string;
 };
 
+/**
+ * A Env element.
+ *
+ * @remarks
+ * Props are {@link EnvProps} without `children`. Nested elements are stored on the node.
+ */
 export type Env<P extends EnvProps = Omit<EnvProps, "children">> = Node<"env", P>;
+/** Env when it is the child of another element. */
 export type EnvNode = Env;
 
-/** EnvFile adds a Compose env_file path. Service, job, AddInclude, and LoadProject. */
+/**
+ * EnvFile adds a Compose env_file path. Service, job, AddInclude, and LoadProject.
+ *
+ * Parent: Include, Job, Service
+ *
+ * @example
+ * ```tsx
+ * <EnvFile path="/tmp" />
+ * ```
+ */
 export type EnvFileProps = {
 	/** EnvFile adds a Compose env_file path. Service, job, AddInclude, and LoadProject. */
 	path?: string;
@@ -567,22 +914,54 @@ export type EnvFileProps = {
 	children?: MaybeChild<never>;
 };
 
+/**
+ * A EnvFile element.
+ *
+ * @remarks
+ * Props are {@link EnvFileProps} without `children`. Nested elements are stored on the node.
+ */
 export type EnvFile<P extends EnvFileProps = Omit<EnvFileProps, "children">> = Node<"envFile", P>;
+/** EnvFile when it is the child of another element. */
 export type EnvFileNode = EnvFile;
 
-/** Expose publishes a port without a host binding (Engine ExposedPorts / Compose expose). */
+/**
+ * Expose publishes a port without a host binding (Engine ExposedPorts / Compose expose).
+ *
+ * Parent: Container, Job, PreStart, Service
+ *
+ * @example
+ * ```tsx
+ * <Expose port={80} />
+ * ```
+ */
 export type ExposeProps = {
 	port?: number;
 	proto?: string | string[];
 	children?: MaybeChild<never>;
 };
 
+/**
+ * A Expose element.
+ *
+ * @remarks
+ * Props are {@link ExposeProps} without `children`. Nested elements are stored on the node.
+ */
 export type Expose<P extends ExposeProps = Omit<ExposeProps, "children">> = Node<"expose", P>;
+/** Expose when it is the child of another element. */
 export type ExposeNode = Expose;
 
 /**
- * ExtraHost adds a hostname-to-IP mapping (Engine extra_hosts / Compose extra_hosts).
- * Inside Build it maps to compose build.extra_hosts.
+ * ExtraHost maps a hostname to an IP inside the container (Engine extra_hosts / Compose extra_hosts).
+ * Put it on the service or container. Inside Build it maps to compose build.extra_hosts.
+ *
+ * 	<ExtraHost hostname="db" ip="10.0.0.2" />
+ *
+ * Parent: Build, Container, Job, PreStart, Service
+ *
+ * @example
+ * ```tsx
+ * <ExtraHost hostname="example" ip="example" />
+ * ```
  */
 export type ExtraHostProps = {
 	hostname?: string;
@@ -590,12 +969,26 @@ export type ExtraHostProps = {
 	children?: MaybeChild<never>;
 };
 
+/**
+ * A ExtraHost element.
+ *
+ * @remarks
+ * Props are {@link ExtraHostProps} without `children`. Nested elements are stored on the node.
+ */
 export type ExtraHost<P extends ExtraHostProps = Omit<ExtraHostProps, "children">> = Node<"extraHost", P>;
+/** ExtraHost when it is the child of another element. */
 export type ExtraHostNode = ExtraHost;
 
 /**
  * FileConfig adds a Compose config-file reference on a service/job.
  * Named FileConfig because Config is the Engine portable config type.
+ *
+ * Parent: Compose, Job, Service
+ *
+ * @example
+ * ```tsx
+ * <FileConfig name="app" source="." target="/data" />
+ * ```
  */
 export type FileConfigProps = {
 	/** External marks a project network, volume, secret, or config as unmanaged. */
@@ -628,20 +1021,50 @@ export type FileConfigProps = {
 	children?: MaybeChild<LabelNode | Node<"fragment">>;
 };
 
+/**
+ * A FileConfig element.
+ *
+ * @remarks
+ * Props are {@link FileConfigProps} without `children`. Nested elements are stored on the node.
+ */
 export type FileConfig<P extends FileConfigProps = Omit<FileConfigProps, "children">> = Node<"fileConfig", P>;
+/** FileConfig when it is the child of another element. */
 export type FileConfigNode = FileConfig;
 
-/** Filter adds an Engine API filter term (list/prune/search/events). */
+/**
+ * Filter adds an Engine API filter term (list/prune/search/events).
+ *
+ * @example
+ * ```tsx
+ * <Filter term="example" values={["example"]} />
+ * ```
+ */
 export type FilterProps = {
 	term?: string;
 	values?: string | string[];
 	children?: MaybeChild<never>;
 };
 
+/**
+ * A Filter element.
+ *
+ * @remarks
+ * Props are {@link FilterProps} without `children`. Nested elements are stored on the node.
+ */
 export type Filter<P extends FilterProps = Omit<FilterProps, "children">> = Node<"filter", P>;
+/** Filter when it is the child of another element. */
 export type FilterNode = Filter;
 
-/** GPU requests GPUs (Engine DeviceRequests / Compose gpus). */
+/**
+ * GPU requests GPUs (Engine DeviceRequests / Compose gpus).
+ *
+ * Parent: Container, Deploy, Job, PreStart, Reserve, Service
+ *
+ * @example
+ * ```tsx
+ * <GPU driver="bridge" />
+ * ```
+ */
 export type GPUProps = {
 	/** Capabilities adds a GPU capability (typically "gpu") inside GPU. */
 	capabilities?: string;
@@ -655,10 +1078,26 @@ export type GPUProps = {
 	children?: MaybeChild<DriverOptNode | Node<"fragment">>;
 };
 
+/**
+ * A GPU element.
+ *
+ * @remarks
+ * Props are {@link GPUProps} without `children`. Nested elements are stored on the node.
+ */
 export type GPU<P extends GPUProps = Omit<GPUProps, "children">> = Node<"gpu", P>;
+/** GPU when it is the child of another element. */
 export type GPUNode = GPU;
 
-/** Health configures a healthcheck with nested setters. */
+/**
+ * Health configures a healthcheck with nested setters.
+ *
+ * Parent: Container, PreStart, Service
+ *
+ * @example
+ * ```tsx
+ * <Health test={["CMD", "true"]} interval="30s" />
+ * ```
+ */
 export type HealthProps = {
 	/**
 	 * Disabled disables a healthcheck, or leaves a plugin disabled after
@@ -697,20 +1136,50 @@ export type HealthProps = {
 	children?: MaybeChild<never>;
 };
 
+/**
+ * A Health element.
+ *
+ * @remarks
+ * Props are {@link HealthProps} without `children`. Nested elements are stored on the node.
+ */
 export type Health<P extends HealthProps = Omit<HealthProps, "children">> = Node<"health", P>;
+/** Health when it is the child of another element. */
 export type HealthNode = Health;
 
-/** HTTPHeader adds a custom HTTP header on Engine requests. */
+/**
+ * HTTPHeader adds a custom HTTP header on Engine requests.
+ *
+ * @example
+ * ```tsx
+ * <HTTPHeader name="app" value="1" />
+ * ```
+ */
 export type HTTPHeaderProps = {
 	name?: string;
 	value?: string;
 	children?: MaybeChild<never>;
 };
 
+/**
+ * A HTTPHeader element.
+ *
+ * @remarks
+ * Props are {@link HTTPHeaderProps} without `children`. Nested elements are stored on the node.
+ */
 export type HTTPHeader<P extends HTTPHeaderProps = Omit<HTTPHeaderProps, "children">> = Node<"httpHeader", P>;
+/** HTTPHeader when it is the child of another element. */
 export type HTTPHeaderNode = HTTPHeader;
 
-/** Include adds a develop.watch include glob inside WatchFiles. */
+/**
+ * Include adds a develop.watch include glob inside WatchFiles.
+ *
+ * Parent: Compose
+ *
+ * @example
+ * ```tsx
+ * <Include path="/tmp" />
+ * ```
+ */
 export type IncludeProps = {
 	/** Path sets a filesystem path for StatPath. */
 	path?: string;
@@ -722,20 +1191,52 @@ export type IncludeProps = {
 	children?: MaybeChild<EnvFileNode | Node<"fragment">>;
 };
 
+/**
+ * A Include element.
+ *
+ * @remarks
+ * Props are {@link IncludeProps} without `children`. Nested elements are stored on the node.
+ */
 export type Include<P extends IncludeProps = Omit<IncludeProps, "children">> = Node<"include", P>;
+/** Include when it is the child of another element. */
 export type IncludeNode = Include;
 
-/** IPAMOpt adds Compose networks.ipam.options inside AddNetwork. */
+/**
+ * IPAMOpt adds Compose networks.ipam.options inside AddNetwork.
+ *
+ * Parent: Network
+ *
+ * @example
+ * ```tsx
+ * <IPAMOpt name="app" value="1" />
+ * ```
+ */
 export type IPAMOptProps = {
 	name?: string;
 	value?: string;
 	children?: MaybeChild<never>;
 };
 
+/**
+ * A IPAMOpt element.
+ *
+ * @remarks
+ * Props are {@link IPAMOptProps} without `children`. Nested elements are stored on the node.
+ */
 export type IPAMOpt<P extends IPAMOptProps = Omit<IPAMOptProps, "children">> = Node<"ipamOpt", P>;
+/** IPAMOpt when it is the child of another element. */
 export type IPAMOptNode = IPAMOpt;
 
-/** Job is a Compose job: shared spec plus job-only build/secrets/depends. */
+/**
+ * Job is a Compose job: shared spec plus job-only build/secrets/depends.
+ *
+ * Parent: Compose
+ *
+ * @example
+ * ```tsx
+ * <Job name="app" image="alpine" />
+ * ```
+ */
 export type JobProps = {
 	/** BlkioWeight sets block IO weight (10–1000). */
 	blkioWeight?: number;
@@ -779,7 +1280,10 @@ export type JobProps = {
 	cpus?: number;
 	/** DeviceCgroupRule adds a device cgroup rule. */
 	deviceCgroupRule?: string;
-	/** DNS adds a DNS server. */
+	/**
+	 * DNS adds one DNS server, such as 1.1.1.1.
+	 * Put it on the service or container. Repeat it for another server.
+	 */
 	dns?: string;
 	/** DNSOption adds a DNS resolver option. */
 	dnsOption?: string;
@@ -791,7 +1295,10 @@ export type JobProps = {
 	entrypoint?: string | string[];
 	/** GroupAdd adds a supplementary group. */
 	groupAdd?: string;
-	/** Hostname sets the container hostname. */
+	/**
+	 * Hostname sets the name the container uses for itself.
+	 * It belongs on the service or container, not on a Network.
+	 */
 	hostname?: string;
 	/** Image sets the image reference on a container, service, job, or Engine build tag. */
 	image?: string;
@@ -814,7 +1321,15 @@ export type JobProps = {
 	labelFile?: string;
 	/** Link adds a legacy container link. */
 	link?: string;
-	/** MacAddress sets the container MAC address, or the endpoint MAC inside Network. */
+	/**
+	 * MacAddress sets a MAC address.
+	 *
+	 * On a Service, Job, or Container it is that container's MAC. On a Network
+	 * child it is the MAC of that one endpoint. Use the Network form when the
+	 * container joins a network you defined.
+	 *
+	 * 	<Network name="backend" macAddress="02:42:0a:00:00:0a" />
+	 */
 	macAddress?: string;
 	/**
 	 * Memory sets the memory limit in bytes, including explicit 0.
@@ -908,12 +1423,26 @@ export type JobProps = {
 	children?: MaybeChild<AnnotationNode | BlkioReadBpsNode | BlkioReadIOpsNode | BlkioWeightDeviceNode | BlkioWriteBpsNode | BlkioWriteIOpsNode | BuildNode | ConsoleSizeNode | ContainerNode | DependsOnNode | DeviceNode | EnvNode | EnvFileNode | ExposeNode | ExtraHostNode | FileConfigNode | GPUNode | LabelNode | LoggingNode | ModelNode | NetworkNode | SecretNode | StorageOptNode | SysctlNode | UlimitNode | VolumeNode | Node<"fragment">>;
 };
 
+/**
+ * A Job element.
+ *
+ * @remarks
+ * Props are {@link JobProps} without `children`. Nested elements are stored on the node.
+ */
 export type Job<P extends JobProps = Omit<JobProps, "children">> = Node<"job", P>;
+/** Job when it is the child of another element. */
 export type JobNode = Job;
 
 /**
  * Label adds a label on the receiver: container/service/job, or nested
  * volume, network, build, deploy, or project resource.
+ *
+ * Parent: Build, Container, Deploy, FileConfig, Job, Network, PreStart, Secret, Service, Volume
+ *
+ * @example
+ * ```tsx
+ * <Label name="app" value="1" />
+ * ```
  */
 export type LabelProps = {
 	name?: string;
@@ -921,10 +1450,26 @@ export type LabelProps = {
 	children?: string;
 };
 
+/**
+ * A Label element.
+ *
+ * @remarks
+ * Props are {@link LabelProps} without `children`. Nested elements are stored on the node.
+ */
 export type Label<P extends LabelProps = Omit<LabelProps, "children">> = Node<"label", P>;
+/** Label when it is the child of another element. */
 export type LabelNode = Label;
 
-/** Logging sets Engine LogConfig / Compose logging. */
+/**
+ * Logging sets Engine LogConfig / Compose logging.
+ *
+ * Parent: Container, Job, PreStart, Service
+ *
+ * @example
+ * ```tsx
+ * <Logging driver="bridge" />
+ * ```
+ */
 export type LoggingProps = {
 	/**
 	 * Driver sets the driver name for logging, devices, GPUs, volumes, networks,
@@ -934,10 +1479,26 @@ export type LoggingProps = {
 	children?: MaybeChild<DriverOptNode | Node<"fragment">>;
 };
 
+/**
+ * A Logging element.
+ *
+ * @remarks
+ * Props are {@link LoggingProps} without `children`. Nested elements are stored on the node.
+ */
 export type Logging<P extends LoggingProps = Omit<LoggingProps, "children">> = Node<"logging", P>;
+/** Logging when it is the child of another element. */
 export type LoggingNode = Logging;
 
-/** Model adds a Compose models mapping. Service and job. */
+/**
+ * Model adds a Compose models mapping. Service and job.
+ *
+ * Parent: Compose, Job, Service
+ *
+ * @example
+ * ```tsx
+ * <Model name="app" image="alpine" />
+ * ```
+ */
 export type ModelProps = {
 	/** ContextSize sets a top-level Compose model's context_size inside AddModel. */
 	contextSize?: number;
@@ -957,10 +1518,31 @@ export type ModelProps = {
 	children?: MaybeChild<never>;
 };
 
+/**
+ * A Model element.
+ *
+ * @remarks
+ * Props are {@link ModelProps} without `children`. Nested elements are stored on the node.
+ */
 export type Model<P extends ModelProps = Omit<ModelProps, "children">> = Node<"model", P>;
+/** Model when it is the child of another element. */
 export type ModelNode = Model;
 
-/** Network attaches a named network (Engine EndpointsConfig / Compose networks). */
+/**
+ * Network attaches a named network (Engine EndpointsConfig / Compose networks).
+ *
+ * Under Compose it defines the network: driver, subnet, and gateway. Under
+ * Service, Job, or Container it joins that network and can set ipv4, ipv6, and
+ * macAddress. A static address has to fall inside the subnet of the project
+ * network with the same name.
+ *
+ * Parent: Compose, Container, Job, PreStart, Service
+ *
+ * @example
+ * ```tsx
+ * <Network name="app" driver="bridge" />
+ * ```
+ */
 export type NetworkProps = {
 	/** Alias adds a network alias inside Network. */
 	alias?: string;
@@ -977,7 +1559,10 @@ export type NetworkProps = {
 	enableIPv6?: boolean;
 	/** External marks a project network, volume, secret, or config as unmanaged. */
 	external?: boolean;
-	/** Gateway sets an IPAM gateway inside AddNetwork. */
+	/**
+	 * Gateway sets the gateway of a project network, such as 10.0.0.1.
+	 * Put it on the Network element under Compose, next to subnet.
+	 */
 	gateway?: string;
 	/** GatewayPriority sets Compose networks.gw_priority inside Network. */
 	gatewayPriority?: number;
@@ -989,13 +1574,36 @@ export type NetworkProps = {
 	ipRange?: string;
 	/** IPAMDriver sets Compose networks.ipam.driver inside AddNetwork. */
 	ipamDriver?: string;
-	/** IPv4 sets a static IPv4 address inside Network. */
+	/**
+	 * IPv4 sets the static IPv4 address of a service, job, or container on one network.
+	 *
+	 * Put it on the Network element inside that service. The Network element under
+	 * Compose defines the network and does not take this address. The address has
+	 * to fall inside that network's subnet.
+	 *
+	 * 	<Network name="backend" ipv4="10.0.0.10" />
+	 */
 	ipv4?: string;
-	/** IPv6 sets a static IPv6 address inside Network. */
+	/**
+	 * IPv6 sets the static IPv6 address of a service, job, or container on one network.
+	 *
+	 * Put it on the Network element inside that service, next to ipv4. The address
+	 * has to fall inside the project network's IPv6 subnet.
+	 *
+	 * 	<Network name="backend" ipv6="fd00:1::10" />
+	 */
 	ipv6?: string;
 	/** LinkLocal adds Compose networks.link_local_ips inside Network. */
 	linkLocal?: string;
-	/** MacAddress sets the container MAC address, or the endpoint MAC inside Network. */
+	/**
+	 * MacAddress sets a MAC address.
+	 *
+	 * On a Service, Job, or Container it is that container's MAC. On a Network
+	 * child it is the MAC of that one endpoint. Use the Network form when the
+	 * container joins a network you defined.
+	 *
+	 * 	<Network name="backend" macAddress="02:42:0a:00:00:0a" />
+	 */
 	macAddress?: string;
 	/**
 	 * Name sets the receiver's name: container, service, job, project, depends_on,
@@ -1004,17 +1612,37 @@ export type NetworkProps = {
 	name?: string;
 	/** Priority sets Compose networks.priority inside Network. */
 	priority?: number;
-	/** Subnet sets an IPAM subnet inside AddNetwork. */
+	/**
+	 * Subnet sets the CIDR of a project network, such as 10.0.0.0/24.
+	 * Put it on the Network element under Compose. A service address on that
+	 * network has to fall inside this range.
+	 */
 	subnet?: string;
 	/** UseServiceNameAlias sets Compose networks.use_service_name_alias inside Network. */
 	useServiceNameAlias?: boolean;
 	children?: MaybeChild<AuxAddressNode | DriverOptNode | IPAMOptNode | LabelNode | Node<"fragment">>;
 };
 
+/**
+ * A Network element.
+ *
+ * @remarks
+ * Props are {@link NetworkProps} without `children`. Nested elements are stored on the node.
+ */
 export type Network<P extends NetworkProps = Omit<NetworkProps, "children">> = Node<"network", P>;
+/** Network when it is the child of another element. */
 export type NetworkNode = Network;
 
-/** Placement sets deploy.placement inside Deploy. */
+/**
+ * Placement sets deploy.placement inside Deploy.
+ *
+ * Parent: Deploy
+ *
+ * @example
+ * ```tsx
+ * <Placement constraint="example" maxReplicas={1} />
+ * ```
+ */
 export type PlacementProps = {
 	/** Constraint adds a placement constraint inside Placement. */
 	constraint?: string;
@@ -1025,10 +1653,26 @@ export type PlacementProps = {
 	children?: MaybeChild<never>;
 };
 
+/**
+ * A Placement element.
+ *
+ * @remarks
+ * Props are {@link PlacementProps} without `children`. Nested elements are stored on the node.
+ */
 export type Placement<P extends PlacementProps = Omit<PlacementProps, "children">> = Node<"placement", P>;
+/** Placement when it is the child of another element. */
 export type PlacementNode = Placement;
 
-/** PostStart adds a Compose post_start hook. Service only. */
+/**
+ * PostStart adds a Compose post_start hook. Service only.
+ *
+ * Parent: Service
+ *
+ * @example
+ * ```tsx
+ * <PostStart command={["example"]} privileged={true} />
+ * ```
+ */
 export type PostStartProps = {
 	/**
 	 * Command sets the command (argv) for a container, service, job, Compose.Run,
@@ -1050,10 +1694,26 @@ export type PostStartProps = {
 	children?: MaybeChild<EnvNode | Node<"fragment">>;
 };
 
+/**
+ * A PostStart element.
+ *
+ * @remarks
+ * Props are {@link PostStartProps} without `children`. Nested elements are stored on the node.
+ */
 export type PostStart<P extends PostStartProps = Omit<PostStartProps, "children">> = Node<"postStart", P>;
+/** PostStart when it is the child of another element. */
 export type PostStartNode = PostStart;
 
-/** PreStart adds a Compose pre_start hook using the same container vocabulary. */
+/**
+ * PreStart adds a Compose pre_start hook using the same container vocabulary.
+ *
+ * Parent: Service
+ *
+ * @example
+ * ```tsx
+ * <PreStart name="app" image="alpine" />
+ * ```
+ */
 export type PreStartProps = {
 	/** ArgsEscaped marks the command as already escaped (Windows). Engine-only. */
 	argsEscaped?: boolean;
@@ -1112,7 +1772,10 @@ export type PreStartProps = {
 	cpus?: number;
 	/** DeviceCgroupRule adds a device cgroup rule. */
 	deviceCgroupRule?: string;
-	/** DNS adds a DNS server. */
+	/**
+	 * DNS adds one DNS server, such as 1.1.1.1.
+	 * Put it on the service or container. Repeat it for another server.
+	 */
 	dns?: string;
 	/** DNSOption adds a DNS resolver option. */
 	dnsOption?: string;
@@ -1124,7 +1787,10 @@ export type PreStartProps = {
 	entrypoint?: string | string[];
 	/** GroupAdd adds a supplementary group. */
 	groupAdd?: string;
-	/** Hostname sets the container hostname. */
+	/**
+	 * Hostname sets the name the container uses for itself.
+	 * It belongs on the service or container, not on a Network.
+	 */
 	hostname?: string;
 	/** Image sets the image reference on a container, service, job, or Engine build tag. */
 	image?: string;
@@ -1145,7 +1811,15 @@ export type PreStartProps = {
 	isolation?: "default" | "process" | "hyperv";
 	/** Link adds a legacy container link. */
 	link?: string;
-	/** MacAddress sets the container MAC address, or the endpoint MAC inside Network. */
+	/**
+	 * MacAddress sets a MAC address.
+	 *
+	 * On a Service, Job, or Container it is that container's MAC. On a Network
+	 * child it is the MAC of that one endpoint. Use the Network form when the
+	 * container joins a network you defined.
+	 *
+	 * 	<Network name="backend" macAddress="02:42:0a:00:00:0a" />
+	 */
 	macAddress?: string;
 	/** MaskedPath overrides a masked path. Engine-only. */
 	maskedPath?: string;
@@ -1249,10 +1923,26 @@ export type PreStartProps = {
 	children?: MaybeChild<AnnotationNode | BlkioReadBpsNode | BlkioReadIOpsNode | BlkioWeightDeviceNode | BlkioWriteBpsNode | BlkioWriteIOpsNode | ConsoleSizeNode | DeviceNode | EnvNode | ExposeNode | ExtraHostNode | GPUNode | HealthNode | LabelNode | LoggingNode | NetworkNode | PublishNode | RestartNode | StorageOptNode | SysctlNode | UlimitNode | VolumeNode | Node<"fragment">>;
 };
 
+/**
+ * A PreStart element.
+ *
+ * @remarks
+ * Props are {@link PreStartProps} without `children`. Nested elements are stored on the node.
+ */
 export type PreStart<P extends PreStartProps = Omit<PreStartProps, "children">> = Node<"preStart", P>;
+/** PreStart when it is the child of another element. */
 export type PreStartNode = PreStart;
 
-/** PreStop adds a Compose pre_stop hook. Service only. */
+/**
+ * PreStop adds a Compose pre_stop hook. Service only.
+ *
+ * Parent: Service
+ *
+ * @example
+ * ```tsx
+ * <PreStop command={["example"]} privileged={true} />
+ * ```
+ */
 export type PreStopProps = {
 	/**
 	 * Command sets the command (argv) for a container, service, job, Compose.Run,
@@ -1274,20 +1964,52 @@ export type PreStopProps = {
 	children?: MaybeChild<EnvNode | Node<"fragment">>;
 };
 
+/**
+ * A PreStop element.
+ *
+ * @remarks
+ * Props are {@link PreStopProps} without `children`. Nested elements are stored on the node.
+ */
 export type PreStop<P extends PreStopProps = Omit<PreStopProps, "children">> = Node<"preStop", P>;
+/** PreStop when it is the child of another element. */
 export type PreStopNode = PreStop;
 
-/** ProviderOption adds Compose provider.options. Service only. */
+/**
+ * ProviderOption adds Compose provider.options. Service only.
+ *
+ * Parent: Service
+ *
+ * @example
+ * ```tsx
+ * <ProviderOption name="app" value="1" />
+ * ```
+ */
 export type ProviderOptionProps = {
 	name?: string;
 	value?: string;
 	children?: MaybeChild<never>;
 };
 
+/**
+ * A ProviderOption element.
+ *
+ * @remarks
+ * Props are {@link ProviderOptionProps} without `children`. Nested elements are stored on the node.
+ */
 export type ProviderOption<P extends ProviderOptionProps = Omit<ProviderOptionProps, "children">> = Node<"providerOption", P>;
+/** ProviderOption when it is the child of another element. */
 export type ProviderOptionNode = ProviderOption;
 
-/** Publish adds a published port. Nested setters determine host/container ports. */
+/**
+ * Publish adds a published port. Nested setters determine host/container ports.
+ *
+ * Parent: Container, PreStart, Service
+ *
+ * @example
+ * ```tsx
+ * <Publish name="app" hostPort={8080} containerPort={80} />
+ * ```
+ */
 export type PublishProps = {
 	/** AppProtocol sets Compose ports.app_protocol inside Publish. */
 	appProtocol?: string;
@@ -1315,10 +2037,26 @@ export type PublishProps = {
 	children?: MaybeChild<never>;
 };
 
+/**
+ * A Publish element.
+ *
+ * @remarks
+ * Props are {@link PublishProps} without `children`. Nested elements are stored on the node.
+ */
 export type Publish<P extends PublishProps = Omit<PublishProps, "children">> = Node<"publish", P>;
+/** Publish when it is the child of another element. */
 export type PublishNode = Publish;
 
-/** Reserve sets deploy.resources.reservations inside Deploy. */
+/**
+ * Reserve sets deploy.resources.reservations inside Deploy.
+ *
+ * Parent: Deploy
+ *
+ * @example
+ * ```tsx
+ * <Reserve cpus={1} memory={1} />
+ * ```
+ */
 export type ReserveProps = {
 	/**
 	 * CPUs sets CPU quota as a fractional count (Compose cpus / Engine NanoCPUs).
@@ -1338,10 +2076,26 @@ export type ReserveProps = {
 	children?: MaybeChild<DiscreteNode | GPUNode | Node<"fragment">>;
 };
 
+/**
+ * A Reserve element.
+ *
+ * @remarks
+ * Props are {@link ReserveProps} without `children`. Nested elements are stored on the node.
+ */
 export type Reserve<P extends ReserveProps = Omit<ReserveProps, "children">> = Node<"reserve", P>;
+/** Reserve when it is the child of another element. */
 export type ReserveNode = Reserve;
 
-/** Restart configures the restart policy with nested setters. */
+/**
+ * Restart configures the restart policy with nested setters.
+ *
+ * Parent: Container, Deploy, PreStart, Service
+ *
+ * @example
+ * ```tsx
+ * <Restart policy="unless-stopped" />
+ * ```
+ */
 export type RestartProps = {
 	/**
 	 * Delay sets update delay or deploy restart_policy delay.
@@ -1360,10 +2114,26 @@ export type RestartProps = {
 	children?: MaybeChild<never>;
 };
 
+/**
+ * A Restart element.
+ *
+ * @remarks
+ * Props are {@link RestartProps} without `children`. Nested elements are stored on the node.
+ */
 export type Restart<P extends RestartProps = Omit<RestartProps, "children">> = Node<"restart", P>;
+/** Restart when it is the child of another element. */
 export type RestartNode = Restart;
 
-/** Rollback sets deploy.rollback_config inside Deploy. */
+/**
+ * Rollback sets deploy.rollback_config inside Deploy.
+ *
+ * Parent: Deploy
+ *
+ * @example
+ * ```tsx
+ * <Rollback delay="30s" failureAction="continue" />
+ * ```
+ */
 export type RollbackProps = {
 	/**
 	 * Delay sets update delay or deploy restart_policy delay.
@@ -1386,10 +2156,26 @@ export type RollbackProps = {
 	children?: MaybeChild<never>;
 };
 
+/**
+ * A Rollback element.
+ *
+ * @remarks
+ * Props are {@link RollbackProps} without `children`. Nested elements are stored on the node.
+ */
 export type Rollback<P extends RollbackProps = Omit<RollbackProps, "children">> = Node<"rollback", P>;
+/** Rollback when it is the child of another element. */
 export type RollbackNode = Rollback;
 
-/** Secret adds a Compose secret reference on a service/job. */
+/**
+ * Secret adds a Compose secret reference on a service/job.
+ *
+ * Parent: Build, Compose, Job, Service
+ *
+ * @example
+ * ```tsx
+ * <Secret name="app" source="." target="/data" />
+ * ```
+ */
 export type SecretProps = {
 	/**
 	 * Driver sets the driver name for logging, devices, GPUs, volumes, networks,
@@ -1426,10 +2212,26 @@ export type SecretProps = {
 	children?: MaybeChild<LabelNode | Node<"fragment">>;
 };
 
+/**
+ * A Secret element.
+ *
+ * @remarks
+ * Props are {@link SecretProps} without `children`. Nested elements are stored on the node.
+ */
 export type Secret<P extends SecretProps = Omit<SecretProps, "children">> = Node<"secret", P>;
+/** Secret when it is the child of another element. */
 export type SecretNode = Secret;
 
-/** Service is a Compose service: shared container settings plus Compose-only fields. */
+/**
+ * Service is a Compose service: shared container settings plus Compose-only fields.
+ *
+ * Parent: Compose
+ *
+ * @example
+ * ```tsx
+ * <Service name="app" image="alpine" />
+ * ```
+ */
 export type ServiceProps = {
 	/** Attach sets Compose attach. Service only. */
 	attach?: boolean;
@@ -1483,7 +2285,10 @@ export type ServiceProps = {
 	credentialRegistry?: string;
 	/** DeviceCgroupRule adds a device cgroup rule. */
 	deviceCgroupRule?: string;
-	/** DNS adds a DNS server. */
+	/**
+	 * DNS adds one DNS server, such as 1.1.1.1.
+	 * Put it on the service or container. Repeat it for another server.
+	 */
 	dns?: string;
 	/** DNSOption adds a DNS resolver option. */
 	dnsOption?: string;
@@ -1499,15 +2304,12 @@ export type ServiceProps = {
 	extendsFile?: string;
 	/** ExternalLink adds a Compose external_links entry. Service only. */
 	externalLink?: string;
-	/**
-	 * FromContainer copies compatible container options onto a Compose service.
-	 * Engine-only settings such as AutoRemove are reported as unsupported mappings.
-	 * Passing a [*Container] directly to NewService is equivalent.
-	 */
-	fromContainer?: unknown;
 	/** GroupAdd adds a supplementary group. */
 	groupAdd?: string;
-	/** Hostname sets the container hostname. */
+	/**
+	 * Hostname sets the name the container uses for itself.
+	 * It belongs on the service or container, not on a Network.
+	 */
 	hostname?: string;
 	/** Image sets the image reference on a container, service, job, or Engine build tag. */
 	image?: string;
@@ -1530,7 +2332,15 @@ export type ServiceProps = {
 	labelFile?: string;
 	/** Link adds a legacy container link. */
 	link?: string;
-	/** MacAddress sets the container MAC address, or the endpoint MAC inside Network. */
+	/**
+	 * MacAddress sets a MAC address.
+	 *
+	 * On a Service, Job, or Container it is that container's MAC. On a Network
+	 * child it is the MAC of that one endpoint. Use the Network form when the
+	 * container joins a network you defined.
+	 *
+	 * 	<Network name="backend" macAddress="02:42:0a:00:00:0a" />
+	 */
 	macAddress?: string;
 	/**
 	 * Memory sets the memory limit in bytes, including explicit 0.
@@ -1630,48 +2440,126 @@ export type ServiceProps = {
 	children?: MaybeChild<AnnotationNode | BlkioReadBpsNode | BlkioReadIOpsNode | BlkioWeightDeviceNode | BlkioWriteBpsNode | BlkioWriteIOpsNode | BuildNode | ConsoleSizeNode | ContainerNode | DependsOnNode | DeployNode | DevelopNode | DeviceNode | EnvNode | EnvFileNode | ExposeNode | ExtraHostNode | FileConfigNode | GPUNode | HealthNode | LabelNode | LoggingNode | ModelNode | NetworkNode | PostStartNode | PreStartNode | PreStopNode | ProviderOptionNode | PublishNode | RestartNode | SecretNode | StorageOptNode | SysctlNode | UlimitNode | VolumeNode | Node<"fragment">>;
 };
 
+/**
+ * A Service element.
+ *
+ * @remarks
+ * Props are {@link ServiceProps} without `children`. Nested elements are stored on the node.
+ */
 export type Service<P extends ServiceProps = Omit<ServiceProps, "children">> = Node<"service", P>;
+/** Service when it is the child of another element. */
 export type ServiceNode = Service;
 
-/** SSH adds a build SSH mount inside Build or Compose.Build (id, optional path). */
+/**
+ * SSH adds a build SSH mount inside Build or Compose.Build (id, optional path).
+ *
+ * Parent: Build
+ *
+ * @example
+ * ```tsx
+ * <SSH path="/tmp" />
+ * ```
+ */
 export type SSHProps = {
 	id?: string;
 	path?: string;
 	children?: MaybeChild<never>;
 };
 
+/**
+ * A SSH element.
+ *
+ * @remarks
+ * Props are {@link SSHProps} without `children`. Nested elements are stored on the node.
+ */
 export type SSH<P extends SSHProps = Omit<SSHProps, "children">> = Node<"ssh", P>;
+/** SSH when it is the child of another element. */
 export type SSHNode = SSH;
 
-/** StorageOpt sets a storage-driver option. */
+/**
+ * StorageOpt sets a storage-driver option.
+ *
+ * Parent: Container, Job, PreStart, Service
+ *
+ * @example
+ * ```tsx
+ * <StorageOpt name="app" value="1" />
+ * ```
+ */
 export type StorageOptProps = {
 	name?: string;
 	value?: string;
 	children?: MaybeChild<never>;
 };
 
+/**
+ * A StorageOpt element.
+ *
+ * @remarks
+ * Props are {@link StorageOptProps} without `children`. Nested elements are stored on the node.
+ */
 export type StorageOpt<P extends StorageOptProps = Omit<StorageOptProps, "children">> = Node<"storageOpt", P>;
+/** StorageOpt when it is the child of another element. */
 export type StorageOptNode = StorageOpt;
 
-/** Sysctl sets a namespaced sysctl. */
+/**
+ * Sysctl sets a namespaced sysctl.
+ *
+ * Parent: Container, Job, PreStart, Service
+ *
+ * @example
+ * ```tsx
+ * <Sysctl name="app" value="1" />
+ * ```
+ */
 export type SysctlProps = {
 	name?: string;
 	value?: string;
 	children?: MaybeChild<never>;
 };
 
+/**
+ * A Sysctl element.
+ *
+ * @remarks
+ * Props are {@link SysctlProps} without `children`. Nested elements are stored on the node.
+ */
 export type Sysctl<P extends SysctlProps = Omit<SysctlProps, "children">> = Node<"sysctl", P>;
+/** Sysctl when it is the child of another element. */
 export type SysctlNode = Sysctl;
 
-/** TLS configures client TLS. Nested setters are CA, Cert, and Key. */
+/**
+ * TLS configures client TLS. Nested setters are CA, Cert, and Key.
+ *
+ * @example
+ * ```tsx
+ * <TLS />
+ * ```
+ */
 export type TLSProps = {
 	children?: MaybeChild<never>;
 };
 
+/**
+ * A TLS element.
+ *
+ * @remarks
+ * Props are {@link TLSProps} without `children`. Nested elements are stored on the node.
+ */
 export type TLS<P extends TLSProps = Omit<TLSProps, "children">> = Node<"tls", P>;
+/** TLS when it is the child of another element. */
 export type TLSNode = TLS;
 
-/** Ulimit adds a ulimit shared by Engine Resources.Ulimits and Compose ulimits. */
+/**
+ * Ulimit adds a ulimit shared by Engine Resources.Ulimits and Compose ulimits.
+ *
+ * Parent: Build, Container, Job, PreStart, Service
+ *
+ * @example
+ * ```tsx
+ * <Ulimit name="app" />
+ * ```
+ */
 export type UlimitProps = {
 	/** Hard sets the hard ulimit inside Ulimit. */
 	hard?: number;
@@ -1685,10 +2573,26 @@ export type UlimitProps = {
 	children?: MaybeChild<never>;
 };
 
+/**
+ * A Ulimit element.
+ *
+ * @remarks
+ * Props are {@link UlimitProps} without `children`. Nested elements are stored on the node.
+ */
 export type Ulimit<P extends UlimitProps = Omit<UlimitProps, "children">> = Node<"ulimit", P>;
+/** Ulimit when it is the child of another element. */
 export type UlimitNode = Ulimit;
 
-/** Update sets deploy.update_config inside Deploy. */
+/**
+ * Update sets deploy.update_config inside Deploy.
+ *
+ * Parent: Deploy
+ *
+ * @example
+ * ```tsx
+ * <Update delay="30s" failureAction="continue" />
+ * ```
+ */
 export type UpdateProps = {
 	/**
 	 * Delay sets update delay or deploy restart_policy delay.
@@ -1711,10 +2615,26 @@ export type UpdateProps = {
 	children?: MaybeChild<never>;
 };
 
+/**
+ * A Update element.
+ *
+ * @remarks
+ * Props are {@link UpdateProps} without `children`. Nested elements are stored on the node.
+ */
 export type Update<P extends UpdateProps = Omit<UpdateProps, "children">> = Node<"update", P>;
+/** Update when it is the child of another element. */
 export type UpdateNode = Update;
 
-/** Volume adds a mount shared by Engine HostConfig.Mounts and Compose volumes. */
+/**
+ * Volume adds a mount shared by Engine HostConfig.Mounts and Compose volumes.
+ *
+ * Parent: Compose, Container, Job, PreStart, Service
+ *
+ * @example
+ * ```tsx
+ * <Volume name="app" source="." target="/data" />
+ * ```
+ */
 export type VolumeProps = {
 	/** CreateHostPath sets Compose volumes.bind.create_host_path inside Volume. */
 	createHostPath?: boolean;
@@ -1764,10 +2684,26 @@ export type VolumeProps = {
 	children?: MaybeChild<DriverOptNode | LabelNode | Node<"fragment">>;
 };
 
+/**
+ * A Volume element.
+ *
+ * @remarks
+ * Props are {@link VolumeProps} without `children`. Nested elements are stored on the node.
+ */
 export type Volume<P extends VolumeProps = Omit<VolumeProps, "children">> = Node<"volume", P>;
+/** Volume when it is the child of another element. */
 export type VolumeNode = Volume;
 
-/** WatchFiles adds a develop.watch trigger inside Develop. */
+/**
+ * WatchFiles adds a develop.watch trigger inside Develop.
+ *
+ * Parent: Develop
+ *
+ * @example
+ * ```tsx
+ * <WatchFiles target="/data" path="/tmp" />
+ * ```
+ */
 export type WatchFilesProps = {
 	/** Action sets a develop.watch action inside WatchFiles. */
 	action?: "sync" | "rebuild" | "sync+restart" | "sync+exec" | "restart";
@@ -1804,60 +2740,186 @@ export type WatchFilesProps = {
 	children?: MaybeChild<EnvNode | Node<"fragment">>;
 };
 
+/**
+ * A WatchFiles element.
+ *
+ * @remarks
+ * Props are {@link WatchFilesProps} without `children`. Nested elements are stored on the node.
+ */
 export type WatchFiles<P extends WatchFilesProps = Omit<WatchFilesProps, "children">> = Node<"watchFiles", P>;
+/** WatchFiles when it is the child of another element. */
 export type WatchFilesNode = WatchFiles;
 
-/** AdditionalContext adds a named additional build context inside Build. */
+/**
+ * AdditionalContext adds a named additional build context inside Build.
+ *
+ * Parent: Build
+ *
+ * @param props - Props for this element. Nested elements are children, not fields of this object.
+ * @returns The AdditionalContext element.
+ * @example
+ * ```tsx
+ * <AdditionalContext name="app" value="1" />
+ * ```
+ */
 export function AdditionalContext(props: AdditionalContextProps): AdditionalContext {
 	return element("additionalContext", props);
 }
 
-/** Annotation adds a runtime annotation. */
+/**
+ * Annotation adds a runtime annotation.
+ *
+ * Parent: Container, Job, PreStart, Service
+ *
+ * @param props - Props for this element. Nested elements are children, not fields of this object.
+ * @returns The Annotation element.
+ * @example
+ * ```tsx
+ * <Annotation name="app" value="1" />
+ * ```
+ */
 export function Annotation(props: AnnotationProps): Annotation {
 	return element("annotation", props);
 }
 
-/** AuxAddress adds Compose networks.ipam.config.aux_addresses inside AddNetwork. */
+/**
+ * AuxAddress adds Compose networks.ipam.config.aux_addresses inside AddNetwork.
+ *
+ * Parent: Network
+ *
+ * @param props - Props for this element. Nested elements are children, not fields of this object.
+ * @returns The AuxAddress element.
+ * @example
+ * ```tsx
+ * <AuxAddress host="example" addr="example" />
+ * ```
+ */
 export function AuxAddress(props: AuxAddressProps): AuxAddress {
 	return element("auxAddress", props);
 }
 
-/** BlkioReadBps throttles read bytes/sec on a device. */
+/**
+ * BlkioReadBps throttles read bytes/sec on a device.
+ *
+ * Parent: Container, Job, PreStart, Service
+ *
+ * @param props - Props for this element. Nested elements are children, not fields of this object.
+ * @returns The BlkioReadBps element.
+ * @example
+ * ```tsx
+ * <BlkioReadBps path="/tmp" />
+ * ```
+ */
 export function BlkioReadBps(props: BlkioReadBpsProps): BlkioReadBps {
 	return element("blkioReadBps", props);
 }
 
-/** BlkioReadIOps throttles read IOPS on a device. */
+/**
+ * BlkioReadIOps throttles read IOPS on a device.
+ *
+ * Parent: Container, Job, PreStart, Service
+ *
+ * @param props - Props for this element. Nested elements are children, not fields of this object.
+ * @returns The BlkioReadIOps element.
+ * @example
+ * ```tsx
+ * <BlkioReadIOps path="/tmp" />
+ * ```
+ */
 export function BlkioReadIOps(props: BlkioReadIOpsProps): BlkioReadIOps {
 	return element("blkioReadIOps", props);
 }
 
-/** BlkioWeightDevice adds a per-device blkio weight. */
+/**
+ * BlkioWeightDevice adds a per-device blkio weight.
+ *
+ * Parent: Container, Job, PreStart, Service
+ *
+ * @param props - Props for this element. Nested elements are children, not fields of this object.
+ * @returns The BlkioWeightDevice element.
+ * @example
+ * ```tsx
+ * <BlkioWeightDevice path="/tmp" />
+ * ```
+ */
 export function BlkioWeightDevice(props: BlkioWeightDeviceProps): BlkioWeightDevice {
 	return element("blkioWeightDevice", props);
 }
 
-/** BlkioWriteBps throttles write bytes/sec on a device. */
+/**
+ * BlkioWriteBps throttles write bytes/sec on a device.
+ *
+ * Parent: Container, Job, PreStart, Service
+ *
+ * @param props - Props for this element. Nested elements are children, not fields of this object.
+ * @returns The BlkioWriteBps element.
+ * @example
+ * ```tsx
+ * <BlkioWriteBps path="/tmp" />
+ * ```
+ */
 export function BlkioWriteBps(props: BlkioWriteBpsProps): BlkioWriteBps {
 	return element("blkioWriteBps", props);
 }
 
-/** BlkioWriteIOps throttles write IOPS on a device. */
+/**
+ * BlkioWriteIOps throttles write IOPS on a device.
+ *
+ * Parent: Container, Job, PreStart, Service
+ *
+ * @param props - Props for this element. Nested elements are children, not fields of this object.
+ * @returns The BlkioWriteIOps element.
+ * @example
+ * ```tsx
+ * <BlkioWriteIOps path="/tmp" />
+ * ```
+ */
 export function BlkioWriteIOps(props: BlkioWriteIOpsProps): BlkioWriteIOps {
 	return element("blkioWriteIOps", props);
 }
 
-/** Build sets Compose build configuration. Service and job only. */
+/**
+ * Build sets Compose build configuration. Service and job only.
+ *
+ * Parent: Job, Service
+ *
+ * @param props - Props for this element. Nested elements are children, not fields of this object.
+ * @returns The Build element.
+ * @example
+ * ```tsx
+ * <Build source="." target="/data" />
+ * ```
+ */
 export function Build(props: BuildProps): Build {
 	return element("build", props);
 }
 
-/** Compose is a Compose file: name, services, jobs, networks, volumes, secrets, and configs. */
+/**
+ * Compose is a Compose file: name, services, jobs, networks, volumes, secrets, and configs.
+ *
+ * @param props - Props for this element. Nested elements are children, not fields of this object.
+ * @returns The Compose element.
+ * @example
+ * ```tsx
+ * <Compose name="app" />
+ * ```
+ */
 export function Compose(props: ComposeProps): Compose {
 	return element("compose", props);
 }
 
-/** ConsoleSize sets the initial console height and width. */
+/**
+ * ConsoleSize sets the initial console height and width.
+ *
+ * Parent: Container, Job, PreStart, Service
+ *
+ * @param props - Props for this element. Nested elements are children, not fields of this object.
+ * @returns The ConsoleSize element.
+ * @example
+ * ```tsx
+ * <ConsoleSize height={1} width={1} />
+ * ```
+ */
 export function ConsoleSize(props: ConsoleSizeProps): ConsoleSize {
 	return element("consoleSize", props);
 }
@@ -1865,42 +2927,126 @@ export function ConsoleSize(props: ConsoleSizeProps): ConsoleSize {
 /**
  * Container is a standalone Engine container configuration that also converts
  * to a Compose service when the settings map.
+ *
+ * Parent: Compose, Job, Service
+ *
+ * @param props - Props for this element. Nested elements are children, not fields of this object.
+ * @returns The Container element.
+ * @example
+ * ```tsx
+ * <Container name="app" image="alpine" />
+ * ```
  */
 export function Container(props: ContainerProps): Container {
 	return element("container", props);
 }
 
-/** CopyPath sets source and destination for Compose.Copy. */
+/**
+ * CopyPath sets source and destination for Compose.Copy.
+ *
+ * @param props - Props for this element. Nested elements are children, not fields of this object.
+ * @returns The CopyPath element.
+ * @example
+ * ```tsx
+ * <CopyPath source="." />
+ * ```
+ */
 export function CopyPath(props: CopyPathProps): CopyPath {
 	return element("copyPath", props);
 }
 
-/** DependsOn adds a service dependency with nested setters (Name, Condition). */
+/**
+ * DependsOn adds a service dependency with nested setters (Name, Condition).
+ *
+ * Parent: Job, Service
+ *
+ * @param props - Props for this element. Nested elements are children, not fields of this object.
+ * @returns The DependsOn element.
+ * @example
+ * ```tsx
+ * <DependsOn name="app" />
+ * ```
+ */
 export function DependsOn(props: DependsOnProps): DependsOn {
 	return element("dependsOn", props);
 }
 
-/** Deploy sets Compose deploy configuration. Service only. */
+/**
+ * Deploy sets Compose deploy configuration. Service only.
+ *
+ * Parent: Service
+ *
+ * @param props - Props for this element. Nested elements are children, not fields of this object.
+ * @returns The Deploy element.
+ * @example
+ * ```tsx
+ * <Deploy cpus={1} endpointMode="vip" />
+ * ```
+ */
 export function Deploy(props: DeployProps): Deploy {
 	return element("deploy", props);
 }
 
-/** Develop sets Compose develop.watch. Service only. */
+/**
+ * Develop sets Compose develop.watch. Service only.
+ *
+ * Parent: Service
+ *
+ * @param props - Props for this element. Nested elements are children, not fields of this object.
+ * @returns The Develop element.
+ * @example
+ * ```tsx
+ * <Develop />
+ * ```
+ */
 export function Develop(props: DevelopProps): Develop {
 	return element("develop", props);
 }
 
-/** Device maps a host device into the container (Engine Devices / Compose devices). */
+/**
+ * Device maps a host device into the container (Engine Devices / Compose devices).
+ *
+ * Parent: Container, Job, PreStart, Service
+ *
+ * @param props - Props for this element. Nested elements are children, not fields of this object.
+ * @returns The Device element.
+ * @example
+ * ```tsx
+ * <Device source="." target="/data" />
+ * ```
+ */
 export function Device(props: DeviceProps): Device {
 	return element("device", props);
 }
 
-/** Discrete adds Compose deploy.resources.generic_resources.discrete_resource_spec. */
+/**
+ * Discrete adds Compose deploy.resources.generic_resources.discrete_resource_spec.
+ *
+ * Parent: Deploy, Reserve
+ *
+ * @param props - Props for this element. Nested elements are children, not fields of this object.
+ * @returns The Discrete element.
+ * @example
+ * ```tsx
+ * <Discrete value={1} />
+ * ```
+ */
 export function Discrete(props: DiscreteProps): Discrete {
 	return element("discrete", props);
 }
 
-/** DriverOpt adds a driver option inside Logging, Volume, Network, or project resources. */
+/**
+ * DriverOpt adds a driver option inside Logging, Volume, Network, or project resources.
+ *
+ * Parent: GPU, Logging, Network, Volume
+ *
+ * @param props - Props for this element. Nested elements are children, not fields of this object.
+ * @returns The DriverOpt element.
+ * @example
+ * ```tsx
+ * <DriverOpt name="app" value="1" />
+ * ```
+ */
 export function DriverOpt(props: DriverOptProps): DriverOpt {
 	return element("driverOpt", props);
 }
@@ -1909,24 +3055,66 @@ export function DriverOpt(props: DriverOptProps): DriverOpt {
  * Env adds an environment variable at the outer scope, a build-arg inside
  * Build or Compose.Build, or a run-time variable on Compose.Run.
  * The value is treated as secret in errors.
+ *
+ * Parent: Build, Container, Job, PostStart, PreStart, PreStop, Service, WatchFiles
+ *
+ * @param props - Props for this element. Nested elements are children, not fields of this object.
+ * @returns The Env element.
+ * @example
+ * ```tsx
+ * <Env name="app" value="1" />
+ * ```
  */
 export function Env(props: EnvInput): Env<{ name?: string; value: string }> {
 	return element("env", resolveEnv(props));
 }
 
-/** EnvFile adds a Compose env_file path. Service, job, AddInclude, and LoadProject. */
+/**
+ * EnvFile adds a Compose env_file path. Service, job, AddInclude, and LoadProject.
+ *
+ * Parent: Include, Job, Service
+ *
+ * @param props - Props for this element. Nested elements are children, not fields of this object.
+ * @returns The EnvFile element.
+ * @example
+ * ```tsx
+ * <EnvFile path="/tmp" />
+ * ```
+ */
 export function EnvFile(props: EnvFileProps): EnvFile {
 	return element("envFile", props);
 }
 
-/** Expose publishes a port without a host binding (Engine ExposedPorts / Compose expose). */
+/**
+ * Expose publishes a port without a host binding (Engine ExposedPorts / Compose expose).
+ *
+ * Parent: Container, Job, PreStart, Service
+ *
+ * @param props - Props for this element. Nested elements are children, not fields of this object.
+ * @returns The Expose element.
+ * @example
+ * ```tsx
+ * <Expose port={80} />
+ * ```
+ */
 export function Expose(props: ExposeProps): Expose {
 	return element("expose", props);
 }
 
 /**
- * ExtraHost adds a hostname-to-IP mapping (Engine extra_hosts / Compose extra_hosts).
- * Inside Build it maps to compose build.extra_hosts.
+ * ExtraHost maps a hostname to an IP inside the container (Engine extra_hosts / Compose extra_hosts).
+ * Put it on the service or container. Inside Build it maps to compose build.extra_hosts.
+ *
+ * 	<ExtraHost hostname="db" ip="10.0.0.2" />
+ *
+ * Parent: Build, Container, Job, PreStart, Service
+ *
+ * @param props - Props for this element. Nested elements are children, not fields of this object.
+ * @returns The ExtraHost element.
+ * @example
+ * ```tsx
+ * <ExtraHost hostname="example" ip="example" />
+ * ```
  */
 export function ExtraHost(props: ExtraHostProps): ExtraHost {
 	return element("extraHost", props);
@@ -1935,42 +3123,124 @@ export function ExtraHost(props: ExtraHostProps): ExtraHost {
 /**
  * FileConfig adds a Compose config-file reference on a service/job.
  * Named FileConfig because Config is the Engine portable config type.
+ *
+ * Parent: Compose, Job, Service
+ *
+ * @param props - Props for this element. Nested elements are children, not fields of this object.
+ * @returns The FileConfig element.
+ * @example
+ * ```tsx
+ * <FileConfig name="app" source="." target="/data" />
+ * ```
  */
 export function FileConfig(props: FileConfigProps): FileConfig {
 	return element("fileConfig", props);
 }
 
-/** Filter adds an Engine API filter term (list/prune/search/events). */
+/**
+ * Filter adds an Engine API filter term (list/prune/search/events).
+ *
+ * @param props - Props for this element. Nested elements are children, not fields of this object.
+ * @returns The Filter element.
+ * @example
+ * ```tsx
+ * <Filter term="example" values={["example"]} />
+ * ```
+ */
 export function Filter(props: FilterProps): Filter {
 	return element("filter", props);
 }
 
-/** GPU requests GPUs (Engine DeviceRequests / Compose gpus). */
+/**
+ * GPU requests GPUs (Engine DeviceRequests / Compose gpus).
+ *
+ * Parent: Container, Deploy, Job, PreStart, Reserve, Service
+ *
+ * @param props - Props for this element. Nested elements are children, not fields of this object.
+ * @returns The GPU element.
+ * @example
+ * ```tsx
+ * <GPU driver="bridge" />
+ * ```
+ */
 export function GPU(props: GPUProps): GPU {
 	return element("gpu", props);
 }
 
-/** Health configures a healthcheck with nested setters. */
+/**
+ * Health configures a healthcheck with nested setters.
+ *
+ * Parent: Container, PreStart, Service
+ *
+ * @param props - Props for this element. Nested elements are children, not fields of this object.
+ * @returns The Health element.
+ * @example
+ * ```tsx
+ * <Health test={["CMD", "true"]} interval="30s" />
+ * ```
+ */
 export function Health(props: HealthProps): Health {
 	return element("health", props);
 }
 
-/** HTTPHeader adds a custom HTTP header on Engine requests. */
+/**
+ * HTTPHeader adds a custom HTTP header on Engine requests.
+ *
+ * @param props - Props for this element. Nested elements are children, not fields of this object.
+ * @returns The HTTPHeader element.
+ * @example
+ * ```tsx
+ * <HTTPHeader name="app" value="1" />
+ * ```
+ */
 export function HTTPHeader(props: HTTPHeaderProps): HTTPHeader {
 	return element("httpHeader", props);
 }
 
-/** Include adds a develop.watch include glob inside WatchFiles. */
+/**
+ * Include adds a develop.watch include glob inside WatchFiles.
+ *
+ * Parent: Compose
+ *
+ * @param props - Props for this element. Nested elements are children, not fields of this object.
+ * @returns The Include element.
+ * @example
+ * ```tsx
+ * <Include path="/tmp" />
+ * ```
+ */
 export function Include(props: IncludeProps): Include {
 	return element("include", props);
 }
 
-/** IPAMOpt adds Compose networks.ipam.options inside AddNetwork. */
+/**
+ * IPAMOpt adds Compose networks.ipam.options inside AddNetwork.
+ *
+ * Parent: Network
+ *
+ * @param props - Props for this element. Nested elements are children, not fields of this object.
+ * @returns The IPAMOpt element.
+ * @example
+ * ```tsx
+ * <IPAMOpt name="app" value="1" />
+ * ```
+ */
 export function IPAMOpt(props: IPAMOptProps): IPAMOpt {
 	return element("ipamOpt", props);
 }
 
-/** Job is a Compose job: shared spec plus job-only build/secrets/depends. */
+/**
+ * Job is a Compose job: shared spec plus job-only build/secrets/depends.
+ *
+ * Parent: Compose
+ *
+ * @param props - Props for this element. Nested elements are children, not fields of this object.
+ * @returns The Job element.
+ * @example
+ * ```tsx
+ * <Job name="app" image="alpine" />
+ * ```
+ */
 export function Job(props: JobProps): Job {
 	return element("job", props);
 }
@@ -1978,137 +3248,623 @@ export function Job(props: JobProps): Job {
 /**
  * Label adds a label on the receiver: container/service/job, or nested
  * volume, network, build, deploy, or project resource.
+ *
+ * Parent: Build, Container, Deploy, FileConfig, Job, Network, PreStart, Secret, Service, Volume
+ *
+ * @param props - Props for this element. Nested elements are children, not fields of this object.
+ * @returns The Label element.
+ * @example
+ * ```tsx
+ * <Label name="app" value="1" />
+ * ```
  */
 export function Label(props: EnvInput): Label<{ name?: string; value: string }> {
 	return element("label", resolveNamedValue(props, "label"));
 }
 
-/** Logging sets Engine LogConfig / Compose logging. */
+/**
+ * Logging sets Engine LogConfig / Compose logging.
+ *
+ * Parent: Container, Job, PreStart, Service
+ *
+ * @param props - Props for this element. Nested elements are children, not fields of this object.
+ * @returns The Logging element.
+ * @example
+ * ```tsx
+ * <Logging driver="bridge" />
+ * ```
+ */
 export function Logging(props: LoggingProps): Logging {
 	return element("logging", props);
 }
 
-/** Model adds a Compose models mapping. Service and job. */
+/**
+ * Model adds a Compose models mapping. Service and job.
+ *
+ * Parent: Compose, Job, Service
+ *
+ * @param props - Props for this element. Nested elements are children, not fields of this object.
+ * @returns The Model element.
+ * @example
+ * ```tsx
+ * <Model name="app" image="alpine" />
+ * ```
+ */
 export function Model(props: ModelProps): Model {
 	return element("model", props);
 }
 
-/** Network attaches a named network (Engine EndpointsConfig / Compose networks). */
+/**
+ * Network attaches a named network (Engine EndpointsConfig / Compose networks).
+ *
+ * Under Compose it defines the network: driver, subnet, and gateway. Under
+ * Service, Job, or Container it joins that network and can set ipv4, ipv6, and
+ * macAddress. A static address has to fall inside the subnet of the project
+ * network with the same name.
+ *
+ * Parent: Compose, Container, Job, PreStart, Service
+ *
+ * @param props - Props for this element. Nested elements are children, not fields of this object.
+ * @returns The Network element.
+ * @example
+ * ```tsx
+ * <Network name="app" driver="bridge" />
+ * ```
+ */
 export function Network(props: NetworkProps): Network {
 	return element("network", props);
 }
 
-/** Placement sets deploy.placement inside Deploy. */
+/**
+ * Placement sets deploy.placement inside Deploy.
+ *
+ * Parent: Deploy
+ *
+ * @param props - Props for this element. Nested elements are children, not fields of this object.
+ * @returns The Placement element.
+ * @example
+ * ```tsx
+ * <Placement constraint="example" maxReplicas={1} />
+ * ```
+ */
 export function Placement(props: PlacementProps): Placement {
 	return element("placement", props);
 }
 
-/** PostStart adds a Compose post_start hook. Service only. */
+/**
+ * PostStart adds a Compose post_start hook. Service only.
+ *
+ * Parent: Service
+ *
+ * @param props - Props for this element. Nested elements are children, not fields of this object.
+ * @returns The PostStart element.
+ * @example
+ * ```tsx
+ * <PostStart command={["example"]} privileged={true} />
+ * ```
+ */
 export function PostStart(props: PostStartProps): PostStart {
 	return element("postStart", props);
 }
 
-/** PreStart adds a Compose pre_start hook using the same container vocabulary. */
+/**
+ * PreStart adds a Compose pre_start hook using the same container vocabulary.
+ *
+ * Parent: Service
+ *
+ * @param props - Props for this element. Nested elements are children, not fields of this object.
+ * @returns The PreStart element.
+ * @example
+ * ```tsx
+ * <PreStart name="app" image="alpine" />
+ * ```
+ */
 export function PreStart(props: PreStartProps): PreStart {
 	return element("preStart", props);
 }
 
-/** PreStop adds a Compose pre_stop hook. Service only. */
+/**
+ * PreStop adds a Compose pre_stop hook. Service only.
+ *
+ * Parent: Service
+ *
+ * @param props - Props for this element. Nested elements are children, not fields of this object.
+ * @returns The PreStop element.
+ * @example
+ * ```tsx
+ * <PreStop command={["example"]} privileged={true} />
+ * ```
+ */
 export function PreStop(props: PreStopProps): PreStop {
 	return element("preStop", props);
 }
 
-/** ProviderOption adds Compose provider.options. Service only. */
+/**
+ * ProviderOption adds Compose provider.options. Service only.
+ *
+ * Parent: Service
+ *
+ * @param props - Props for this element. Nested elements are children, not fields of this object.
+ * @returns The ProviderOption element.
+ * @example
+ * ```tsx
+ * <ProviderOption name="app" value="1" />
+ * ```
+ */
 export function ProviderOption(props: ProviderOptionProps): ProviderOption {
 	return element("providerOption", props);
 }
 
-/** Publish adds a published port. Nested setters determine host/container ports. */
+/**
+ * Publish adds a published port. Nested setters determine host/container ports.
+ *
+ * Parent: Container, PreStart, Service
+ *
+ * @param props - Props for this element. Nested elements are children, not fields of this object.
+ * @returns The Publish element.
+ * @example
+ * ```tsx
+ * <Publish name="app" hostPort={8080} containerPort={80} />
+ * ```
+ */
 export function Publish(props: PublishProps): Publish {
 	return element("publish", props);
 }
 
-/** Reserve sets deploy.resources.reservations inside Deploy. */
+/**
+ * Reserve sets deploy.resources.reservations inside Deploy.
+ *
+ * Parent: Deploy
+ *
+ * @param props - Props for this element. Nested elements are children, not fields of this object.
+ * @returns The Reserve element.
+ * @example
+ * ```tsx
+ * <Reserve cpus={1} memory={1} />
+ * ```
+ */
 export function Reserve(props: ReserveProps): Reserve {
 	return element("reserve", props);
 }
 
-/** Restart configures the restart policy with nested setters. */
+/**
+ * Restart configures the restart policy with nested setters.
+ *
+ * Parent: Container, Deploy, PreStart, Service
+ *
+ * @param props - Props for this element. Nested elements are children, not fields of this object.
+ * @returns The Restart element.
+ * @example
+ * ```tsx
+ * <Restart policy="unless-stopped" />
+ * ```
+ */
 export function Restart(props: RestartProps): Restart {
 	return element("restart", props);
 }
 
-/** Rollback sets deploy.rollback_config inside Deploy. */
+/**
+ * Rollback sets deploy.rollback_config inside Deploy.
+ *
+ * Parent: Deploy
+ *
+ * @param props - Props for this element. Nested elements are children, not fields of this object.
+ * @returns The Rollback element.
+ * @example
+ * ```tsx
+ * <Rollback delay="30s" failureAction="continue" />
+ * ```
+ */
 export function Rollback(props: RollbackProps): Rollback {
 	return element("rollback", props);
 }
 
-/** Secret adds a Compose secret reference on a service/job. */
+/**
+ * Secret adds a Compose secret reference on a service/job.
+ *
+ * Parent: Build, Compose, Job, Service
+ *
+ * @param props - Props for this element. Nested elements are children, not fields of this object.
+ * @returns The Secret element.
+ * @example
+ * ```tsx
+ * <Secret name="app" source="." target="/data" />
+ * ```
+ */
 export function Secret(props: SecretProps): Secret {
 	return element("secret", props);
 }
 
-/** Service is a Compose service: shared container settings plus Compose-only fields. */
+/**
+ * Service is a Compose service: shared container settings plus Compose-only fields.
+ *
+ * Parent: Compose
+ *
+ * @param props - Props for this element. Nested elements are children, not fields of this object.
+ * @returns The Service element.
+ * @example
+ * ```tsx
+ * <Service name="app" image="alpine" />
+ * ```
+ */
 export function Service(props: ServiceProps): Service {
 	return element("service", props);
 }
 
-/** SSH adds a build SSH mount inside Build or Compose.Build (id, optional path). */
+/**
+ * SSH adds a build SSH mount inside Build or Compose.Build (id, optional path).
+ *
+ * Parent: Build
+ *
+ * @param props - Props for this element. Nested elements are children, not fields of this object.
+ * @returns The SSH element.
+ * @example
+ * ```tsx
+ * <SSH path="/tmp" />
+ * ```
+ */
 export function SSH(props: SSHProps): SSH {
 	return element("ssh", props);
 }
 
-/** StorageOpt sets a storage-driver option. */
+/**
+ * StorageOpt sets a storage-driver option.
+ *
+ * Parent: Container, Job, PreStart, Service
+ *
+ * @param props - Props for this element. Nested elements are children, not fields of this object.
+ * @returns The StorageOpt element.
+ * @example
+ * ```tsx
+ * <StorageOpt name="app" value="1" />
+ * ```
+ */
 export function StorageOpt(props: StorageOptProps): StorageOpt {
 	return element("storageOpt", props);
 }
 
-/** Sysctl sets a namespaced sysctl. */
+/**
+ * Sysctl sets a namespaced sysctl.
+ *
+ * Parent: Container, Job, PreStart, Service
+ *
+ * @param props - Props for this element. Nested elements are children, not fields of this object.
+ * @returns The Sysctl element.
+ * @example
+ * ```tsx
+ * <Sysctl name="app" value="1" />
+ * ```
+ */
 export function Sysctl(props: SysctlProps): Sysctl {
 	return element("sysctl", props);
 }
 
-/** TLS configures client TLS. Nested setters are CA, Cert, and Key. */
+/**
+ * TLS configures client TLS. Nested setters are CA, Cert, and Key.
+ *
+ * @param props - Props for this element. Nested elements are children, not fields of this object.
+ * @returns The TLS element.
+ * @example
+ * ```tsx
+ * <TLS />
+ * ```
+ */
 export function TLS(props: TLSProps): TLS {
 	return element("tls", props);
 }
 
-/** Ulimit adds a ulimit shared by Engine Resources.Ulimits and Compose ulimits. */
+/**
+ * Ulimit adds a ulimit shared by Engine Resources.Ulimits and Compose ulimits.
+ *
+ * Parent: Build, Container, Job, PreStart, Service
+ *
+ * @param props - Props for this element. Nested elements are children, not fields of this object.
+ * @returns The Ulimit element.
+ * @example
+ * ```tsx
+ * <Ulimit name="app" />
+ * ```
+ */
 export function Ulimit(props: UlimitProps): Ulimit {
 	return element("ulimit", props);
 }
 
-/** Update sets deploy.update_config inside Deploy. */
+/**
+ * Update sets deploy.update_config inside Deploy.
+ *
+ * Parent: Deploy
+ *
+ * @param props - Props for this element. Nested elements are children, not fields of this object.
+ * @returns The Update element.
+ * @example
+ * ```tsx
+ * <Update delay="30s" failureAction="continue" />
+ * ```
+ */
 export function Update(props: UpdateProps): Update {
 	return element("update", props);
 }
 
-/** Volume adds a mount shared by Engine HostConfig.Mounts and Compose volumes. */
+/**
+ * Volume adds a mount shared by Engine HostConfig.Mounts and Compose volumes.
+ *
+ * Parent: Compose, Container, Job, PreStart, Service
+ *
+ * @param props - Props for this element. Nested elements are children, not fields of this object.
+ * @returns The Volume element.
+ * @example
+ * ```tsx
+ * <Volume name="app" source="." target="/data" />
+ * ```
+ */
 export function Volume(props: VolumeProps): Volume {
 	return element("volume", props);
 }
 
-/** WatchFiles adds a develop.watch trigger inside Develop. */
+/**
+ * WatchFiles adds a develop.watch trigger inside Develop.
+ *
+ * Parent: Develop
+ *
+ * @param props - Props for this element. Nested elements are children, not fields of this object.
+ * @returns The WatchFiles element.
+ * @example
+ * ```tsx
+ * <WatchFiles target="/data" path="/tmp" />
+ * ```
+ */
 export function WatchFiles(props: WatchFilesProps): WatchFiles {
 	return element("watchFiles", props);
 }
 
+/**
+ * Child element kinds each parent kind accepts.
+ *
+ * @remarks
+ * The eslint plugin and the renderer both read this map. A kind that is not listed is not valid inside that parent.
+ */
 export const allowedChildren: Record<string, readonly string[]> = {
-	"build": ["additionalContext", "env", "extraHost", "label", "secret", "ssh", "ulimit", "dockerfile"],
+	"additionalContext": [],
+	"annotation": [],
+	"auxAddress": [],
+	"blkioReadBps": [],
+	"blkioReadIOps": [],
+	"blkioWeightDevice": [],
+	"blkioWriteBps": [],
+	"blkioWriteIOps": [],
+	"build": ["additionalContext", "dockerfile", "env", "extraHost", "label", "secret", "ssh", "ulimit"],
 	"compose": ["container", "fileConfig", "include", "job", "model", "network", "secret", "service", "volume"],
+	"consoleSize": [],
 	"container": ["annotation", "blkioReadBps", "blkioReadIOps", "blkioWeightDevice", "blkioWriteBps", "blkioWriteIOps", "consoleSize", "device", "env", "expose", "extraHost", "gpu", "health", "label", "logging", "network", "publish", "restart", "storageOpt", "sysctl", "ulimit", "volume"],
+	"copyPath": [],
+	"dependsOn": [],
 	"deploy": ["discrete", "gpu", "label", "placement", "reserve", "restart", "rollback", "update"],
 	"develop": ["watchFiles"],
+	"device": [],
+	"dfAdd": [],
+	"dfArg": [],
+	"dfCheck": [],
+	"dfCommand": [],
+	"dfCommandShell": [],
+	"dfComment": [],
+	"dfCopy": [],
+	"dfEntrypoint": [],
+	"dfEntrypointShell": [],
+	"dfEnv": [],
+	"dfEscape": [],
+	"dfExpose": [],
+	"dfFrom": [],
+	"dfHealth": [],
+	"dfHealthNone": [],
+	"dfLabel": [],
+	"dfOnbuild": [],
+	"dfRun": [],
+	"dfRunArgs": [],
+	"dfRunLayer": [],
+	"dfShell": [],
+	"dfStopSignal": [],
+	"dfSyntax": [],
+	"dfUser": [],
+	"dfVolume": [],
+	"dfWorkdir": [],
+	"discrete": [],
+	"dockerfile": ["dfAdd", "dfArg", "dfCheck", "dfCommand", "dfCommandShell", "dfComment", "dfCopy", "dfEntrypoint", "dfEntrypointShell", "dfEnv", "dfEscape", "dfExpose", "dfFrom", "dfHealth", "dfHealthNone", "dfLabel", "dfOnbuild", "dfRun", "dfRunArgs", "dfRunLayer", "dfShell", "dfStopSignal", "dfSyntax", "dfUser", "dfVolume", "dfWorkdir"],
+	"driverOpt": [],
+	"env": [],
+	"envFile": [],
+	"expose": [],
+	"extraHost": [],
 	"fileConfig": ["label"],
+	"filter": [],
 	"gpu": ["driverOpt"],
-	"hook": ["env"],
+	"health": [],
+	"httpHeader": [],
 	"include": ["envFile"],
+	"ipamOpt": [],
 	"job": ["annotation", "blkioReadBps", "blkioReadIOps", "blkioWeightDevice", "blkioWriteBps", "blkioWriteIOps", "build", "consoleSize", "container", "dependsOn", "device", "env", "envFile", "expose", "extraHost", "fileConfig", "gpu", "label", "logging", "model", "network", "secret", "storageOpt", "sysctl", "ulimit", "volume"],
+	"label": [],
 	"logging": ["driverOpt"],
+	"model": [],
 	"network": ["auxAddress", "driverOpt", "ipamOpt", "label"],
+	"placement": [],
+	"postStart": ["env"],
+	"preStart": ["annotation", "blkioReadBps", "blkioReadIOps", "blkioWeightDevice", "blkioWriteBps", "blkioWriteIOps", "consoleSize", "device", "env", "expose", "extraHost", "gpu", "health", "label", "logging", "network", "publish", "restart", "storageOpt", "sysctl", "ulimit", "volume"],
+	"preStop": ["env"],
+	"providerOption": [],
+	"publish": [],
 	"reserve": ["discrete", "gpu"],
+	"restart": [],
+	"rollback": [],
 	"secret": ["label"],
 	"service": ["annotation", "blkioReadBps", "blkioReadIOps", "blkioWeightDevice", "blkioWriteBps", "blkioWriteIOps", "build", "consoleSize", "container", "dependsOn", "deploy", "develop", "device", "env", "envFile", "expose", "extraHost", "fileConfig", "gpu", "health", "label", "logging", "model", "network", "postStart", "preStart", "preStop", "providerOption", "publish", "restart", "secret", "storageOpt", "sysctl", "ulimit", "volume"],
+	"ssh": [],
+	"storageOpt": [],
+	"sysctl": [],
+	"tls": [],
+	"ulimit": [],
+	"update": [],
 	"volume": ["driverOpt", "label"],
-	"watchTrigger": ["env"],
+	"watchFiles": ["env"],
 };
+
+/**
+ * Children that may appear only once inside a parent.
+ *
+ * @remarks
+ * `message` is the error reported when a second child of that kind is present.
+ */
+export const singleChildren: Record<string, readonly { kinds: readonly string[]; message: string }[]> = {
+	"build": [
+		{ kinds: ["dockerfile"], message: "Build accepts one Dockerfile, and not alongside dockerfilePath, parseDockerfile, or readDockerfile" },
+	],
+	"container": [
+		{ kinds: ["consoleSize"], message: "<consoleSize> is already set inside <container>" },
+		{ kinds: ["health"], message: "<health> is already set inside <container>" },
+		{ kinds: ["logging"], message: "<logging> is already set inside <container>" },
+		{ kinds: ["restart"], message: "<restart> is already set inside <container>" },
+	],
+	"deploy": [
+		{ kinds: ["placement"], message: "<placement> is already set inside <deploy>" },
+		{ kinds: ["reserve"], message: "<reserve> is already set inside <deploy>" },
+		{ kinds: ["restart"], message: "<restart> is already set inside <deploy>" },
+		{ kinds: ["rollback"], message: "<rollback> is already set inside <deploy>" },
+		{ kinds: ["update"], message: "<update> is already set inside <deploy>" },
+	],
+	"dockerfile": [
+		{ kinds: ["dfCheck"], message: "check directive is already set" },
+		{ kinds: ["dfCommand", "dfCommandShell"], message: "command has already been set" },
+		{ kinds: ["dfEscape"], message: "escape directive is already set" },
+		{ kinds: ["dfSyntax"], message: "syntax directive is already set" },
+	],
+	"job": [
+		{ kinds: ["build"], message: "<build> is already set inside <job>" },
+		{ kinds: ["consoleSize"], message: "<consoleSize> is already set inside <job>" },
+		{ kinds: ["logging"], message: "<logging> is already set inside <job>" },
+	],
+	"preStart": [
+		{ kinds: ["consoleSize"], message: "<consoleSize> is already set inside <preStart>" },
+		{ kinds: ["health"], message: "<health> is already set inside <preStart>" },
+		{ kinds: ["logging"], message: "<logging> is already set inside <preStart>" },
+		{ kinds: ["restart"], message: "<restart> is already set inside <preStart>" },
+	],
+	"service": [
+		{ kinds: ["build"], message: "<build> is already set inside <service>" },
+		{ kinds: ["consoleSize"], message: "<consoleSize> is already set inside <service>" },
+		{ kinds: ["deploy"], message: "<deploy> is already set inside <service>" },
+		{ kinds: ["develop"], message: "<develop> is already set inside <service>" },
+		{ kinds: ["health"], message: "<health> is already set inside <service>" },
+		{ kinds: ["logging"], message: "<logging> is already set inside <service>" },
+		{ kinds: ["restart"], message: "<restart> is already set inside <service>" },
+	],
+};
+
+/**
+ * Props that cannot be set on a parent when a given child is also present.
+ *
+ * @remarks
+ * `message` is the error reported when both the child and one of `props` are set.
+ */
+export const exclusiveChildProps: Record<string, { child: string; props: readonly string[]; message: string }> = {
+	build: {
+		child: "dockerfile",
+		props: ["dockerfilePath", "parseDockerfile", "readDockerfile"],
+		message: "Build accepts one Dockerfile, and not alongside dockerfilePath, parseDockerfile, or readDockerfile",
+	},
+};
+
+/**
+ * Compose component name to element kind.
+ *
+ * @remarks
+ * `Dockerfile` and `BuildArg` are hand-written and included here so one map covers every Compose component.
+ */
+export const composeComponents: Record<string, string> = {
+	"AdditionalContext": "additionalContext",
+	"Annotation": "annotation",
+	"AuxAddress": "auxAddress",
+	"BlkioReadBps": "blkioReadBps",
+	"BlkioReadIOps": "blkioReadIOps",
+	"BlkioWeightDevice": "blkioWeightDevice",
+	"BlkioWriteBps": "blkioWriteBps",
+	"BlkioWriteIOps": "blkioWriteIOps",
+	"Build": "build",
+	"BuildArg": "env",
+	"Compose": "compose",
+	"ConsoleSize": "consoleSize",
+	"Container": "container",
+	"CopyPath": "copyPath",
+	"DependsOn": "dependsOn",
+	"Deploy": "deploy",
+	"Develop": "develop",
+	"Device": "device",
+	"Discrete": "discrete",
+	"Dockerfile": "dockerfile",
+	"DriverOpt": "driverOpt",
+	"Env": "env",
+	"EnvFile": "envFile",
+	"Expose": "expose",
+	"ExtraHost": "extraHost",
+	"FileConfig": "fileConfig",
+	"Filter": "filter",
+	"GPU": "gpu",
+	"HTTPHeader": "httpHeader",
+	"Health": "health",
+	"IPAMOpt": "ipamOpt",
+	"Include": "include",
+	"Job": "job",
+	"Label": "label",
+	"Logging": "logging",
+	"Model": "model",
+	"Network": "network",
+	"Placement": "placement",
+	"PostStart": "postStart",
+	"PreStart": "preStart",
+	"PreStop": "preStop",
+	"ProviderOption": "providerOption",
+	"Publish": "publish",
+	"Reserve": "reserve",
+	"Restart": "restart",
+	"Rollback": "rollback",
+	"SSH": "ssh",
+	"Secret": "secret",
+	"Service": "service",
+	"StorageOpt": "storageOpt",
+	"Sysctl": "sysctl",
+	"TLS": "tls",
+	"Ulimit": "ulimit",
+	"Update": "update",
+	"Volume": "volume",
+	"WatchFiles": "watchFiles",
+};
+
+/** Dockerfile instruction name to element kind. */
+export const dockerfileComponents: Record<string, string> = {
+	"Add": "dfAdd",
+	"Arg": "dfArg",
+	"Check": "dfCheck",
+	"Command": "dfCommand",
+	"CommandShell": "dfCommandShell",
+	"Comment": "dfComment",
+	"Copy": "dfCopy",
+	"Dockerfile": "dockerfile",
+	"Entrypoint": "dfEntrypoint",
+	"EntrypointShell": "dfEntrypointShell",
+	"Env": "dfEnv",
+	"Escape": "dfEscape",
+	"Expose": "dfExpose",
+	"From": "dfFrom",
+	"HealthCheck": "dfHealth",
+	"HealthCheckNone": "dfHealthNone",
+	"Label": "dfLabel",
+	"Onbuild": "dfOnbuild",
+	"Run": "dfRun",
+	"RunArgs": "dfRunArgs",
+	"RunLayer": "dfRunLayer",
+	"Shell": "dfShell",
+	"StopSignal": "dfStopSignal",
+	"Syntax": "dfSyntax",
+	"User": "dfUser",
+	"Volume": "dfVolume",
+	"Workdir": "dfWorkdir",
+};
+

@@ -201,7 +201,7 @@ func sdkPackageDirs(t *testing.T) map[string]string {
 		t.Fatalf("go list: %v\n%s", err, stderr.String())
 	}
 	out := map[string]string{}
-	for _, line := range strings.Split(strings.TrimSpace(stdout.String()), "\n") {
+	for line := range strings.SplitSeq(strings.TrimSpace(stdout.String()), "\n") {
 		path, dir, ok := strings.Cut(line, "\t")
 		if !ok || dir == "" {
 			continue

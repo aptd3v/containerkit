@@ -12,6 +12,7 @@ import (
 	"path/filepath"
 	"regexp"
 	"sort"
+	"strconv"
 	"strings"
 	"unicode"
 	"unicode/utf8"
@@ -154,16 +155,9 @@ func main() {
 	}
 
 	fset := token.NewFileSet()
-	pkgs, err := parser.ParseDir(fset, filepath.Join(root, "pkg", "kit"), func(info os.FileInfo) bool {
-		n := info.Name()
-		return strings.HasSuffix(n, ".go") && !strings.HasSuffix(n, "_test.go")
-	}, parser.ParseComments)
+	files, err := parseKit(fset, filepath.Join(root, "pkg", "kit"))
 	if err != nil {
 		fatal(err)
-	}
-	pkg := pkgs["kit"]
-	if pkg == nil {
-		fatal("package kit not found")
 	}
 
 	optionKind := map[string]string{}
@@ -174,7 +168,7 @@ func main() {
 	optionIfaces := map[string]bool{}
 	typeDocs := map[string]string{}
 
-	for _, file := range pkg.Files {
+	for _, file := range files {
 		for _, decl := range file.Decls {
 			switch d := decl.(type) {
 			case *ast.GenDecl:
@@ -235,7 +229,7 @@ func main() {
 		}
 	}
 
-	for _, file := range pkg.Files {
+	for _, file := range files {
 		for _, decl := range file.Decls {
 			d, ok := decl.(*ast.FuncDecl)
 			if !ok || d.Name == nil || d.Recv != nil {
@@ -277,7 +271,7 @@ func main() {
 		}
 	}
 
-	verbs := parseVerbs(pkg, bags)
+	verbs := parseVerbs(files, bags)
 
 	nestedByScope := map[string][]string{}
 	leafByScope := map[string][]string{}
@@ -330,6 +324,11 @@ func main() {
 				leafByScope[sc] = appendUnique(leafByScope[sc], s.kind)
 			}
 		default:
+			// A Logger, reader, or callback cannot ride in the plan JSON.
+			// Leaving it on the props as unknown would accept any value.
+			if s.jsonSkip {
+				break
+			}
 			for sc := range s.scopes {
 				propsByScope[sc] = append(propsByScope[sc], s)
 			}
@@ -361,6 +360,7 @@ func main() {
 	buf.WriteString("import { element, type MaybeChild, type Node } from \"./node.js\";\n")
 	buf.WriteString("import { resolveEnv, resolveNamedValue, type EnvInput } from \"./env.js\";\n")
 	buf.WriteString("import type { DockerfileNode } from \"./docker-file.js\";\n\n")
+	writeJSDoc(&buf, "", "Child list and element shape used by every component in this file.\n\n@see {@link MaybeChild}\n@see {@link Node}")
 	buf.WriteString("export type { MaybeChild, Node };\n\n")
 
 	kindSet := map[string]bool{"fragment": true}
@@ -372,6 +372,7 @@ func main() {
 		kindList = append(kindList, k)
 	}
 	sort.Strings(kindList)
+	writeJSDoc(&buf, "", "Element kind stored on `$$kind`.\n\n@remarks\n`fragment` is a list of elements. Every other name is a component in this file.")
 	buf.WriteString("export type Kind =\n")
 	for i, k := range kindList {
 		if i == len(kindList)-1 {
@@ -381,12 +382,27 @@ func main() {
 		fmt.Fprintf(&buf, "\t| %q\n", k)
 	}
 
+	parentsOf := map[string][]string{}
+	for _, k := range allKinds {
+		kids := mergedKids(k, propAlias, nestedByScope, leafByScope)
+		if k == "build" {
+			kids = appendUnique(kids, "dockerfile")
+		}
+		parent := identOf(identByKind, k)
+		for _, kid := range kids {
+			parentsOf[kid] = appendUnique(parentsOf[kid], parent)
+		}
+	}
+	for _, names := range parentsOf {
+		sort.Strings(names)
+	}
+
 	for _, k := range allKinds {
 		if k == "fragment" {
 			continue
 		}
 		ident := identOf(identByKind, k)
-		doc := componentDoc(ident, k, setters, typeDocs)
+		doc := componentDoc(ident, k, setters, typeDocs, parentsOf[k], listedProps(k, propAlias, leadByKind, leafFields, propsByScope))
 		writeJSDoc(&buf, "", doc)
 		fmt.Fprintf(&buf, "export type %sProps = {\n", ident)
 		seenProp := map[string]bool{}
@@ -429,7 +445,9 @@ func main() {
 		// The node props are the component props without children. Children are
 		// stored on the node, not on props. P still has to extend the full props
 		// type so DockerNode<Compose<{ name?: string }>> accepts a compose node.
+		writeJSDoc(&buf, "", fmt.Sprintf("A %s element.\n\n@remarks\nProps are {@link %sProps} without `children`. Nested elements are stored on the node.", ident, ident))
 		fmt.Fprintf(&buf, "export type %s<P extends %sProps = Omit<%sProps, \"children\">> = Node<%q, P>;\n", ident, ident, ident, k)
+		writeJSDoc(&buf, "", fmt.Sprintf("%s when it is the child of another element.", ident))
 		fmt.Fprintf(&buf, "export type %sNode = %s;\n\n", ident, ident)
 	}
 
@@ -438,7 +456,8 @@ func main() {
 			continue
 		}
 		ident := identOf(identByKind, k)
-		writeJSDoc(&buf, "", componentDoc(ident, k, setters, typeDocs))
+		fnDoc := withSignature(componentDoc(ident, k, setters, typeDocs, parentsOf[k], listedProps(k, propAlias, leadByKind, leafFields, propsByScope)), ident)
+		writeJSDoc(&buf, "", fnDoc)
 		switch k {
 		case "env":
 			buf.WriteString("export function Env(props: EnvInput): Env<{ name?: string; value: string }> {\n")
@@ -456,27 +475,79 @@ func main() {
 		buf.WriteString("}\n\n")
 	}
 
-	buf.WriteString("export const allowedChildren: Record<string, readonly string[]> = {\n")
-	scopes := make([]string, 0, len(nestedByScope)+len(leafByScope))
-	seenSc := map[string]bool{}
-	for sc := range nestedByScope {
-		scopes = append(scopes, sc)
-		seenSc[sc] = true
-	}
-	for sc := range leafByScope {
-		if !seenSc[sc] {
-			scopes = append(scopes, sc)
-		}
-	}
-	sort.Strings(scopes)
-	for _, sc := range scopes {
-		kids := mergedKids(sc, propAlias, nestedByScope, leafByScope)
-		if sc == "build" {
+	kidsByKind := map[string][]string{}
+	for _, k := range allKinds {
+		kids := mergedKids(k, propAlias, nestedByScope, leafByScope)
+		if k == "build" {
 			kids = append(kids, "dockerfile")
+			sort.Strings(kids)
+			kids = unique(kids)
 		}
-		fmt.Fprintf(&buf, "\t%q: [%s],\n", sc, quoteList(kids))
+		kidsByKind[k] = kids
 	}
-	buf.WriteString("};\n")
+	dfInstr := dockerfileInstructions(filepath.Join(root, "tsx", "src", "docker-file.ts"))
+	for _, k := range dfInstr {
+		kidsByKind[k] = nil
+	}
+	kidsByKind["dockerfile"] = dfInstr
+
+	var kindKeys []string
+	for k := range kidsByKind {
+		kindKeys = append(kindKeys, k)
+	}
+	sort.Strings(kindKeys)
+	writeJSDoc(&buf, "", "Child element kinds each parent kind accepts.\n\n@remarks\nThe eslint plugin and the renderer both read this map. A kind that is not listed is not valid inside that parent.")
+	buf.WriteString("export const allowedChildren: Record<string, readonly string[]> = {\n")
+	for _, k := range kindKeys {
+		fmt.Fprintf(&buf, "\t%q: [%s],\n", k, quoteList(kidsByKind[k]))
+	}
+	buf.WriteString("};\n\n")
+
+	onceKind := onceKinds(files, setters)
+	dfGroups := dockerfileOnce(files, dfInstr)
+	writeJSDoc(&buf, "", "Children that may appear only once inside a parent.\n\n@remarks\n`message` is the error reported when a second child of that kind is present.")
+	buf.WriteString("export const singleChildren: Record<string, readonly { kinds: readonly string[]; message: string }[]> = {\n")
+	for _, parent := range kindKeys {
+		var groups []singleGroup
+		for _, kid := range kidsByKind[parent] {
+			if !onceKind[kid] {
+				continue
+			}
+			groups = append(groups, singleGroup{
+				kinds:   []string{kid},
+				message: fmt.Sprintf("<%s> is already set inside <%s>", kid, parent),
+			})
+		}
+		if parent == "build" {
+			groups = append(groups, singleGroup{
+				kinds:   []string{"dockerfile"},
+				message: "Build accepts one Dockerfile, and not alongside dockerfilePath, parseDockerfile, or readDockerfile",
+			})
+		}
+		if parent == "dockerfile" {
+			groups = append(groups, dfGroups...)
+		}
+		if len(groups) == 0 {
+			continue
+		}
+		sort.Slice(groups, func(i, j int) bool { return groups[i].kinds[0] < groups[j].kinds[0] })
+		fmt.Fprintf(&buf, "\t%q: [\n", parent)
+		for _, g := range groups {
+			fmt.Fprintf(&buf, "\t\t{ kinds: [%s], message: %q },\n", quoteList(g.kinds), g.message)
+		}
+		buf.WriteString("\t],\n")
+	}
+	buf.WriteString("};\n\n")
+	writeJSDoc(&buf, "", "Props that cannot be set on a parent when a given child is also present.\n\n@remarks\n`message` is the error reported when both the child and one of `props` are set.")
+	buf.WriteString("export const exclusiveChildProps: Record<string, { child: string; props: readonly string[]; message: string }> = {\n")
+	buf.WriteString("\tbuild: {\n")
+	buf.WriteString("\t\tchild: \"dockerfile\",\n")
+	buf.WriteString("\t\tprops: [\"dockerfilePath\", \"parseDockerfile\", \"readDockerfile\"],\n")
+	buf.WriteString("\t\tmessage: \"Build accepts one Dockerfile, and not alongside dockerfilePath, parseDockerfile, or readDockerfile\",\n")
+	buf.WriteString("\t},\n")
+	buf.WriteString("};\n\n")
+	writeComponentMap(&buf, "composeComponents", "Compose component name to element kind.\n\n@remarks\n`Dockerfile` and `BuildArg` are hand-written and included here so one map covers every Compose component.", composeComponentKinds(allKinds, identByKind))
+	writeComponentMap(&buf, "dockerfileComponents", "Dockerfile instruction name to element kind.", dockerfileComponentKinds(filepath.Join(root, "tsx", "src", "docker-file.ts")))
 
 	out := filepath.Join(root, "tsx", "src", "generated.ts")
 	if err := os.MkdirAll(filepath.Dir(out), 0o755); err != nil {
@@ -730,14 +801,136 @@ func typeDoc(d *ast.GenDecl, ts *ast.TypeSpec) string {
 	return ""
 }
 
-func componentDoc(ident, kind string, setters map[string]*setter, typeDocs map[string]string) string {
+type docProp struct {
+	name   string
+	tsType string
+}
+
+func listedProps(kind string, alias map[string]string, leads map[string]*setter, leaves map[string][]leadParam, props map[string][]*setter) []docProp {
+	var out []docProp
+	seen := map[string]bool{}
+	add := func(name, tsType string) {
+		if name == "" || seen[name] || tsType == "" {
+			return
+		}
+		seen[name] = true
+		out = append(out, docProp{name: name, tsType: tsType})
+	}
+	for _, src := range propSources(kind, alias) {
+		if lead, ok := leads[src]; ok {
+			add(lead.prop, lead.tsType)
+		}
+		for _, f := range leaves[src] {
+			add(f.name, f.tsType)
+		}
+	}
+	ps := mergedProps(kind, alias, props)
+	sort.Slice(ps, func(i, j int) bool { return ps[i].prop < ps[j].prop })
+	for _, s := range ps {
+		add(s.prop, s.tsType)
+	}
+	return out
+}
+
+func componentDoc(ident, kind string, setters map[string]*setter, typeDocs map[string]string, parents []string, props []docProp) string {
+	doc := ""
 	if s := setters[ident]; s != nil && s.doc != "" {
-		return s.doc
+		doc = s.doc
+	} else if d := typeDocs[ident]; d != "" {
+		doc = d
+	} else {
+		doc = fmt.Sprintf("%s is the %s scope as a TSX component.", ident, kind)
 	}
-	if doc := typeDocs[ident]; doc != "" {
-		return doc
+	if len(parents) > 0 && !strings.Contains(doc, "Parent:") {
+		doc += "\n\nParent: " + strings.Join(parents, ", ")
 	}
-	return fmt.Sprintf("%s is the %s scope as a TSX component.", ident, kind)
+	if !strings.Contains(doc, "@example") {
+		doc += "\n\n@example\n```tsx\n" + exampleTag(ident, props) + "\n```"
+	}
+	return doc
+}
+
+func exampleTag(ident string, props []docProp) string {
+	byName := map[string]docProp{}
+	for _, p := range props {
+		byName[p.name] = p
+	}
+	var chosen []docProp
+	for _, name := range []string{"name", "image", "test", "source", "target", "path", "port", "policy", "driver", "value", "interval", "hostPort", "containerPort"} {
+		if p, ok := byName[name]; ok {
+			chosen = append(chosen, p)
+		}
+		if len(chosen) == 3 {
+			break
+		}
+	}
+	if len(chosen) == 0 {
+		for _, p := range props {
+			chosen = append(chosen, p)
+			if len(chosen) == 2 {
+				break
+			}
+		}
+	}
+	if len(chosen) == 0 {
+		return "<" + ident + " />"
+	}
+	attrs := make([]string, len(chosen))
+	for i, p := range chosen {
+		attrs[i] = p.name + "=" + exampleValue(p.name, p.tsType)
+	}
+	return "<" + ident + " " + strings.Join(attrs, " ") + " />"
+}
+
+func exampleValue(name, tsType string) string {
+	switch name {
+	case "name":
+		return `"app"`
+	case "image":
+		return `"alpine"`
+	case "test":
+		return `{["CMD", "true"]}`
+	case "source":
+		return `"."`
+	case "target":
+		return `"/data"`
+	case "path":
+		return `"/tmp"`
+	case "port", "containerPort":
+		return `{80}`
+	case "hostPort":
+		return `{8080}`
+	case "policy":
+		return `"unless-stopped"`
+	case "driver":
+		return `"bridge"`
+	case "value":
+		if strings.HasPrefix(tsType, "number") && !strings.Contains(tsType, "string") {
+			return "{1}"
+		}
+		return `"1"`
+	case "interval", "timeout", "startPeriod":
+		return `"30s"`
+	}
+	if strings.Contains(tsType, "boolean") && !strings.Contains(tsType, "|") {
+		return "{true}"
+	}
+	if strings.HasPrefix(tsType, "number") {
+		if strings.Contains(tsType, "string") {
+			return `"30s"`
+		}
+		return "{1}"
+	}
+	if i := strings.Index(tsType, `"`); i >= 0 {
+		rest := tsType[i+1:]
+		if j := strings.Index(rest, `"`); j >= 0 {
+			return `"` + rest[:j] + `"`
+		}
+	}
+	if strings.Contains(tsType, "string[]") {
+		return `{["example"]}`
+	}
+	return `"example"`
 }
 
 func propDoc(s *setter) string {
@@ -764,6 +957,14 @@ func isDuration(s *setter) bool {
 		}
 	}
 	return false
+}
+
+func withSignature(doc, ident string) string {
+	sig := "@param props - Props for this element. Nested elements are children, not fields of this object.\n@returns The " + ident + " element."
+	if i := strings.Index(doc, "\n@example"); i >= 0 {
+		return doc[:i] + "\n" + sig + doc[i:]
+	}
+	return doc + "\n\n" + sig
 }
 
 func writeJSDoc(buf *bytes.Buffer, indent, doc string) {
@@ -852,12 +1053,357 @@ func unique(in []string) []string {
 	return out
 }
 
+type singleGroup struct {
+	kinds   []string
+	message string
+}
+
+func onceKinds(files []*ast.File, setters map[string]*setter) map[string]bool {
+	card := map[string]struct{ single, many bool }{}
+	for _, file := range files {
+		for _, decl := range file.Decls {
+			fn, ok := decl.(*ast.FuncDecl)
+			if !ok || fn.Recv == nil || fn.Body == nil {
+				continue
+			}
+			recv := recvName(fn.Recv)
+			if !strings.HasSuffix(recv, "Opt") {
+				continue
+			}
+			single, many := optStores(fn)
+			c := card[recv]
+			c.single = c.single || single
+			c.many = c.many || many
+			card[recv] = c
+		}
+	}
+	once := map[string]bool{}
+	for _, s := range setters {
+		if !s.nested && !s.leaf {
+			continue
+		}
+		c := card[s.ret]
+		if c.single && !c.many {
+			once[s.kind] = true
+		}
+	}
+	return once
+}
+
+func optStores(fn *ast.FuncDecl) (single, many bool) {
+	acc := map[string]bool{}
+	for _, stmt := range fn.Body.List {
+		ds, ok := stmt.(*ast.DeclStmt)
+		if !ok {
+			continue
+		}
+		g, ok := ds.Decl.(*ast.GenDecl)
+		if !ok || g.Tok != token.VAR {
+			continue
+		}
+		for _, spec := range g.Specs {
+			vs, ok := spec.(*ast.ValueSpec)
+			if !ok || !isAccumulatorType(vs.Type) {
+				continue
+			}
+			for _, name := range vs.Names {
+				acc[name.Name] = true
+			}
+		}
+	}
+	ast.Inspect(fn.Body, func(n ast.Node) bool {
+		call, ok := n.(*ast.CallExpr)
+		if !ok {
+			return true
+		}
+		name := callName(call.Fun)
+		switch {
+		case name == "append" && appendsValue(call):
+			many = true
+		case isSetter(name, "add"):
+			many = true
+		case isSetter(name, "set"):
+			single = true
+		case name == "assign" && callPasses(call, acc):
+			single = true
+		}
+		return true
+	})
+	return single, many
+}
+
+func isAccumulatorType(expr ast.Expr) bool {
+	id, ok := expr.(*ast.Ident)
+	if !ok {
+		return false
+	}
+	switch id.Name {
+	case "string", "bool", "int", "int8", "int16", "int32", "int64",
+		"uint", "uint8", "uint16", "uint32", "uint64", "uintptr",
+		"float32", "float64", "byte", "rune", "error", "any":
+		return false
+	default:
+		return id.Name != ""
+	}
+}
+
+func isSetter(name, prefix string) bool {
+	if !strings.HasPrefix(name, prefix) || len(name) == len(prefix) {
+		return false
+	}
+	r, _ := utf8.DecodeRuneInString(name[len(prefix):])
+	return unicode.IsUpper(r)
+}
+
+func callPasses(call *ast.CallExpr, acc map[string]bool) bool {
+	for _, arg := range call.Args {
+		id, ok := arg.(*ast.Ident)
+		if ok && acc[id.Name] {
+			return true
+		}
+	}
+	return false
+}
+
+func appendsValue(call *ast.CallExpr) bool {
+	if len(call.Args) < 2 {
+		return false
+	}
+	switch arg := call.Args[0].(type) {
+	case *ast.Ident:
+		return arg.Name != "errs" && arg.Name != "err"
+	case *ast.StarExpr:
+		id, ok := arg.X.(*ast.Ident)
+		return ok && id.Name != "errs" && id.Name != "err"
+	case *ast.SelectorExpr:
+		return arg.Sel.Name != "errs"
+	default:
+		return false
+	}
+}
+
+func callName(fun ast.Expr) string {
+	switch x := fun.(type) {
+	case *ast.Ident:
+		return x.Name
+	case *ast.SelectorExpr:
+		return x.Sel.Name
+	default:
+		return ""
+	}
+}
+
+func composeComponentKinds(kinds []string, idents map[string]string) map[string]string {
+	out := map[string]string{}
+	for _, kind := range kinds {
+		name := identOf(idents, kind)
+		if prev, ok := out[name]; ok && prev != kind {
+			fatal(fmt.Sprintf("component %s is both %s and %s", name, prev, kind))
+		}
+		out[name] = kind
+	}
+	// These two are hand-written and re-exported from the package root.
+	out["Dockerfile"] = "dockerfile"
+	out["BuildArg"] = "env"
+	return out
+}
+
+func dockerfileComponentKinds(path string) map[string]string {
+	b, err := os.ReadFile(path)
+	if err != nil {
+		fatal(err)
+	}
+	text := string(b)
+	out := map[string]string{"Dockerfile": "dockerfile"}
+	add := func(name, kind string) {
+		if prev, ok := out[name]; ok && prev != kind {
+			fatal(fmt.Sprintf("dockerfile component %s is both %s and %s", name, prev, kind))
+		}
+		out[name] = kind
+	}
+	for _, m := range regexp.MustCompile(`export const (\w+) = instr<"(\w+)"`).FindAllStringSubmatch(text, -1) {
+		add(m[1], m[2])
+	}
+	for _, m := range regexp.MustCompile(`export function (\w+)\([^)]*\): Node<"(\w+)"`).FindAllStringSubmatch(text, -1) {
+		add(m[1], m[2])
+	}
+	return out
+}
+
+func writeComponentMap(buf *bytes.Buffer, name, doc string, kinds map[string]string) {
+	keys := make([]string, 0, len(kinds))
+	for key := range kinds {
+		keys = append(keys, key)
+	}
+	sort.Strings(keys)
+	writeJSDoc(buf, "", doc)
+	fmt.Fprintf(buf, "export const %s: Record<string, string> = {\n", name)
+	for _, key := range keys {
+		fmt.Fprintf(buf, "\t%q: %q,\n", key, kinds[key])
+	}
+	buf.WriteString("};\n\n")
+}
+
+func dockerfileInstructions(path string) []string {
+	b, err := os.ReadFile(path)
+	if err != nil {
+		fatal(err)
+	}
+	re := regexp.MustCompile(`"(df[A-Za-z]+)"`)
+	seen := map[string]bool{}
+	var out []string
+	for _, m := range re.FindAllStringSubmatch(string(b), -1) {
+		if seen[m[1]] {
+			continue
+		}
+		seen[m[1]] = true
+		out = append(out, m[1])
+	}
+	sort.Strings(out)
+	return out
+}
+
+func dockerfileOnce(files []*ast.File, instructions []string) []singleGroup {
+	known := map[string]bool{}
+	for _, k := range instructions {
+		known[k] = true
+	}
+	var directives []string
+	var commands []string
+	commandMsg := "command has already been set"
+	for _, file := range files {
+		for _, decl := range file.Decls {
+			fn, ok := decl.(*ast.FuncDecl)
+			if !ok || fn.Body == nil || fn.Name == nil || recvName(fn.Recv) != "Dockerfile" {
+				continue
+			}
+			if arg := directiveArg(fn); arg != "" {
+				kind := dfKind(arg)
+				if known[kind] {
+					directives = append(directives, kind)
+				}
+			}
+			if mentions(fn.Body, "cmdSet") {
+				kind := dfKind(fn.Name.Name)
+				if known[kind] {
+					commands = append(commands, kind)
+				}
+				if msg := errorLiteral(fn.Body); msg != "" {
+					commandMsg = msg
+				}
+			}
+		}
+	}
+	sort.Strings(directives)
+	sort.Strings(commands)
+	var groups []singleGroup
+	for _, kind := range directives {
+		name := strings.ToLower(strings.TrimPrefix(kind, "df")[:1]) + strings.TrimPrefix(kind, "df")[1:]
+		groups = append(groups, singleGroup{
+			kinds:   []string{kind},
+			message: name + " directive is already set",
+		})
+	}
+	if len(commands) > 0 {
+		groups = append(groups, singleGroup{kinds: commands, message: commandMsg})
+	}
+	return groups
+}
+
+func dfKind(name string) string {
+	r, size := utf8.DecodeRuneInString(name)
+	return "df" + string(unicode.ToUpper(r)) + name[size:]
+}
+
+func directiveArg(fn *ast.FuncDecl) string {
+	arg := ""
+	ast.Inspect(fn.Body, func(n ast.Node) bool {
+		call, ok := n.(*ast.CallExpr)
+		if !ok || callName(call.Fun) != "directive" || len(call.Args) == 0 {
+			return true
+		}
+		lit, ok := call.Args[0].(*ast.BasicLit)
+		if !ok || lit.Kind != token.STRING {
+			return true
+		}
+		s, err := strconv.Unquote(lit.Value)
+		if err == nil {
+			arg = s
+		}
+		return true
+	})
+	return arg
+}
+
+func mentions(body *ast.BlockStmt, name string) bool {
+	found := false
+	ast.Inspect(body, func(n ast.Node) bool {
+		id, ok := n.(*ast.Ident)
+		if ok && id.Name == name {
+			found = true
+		}
+		return true
+	})
+	return found
+}
+
+func errorLiteral(body *ast.BlockStmt) string {
+	msg := ""
+	ast.Inspect(body, func(n ast.Node) bool {
+		call, ok := n.(*ast.CallExpr)
+		if !ok || callName(call.Fun) != "Errorf" || len(call.Args) == 0 {
+			return true
+		}
+		lit, ok := call.Args[0].(*ast.BasicLit)
+		if !ok || lit.Kind != token.STRING {
+			return true
+		}
+		s, err := strconv.Unquote(lit.Value)
+		if err == nil && !strings.Contains(s, "%") {
+			msg = s
+		}
+		return true
+	})
+	return msg
+}
+
 func quoteList(in []string) string {
 	parts := make([]string, len(in))
 	for i, s := range in {
 		parts[i] = fmt.Sprintf("%q", s)
 	}
 	return strings.Join(parts, ", ")
+}
+
+func parseKit(fset *token.FileSet, dir string) ([]*ast.File, error) {
+	entries, err := os.ReadDir(dir)
+	if err != nil {
+		return nil, err
+	}
+	var names []string
+	for _, entry := range entries {
+		name := entry.Name()
+		if entry.IsDir() || !strings.HasSuffix(name, ".go") || strings.HasSuffix(name, "_test.go") {
+			continue
+		}
+		names = append(names, name)
+	}
+	sort.Strings(names)
+	var files []*ast.File
+	for _, name := range names {
+		file, err := parser.ParseFile(fset, filepath.Join(dir, name), nil, parser.ParseComments)
+		if err != nil {
+			return nil, err
+		}
+		if file.Name == nil || file.Name.Name != "kit" {
+			continue
+		}
+		files = append(files, file)
+	}
+	if len(files) == 0 {
+		return nil, fmt.Errorf("package kit not found")
+	}
+	return files, nil
 }
 
 func moduleRoot() (string, error) {

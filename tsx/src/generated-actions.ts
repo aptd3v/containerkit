@@ -119,6 +119,12 @@ import type {
 	WatchOptions,
 } from "./generated-options.js";
 
+/**
+ * Name of one session action.
+ *
+ * @remarks
+ * This is the `op` of a plan action. Each name has a function of the same name in this file.
+ */
 export type PlanOp =
 	| "attachContainer"
 	| "attachExec"
@@ -249,7 +255,22 @@ export type PlanOp =
 	| "wait"
 ;
 
-/** attachContainer encodes kit AttachContainer as a plan document. Go ImportPlan / ExecJSON runs it. */
+/**
+ * attachContainer builds a plan for kit AttachContainer.
+ *
+ * @remarks
+ * Go ImportPlan runs the plan. A session sends it as one action.
+ *
+ * @param cli - Connected client. `connect({ fromEnv: true })` reads the local Docker host.
+ * @param id - Container, image, network, volume, or other object id
+ * @param options - EngineAttachOptions. Omit it to keep the kit defaults.
+ * @returns The plan. Pass it to `run` or `session.call`.
+ *
+ * @example
+ * ```ts
+ * attachContainer(cli, "example", {});
+ * ```
+ */
 export function attachContainer(cli: Client, id: string, options?: EngineAttachOptions): PlanDocument {
 	const action: PlanAction = { op: "attachContainer" };
 	if (options) {
@@ -260,7 +281,22 @@ export function attachContainer(cli: Client, id: string, options?: EngineAttachO
 	return doc;
 }
 
-/** attachExec encodes kit AttachExec as a plan document. Go ImportPlan / ExecJSON runs it. */
+/**
+ * attachExec builds a plan for kit AttachExec.
+ *
+ * @remarks
+ * Go ImportPlan runs the plan. A session sends it as one action.
+ *
+ * @param cli - Connected client. `connect({ fromEnv: true })` reads the local Docker host.
+ * @param id - Container, image, network, volume, or other object id
+ * @param options - EngineExecAttachOptions. Omit it to keep the kit defaults.
+ * @returns The plan. Pass it to `run` or `session.call`.
+ *
+ * @example
+ * ```ts
+ * attachExec(cli, "example", {});
+ * ```
+ */
 export function attachExec(cli: Client, id: string, options?: EngineExecAttachOptions): PlanDocument {
 	const action: PlanAction = { op: "attachExec" };
 	if (options) {
@@ -271,7 +307,22 @@ export function attachExec(cli: Client, id: string, options?: EngineExecAttachOp
 	return doc;
 }
 
-/** attestImage encodes kit AttestImage as a plan document. Go ImportPlan / ExecJSON runs it. */
+/**
+ * attestImage builds a plan for kit AttestImage.
+ *
+ * @remarks
+ * Go ImportPlan runs the plan. A session sends it as one action.
+ *
+ * @param cli - Connected client. `connect({ fromEnv: true })` reads the local Docker host.
+ * @param ref - Image reference
+ * @param options - EngineImageAttestOptions. Omit it to keep the kit defaults.
+ * @returns The plan. Pass it to `run` or `session.call`.
+ *
+ * @example
+ * ```ts
+ * attestImage(cli, "example", {});
+ * ```
+ */
 export function attestImage(cli: Client, ref: string, options?: EngineImageAttestOptions): PlanDocument {
 	const action: PlanAction = { op: "attestImage" };
 	if (options) {
@@ -282,7 +333,21 @@ export function attestImage(cli: Client, ref: string, options?: EngineImageAttes
 	return doc;
 }
 
-/** buildImage encodes kit BuildImage as a plan document. Go ImportPlan / ExecJSON runs it. */
+/**
+ * buildImage builds a plan for kit BuildImage.
+ *
+ * @remarks
+ * Go ImportPlan runs the plan. A session sends it as one action.
+ *
+ * @param cli - Connected client. `connect({ fromEnv: true })` reads the local Docker host.
+ * @param options - BuildImageOptions. Omit it to keep the kit defaults.
+ * @returns The plan. Pass it to `run` or `session.call`.
+ *
+ * @example
+ * ```ts
+ * buildImage(cli, {});
+ * ```
+ */
 export function buildImage(cli: Client, options?: BuildImageOptions): PlanDocument {
 	const action: PlanAction = { op: "buildImage" };
 	if (options) {
@@ -292,7 +357,22 @@ export function buildImage(cli: Client, options?: BuildImageOptions): PlanDocume
 	return doc;
 }
 
-/** commitContainer encodes kit CommitContainer as a plan document. Go ImportPlan / ExecJSON runs it. */
+/**
+ * commitContainer builds a plan for kit CommitContainer.
+ *
+ * @remarks
+ * Go ImportPlan runs the plan. A session sends it as one action.
+ *
+ * @param cli - Connected client. `connect({ fromEnv: true })` reads the local Docker host.
+ * @param id - Container, image, network, volume, or other object id
+ * @param options - EngineCommitOptions. Omit it to keep the kit defaults.
+ * @returns The plan. Pass it to `run` or `session.call`.
+ *
+ * @example
+ * ```ts
+ * commitContainer(cli, "example", {});
+ * ```
+ */
 export function commitContainer(cli: Client, id: string, options?: EngineCommitOptions): PlanDocument {
 	const action: PlanAction = { op: "commitContainer" };
 	if (options) {
@@ -303,7 +383,24 @@ export function commitContainer(cli: Client, id: string, options?: EngineCommitO
 	return doc;
 }
 
-/** composeAttach encodes kit Attach as a plan document. Go ImportPlan / ExecJSON runs it. */
+/**
+ * composeAttach builds a plan for kit Attach.
+ *
+ * @remarks
+ * Go ImportPlan runs the plan. A session sends it as one action.
+ *
+ * @param cli - Connected client. `connect({ fromEnv: true })` reads the local Docker host.
+ * @param node - Compose, service, job, or container tree. Its YAML is rendered onto the plan.
+ * @param service - Compose service name
+ * @param options - AttachOptions. Omit it to keep the kit defaults.
+ * @returns The plan. Pass it to `run` or `session.call`.
+ * @throws Error when the tree cannot be rendered.
+ *
+ * @example
+ * ```ts
+ * composeAttach(cli, tree, "example", {});
+ * ```
+ */
 export function composeAttach(cli: Client, node: DockerNode, service: string, options?: AttachOptions): PlanDocument {
 	const action: PlanAction = { op: "composeAttach" };
 	if (options) {
@@ -315,7 +412,23 @@ export function composeAttach(cli: Client, node: DockerNode, service: string, op
 	return doc;
 }
 
-/** composeBuild encodes kit Build as a plan document. Go ImportPlan / ExecJSON runs it. */
+/**
+ * composeBuild builds a plan for kit Build.
+ *
+ * @remarks
+ * Go ImportPlan runs the plan. A session sends it as one action.
+ *
+ * @param cli - Connected client. `connect({ fromEnv: true })` reads the local Docker host.
+ * @param node - Compose, service, job, or container tree. Its YAML is rendered onto the plan.
+ * @param options - ComposeBuildOptions. Omit it to keep the kit defaults.
+ * @returns The plan. Pass it to `run` or `session.call`.
+ * @throws Error when the tree cannot be rendered.
+ *
+ * @example
+ * ```ts
+ * composeBuild(cli, tree, {});
+ * ```
+ */
 export function composeBuild(cli: Client, node: DockerNode, options?: ComposeBuildOptions): PlanDocument {
 	const action: PlanAction = { op: "composeBuild" };
 	if (options) {
@@ -326,7 +439,24 @@ export function composeBuild(cli: Client, node: DockerNode, options?: ComposeBui
 	return doc;
 }
 
-/** composeCommit encodes kit Commit as a plan document. Go ImportPlan / ExecJSON runs it. */
+/**
+ * composeCommit builds a plan for kit Commit.
+ *
+ * @remarks
+ * Go ImportPlan runs the plan. A session sends it as one action.
+ *
+ * @param cli - Connected client. `connect({ fromEnv: true })` reads the local Docker host.
+ * @param node - Compose, service, job, or container tree. Its YAML is rendered onto the plan.
+ * @param service - Compose service name
+ * @param options - CommitOptions. Omit it to keep the kit defaults.
+ * @returns The plan. Pass it to `run` or `session.call`.
+ * @throws Error when the tree cannot be rendered.
+ *
+ * @example
+ * ```ts
+ * composeCommit(cli, tree, "example", {});
+ * ```
+ */
 export function composeCommit(cli: Client, node: DockerNode, service: string, options?: CommitOptions): PlanDocument {
 	const action: PlanAction = { op: "composeCommit" };
 	if (options) {
@@ -338,7 +468,23 @@ export function composeCommit(cli: Client, node: DockerNode, service: string, op
 	return doc;
 }
 
-/** composeCopy encodes kit Copy as a plan document. Go ImportPlan / ExecJSON runs it. */
+/**
+ * composeCopy builds a plan for kit Copy.
+ *
+ * @remarks
+ * Go ImportPlan runs the plan. A session sends it as one action.
+ *
+ * @param cli - Connected client. `connect({ fromEnv: true })` reads the local Docker host.
+ * @param node - Compose, service, job, or container tree. Its YAML is rendered onto the plan.
+ * @param options - CopyOptions. Omit it to keep the kit defaults.
+ * @returns The plan. Pass it to `run` or `session.call`.
+ * @throws Error when the tree cannot be rendered.
+ *
+ * @example
+ * ```ts
+ * composeCopy(cli, tree, {});
+ * ```
+ */
 export function composeCopy(cli: Client, node: DockerNode, options?: CopyOptions): PlanDocument {
 	const action: PlanAction = { op: "composeCopy" };
 	if (options) {
@@ -349,7 +495,23 @@ export function composeCopy(cli: Client, node: DockerNode, options?: CopyOptions
 	return doc;
 }
 
-/** composeCreate encodes kit Create as a plan document. Go ImportPlan / ExecJSON runs it. */
+/**
+ * composeCreate builds a plan for kit Create.
+ *
+ * @remarks
+ * Go ImportPlan runs the plan. A session sends it as one action.
+ *
+ * @param cli - Connected client. `connect({ fromEnv: true })` reads the local Docker host.
+ * @param node - Compose, service, job, or container tree. Its YAML is rendered onto the plan.
+ * @param options - ComposeCreateOptions. Omit it to keep the kit defaults.
+ * @returns The plan. Pass it to `run` or `session.call`.
+ * @throws Error when the tree cannot be rendered.
+ *
+ * @example
+ * ```ts
+ * composeCreate(cli, tree, {});
+ * ```
+ */
 export function composeCreate(cli: Client, node: DockerNode, options?: ComposeCreateOptions): PlanDocument {
 	const action: PlanAction = { op: "composeCreate" };
 	if (options) {
@@ -360,7 +522,23 @@ export function composeCreate(cli: Client, node: DockerNode, options?: ComposeCr
 	return doc;
 }
 
-/** composeDown encodes kit Down as a plan document. Go ImportPlan / ExecJSON runs it. */
+/**
+ * composeDown builds a plan for kit Down.
+ *
+ * @remarks
+ * Go ImportPlan runs the plan. A session sends it as one action.
+ *
+ * @param cli - Connected client. `connect({ fromEnv: true })` reads the local Docker host.
+ * @param node - Compose, service, job, or container tree. Its YAML is rendered onto the plan.
+ * @param options - DownOptions. Omit it to keep the kit defaults.
+ * @returns The plan. Pass it to `run` or `session.call`.
+ * @throws Error when the tree cannot be rendered.
+ *
+ * @example
+ * ```ts
+ * composeDown(cli, tree, {});
+ * ```
+ */
 export function composeDown(cli: Client, node: DockerNode, options?: DownOptions): PlanDocument {
 	const action: PlanAction = { op: "composeDown" };
 	if (options) {
@@ -371,7 +549,23 @@ export function composeDown(cli: Client, node: DockerNode, options?: DownOptions
 	return doc;
 }
 
-/** composeEvents encodes kit Events as a plan document. Go ImportPlan / ExecJSON runs it. */
+/**
+ * composeEvents builds a plan for kit Events.
+ *
+ * @remarks
+ * Go ImportPlan runs the plan. A session sends it as one action.
+ *
+ * @param cli - Connected client. `connect({ fromEnv: true })` reads the local Docker host.
+ * @param node - Compose, service, job, or container tree. Its YAML is rendered onto the plan.
+ * @param options - EventsOptions. Omit it to keep the kit defaults.
+ * @returns The plan. Pass it to `run` or `session.call`.
+ * @throws Error when the tree cannot be rendered.
+ *
+ * @example
+ * ```ts
+ * composeEvents(cli, tree, {});
+ * ```
+ */
 export function composeEvents(cli: Client, node: DockerNode, options?: EventsOptions): PlanDocument {
 	const action: PlanAction = { op: "composeEvents" };
 	if (options) {
@@ -382,7 +576,24 @@ export function composeEvents(cli: Client, node: DockerNode, options?: EventsOpt
 	return doc;
 }
 
-/** composeExec encodes kit Exec as a plan document. Go ImportPlan / ExecJSON runs it. */
+/**
+ * composeExec builds a plan for kit Exec.
+ *
+ * @remarks
+ * Go ImportPlan runs the plan. A session sends it as one action.
+ *
+ * @param cli - Connected client. `connect({ fromEnv: true })` reads the local Docker host.
+ * @param node - Compose, service, job, or container tree. Its YAML is rendered onto the plan.
+ * @param service - Compose service name
+ * @param options - RunOptions. Omit it to keep the kit defaults.
+ * @returns The plan. Pass it to `run` or `session.call`.
+ * @throws Error when the tree cannot be rendered.
+ *
+ * @example
+ * ```ts
+ * composeExec(cli, tree, "example", {});
+ * ```
+ */
 export function composeExec(cli: Client, node: DockerNode, service: string, options?: RunOptions): PlanDocument {
 	const action: PlanAction = { op: "composeExec" };
 	if (options) {
@@ -394,7 +605,24 @@ export function composeExec(cli: Client, node: DockerNode, service: string, opti
 	return doc;
 }
 
-/** composeExport encodes kit Export as a plan document. Go ImportPlan / ExecJSON runs it. */
+/**
+ * composeExport builds a plan for kit Export.
+ *
+ * @remarks
+ * Go ImportPlan runs the plan. A session sends it as one action.
+ *
+ * @param cli - Connected client. `connect({ fromEnv: true })` reads the local Docker host.
+ * @param node - Compose, service, job, or container tree. Its YAML is rendered onto the plan.
+ * @param service - Compose service name
+ * @param options - ExportOptions. Omit it to keep the kit defaults.
+ * @returns The plan. Pass it to `run` or `session.call`.
+ * @throws Error when the tree cannot be rendered.
+ *
+ * @example
+ * ```ts
+ * composeExport(cli, tree, "example", {});
+ * ```
+ */
 export function composeExport(cli: Client, node: DockerNode, service: string, options?: ExportOptions): PlanDocument {
 	const action: PlanAction = { op: "composeExport" };
 	if (options) {
@@ -406,7 +634,23 @@ export function composeExport(cli: Client, node: DockerNode, service: string, op
 	return doc;
 }
 
-/** composeGenerate encodes kit Generate as a plan document. Go ImportPlan / ExecJSON runs it. */
+/**
+ * composeGenerate builds a plan for kit Generate.
+ *
+ * @remarks
+ * Go ImportPlan runs the plan. A session sends it as one action.
+ *
+ * @param cli - Connected client. `connect({ fromEnv: true })` reads the local Docker host.
+ * @param node - Compose, service, job, or container tree. Its YAML is rendered onto the plan.
+ * @param options - GenerateOptions. Omit it to keep the kit defaults.
+ * @returns The plan. Pass it to `run` or `session.call`.
+ * @throws Error when the tree cannot be rendered.
+ *
+ * @example
+ * ```ts
+ * composeGenerate(cli, tree, {});
+ * ```
+ */
 export function composeGenerate(cli: Client, node: DockerNode, options?: GenerateOptions): PlanDocument {
 	const action: PlanAction = { op: "composeGenerate" };
 	if (options) {
@@ -417,7 +661,23 @@ export function composeGenerate(cli: Client, node: DockerNode, options?: Generat
 	return doc;
 }
 
-/** composeImages encodes kit Images as a plan document. Go ImportPlan / ExecJSON runs it. */
+/**
+ * composeImages builds a plan for kit Images.
+ *
+ * @remarks
+ * Go ImportPlan runs the plan. A session sends it as one action.
+ *
+ * @param cli - Connected client. `connect({ fromEnv: true })` reads the local Docker host.
+ * @param node - Compose, service, job, or container tree. Its YAML is rendered onto the plan.
+ * @param options - ImagesOptions. Omit it to keep the kit defaults.
+ * @returns The plan. Pass it to `run` or `session.call`.
+ * @throws Error when the tree cannot be rendered.
+ *
+ * @example
+ * ```ts
+ * composeImages(cli, tree, {});
+ * ```
+ */
 export function composeImages(cli: Client, node: DockerNode, options?: ImagesOptions): PlanDocument {
 	const action: PlanAction = { op: "composeImages" };
 	if (options) {
@@ -428,7 +688,23 @@ export function composeImages(cli: Client, node: DockerNode, options?: ImagesOpt
 	return doc;
 }
 
-/** composeKill encodes kit Kill as a plan document. Go ImportPlan / ExecJSON runs it. */
+/**
+ * composeKill builds a plan for kit Kill.
+ *
+ * @remarks
+ * Go ImportPlan runs the plan. A session sends it as one action.
+ *
+ * @param cli - Connected client. `connect({ fromEnv: true })` reads the local Docker host.
+ * @param node - Compose, service, job, or container tree. Its YAML is rendered onto the plan.
+ * @param options - KillOptions. Omit it to keep the kit defaults.
+ * @returns The plan. Pass it to `run` or `session.call`.
+ * @throws Error when the tree cannot be rendered.
+ *
+ * @example
+ * ```ts
+ * composeKill(cli, tree, {});
+ * ```
+ */
 export function composeKill(cli: Client, node: DockerNode, options?: KillOptions): PlanDocument {
 	const action: PlanAction = { op: "composeKill" };
 	if (options) {
@@ -439,7 +715,23 @@ export function composeKill(cli: Client, node: DockerNode, options?: KillOptions
 	return doc;
 }
 
-/** composeList encodes kit List as a plan document. Go ImportPlan / ExecJSON runs it. */
+/**
+ * composeList builds a plan for kit List.
+ *
+ * @remarks
+ * Go ImportPlan runs the plan. A session sends it as one action.
+ *
+ * @param cli - Connected client. `connect({ fromEnv: true })` reads the local Docker host.
+ * @param node - Compose, service, job, or container tree. Its YAML is rendered onto the plan.
+ * @param options - ListOptions. Omit it to keep the kit defaults.
+ * @returns The plan. Pass it to `run` or `session.call`.
+ * @throws Error when the tree cannot be rendered.
+ *
+ * @example
+ * ```ts
+ * composeList(cli, tree, {});
+ * ```
+ */
 export function composeList(cli: Client, node: DockerNode, options?: ListOptions): PlanDocument {
 	const action: PlanAction = { op: "composeList" };
 	if (options) {
@@ -450,7 +742,23 @@ export function composeList(cli: Client, node: DockerNode, options?: ListOptions
 	return doc;
 }
 
-/** composeLoadProject encodes kit LoadProject as a plan document. Go ImportPlan / ExecJSON runs it. */
+/**
+ * composeLoadProject builds a plan for kit LoadProject.
+ *
+ * @remarks
+ * Go ImportPlan runs the plan. A session sends it as one action.
+ *
+ * @param cli - Connected client. `connect({ fromEnv: true })` reads the local Docker host.
+ * @param node - Compose, service, job, or container tree. Its YAML is rendered onto the plan.
+ * @param options - LoadProjectOptions. Omit it to keep the kit defaults.
+ * @returns The plan. Pass it to `run` or `session.call`.
+ * @throws Error when the tree cannot be rendered.
+ *
+ * @example
+ * ```ts
+ * composeLoadProject(cli, tree, {});
+ * ```
+ */
 export function composeLoadProject(cli: Client, node: DockerNode, options?: LoadProjectOptions): PlanDocument {
 	const action: PlanAction = { op: "composeLoadProject" };
 	if (options) {
@@ -461,7 +769,23 @@ export function composeLoadProject(cli: Client, node: DockerNode, options?: Load
 	return doc;
 }
 
-/** composePause encodes kit Pause as a plan document. Go ImportPlan / ExecJSON runs it. */
+/**
+ * composePause builds a plan for kit Pause.
+ *
+ * @remarks
+ * Go ImportPlan runs the plan. A session sends it as one action.
+ *
+ * @param cli - Connected client. `connect({ fromEnv: true })` reads the local Docker host.
+ * @param node - Compose, service, job, or container tree. Its YAML is rendered onto the plan.
+ * @param options - PauseOptions. Omit it to keep the kit defaults.
+ * @returns The plan. Pass it to `run` or `session.call`.
+ * @throws Error when the tree cannot be rendered.
+ *
+ * @example
+ * ```ts
+ * composePause(cli, tree, {});
+ * ```
+ */
 export function composePause(cli: Client, node: DockerNode, options?: PauseOptions): PlanDocument {
 	const action: PlanAction = { op: "composePause" };
 	if (options) {
@@ -472,7 +796,25 @@ export function composePause(cli: Client, node: DockerNode, options?: PauseOptio
 	return doc;
 }
 
-/** composePort encodes kit Port as a plan document. Go ImportPlan / ExecJSON runs it. */
+/**
+ * composePort builds a plan for kit Port.
+ *
+ * @remarks
+ * Go ImportPlan runs the plan. A session sends it as one action.
+ *
+ * @param cli - Connected client. `connect({ fromEnv: true })` reads the local Docker host.
+ * @param node - Compose, service, job, or container tree. Its YAML is rendered onto the plan.
+ * @param service - Compose service name
+ * @param port - Container port
+ * @param options - ComposePortOptions. Omit it to keep the kit defaults.
+ * @returns The plan. Pass it to `run` or `session.call`.
+ * @throws Error when the tree cannot be rendered.
+ *
+ * @example
+ * ```ts
+ * composePort(cli, tree, "example", 1, {});
+ * ```
+ */
 export function composePort(cli: Client, node: DockerNode, service: string, port: number, options?: ComposePortOptions): PlanDocument {
 	const action: PlanAction = { op: "composePort" };
 	if (options) {
@@ -485,7 +827,23 @@ export function composePort(cli: Client, node: DockerNode, service: string, port
 	return doc;
 }
 
-/** composePs encodes kit Ps as a plan document. Go ImportPlan / ExecJSON runs it. */
+/**
+ * composePs builds a plan for kit Ps.
+ *
+ * @remarks
+ * Go ImportPlan runs the plan. A session sends it as one action.
+ *
+ * @param cli - Connected client. `connect({ fromEnv: true })` reads the local Docker host.
+ * @param node - Compose, service, job, or container tree. Its YAML is rendered onto the plan.
+ * @param options - PsOptions. Omit it to keep the kit defaults.
+ * @returns The plan. Pass it to `run` or `session.call`.
+ * @throws Error when the tree cannot be rendered.
+ *
+ * @example
+ * ```ts
+ * composePs(cli, tree, {});
+ * ```
+ */
 export function composePs(cli: Client, node: DockerNode, options?: PsOptions): PlanDocument {
 	const action: PlanAction = { op: "composePs" };
 	if (options) {
@@ -496,7 +854,24 @@ export function composePs(cli: Client, node: DockerNode, options?: PsOptions): P
 	return doc;
 }
 
-/** composePublishOCI encodes kit PublishOCI as a plan document. Go ImportPlan / ExecJSON runs it. */
+/**
+ * composePublishOCI builds a plan for kit PublishOCI.
+ *
+ * @remarks
+ * Go ImportPlan runs the plan. A session sends it as one action.
+ *
+ * @param cli - Connected client. `connect({ fromEnv: true })` reads the local Docker host.
+ * @param node - Compose, service, job, or container tree. Its YAML is rendered onto the plan.
+ * @param repository - Registry repository
+ * @param options - PublishOptions. Omit it to keep the kit defaults.
+ * @returns The plan. Pass it to `run` or `session.call`.
+ * @throws Error when the tree cannot be rendered.
+ *
+ * @example
+ * ```ts
+ * composePublishOCI(cli, tree, "example", {});
+ * ```
+ */
 export function composePublishOCI(cli: Client, node: DockerNode, repository: string, options?: PublishOptions): PlanDocument {
 	const action: PlanAction = { op: "composePublishOCI" };
 	if (options) {
@@ -508,7 +883,23 @@ export function composePublishOCI(cli: Client, node: DockerNode, repository: str
 	return doc;
 }
 
-/** composePull encodes kit Pull as a plan document. Go ImportPlan / ExecJSON runs it. */
+/**
+ * composePull builds a plan for kit Pull.
+ *
+ * @remarks
+ * Go ImportPlan runs the plan. A session sends it as one action.
+ *
+ * @param cli - Connected client. `connect({ fromEnv: true })` reads the local Docker host.
+ * @param node - Compose, service, job, or container tree. Its YAML is rendered onto the plan.
+ * @param options - PullOptions. Omit it to keep the kit defaults.
+ * @returns The plan. Pass it to `run` or `session.call`.
+ * @throws Error when the tree cannot be rendered.
+ *
+ * @example
+ * ```ts
+ * composePull(cli, tree, {});
+ * ```
+ */
 export function composePull(cli: Client, node: DockerNode, options?: PullOptions): PlanDocument {
 	const action: PlanAction = { op: "composePull" };
 	if (options) {
@@ -519,7 +910,23 @@ export function composePull(cli: Client, node: DockerNode, options?: PullOptions
 	return doc;
 }
 
-/** composePush encodes kit Push as a plan document. Go ImportPlan / ExecJSON runs it. */
+/**
+ * composePush builds a plan for kit Push.
+ *
+ * @remarks
+ * Go ImportPlan runs the plan. A session sends it as one action.
+ *
+ * @param cli - Connected client. `connect({ fromEnv: true })` reads the local Docker host.
+ * @param node - Compose, service, job, or container tree. Its YAML is rendered onto the plan.
+ * @param options - PushOptions. Omit it to keep the kit defaults.
+ * @returns The plan. Pass it to `run` or `session.call`.
+ * @throws Error when the tree cannot be rendered.
+ *
+ * @example
+ * ```ts
+ * composePush(cli, tree, {});
+ * ```
+ */
 export function composePush(cli: Client, node: DockerNode, options?: PushOptions): PlanDocument {
 	const action: PlanAction = { op: "composePush" };
 	if (options) {
@@ -530,7 +937,23 @@ export function composePush(cli: Client, node: DockerNode, options?: PushOptions
 	return doc;
 }
 
-/** composeRemove encodes kit Remove as a plan document. Go ImportPlan / ExecJSON runs it. */
+/**
+ * composeRemove builds a plan for kit Remove.
+ *
+ * @remarks
+ * Go ImportPlan runs the plan. A session sends it as one action.
+ *
+ * @param cli - Connected client. `connect({ fromEnv: true })` reads the local Docker host.
+ * @param node - Compose, service, job, or container tree. Its YAML is rendered onto the plan.
+ * @param options - RemoveOptions. Omit it to keep the kit defaults.
+ * @returns The plan. Pass it to `run` or `session.call`.
+ * @throws Error when the tree cannot be rendered.
+ *
+ * @example
+ * ```ts
+ * composeRemove(cli, tree, {});
+ * ```
+ */
 export function composeRemove(cli: Client, node: DockerNode, options?: RemoveOptions): PlanDocument {
 	const action: PlanAction = { op: "composeRemove" };
 	if (options) {
@@ -541,7 +964,23 @@ export function composeRemove(cli: Client, node: DockerNode, options?: RemoveOpt
 	return doc;
 }
 
-/** composeRestart encodes kit Restart as a plan document. Go ImportPlan / ExecJSON runs it. */
+/**
+ * composeRestart builds a plan for kit Restart.
+ *
+ * @remarks
+ * Go ImportPlan runs the plan. A session sends it as one action.
+ *
+ * @param cli - Connected client. `connect({ fromEnv: true })` reads the local Docker host.
+ * @param node - Compose, service, job, or container tree. Its YAML is rendered onto the plan.
+ * @param options - ComposeRestartOptions. Omit it to keep the kit defaults.
+ * @returns The plan. Pass it to `run` or `session.call`.
+ * @throws Error when the tree cannot be rendered.
+ *
+ * @example
+ * ```ts
+ * composeRestart(cli, tree, {});
+ * ```
+ */
 export function composeRestart(cli: Client, node: DockerNode, options?: ComposeRestartOptions): PlanDocument {
 	const action: PlanAction = { op: "composeRestart" };
 	if (options) {
@@ -552,7 +991,24 @@ export function composeRestart(cli: Client, node: DockerNode, options?: ComposeR
 	return doc;
 }
 
-/** composeRun encodes kit Run as a plan document. Go ImportPlan / ExecJSON runs it. */
+/**
+ * composeRun builds a plan for kit Run.
+ *
+ * @remarks
+ * Go ImportPlan runs the plan. A session sends it as one action.
+ *
+ * @param cli - Connected client. `connect({ fromEnv: true })` reads the local Docker host.
+ * @param node - Compose, service, job, or container tree. Its YAML is rendered onto the plan.
+ * @param service - Compose service name
+ * @param options - RunOptions. Omit it to keep the kit defaults.
+ * @returns The plan. Pass it to `run` or `session.call`.
+ * @throws Error when the tree cannot be rendered.
+ *
+ * @example
+ * ```ts
+ * composeRun(cli, tree, "example", {});
+ * ```
+ */
 export function composeRun(cli: Client, node: DockerNode, service: string, options?: RunOptions): PlanDocument {
 	const action: PlanAction = { op: "composeRun" };
 	if (options) {
@@ -564,7 +1020,23 @@ export function composeRun(cli: Client, node: DockerNode, service: string, optio
 	return doc;
 }
 
-/** composeScale encodes kit Scale as a plan document. Go ImportPlan / ExecJSON runs it. */
+/**
+ * composeScale builds a plan for kit Scale.
+ *
+ * @remarks
+ * Go ImportPlan runs the plan. A session sends it as one action.
+ *
+ * @param cli - Connected client. `connect({ fromEnv: true })` reads the local Docker host.
+ * @param node - Compose, service, job, or container tree. Its YAML is rendered onto the plan.
+ * @param options - ScaleOptions. Omit it to keep the kit defaults.
+ * @returns The plan. Pass it to `run` or `session.call`.
+ * @throws Error when the tree cannot be rendered.
+ *
+ * @example
+ * ```ts
+ * composeScale(cli, tree, {});
+ * ```
+ */
 export function composeScale(cli: Client, node: DockerNode, options?: ScaleOptions): PlanDocument {
 	const action: PlanAction = { op: "composeScale" };
 	if (options) {
@@ -575,7 +1047,23 @@ export function composeScale(cli: Client, node: DockerNode, options?: ScaleOptio
 	return doc;
 }
 
-/** composeStart encodes kit Start as a plan document. Go ImportPlan / ExecJSON runs it. */
+/**
+ * composeStart builds a plan for kit Start.
+ *
+ * @remarks
+ * Go ImportPlan runs the plan. A session sends it as one action.
+ *
+ * @param cli - Connected client. `connect({ fromEnv: true })` reads the local Docker host.
+ * @param node - Compose, service, job, or container tree. Its YAML is rendered onto the plan.
+ * @param options - ComposeStartOptions. Omit it to keep the kit defaults.
+ * @returns The plan. Pass it to `run` or `session.call`.
+ * @throws Error when the tree cannot be rendered.
+ *
+ * @example
+ * ```ts
+ * composeStart(cli, tree, {});
+ * ```
+ */
 export function composeStart(cli: Client, node: DockerNode, options?: ComposeStartOptions): PlanDocument {
 	const action: PlanAction = { op: "composeStart" };
 	if (options) {
@@ -586,7 +1074,23 @@ export function composeStart(cli: Client, node: DockerNode, options?: ComposeSta
 	return doc;
 }
 
-/** composeStop encodes kit Stop as a plan document. Go ImportPlan / ExecJSON runs it. */
+/**
+ * composeStop builds a plan for kit Stop.
+ *
+ * @remarks
+ * Go ImportPlan runs the plan. A session sends it as one action.
+ *
+ * @param cli - Connected client. `connect({ fromEnv: true })` reads the local Docker host.
+ * @param node - Compose, service, job, or container tree. Its YAML is rendered onto the plan.
+ * @param options - ComposeStopOptions. Omit it to keep the kit defaults.
+ * @returns The plan. Pass it to `run` or `session.call`.
+ * @throws Error when the tree cannot be rendered.
+ *
+ * @example
+ * ```ts
+ * composeStop(cli, tree, {});
+ * ```
+ */
 export function composeStop(cli: Client, node: DockerNode, options?: ComposeStopOptions): PlanDocument {
 	const action: PlanAction = { op: "composeStop" };
 	if (options) {
@@ -597,7 +1101,23 @@ export function composeStop(cli: Client, node: DockerNode, options?: ComposeStop
 	return doc;
 }
 
-/** composeUnpause encodes kit Unpause as a plan document. Go ImportPlan / ExecJSON runs it. */
+/**
+ * composeUnpause builds a plan for kit Unpause.
+ *
+ * @remarks
+ * Go ImportPlan runs the plan. A session sends it as one action.
+ *
+ * @param cli - Connected client. `connect({ fromEnv: true })` reads the local Docker host.
+ * @param node - Compose, service, job, or container tree. Its YAML is rendered onto the plan.
+ * @param options - PauseOptions. Omit it to keep the kit defaults.
+ * @returns The plan. Pass it to `run` or `session.call`.
+ * @throws Error when the tree cannot be rendered.
+ *
+ * @example
+ * ```ts
+ * composeUnpause(cli, tree, {});
+ * ```
+ */
 export function composeUnpause(cli: Client, node: DockerNode, options?: PauseOptions): PlanDocument {
 	const action: PlanAction = { op: "composeUnpause" };
 	if (options) {
@@ -608,7 +1128,23 @@ export function composeUnpause(cli: Client, node: DockerNode, options?: PauseOpt
 	return doc;
 }
 
-/** composeUp encodes kit Up as a plan document. Go ImportPlan / ExecJSON runs it. */
+/**
+ * composeUp builds a plan for kit Up.
+ *
+ * @remarks
+ * Go ImportPlan runs the plan. A session sends it as one action.
+ *
+ * @param cli - Connected client. `connect({ fromEnv: true })` reads the local Docker host.
+ * @param node - Compose, service, job, or container tree. Its YAML is rendered onto the plan.
+ * @param options - UpOptions. Omit it to keep the kit defaults.
+ * @returns The plan. Pass it to `run` or `session.call`.
+ * @throws Error when the tree cannot be rendered.
+ *
+ * @example
+ * ```ts
+ * composeUp(cli, tree, {});
+ * ```
+ */
 export function composeUp(cli: Client, node: DockerNode, options?: UpOptions): PlanDocument {
 	const action: PlanAction = { op: "composeUp" };
 	if (options) {
@@ -619,7 +1155,23 @@ export function composeUp(cli: Client, node: DockerNode, options?: UpOptions): P
 	return doc;
 }
 
-/** composeViz encodes kit Viz as a plan document. Go ImportPlan / ExecJSON runs it. */
+/**
+ * composeViz builds a plan for kit Viz.
+ *
+ * @remarks
+ * Go ImportPlan runs the plan. A session sends it as one action.
+ *
+ * @param cli - Connected client. `connect({ fromEnv: true })` reads the local Docker host.
+ * @param node - Compose, service, job, or container tree. Its YAML is rendered onto the plan.
+ * @param options - VizOptions. Omit it to keep the kit defaults.
+ * @returns The plan. Pass it to `run` or `session.call`.
+ * @throws Error when the tree cannot be rendered.
+ *
+ * @example
+ * ```ts
+ * composeViz(cli, tree, {});
+ * ```
+ */
 export function composeViz(cli: Client, node: DockerNode, options?: VizOptions): PlanDocument {
 	const action: PlanAction = { op: "composeViz" };
 	if (options) {
@@ -630,7 +1182,23 @@ export function composeViz(cli: Client, node: DockerNode, options?: VizOptions):
 	return doc;
 }
 
-/** composeVolumeList encodes kit VolumeList as a plan document. Go ImportPlan / ExecJSON runs it. */
+/**
+ * composeVolumeList builds a plan for kit VolumeList.
+ *
+ * @remarks
+ * Go ImportPlan runs the plan. A session sends it as one action.
+ *
+ * @param cli - Connected client. `connect({ fromEnv: true })` reads the local Docker host.
+ * @param node - Compose, service, job, or container tree. Its YAML is rendered onto the plan.
+ * @param options - VolumesListOptions. Omit it to keep the kit defaults.
+ * @returns The plan. Pass it to `run` or `session.call`.
+ * @throws Error when the tree cannot be rendered.
+ *
+ * @example
+ * ```ts
+ * composeVolumeList(cli, tree, {});
+ * ```
+ */
 export function composeVolumeList(cli: Client, node: DockerNode, options?: VolumesListOptions): PlanDocument {
 	const action: PlanAction = { op: "composeVolumeList" };
 	if (options) {
@@ -641,7 +1209,23 @@ export function composeVolumeList(cli: Client, node: DockerNode, options?: Volum
 	return doc;
 }
 
-/** composeWait encodes kit Wait as a plan document. Go ImportPlan / ExecJSON runs it. */
+/**
+ * composeWait builds a plan for kit Wait.
+ *
+ * @remarks
+ * Go ImportPlan runs the plan. A session sends it as one action.
+ *
+ * @param cli - Connected client. `connect({ fromEnv: true })` reads the local Docker host.
+ * @param node - Compose, service, job, or container tree. Its YAML is rendered onto the plan.
+ * @param options - WaitOptions. Omit it to keep the kit defaults.
+ * @returns The plan. Pass it to `run` or `session.call`.
+ * @throws Error when the tree cannot be rendered.
+ *
+ * @example
+ * ```ts
+ * composeWait(cli, tree, {});
+ * ```
+ */
 export function composeWait(cli: Client, node: DockerNode, options?: WaitOptions): PlanDocument {
 	const action: PlanAction = { op: "composeWait" };
 	if (options) {
@@ -652,7 +1236,23 @@ export function composeWait(cli: Client, node: DockerNode, options?: WaitOptions
 	return doc;
 }
 
-/** composeWatch encodes kit Watch as a plan document. Go ImportPlan / ExecJSON runs it. */
+/**
+ * composeWatch builds a plan for kit Watch.
+ *
+ * @remarks
+ * Go ImportPlan runs the plan. A session sends it as one action.
+ *
+ * @param cli - Connected client. `connect({ fromEnv: true })` reads the local Docker host.
+ * @param node - Compose, service, job, or container tree. Its YAML is rendered onto the plan.
+ * @param options - WatchOptions. Omit it to keep the kit defaults.
+ * @returns The plan. Pass it to `run` or `session.call`.
+ * @throws Error when the tree cannot be rendered.
+ *
+ * @example
+ * ```ts
+ * composeWatch(cli, tree, {});
+ * ```
+ */
 export function composeWatch(cli: Client, node: DockerNode, options?: WatchOptions): PlanDocument {
 	const action: PlanAction = { op: "composeWatch" };
 	if (options) {
@@ -663,7 +1263,22 @@ export function composeWatch(cli: Client, node: DockerNode, options?: WatchOptio
 	return doc;
 }
 
-/** connectNetwork encodes kit ConnectNetwork as a plan document. Go ImportPlan / ExecJSON runs it. */
+/**
+ * connectNetwork builds a plan for kit ConnectNetwork.
+ *
+ * @remarks
+ * Go ImportPlan runs the plan. A session sends it as one action.
+ *
+ * @param cli - Connected client. `connect({ fromEnv: true })` reads the local Docker host.
+ * @param name - Object name
+ * @param options - EngineNetworkConnectOptions. Omit it to keep the kit defaults.
+ * @returns The plan. Pass it to `run` or `session.call`.
+ *
+ * @example
+ * ```ts
+ * connectNetwork(cli, "example", {});
+ * ```
+ */
 export function connectNetwork(cli: Client, name: string, options?: EngineNetworkConnectOptions): PlanDocument {
 	const action: PlanAction = { op: "connectNetwork" };
 	if (options) {
@@ -674,7 +1289,21 @@ export function connectNetwork(cli: Client, name: string, options?: EngineNetwor
 	return doc;
 }
 
-/** containerRun encodes kit Run as a plan document. Go ImportPlan / ExecJSON runs it. */
+/**
+ * containerRun builds a plan for kit Run.
+ *
+ * @remarks
+ * Go ImportPlan runs the plan. A session sends it as one action.
+ *
+ * @param cli - Connected client. `connect({ fromEnv: true })` reads the local Docker host.
+ * @param options - ContainerOptions. Omit it to keep the kit defaults.
+ * @returns The plan. Pass it to `run` or `session.call`.
+ *
+ * @example
+ * ```ts
+ * containerRun(cli, {});
+ * ```
+ */
 export function containerRun(cli: Client, options?: ContainerOptions): PlanDocument {
 	const action: PlanAction = { op: "containerRun" };
 	if (options) {
@@ -684,7 +1313,22 @@ export function containerRun(cli: Client, options?: ContainerOptions): PlanDocum
 	return doc;
 }
 
-/** copyFrom encodes kit CopyFrom as a plan document. Go ImportPlan / ExecJSON runs it. */
+/**
+ * copyFrom builds a plan for kit CopyFrom.
+ *
+ * @remarks
+ * Go ImportPlan runs the plan. A session sends it as one action.
+ *
+ * @param cli - Connected client. `connect({ fromEnv: true })` reads the local Docker host.
+ * @param id - Container, image, network, volume, or other object id
+ * @param options - EngineCopyFromOptions. Omit it to keep the kit defaults.
+ * @returns The plan. Pass it to `run` or `session.call`.
+ *
+ * @example
+ * ```ts
+ * copyFrom(cli, "example", {});
+ * ```
+ */
 export function copyFrom(cli: Client, id: string, options?: EngineCopyFromOptions): PlanDocument {
 	const action: PlanAction = { op: "copyFrom" };
 	if (options) {
@@ -695,7 +1339,22 @@ export function copyFrom(cli: Client, id: string, options?: EngineCopyFromOption
 	return doc;
 }
 
-/** copyTo encodes kit CopyTo as a plan document. Go ImportPlan / ExecJSON runs it. */
+/**
+ * copyTo builds a plan for kit CopyTo.
+ *
+ * @remarks
+ * Go ImportPlan runs the plan. A session sends it as one action.
+ *
+ * @param cli - Connected client. `connect({ fromEnv: true })` reads the local Docker host.
+ * @param id - Container, image, network, volume, or other object id
+ * @param options - EngineCopyToOptions. Omit it to keep the kit defaults.
+ * @returns The plan. Pass it to `run` or `session.call`.
+ *
+ * @example
+ * ```ts
+ * copyTo(cli, "example", {});
+ * ```
+ */
 export function copyTo(cli: Client, id: string, options?: EngineCopyToOptions): PlanDocument {
 	const action: PlanAction = { op: "copyTo" };
 	if (options) {
@@ -706,7 +1365,21 @@ export function copyTo(cli: Client, id: string, options?: EngineCopyToOptions): 
 	return doc;
 }
 
-/** create encodes kit Create as a plan document. Go ImportPlan / ExecJSON runs it. */
+/**
+ * create builds a plan for kit Create.
+ *
+ * @remarks
+ * Go ImportPlan runs the plan. A session sends it as one action.
+ *
+ * @param cli - Connected client. `connect({ fromEnv: true })` reads the local Docker host.
+ * @param options - EngineCreateOptions. Omit it to keep the kit defaults.
+ * @returns The plan. Pass it to `run` or `session.call`.
+ *
+ * @example
+ * ```ts
+ * create(cli, {});
+ * ```
+ */
 export function create(cli: Client, options?: EngineCreateOptions): PlanDocument {
 	const action: PlanAction = { op: "create" };
 	if (options) {
@@ -716,7 +1389,22 @@ export function create(cli: Client, options?: EngineCreateOptions): PlanDocument
 	return doc;
 }
 
-/** createCheckpoint encodes kit CreateCheckpoint as a plan document. Go ImportPlan / ExecJSON runs it. */
+/**
+ * createCheckpoint builds a plan for kit CreateCheckpoint.
+ *
+ * @remarks
+ * Go ImportPlan runs the plan. A session sends it as one action.
+ *
+ * @param cli - Connected client. `connect({ fromEnv: true })` reads the local Docker host.
+ * @param id - Container, image, network, volume, or other object id
+ * @param options - EngineCheckpointCreateOptions. Omit it to keep the kit defaults.
+ * @returns The plan. Pass it to `run` or `session.call`.
+ *
+ * @example
+ * ```ts
+ * createCheckpoint(cli, "example", {});
+ * ```
+ */
 export function createCheckpoint(cli: Client, id: string, options?: EngineCheckpointCreateOptions): PlanDocument {
 	const action: PlanAction = { op: "createCheckpoint" };
 	if (options) {
@@ -727,7 +1415,21 @@ export function createCheckpoint(cli: Client, id: string, options?: EngineCheckp
 	return doc;
 }
 
-/** createEngineConfig encodes kit CreateEngineConfig as a plan document. Go ImportPlan / ExecJSON runs it. */
+/**
+ * createEngineConfig builds a plan for kit CreateEngineConfig.
+ *
+ * @remarks
+ * Go ImportPlan runs the plan. A session sends it as one action.
+ *
+ * @param cli - Connected client. `connect({ fromEnv: true })` reads the local Docker host.
+ * @param options - EngineConfigCreateOptions. Omit it to keep the kit defaults.
+ * @returns The plan. Pass it to `run` or `session.call`.
+ *
+ * @example
+ * ```ts
+ * createEngineConfig(cli, {});
+ * ```
+ */
 export function createEngineConfig(cli: Client, options?: EngineConfigCreateOptions): PlanDocument {
 	const action: PlanAction = { op: "createEngineConfig" };
 	if (options) {
@@ -737,7 +1439,21 @@ export function createEngineConfig(cli: Client, options?: EngineConfigCreateOpti
 	return doc;
 }
 
-/** createEngineSecret encodes kit CreateEngineSecret as a plan document. Go ImportPlan / ExecJSON runs it. */
+/**
+ * createEngineSecret builds a plan for kit CreateEngineSecret.
+ *
+ * @remarks
+ * Go ImportPlan runs the plan. A session sends it as one action.
+ *
+ * @param cli - Connected client. `connect({ fromEnv: true })` reads the local Docker host.
+ * @param options - EngineSecretCreateOptions. Omit it to keep the kit defaults.
+ * @returns The plan. Pass it to `run` or `session.call`.
+ *
+ * @example
+ * ```ts
+ * createEngineSecret(cli, {});
+ * ```
+ */
 export function createEngineSecret(cli: Client, options?: EngineSecretCreateOptions): PlanDocument {
 	const action: PlanAction = { op: "createEngineSecret" };
 	if (options) {
@@ -747,7 +1463,22 @@ export function createEngineSecret(cli: Client, options?: EngineSecretCreateOpti
 	return doc;
 }
 
-/** createExec encodes kit CreateExec as a plan document. Go ImportPlan / ExecJSON runs it. */
+/**
+ * createExec builds a plan for kit CreateExec.
+ *
+ * @remarks
+ * Go ImportPlan runs the plan. A session sends it as one action.
+ *
+ * @param cli - Connected client. `connect({ fromEnv: true })` reads the local Docker host.
+ * @param id - Container, image, network, volume, or other object id
+ * @param options - EngineExecCreateOptions. Omit it to keep the kit defaults.
+ * @returns The plan. Pass it to `run` or `session.call`.
+ *
+ * @example
+ * ```ts
+ * createExec(cli, "example", {});
+ * ```
+ */
 export function createExec(cli: Client, id: string, options?: EngineExecCreateOptions): PlanDocument {
 	const action: PlanAction = { op: "createExec" };
 	if (options) {
@@ -758,7 +1489,22 @@ export function createExec(cli: Client, id: string, options?: EngineExecCreateOp
 	return doc;
 }
 
-/** createNetwork encodes kit CreateNetwork as a plan document. Go ImportPlan / ExecJSON runs it. */
+/**
+ * createNetwork builds a plan for kit CreateNetwork.
+ *
+ * @remarks
+ * Go ImportPlan runs the plan. A session sends it as one action.
+ *
+ * @param cli - Connected client. `connect({ fromEnv: true })` reads the local Docker host.
+ * @param name - Object name
+ * @param options - EngineNetworkOptions. Omit it to keep the kit defaults.
+ * @returns The plan. Pass it to `run` or `session.call`.
+ *
+ * @example
+ * ```ts
+ * createNetwork(cli, "example", {});
+ * ```
+ */
 export function createNetwork(cli: Client, name: string, options?: EngineNetworkOptions): PlanDocument {
 	const action: PlanAction = { op: "createNetwork" };
 	if (options) {
@@ -769,7 +1515,21 @@ export function createNetwork(cli: Client, name: string, options?: EngineNetwork
 	return doc;
 }
 
-/** createPlugin encodes kit CreatePlugin as a plan document. Go ImportPlan / ExecJSON runs it. */
+/**
+ * createPlugin builds a plan for kit CreatePlugin.
+ *
+ * @remarks
+ * Go ImportPlan runs the plan. A session sends it as one action.
+ *
+ * @param cli - Connected client. `connect({ fromEnv: true })` reads the local Docker host.
+ * @param options - EnginePluginCreateOptions. Omit it to keep the kit defaults.
+ * @returns The plan. Pass it to `run` or `session.call`.
+ *
+ * @example
+ * ```ts
+ * createPlugin(cli, {});
+ * ```
+ */
 export function createPlugin(cli: Client, options?: EnginePluginCreateOptions): PlanDocument {
 	const action: PlanAction = { op: "createPlugin" };
 	if (options) {
@@ -779,7 +1539,21 @@ export function createPlugin(cli: Client, options?: EnginePluginCreateOptions): 
 	return doc;
 }
 
-/** createSwarmService encodes kit CreateSwarmService as a plan document. Go ImportPlan / ExecJSON runs it. */
+/**
+ * createSwarmService builds a plan for kit CreateSwarmService.
+ *
+ * @remarks
+ * Go ImportPlan runs the plan. A session sends it as one action.
+ *
+ * @param cli - Connected client. `connect({ fromEnv: true })` reads the local Docker host.
+ * @param options - EngineServiceCreateOptions. Omit it to keep the kit defaults.
+ * @returns The plan. Pass it to `run` or `session.call`.
+ *
+ * @example
+ * ```ts
+ * createSwarmService(cli, {});
+ * ```
+ */
 export function createSwarmService(cli: Client, options?: EngineServiceCreateOptions): PlanDocument {
 	const action: PlanAction = { op: "createSwarmService" };
 	if (options) {
@@ -789,7 +1563,21 @@ export function createSwarmService(cli: Client, options?: EngineServiceCreateOpt
 	return doc;
 }
 
-/** createVolume encodes kit CreateVolume as a plan document. Go ImportPlan / ExecJSON runs it. */
+/**
+ * createVolume builds a plan for kit CreateVolume.
+ *
+ * @remarks
+ * Go ImportPlan runs the plan. A session sends it as one action.
+ *
+ * @param cli - Connected client. `connect({ fromEnv: true })` reads the local Docker host.
+ * @param options - EngineVolumeOptions. Omit it to keep the kit defaults.
+ * @returns The plan. Pass it to `run` or `session.call`.
+ *
+ * @example
+ * ```ts
+ * createVolume(cli, {});
+ * ```
+ */
 export function createVolume(cli: Client, options?: EngineVolumeOptions): PlanDocument {
 	const action: PlanAction = { op: "createVolume" };
 	if (options) {
@@ -799,7 +1587,22 @@ export function createVolume(cli: Client, options?: EngineVolumeOptions): PlanDo
 	return doc;
 }
 
-/** disablePlugin encodes kit DisablePlugin as a plan document. Go ImportPlan / ExecJSON runs it. */
+/**
+ * disablePlugin builds a plan for kit DisablePlugin.
+ *
+ * @remarks
+ * Go ImportPlan runs the plan. A session sends it as one action.
+ *
+ * @param cli - Connected client. `connect({ fromEnv: true })` reads the local Docker host.
+ * @param name - Object name
+ * @param options - EnginePluginDisableOptions. Omit it to keep the kit defaults.
+ * @returns The plan. Pass it to `run` or `session.call`.
+ *
+ * @example
+ * ```ts
+ * disablePlugin(cli, "example", {});
+ * ```
+ */
 export function disablePlugin(cli: Client, name: string, options?: EnginePluginDisableOptions): PlanDocument {
 	const action: PlanAction = { op: "disablePlugin" };
 	if (options) {
@@ -810,7 +1613,22 @@ export function disablePlugin(cli: Client, name: string, options?: EnginePluginD
 	return doc;
 }
 
-/** disconnectNetwork encodes kit DisconnectNetwork as a plan document. Go ImportPlan / ExecJSON runs it. */
+/**
+ * disconnectNetwork builds a plan for kit DisconnectNetwork.
+ *
+ * @remarks
+ * Go ImportPlan runs the plan. A session sends it as one action.
+ *
+ * @param cli - Connected client. `connect({ fromEnv: true })` reads the local Docker host.
+ * @param name - Object name
+ * @param options - EngineNetworkDisconnectOptions. Omit it to keep the kit defaults.
+ * @returns The plan. Pass it to `run` or `session.call`.
+ *
+ * @example
+ * ```ts
+ * disconnectNetwork(cli, "example", {});
+ * ```
+ */
 export function disconnectNetwork(cli: Client, name: string, options?: EngineNetworkDisconnectOptions): PlanDocument {
 	const action: PlanAction = { op: "disconnectNetwork" };
 	if (options) {
@@ -821,7 +1639,21 @@ export function disconnectNetwork(cli: Client, name: string, options?: EngineNet
 	return doc;
 }
 
-/** diskUsage encodes kit DiskUsage as a plan document. Go ImportPlan / ExecJSON runs it. */
+/**
+ * diskUsage builds a plan for kit DiskUsage.
+ *
+ * @remarks
+ * Go ImportPlan runs the plan. A session sends it as one action.
+ *
+ * @param cli - Connected client. `connect({ fromEnv: true })` reads the local Docker host.
+ * @param options - EngineDiskUsageOptions. Omit it to keep the kit defaults.
+ * @returns The plan. Pass it to `run` or `session.call`.
+ *
+ * @example
+ * ```ts
+ * diskUsage(cli, {});
+ * ```
+ */
 export function diskUsage(cli: Client, options?: EngineDiskUsageOptions): PlanDocument {
 	const action: PlanAction = { op: "diskUsage" };
 	if (options) {
@@ -831,7 +1663,22 @@ export function diskUsage(cli: Client, options?: EngineDiskUsageOptions): PlanDo
 	return doc;
 }
 
-/** enablePlugin encodes kit EnablePlugin as a plan document. Go ImportPlan / ExecJSON runs it. */
+/**
+ * enablePlugin builds a plan for kit EnablePlugin.
+ *
+ * @remarks
+ * Go ImportPlan runs the plan. A session sends it as one action.
+ *
+ * @param cli - Connected client. `connect({ fromEnv: true })` reads the local Docker host.
+ * @param name - Object name
+ * @param options - EnginePluginEnableOptions. Omit it to keep the kit defaults.
+ * @returns The plan. Pass it to `run` or `session.call`.
+ *
+ * @example
+ * ```ts
+ * enablePlugin(cli, "example", {});
+ * ```
+ */
 export function enablePlugin(cli: Client, name: string, options?: EnginePluginEnableOptions): PlanDocument {
 	const action: PlanAction = { op: "enablePlugin" };
 	if (options) {
@@ -842,7 +1689,22 @@ export function enablePlugin(cli: Client, name: string, options?: EnginePluginEn
 	return doc;
 }
 
-/** historyImage encodes kit HistoryImage as a plan document. Go ImportPlan / ExecJSON runs it. */
+/**
+ * historyImage builds a plan for kit HistoryImage.
+ *
+ * @remarks
+ * Go ImportPlan runs the plan. A session sends it as one action.
+ *
+ * @param cli - Connected client. `connect({ fromEnv: true })` reads the local Docker host.
+ * @param ref - Image reference
+ * @param options - EngineImageHistoryOptions. Omit it to keep the kit defaults.
+ * @returns The plan. Pass it to `run` or `session.call`.
+ *
+ * @example
+ * ```ts
+ * historyImage(cli, "example", {});
+ * ```
+ */
 export function historyImage(cli: Client, ref: string, options?: EngineImageHistoryOptions): PlanDocument {
 	const action: PlanAction = { op: "historyImage" };
 	if (options) {
@@ -853,7 +1715,21 @@ export function historyImage(cli: Client, ref: string, options?: EngineImageHist
 	return doc;
 }
 
-/** initSwarm encodes kit InitSwarm as a plan document. Go ImportPlan / ExecJSON runs it. */
+/**
+ * initSwarm builds a plan for kit InitSwarm.
+ *
+ * @remarks
+ * Go ImportPlan runs the plan. A session sends it as one action.
+ *
+ * @param cli - Connected client. `connect({ fromEnv: true })` reads the local Docker host.
+ * @param options - EngineSwarmInitOptions. Omit it to keep the kit defaults.
+ * @returns The plan. Pass it to `run` or `session.call`.
+ *
+ * @example
+ * ```ts
+ * initSwarm(cli, {});
+ * ```
+ */
 export function initSwarm(cli: Client, options?: EngineSwarmInitOptions): PlanDocument {
 	const action: PlanAction = { op: "initSwarm" };
 	if (options) {
@@ -863,7 +1739,22 @@ export function initSwarm(cli: Client, options?: EngineSwarmInitOptions): PlanDo
 	return doc;
 }
 
-/** inspect encodes kit Inspect as a plan document. Go ImportPlan / ExecJSON runs it. */
+/**
+ * inspect builds a plan for kit Inspect.
+ *
+ * @remarks
+ * Go ImportPlan runs the plan. A session sends it as one action.
+ *
+ * @param cli - Connected client. `connect({ fromEnv: true })` reads the local Docker host.
+ * @param id - Container, image, network, volume, or other object id
+ * @param options - EngineInspectOptions. Omit it to keep the kit defaults.
+ * @returns The plan. Pass it to `run` or `session.call`.
+ *
+ * @example
+ * ```ts
+ * inspect(cli, "example", {});
+ * ```
+ */
 export function inspect(cli: Client, id: string, options?: EngineInspectOptions): PlanDocument {
 	const action: PlanAction = { op: "inspect" };
 	if (options) {
@@ -874,7 +1765,21 @@ export function inspect(cli: Client, id: string, options?: EngineInspectOptions)
 	return doc;
 }
 
-/** inspectConfig encodes kit InspectConfig as a plan document. Go ImportPlan / ExecJSON runs it. */
+/**
+ * inspectConfig builds a plan for kit InspectConfig.
+ *
+ * @remarks
+ * Go ImportPlan runs the plan. A session sends it as one action.
+ *
+ * @param cli - Connected client. `connect({ fromEnv: true })` reads the local Docker host.
+ * @param id - Container, image, network, volume, or other object id
+ * @returns The plan. Pass it to `run` or `session.call`.
+ *
+ * @example
+ * ```ts
+ * inspectConfig(cli, "example");
+ * ```
+ */
 export function inspectConfig(cli: Client, id: string): PlanDocument {
 	const action: PlanAction = { op: "inspectConfig" };
 	action.id = id;
@@ -882,7 +1787,22 @@ export function inspectConfig(cli: Client, id: string): PlanDocument {
 	return doc;
 }
 
-/** inspectImage encodes kit InspectImage as a plan document. Go ImportPlan / ExecJSON runs it. */
+/**
+ * inspectImage builds a plan for kit InspectImage.
+ *
+ * @remarks
+ * Go ImportPlan runs the plan. A session sends it as one action.
+ *
+ * @param cli - Connected client. `connect({ fromEnv: true })` reads the local Docker host.
+ * @param ref - Image reference
+ * @param options - EngineImageInspectOptions. Omit it to keep the kit defaults.
+ * @returns The plan. Pass it to `run` or `session.call`.
+ *
+ * @example
+ * ```ts
+ * inspectImage(cli, "example", {});
+ * ```
+ */
 export function inspectImage(cli: Client, ref: string, options?: EngineImageInspectOptions): PlanDocument {
 	const action: PlanAction = { op: "inspectImage" };
 	if (options) {
@@ -893,7 +1813,22 @@ export function inspectImage(cli: Client, ref: string, options?: EngineImageInsp
 	return doc;
 }
 
-/** inspectNetwork encodes kit InspectNetwork as a plan document. Go ImportPlan / ExecJSON runs it. */
+/**
+ * inspectNetwork builds a plan for kit InspectNetwork.
+ *
+ * @remarks
+ * Go ImportPlan runs the plan. A session sends it as one action.
+ *
+ * @param cli - Connected client. `connect({ fromEnv: true })` reads the local Docker host.
+ * @param name - Object name
+ * @param options - EngineNetworkInspectOptions. Omit it to keep the kit defaults.
+ * @returns The plan. Pass it to `run` or `session.call`.
+ *
+ * @example
+ * ```ts
+ * inspectNetwork(cli, "example", {});
+ * ```
+ */
 export function inspectNetwork(cli: Client, name: string, options?: EngineNetworkInspectOptions): PlanDocument {
 	const action: PlanAction = { op: "inspectNetwork" };
 	if (options) {
@@ -904,7 +1839,21 @@ export function inspectNetwork(cli: Client, name: string, options?: EngineNetwor
 	return doc;
 }
 
-/** inspectNode encodes kit InspectNode as a plan document. Go ImportPlan / ExecJSON runs it. */
+/**
+ * inspectNode builds a plan for kit InspectNode.
+ *
+ * @remarks
+ * Go ImportPlan runs the plan. A session sends it as one action.
+ *
+ * @param cli - Connected client. `connect({ fromEnv: true })` reads the local Docker host.
+ * @param id - Container, image, network, volume, or other object id
+ * @returns The plan. Pass it to `run` or `session.call`.
+ *
+ * @example
+ * ```ts
+ * inspectNode(cli, "example");
+ * ```
+ */
 export function inspectNode(cli: Client, id: string): PlanDocument {
 	const action: PlanAction = { op: "inspectNode" };
 	action.id = id;
@@ -912,7 +1861,21 @@ export function inspectNode(cli: Client, id: string): PlanDocument {
 	return doc;
 }
 
-/** inspectPlugin encodes kit InspectPlugin as a plan document. Go ImportPlan / ExecJSON runs it. */
+/**
+ * inspectPlugin builds a plan for kit InspectPlugin.
+ *
+ * @remarks
+ * Go ImportPlan runs the plan. A session sends it as one action.
+ *
+ * @param cli - Connected client. `connect({ fromEnv: true })` reads the local Docker host.
+ * @param name - Object name
+ * @returns The plan. Pass it to `run` or `session.call`.
+ *
+ * @example
+ * ```ts
+ * inspectPlugin(cli, "example");
+ * ```
+ */
 export function inspectPlugin(cli: Client, name: string): PlanDocument {
 	const action: PlanAction = { op: "inspectPlugin" };
 	action.name = name;
@@ -920,7 +1883,21 @@ export function inspectPlugin(cli: Client, name: string): PlanDocument {
 	return doc;
 }
 
-/** inspectSecret encodes kit InspectSecret as a plan document. Go ImportPlan / ExecJSON runs it. */
+/**
+ * inspectSecret builds a plan for kit InspectSecret.
+ *
+ * @remarks
+ * Go ImportPlan runs the plan. A session sends it as one action.
+ *
+ * @param cli - Connected client. `connect({ fromEnv: true })` reads the local Docker host.
+ * @param id - Container, image, network, volume, or other object id
+ * @returns The plan. Pass it to `run` or `session.call`.
+ *
+ * @example
+ * ```ts
+ * inspectSecret(cli, "example");
+ * ```
+ */
 export function inspectSecret(cli: Client, id: string): PlanDocument {
 	const action: PlanAction = { op: "inspectSecret" };
 	action.id = id;
@@ -928,14 +1905,41 @@ export function inspectSecret(cli: Client, id: string): PlanDocument {
 	return doc;
 }
 
-/** inspectSwarm encodes kit InspectSwarm as a plan document. Go ImportPlan / ExecJSON runs it. */
+/**
+ * inspectSwarm builds a plan for kit InspectSwarm.
+ *
+ * @remarks
+ * Go ImportPlan runs the plan. A session sends it as one action.
+ *
+ * @param cli - Connected client. `connect({ fromEnv: true })` reads the local Docker host.
+ * @returns The plan. Pass it to `run` or `session.call`.
+ *
+ * @example
+ * ```ts
+ * inspectSwarm(cli);
+ * ```
+ */
 export function inspectSwarm(cli: Client): PlanDocument {
 	const action: PlanAction = { op: "inspectSwarm" };
 	const doc: PlanDocument = { connect: cli.options, actions: [action] };
 	return doc;
 }
 
-/** inspectSwarmService encodes kit InspectSwarmService as a plan document. Go ImportPlan / ExecJSON runs it. */
+/**
+ * inspectSwarmService builds a plan for kit InspectSwarmService.
+ *
+ * @remarks
+ * Go ImportPlan runs the plan. A session sends it as one action.
+ *
+ * @param cli - Connected client. `connect({ fromEnv: true })` reads the local Docker host.
+ * @param id - Container, image, network, volume, or other object id
+ * @returns The plan. Pass it to `run` or `session.call`.
+ *
+ * @example
+ * ```ts
+ * inspectSwarmService(cli, "example");
+ * ```
+ */
 export function inspectSwarmService(cli: Client, id: string): PlanDocument {
 	const action: PlanAction = { op: "inspectSwarmService" };
 	action.id = id;
@@ -943,7 +1947,21 @@ export function inspectSwarmService(cli: Client, id: string): PlanDocument {
 	return doc;
 }
 
-/** inspectTask encodes kit InspectTask as a plan document. Go ImportPlan / ExecJSON runs it. */
+/**
+ * inspectTask builds a plan for kit InspectTask.
+ *
+ * @remarks
+ * Go ImportPlan runs the plan. A session sends it as one action.
+ *
+ * @param cli - Connected client. `connect({ fromEnv: true })` reads the local Docker host.
+ * @param id - Container, image, network, volume, or other object id
+ * @returns The plan. Pass it to `run` or `session.call`.
+ *
+ * @example
+ * ```ts
+ * inspectTask(cli, "example");
+ * ```
+ */
 export function inspectTask(cli: Client, id: string): PlanDocument {
 	const action: PlanAction = { op: "inspectTask" };
 	action.id = id;
@@ -951,7 +1969,22 @@ export function inspectTask(cli: Client, id: string): PlanDocument {
 	return doc;
 }
 
-/** installPlugin encodes kit InstallPlugin as a plan document. Go ImportPlan / ExecJSON runs it. */
+/**
+ * installPlugin builds a plan for kit InstallPlugin.
+ *
+ * @remarks
+ * Go ImportPlan runs the plan. A session sends it as one action.
+ *
+ * @param cli - Connected client. `connect({ fromEnv: true })` reads the local Docker host.
+ * @param name - Object name
+ * @param options - EnginePluginInstallOptions. Omit it to keep the kit defaults.
+ * @returns The plan. Pass it to `run` or `session.call`.
+ *
+ * @example
+ * ```ts
+ * installPlugin(cli, "example", {});
+ * ```
+ */
 export function installPlugin(cli: Client, name: string, options?: EnginePluginInstallOptions): PlanDocument {
 	const action: PlanAction = { op: "installPlugin" };
 	if (options) {
@@ -962,7 +1995,21 @@ export function installPlugin(cli: Client, name: string, options?: EnginePluginI
 	return doc;
 }
 
-/** joinSwarm encodes kit JoinSwarm as a plan document. Go ImportPlan / ExecJSON runs it. */
+/**
+ * joinSwarm builds a plan for kit JoinSwarm.
+ *
+ * @remarks
+ * Go ImportPlan runs the plan. A session sends it as one action.
+ *
+ * @param cli - Connected client. `connect({ fromEnv: true })` reads the local Docker host.
+ * @param options - EngineSwarmJoinOptions. Omit it to keep the kit defaults.
+ * @returns The plan. Pass it to `run` or `session.call`.
+ *
+ * @example
+ * ```ts
+ * joinSwarm(cli, {});
+ * ```
+ */
 export function joinSwarm(cli: Client, options?: EngineSwarmJoinOptions): PlanDocument {
 	const action: PlanAction = { op: "joinSwarm" };
 	if (options) {
@@ -972,7 +2019,22 @@ export function joinSwarm(cli: Client, options?: EngineSwarmJoinOptions): PlanDo
 	return doc;
 }
 
-/** kill encodes kit Kill as a plan document. Go ImportPlan / ExecJSON runs it. */
+/**
+ * kill builds a plan for kit Kill.
+ *
+ * @remarks
+ * Go ImportPlan runs the plan. A session sends it as one action.
+ *
+ * @param cli - Connected client. `connect({ fromEnv: true })` reads the local Docker host.
+ * @param id - Container, image, network, volume, or other object id
+ * @param options - KillOptions. Omit it to keep the kit defaults.
+ * @returns The plan. Pass it to `run` or `session.call`.
+ *
+ * @example
+ * ```ts
+ * kill(cli, "example", {});
+ * ```
+ */
 export function kill(cli: Client, id: string, options?: KillOptions): PlanDocument {
 	const action: PlanAction = { op: "kill" };
 	if (options) {
@@ -983,7 +2045,21 @@ export function kill(cli: Client, id: string, options?: KillOptions): PlanDocume
 	return doc;
 }
 
-/** leaveSwarm encodes kit LeaveSwarm as a plan document. Go ImportPlan / ExecJSON runs it. */
+/**
+ * leaveSwarm builds a plan for kit LeaveSwarm.
+ *
+ * @remarks
+ * Go ImportPlan runs the plan. A session sends it as one action.
+ *
+ * @param cli - Connected client. `connect({ fromEnv: true })` reads the local Docker host.
+ * @param options - EngineSwarmLeaveOptions. Omit it to keep the kit defaults.
+ * @returns The plan. Pass it to `run` or `session.call`.
+ *
+ * @example
+ * ```ts
+ * leaveSwarm(cli, {});
+ * ```
+ */
 export function leaveSwarm(cli: Client, options?: EngineSwarmLeaveOptions): PlanDocument {
 	const action: PlanAction = { op: "leaveSwarm" };
 	if (options) {
@@ -993,7 +2069,22 @@ export function leaveSwarm(cli: Client, options?: EngineSwarmLeaveOptions): Plan
 	return doc;
 }
 
-/** listCheckpoints encodes kit ListCheckpoints as a plan document. Go ImportPlan / ExecJSON runs it. */
+/**
+ * listCheckpoints builds a plan for kit ListCheckpoints.
+ *
+ * @remarks
+ * Go ImportPlan runs the plan. A session sends it as one action.
+ *
+ * @param cli - Connected client. `connect({ fromEnv: true })` reads the local Docker host.
+ * @param id - Container, image, network, volume, or other object id
+ * @param options - EngineCheckpointListOptions. Omit it to keep the kit defaults.
+ * @returns The plan. Pass it to `run` or `session.call`.
+ *
+ * @example
+ * ```ts
+ * listCheckpoints(cli, "example", {});
+ * ```
+ */
 export function listCheckpoints(cli: Client, id: string, options?: EngineCheckpointListOptions): PlanDocument {
 	const action: PlanAction = { op: "listCheckpoints" };
 	if (options) {
@@ -1004,7 +2095,21 @@ export function listCheckpoints(cli: Client, id: string, options?: EngineCheckpo
 	return doc;
 }
 
-/** listConfigs encodes kit ListConfigs as a plan document. Go ImportPlan / ExecJSON runs it. */
+/**
+ * listConfigs builds a plan for kit ListConfigs.
+ *
+ * @remarks
+ * Go ImportPlan runs the plan. A session sends it as one action.
+ *
+ * @param cli - Connected client. `connect({ fromEnv: true })` reads the local Docker host.
+ * @param options - EngineConfigListOptions. Omit it to keep the kit defaults.
+ * @returns The plan. Pass it to `run` or `session.call`.
+ *
+ * @example
+ * ```ts
+ * listConfigs(cli, {});
+ * ```
+ */
 export function listConfigs(cli: Client, options?: EngineConfigListOptions): PlanDocument {
 	const action: PlanAction = { op: "listConfigs" };
 	if (options) {
@@ -1014,7 +2119,21 @@ export function listConfigs(cli: Client, options?: EngineConfigListOptions): Pla
 	return doc;
 }
 
-/** listContainers encodes kit ListContainers as a plan document. Go ImportPlan / ExecJSON runs it. */
+/**
+ * listContainers builds a plan for kit ListContainers.
+ *
+ * @remarks
+ * Go ImportPlan runs the plan. A session sends it as one action.
+ *
+ * @param cli - Connected client. `connect({ fromEnv: true })` reads the local Docker host.
+ * @param options - ListContainersOptions. Omit it to keep the kit defaults.
+ * @returns The plan. Pass it to `run` or `session.call`.
+ *
+ * @example
+ * ```ts
+ * listContainers(cli, {});
+ * ```
+ */
 export function listContainers(cli: Client, options?: ListContainersOptions): PlanDocument {
 	const action: PlanAction = { op: "listContainers" };
 	if (options) {
@@ -1024,7 +2143,21 @@ export function listContainers(cli: Client, options?: ListContainersOptions): Pl
 	return doc;
 }
 
-/** listEngineVolumes encodes kit ListEngineVolumes as a plan document. Go ImportPlan / ExecJSON runs it. */
+/**
+ * listEngineVolumes builds a plan for kit ListEngineVolumes.
+ *
+ * @remarks
+ * Go ImportPlan runs the plan. A session sends it as one action.
+ *
+ * @param cli - Connected client. `connect({ fromEnv: true })` reads the local Docker host.
+ * @param options - EngineVolumeListOptions. Omit it to keep the kit defaults.
+ * @returns The plan. Pass it to `run` or `session.call`.
+ *
+ * @example
+ * ```ts
+ * listEngineVolumes(cli, {});
+ * ```
+ */
 export function listEngineVolumes(cli: Client, options?: EngineVolumeListOptions): PlanDocument {
 	const action: PlanAction = { op: "listEngineVolumes" };
 	if (options) {
@@ -1034,7 +2167,21 @@ export function listEngineVolumes(cli: Client, options?: EngineVolumeListOptions
 	return doc;
 }
 
-/** listImages encodes kit ListImages as a plan document. Go ImportPlan / ExecJSON runs it. */
+/**
+ * listImages builds a plan for kit ListImages.
+ *
+ * @remarks
+ * Go ImportPlan runs the plan. A session sends it as one action.
+ *
+ * @param cli - Connected client. `connect({ fromEnv: true })` reads the local Docker host.
+ * @param options - ListImagesOptions. Omit it to keep the kit defaults.
+ * @returns The plan. Pass it to `run` or `session.call`.
+ *
+ * @example
+ * ```ts
+ * listImages(cli, {});
+ * ```
+ */
 export function listImages(cli: Client, options?: ListImagesOptions): PlanDocument {
 	const action: PlanAction = { op: "listImages" };
 	if (options) {
@@ -1044,7 +2191,21 @@ export function listImages(cli: Client, options?: ListImagesOptions): PlanDocume
 	return doc;
 }
 
-/** listNetworks encodes kit ListNetworks as a plan document. Go ImportPlan / ExecJSON runs it. */
+/**
+ * listNetworks builds a plan for kit ListNetworks.
+ *
+ * @remarks
+ * Go ImportPlan runs the plan. A session sends it as one action.
+ *
+ * @param cli - Connected client. `connect({ fromEnv: true })` reads the local Docker host.
+ * @param options - EngineNetworkListOptions. Omit it to keep the kit defaults.
+ * @returns The plan. Pass it to `run` or `session.call`.
+ *
+ * @example
+ * ```ts
+ * listNetworks(cli, {});
+ * ```
+ */
 export function listNetworks(cli: Client, options?: EngineNetworkListOptions): PlanDocument {
 	const action: PlanAction = { op: "listNetworks" };
 	if (options) {
@@ -1054,7 +2215,21 @@ export function listNetworks(cli: Client, options?: EngineNetworkListOptions): P
 	return doc;
 }
 
-/** listNodes encodes kit ListNodes as a plan document. Go ImportPlan / ExecJSON runs it. */
+/**
+ * listNodes builds a plan for kit ListNodes.
+ *
+ * @remarks
+ * Go ImportPlan runs the plan. A session sends it as one action.
+ *
+ * @param cli - Connected client. `connect({ fromEnv: true })` reads the local Docker host.
+ * @param options - EngineNodeListOptions. Omit it to keep the kit defaults.
+ * @returns The plan. Pass it to `run` or `session.call`.
+ *
+ * @example
+ * ```ts
+ * listNodes(cli, {});
+ * ```
+ */
 export function listNodes(cli: Client, options?: EngineNodeListOptions): PlanDocument {
 	const action: PlanAction = { op: "listNodes" };
 	if (options) {
@@ -1064,7 +2239,21 @@ export function listNodes(cli: Client, options?: EngineNodeListOptions): PlanDoc
 	return doc;
 }
 
-/** listPlugins encodes kit ListPlugins as a plan document. Go ImportPlan / ExecJSON runs it. */
+/**
+ * listPlugins builds a plan for kit ListPlugins.
+ *
+ * @remarks
+ * Go ImportPlan runs the plan. A session sends it as one action.
+ *
+ * @param cli - Connected client. `connect({ fromEnv: true })` reads the local Docker host.
+ * @param options - EnginePluginListOptions. Omit it to keep the kit defaults.
+ * @returns The plan. Pass it to `run` or `session.call`.
+ *
+ * @example
+ * ```ts
+ * listPlugins(cli, {});
+ * ```
+ */
 export function listPlugins(cli: Client, options?: EnginePluginListOptions): PlanDocument {
 	const action: PlanAction = { op: "listPlugins" };
 	if (options) {
@@ -1074,7 +2263,21 @@ export function listPlugins(cli: Client, options?: EnginePluginListOptions): Pla
 	return doc;
 }
 
-/** listSecrets encodes kit ListSecrets as a plan document. Go ImportPlan / ExecJSON runs it. */
+/**
+ * listSecrets builds a plan for kit ListSecrets.
+ *
+ * @remarks
+ * Go ImportPlan runs the plan. A session sends it as one action.
+ *
+ * @param cli - Connected client. `connect({ fromEnv: true })` reads the local Docker host.
+ * @param options - EngineSecretListOptions. Omit it to keep the kit defaults.
+ * @returns The plan. Pass it to `run` or `session.call`.
+ *
+ * @example
+ * ```ts
+ * listSecrets(cli, {});
+ * ```
+ */
 export function listSecrets(cli: Client, options?: EngineSecretListOptions): PlanDocument {
 	const action: PlanAction = { op: "listSecrets" };
 	if (options) {
@@ -1084,7 +2287,21 @@ export function listSecrets(cli: Client, options?: EngineSecretListOptions): Pla
 	return doc;
 }
 
-/** listSwarmServices encodes kit ListSwarmServices as a plan document. Go ImportPlan / ExecJSON runs it. */
+/**
+ * listSwarmServices builds a plan for kit ListSwarmServices.
+ *
+ * @remarks
+ * Go ImportPlan runs the plan. A session sends it as one action.
+ *
+ * @param cli - Connected client. `connect({ fromEnv: true })` reads the local Docker host.
+ * @param options - EngineServiceListOptions. Omit it to keep the kit defaults.
+ * @returns The plan. Pass it to `run` or `session.call`.
+ *
+ * @example
+ * ```ts
+ * listSwarmServices(cli, {});
+ * ```
+ */
 export function listSwarmServices(cli: Client, options?: EngineServiceListOptions): PlanDocument {
 	const action: PlanAction = { op: "listSwarmServices" };
 	if (options) {
@@ -1094,7 +2311,21 @@ export function listSwarmServices(cli: Client, options?: EngineServiceListOption
 	return doc;
 }
 
-/** listTasks encodes kit ListTasks as a plan document. Go ImportPlan / ExecJSON runs it. */
+/**
+ * listTasks builds a plan for kit ListTasks.
+ *
+ * @remarks
+ * Go ImportPlan runs the plan. A session sends it as one action.
+ *
+ * @param cli - Connected client. `connect({ fromEnv: true })` reads the local Docker host.
+ * @param options - EngineTaskListOptions. Omit it to keep the kit defaults.
+ * @returns The plan. Pass it to `run` or `session.call`.
+ *
+ * @example
+ * ```ts
+ * listTasks(cli, {});
+ * ```
+ */
 export function listTasks(cli: Client, options?: EngineTaskListOptions): PlanDocument {
 	const action: PlanAction = { op: "listTasks" };
 	if (options) {
@@ -1104,7 +2335,21 @@ export function listTasks(cli: Client, options?: EngineTaskListOptions): PlanDoc
 	return doc;
 }
 
-/** listenEvents encodes kit ListenEvents as a plan document. Go ImportPlan / ExecJSON runs it. */
+/**
+ * listenEvents builds a plan for kit ListenEvents.
+ *
+ * @remarks
+ * Go ImportPlan runs the plan. A session sends it as one action.
+ *
+ * @param cli - Connected client. `connect({ fromEnv: true })` reads the local Docker host.
+ * @param options - EngineEventsOptions. Omit it to keep the kit defaults.
+ * @returns The plan. Pass it to `run` or `session.call`.
+ *
+ * @example
+ * ```ts
+ * listenEvents(cli, {});
+ * ```
+ */
 export function listenEvents(cli: Client, options?: EngineEventsOptions): PlanDocument {
 	const action: PlanAction = { op: "listenEvents" };
 	if (options) {
@@ -1114,7 +2359,22 @@ export function listenEvents(cli: Client, options?: EngineEventsOptions): PlanDo
 	return doc;
 }
 
-/** load encodes kit Load as a plan document. Go ImportPlan / ExecJSON runs it. */
+/**
+ * load builds a plan for kit Load.
+ *
+ * @remarks
+ * Go ImportPlan runs the plan. A session sends it as one action.
+ *
+ * @param cli - Connected client. `connect({ fromEnv: true })` reads the local Docker host.
+ * @param path - Path inside the container or on the host
+ * @param options - LoadProjectOptions. Omit it to keep the kit defaults.
+ * @returns The plan. Pass it to `run` or `session.call`.
+ *
+ * @example
+ * ```ts
+ * load(cli, "example", {});
+ * ```
+ */
 export function load(cli: Client, path: string, options?: LoadProjectOptions): PlanDocument {
 	const action: PlanAction = { op: "load" };
 	if (options) {
@@ -1125,7 +2385,21 @@ export function load(cli: Client, path: string, options?: LoadProjectOptions): P
 	return doc;
 }
 
-/** login encodes kit Login as a plan document. Go ImportPlan / ExecJSON runs it. */
+/**
+ * login builds a plan for kit Login.
+ *
+ * @remarks
+ * Go ImportPlan runs the plan. A session sends it as one action.
+ *
+ * @param cli - Connected client. `connect({ fromEnv: true })` reads the local Docker host.
+ * @param options - EngineLoginOptions. Omit it to keep the kit defaults.
+ * @returns The plan. Pass it to `run` or `session.call`.
+ *
+ * @example
+ * ```ts
+ * login(cli, {});
+ * ```
+ */
 export function login(cli: Client, options?: EngineLoginOptions): PlanDocument {
 	const action: PlanAction = { op: "login" };
 	if (options) {
@@ -1135,7 +2409,22 @@ export function login(cli: Client, options?: EngineLoginOptions): PlanDocument {
 	return doc;
 }
 
-/** logs encodes kit Logs as a plan document. Go ImportPlan / ExecJSON runs it. */
+/**
+ * logs builds a plan for kit Logs.
+ *
+ * @remarks
+ * Go ImportPlan runs the plan. A session sends it as one action.
+ *
+ * @param cli - Connected client. `connect({ fromEnv: true })` reads the local Docker host.
+ * @param id - Container, image, network, volume, or other object id
+ * @param options - LogsOptions. Omit it to keep the kit defaults.
+ * @returns The plan. Pass it to `run` or `session.call`.
+ *
+ * @example
+ * ```ts
+ * logs(cli, "example", {});
+ * ```
+ */
 export function logs(cli: Client, id: string, options?: LogsOptions): PlanDocument {
 	const action: PlanAction = { op: "logs" };
 	if (options) {
@@ -1146,7 +2435,21 @@ export function logs(cli: Client, id: string, options?: LogsOptions): PlanDocume
 	return doc;
 }
 
-/** ping encodes kit Ping as a plan document. Go ImportPlan / ExecJSON runs it. */
+/**
+ * ping builds a plan for kit Ping.
+ *
+ * @remarks
+ * Go ImportPlan runs the plan. A session sends it as one action.
+ *
+ * @param cli - Connected client. `connect({ fromEnv: true })` reads the local Docker host.
+ * @param options - EnginePingOptions. Omit it to keep the kit defaults.
+ * @returns The plan. Pass it to `run` or `session.call`.
+ *
+ * @example
+ * ```ts
+ * ping(cli, {});
+ * ```
+ */
 export function ping(cli: Client, options?: EnginePingOptions): PlanDocument {
 	const action: PlanAction = { op: "ping" };
 	if (options) {
@@ -1156,7 +2459,21 @@ export function ping(cli: Client, options?: EnginePingOptions): PlanDocument {
 	return doc;
 }
 
-/** pruneBuildCache encodes kit PruneBuildCache as a plan document. Go ImportPlan / ExecJSON runs it. */
+/**
+ * pruneBuildCache builds a plan for kit PruneBuildCache.
+ *
+ * @remarks
+ * Go ImportPlan runs the plan. A session sends it as one action.
+ *
+ * @param cli - Connected client. `connect({ fromEnv: true })` reads the local Docker host.
+ * @param options - EngineBuildCachePruneOptions. Omit it to keep the kit defaults.
+ * @returns The plan. Pass it to `run` or `session.call`.
+ *
+ * @example
+ * ```ts
+ * pruneBuildCache(cli, {});
+ * ```
+ */
 export function pruneBuildCache(cli: Client, options?: EngineBuildCachePruneOptions): PlanDocument {
 	const action: PlanAction = { op: "pruneBuildCache" };
 	if (options) {
@@ -1166,7 +2483,21 @@ export function pruneBuildCache(cli: Client, options?: EngineBuildCachePruneOpti
 	return doc;
 }
 
-/** pruneContainers encodes kit PruneContainers as a plan document. Go ImportPlan / ExecJSON runs it. */
+/**
+ * pruneContainers builds a plan for kit PruneContainers.
+ *
+ * @remarks
+ * Go ImportPlan runs the plan. A session sends it as one action.
+ *
+ * @param cli - Connected client. `connect({ fromEnv: true })` reads the local Docker host.
+ * @param options - EngineContainerPruneOptions. Omit it to keep the kit defaults.
+ * @returns The plan. Pass it to `run` or `session.call`.
+ *
+ * @example
+ * ```ts
+ * pruneContainers(cli, {});
+ * ```
+ */
 export function pruneContainers(cli: Client, options?: EngineContainerPruneOptions): PlanDocument {
 	const action: PlanAction = { op: "pruneContainers" };
 	if (options) {
@@ -1176,7 +2507,21 @@ export function pruneContainers(cli: Client, options?: EngineContainerPruneOptio
 	return doc;
 }
 
-/** pruneImages encodes kit PruneImages as a plan document. Go ImportPlan / ExecJSON runs it. */
+/**
+ * pruneImages builds a plan for kit PruneImages.
+ *
+ * @remarks
+ * Go ImportPlan runs the plan. A session sends it as one action.
+ *
+ * @param cli - Connected client. `connect({ fromEnv: true })` reads the local Docker host.
+ * @param options - EngineImagePruneOptions. Omit it to keep the kit defaults.
+ * @returns The plan. Pass it to `run` or `session.call`.
+ *
+ * @example
+ * ```ts
+ * pruneImages(cli, {});
+ * ```
+ */
 export function pruneImages(cli: Client, options?: EngineImagePruneOptions): PlanDocument {
 	const action: PlanAction = { op: "pruneImages" };
 	if (options) {
@@ -1186,7 +2531,21 @@ export function pruneImages(cli: Client, options?: EngineImagePruneOptions): Pla
 	return doc;
 }
 
-/** pruneNetworks encodes kit PruneNetworks as a plan document. Go ImportPlan / ExecJSON runs it. */
+/**
+ * pruneNetworks builds a plan for kit PruneNetworks.
+ *
+ * @remarks
+ * Go ImportPlan runs the plan. A session sends it as one action.
+ *
+ * @param cli - Connected client. `connect({ fromEnv: true })` reads the local Docker host.
+ * @param options - EngineNetworkPruneOptions. Omit it to keep the kit defaults.
+ * @returns The plan. Pass it to `run` or `session.call`.
+ *
+ * @example
+ * ```ts
+ * pruneNetworks(cli, {});
+ * ```
+ */
 export function pruneNetworks(cli: Client, options?: EngineNetworkPruneOptions): PlanDocument {
 	const action: PlanAction = { op: "pruneNetworks" };
 	if (options) {
@@ -1196,7 +2555,21 @@ export function pruneNetworks(cli: Client, options?: EngineNetworkPruneOptions):
 	return doc;
 }
 
-/** pruneVolumes encodes kit PruneVolumes as a plan document. Go ImportPlan / ExecJSON runs it. */
+/**
+ * pruneVolumes builds a plan for kit PruneVolumes.
+ *
+ * @remarks
+ * Go ImportPlan runs the plan. A session sends it as one action.
+ *
+ * @param cli - Connected client. `connect({ fromEnv: true })` reads the local Docker host.
+ * @param options - EngineVolumePruneOptions. Omit it to keep the kit defaults.
+ * @returns The plan. Pass it to `run` or `session.call`.
+ *
+ * @example
+ * ```ts
+ * pruneVolumes(cli, {});
+ * ```
+ */
 export function pruneVolumes(cli: Client, options?: EngineVolumePruneOptions): PlanDocument {
 	const action: PlanAction = { op: "pruneVolumes" };
 	if (options) {
@@ -1206,7 +2579,22 @@ export function pruneVolumes(cli: Client, options?: EngineVolumePruneOptions): P
 	return doc;
 }
 
-/** pullImage encodes kit PullImage as a plan document. Go ImportPlan / ExecJSON runs it. */
+/**
+ * pullImage builds a plan for kit PullImage.
+ *
+ * @remarks
+ * Go ImportPlan runs the plan. A session sends it as one action.
+ *
+ * @param cli - Connected client. `connect({ fromEnv: true })` reads the local Docker host.
+ * @param ref - Image reference
+ * @param options - PullImageOptions. Omit it to keep the kit defaults.
+ * @returns The plan. Pass it to `run` or `session.call`.
+ *
+ * @example
+ * ```ts
+ * pullImage(cli, "example", {});
+ * ```
+ */
 export function pullImage(cli: Client, ref: string, options?: PullImageOptions): PlanDocument {
 	const action: PlanAction = { op: "pullImage" };
 	if (options) {
@@ -1217,7 +2605,22 @@ export function pullImage(cli: Client, ref: string, options?: PullImageOptions):
 	return doc;
 }
 
-/** pushImage encodes kit PushImage as a plan document. Go ImportPlan / ExecJSON runs it. */
+/**
+ * pushImage builds a plan for kit PushImage.
+ *
+ * @remarks
+ * Go ImportPlan runs the plan. A session sends it as one action.
+ *
+ * @param cli - Connected client. `connect({ fromEnv: true })` reads the local Docker host.
+ * @param ref - Image reference
+ * @param options - EngineImagePushOptions. Omit it to keep the kit defaults.
+ * @returns The plan. Pass it to `run` or `session.call`.
+ *
+ * @example
+ * ```ts
+ * pushImage(cli, "example", {});
+ * ```
+ */
 export function pushImage(cli: Client, ref: string, options?: EngineImagePushOptions): PlanDocument {
 	const action: PlanAction = { op: "pushImage" };
 	if (options) {
@@ -1228,7 +2631,22 @@ export function pushImage(cli: Client, ref: string, options?: EngineImagePushOpt
 	return doc;
 }
 
-/** pushPlugin encodes kit PushPlugin as a plan document. Go ImportPlan / ExecJSON runs it. */
+/**
+ * pushPlugin builds a plan for kit PushPlugin.
+ *
+ * @remarks
+ * Go ImportPlan runs the plan. A session sends it as one action.
+ *
+ * @param cli - Connected client. `connect({ fromEnv: true })` reads the local Docker host.
+ * @param name - Object name
+ * @param options - EnginePluginPushOptions. Omit it to keep the kit defaults.
+ * @returns The plan. Pass it to `run` or `session.call`.
+ *
+ * @example
+ * ```ts
+ * pushPlugin(cli, "example", {});
+ * ```
+ */
 export function pushPlugin(cli: Client, name: string, options?: EnginePluginPushOptions): PlanDocument {
 	const action: PlanAction = { op: "pushPlugin" };
 	if (options) {
@@ -1239,7 +2657,22 @@ export function pushPlugin(cli: Client, name: string, options?: EnginePluginPush
 	return doc;
 }
 
-/** remove encodes kit Remove as a plan document. Go ImportPlan / ExecJSON runs it. */
+/**
+ * remove builds a plan for kit Remove.
+ *
+ * @remarks
+ * Go ImportPlan runs the plan. A session sends it as one action.
+ *
+ * @param cli - Connected client. `connect({ fromEnv: true })` reads the local Docker host.
+ * @param id - Container, image, network, volume, or other object id
+ * @param options - RemoveOptions. Omit it to keep the kit defaults.
+ * @returns The plan. Pass it to `run` or `session.call`.
+ *
+ * @example
+ * ```ts
+ * remove(cli, "example", {});
+ * ```
+ */
 export function remove(cli: Client, id: string, options?: RemoveOptions): PlanDocument {
 	const action: PlanAction = { op: "remove" };
 	if (options) {
@@ -1250,7 +2683,22 @@ export function remove(cli: Client, id: string, options?: RemoveOptions): PlanDo
 	return doc;
 }
 
-/** removeCheckpoint encodes kit RemoveCheckpoint as a plan document. Go ImportPlan / ExecJSON runs it. */
+/**
+ * removeCheckpoint builds a plan for kit RemoveCheckpoint.
+ *
+ * @remarks
+ * Go ImportPlan runs the plan. A session sends it as one action.
+ *
+ * @param cli - Connected client. `connect({ fromEnv: true })` reads the local Docker host.
+ * @param id - Container, image, network, volume, or other object id
+ * @param options - EngineCheckpointRemoveOptions. Omit it to keep the kit defaults.
+ * @returns The plan. Pass it to `run` or `session.call`.
+ *
+ * @example
+ * ```ts
+ * removeCheckpoint(cli, "example", {});
+ * ```
+ */
 export function removeCheckpoint(cli: Client, id: string, options?: EngineCheckpointRemoveOptions): PlanDocument {
 	const action: PlanAction = { op: "removeCheckpoint" };
 	if (options) {
@@ -1261,7 +2709,22 @@ export function removeCheckpoint(cli: Client, id: string, options?: EngineCheckp
 	return doc;
 }
 
-/** removeImage encodes kit RemoveImage as a plan document. Go ImportPlan / ExecJSON runs it. */
+/**
+ * removeImage builds a plan for kit RemoveImage.
+ *
+ * @remarks
+ * Go ImportPlan runs the plan. A session sends it as one action.
+ *
+ * @param cli - Connected client. `connect({ fromEnv: true })` reads the local Docker host.
+ * @param ref - Image reference
+ * @param options - EngineImageRemoveOptions. Omit it to keep the kit defaults.
+ * @returns The plan. Pass it to `run` or `session.call`.
+ *
+ * @example
+ * ```ts
+ * removeImage(cli, "example", {});
+ * ```
+ */
 export function removeImage(cli: Client, ref: string, options?: EngineImageRemoveOptions): PlanDocument {
 	const action: PlanAction = { op: "removeImage" };
 	if (options) {
@@ -1272,7 +2735,22 @@ export function removeImage(cli: Client, ref: string, options?: EngineImageRemov
 	return doc;
 }
 
-/** removeNode encodes kit RemoveNode as a plan document. Go ImportPlan / ExecJSON runs it. */
+/**
+ * removeNode builds a plan for kit RemoveNode.
+ *
+ * @remarks
+ * Go ImportPlan runs the plan. A session sends it as one action.
+ *
+ * @param cli - Connected client. `connect({ fromEnv: true })` reads the local Docker host.
+ * @param id - Container, image, network, volume, or other object id
+ * @param options - EngineNodeRemoveOptions. Omit it to keep the kit defaults.
+ * @returns The plan. Pass it to `run` or `session.call`.
+ *
+ * @example
+ * ```ts
+ * removeNode(cli, "example", {});
+ * ```
+ */
 export function removeNode(cli: Client, id: string, options?: EngineNodeRemoveOptions): PlanDocument {
 	const action: PlanAction = { op: "removeNode" };
 	if (options) {
@@ -1283,7 +2761,22 @@ export function removeNode(cli: Client, id: string, options?: EngineNodeRemoveOp
 	return doc;
 }
 
-/** removePlugin encodes kit RemovePlugin as a plan document. Go ImportPlan / ExecJSON runs it. */
+/**
+ * removePlugin builds a plan for kit RemovePlugin.
+ *
+ * @remarks
+ * Go ImportPlan runs the plan. A session sends it as one action.
+ *
+ * @param cli - Connected client. `connect({ fromEnv: true })` reads the local Docker host.
+ * @param name - Object name
+ * @param options - EnginePluginRemoveOptions. Omit it to keep the kit defaults.
+ * @returns The plan. Pass it to `run` or `session.call`.
+ *
+ * @example
+ * ```ts
+ * removePlugin(cli, "example", {});
+ * ```
+ */
 export function removePlugin(cli: Client, name: string, options?: EnginePluginRemoveOptions): PlanDocument {
 	const action: PlanAction = { op: "removePlugin" };
 	if (options) {
@@ -1294,7 +2787,22 @@ export function removePlugin(cli: Client, name: string, options?: EnginePluginRe
 	return doc;
 }
 
-/** removeVolume encodes kit RemoveVolume as a plan document. Go ImportPlan / ExecJSON runs it. */
+/**
+ * removeVolume builds a plan for kit RemoveVolume.
+ *
+ * @remarks
+ * Go ImportPlan runs the plan. A session sends it as one action.
+ *
+ * @param cli - Connected client. `connect({ fromEnv: true })` reads the local Docker host.
+ * @param id - Container, image, network, volume, or other object id
+ * @param options - EngineVolumeRemoveOptions. Omit it to keep the kit defaults.
+ * @returns The plan. Pass it to `run` or `session.call`.
+ *
+ * @example
+ * ```ts
+ * removeVolume(cli, "example", {});
+ * ```
+ */
 export function removeVolume(cli: Client, id: string, options?: EngineVolumeRemoveOptions): PlanDocument {
 	const action: PlanAction = { op: "removeVolume" };
 	if (options) {
@@ -1305,7 +2813,22 @@ export function removeVolume(cli: Client, id: string, options?: EngineVolumeRemo
 	return doc;
 }
 
-/** renameContainer encodes kit RenameContainer as a plan document. Go ImportPlan / ExecJSON runs it. */
+/**
+ * renameContainer builds a plan for kit RenameContainer.
+ *
+ * @remarks
+ * Go ImportPlan runs the plan. A session sends it as one action.
+ *
+ * @param cli - Connected client. `connect({ fromEnv: true })` reads the local Docker host.
+ * @param id - Container, image, network, volume, or other object id
+ * @param options - EngineRenameOptions. Omit it to keep the kit defaults.
+ * @returns The plan. Pass it to `run` or `session.call`.
+ *
+ * @example
+ * ```ts
+ * renameContainer(cli, "example", {});
+ * ```
+ */
 export function renameContainer(cli: Client, id: string, options?: EngineRenameOptions): PlanDocument {
 	const action: PlanAction = { op: "renameContainer" };
 	if (options) {
@@ -1316,7 +2839,22 @@ export function renameContainer(cli: Client, id: string, options?: EngineRenameO
 	return doc;
 }
 
-/** resizeContainer encodes kit ResizeContainer as a plan document. Go ImportPlan / ExecJSON runs it. */
+/**
+ * resizeContainer builds a plan for kit ResizeContainer.
+ *
+ * @remarks
+ * Go ImportPlan runs the plan. A session sends it as one action.
+ *
+ * @param cli - Connected client. `connect({ fromEnv: true })` reads the local Docker host.
+ * @param id - Container, image, network, volume, or other object id
+ * @param options - EngineResizeOptions. Omit it to keep the kit defaults.
+ * @returns The plan. Pass it to `run` or `session.call`.
+ *
+ * @example
+ * ```ts
+ * resizeContainer(cli, "example", {});
+ * ```
+ */
 export function resizeContainer(cli: Client, id: string, options?: EngineResizeOptions): PlanDocument {
 	const action: PlanAction = { op: "resizeContainer" };
 	if (options) {
@@ -1327,7 +2865,22 @@ export function resizeContainer(cli: Client, id: string, options?: EngineResizeO
 	return doc;
 }
 
-/** resizeExec encodes kit ResizeExec as a plan document. Go ImportPlan / ExecJSON runs it. */
+/**
+ * resizeExec builds a plan for kit ResizeExec.
+ *
+ * @remarks
+ * Go ImportPlan runs the plan. A session sends it as one action.
+ *
+ * @param cli - Connected client. `connect({ fromEnv: true })` reads the local Docker host.
+ * @param id - Container, image, network, volume, or other object id
+ * @param options - EngineExecResizeOptions. Omit it to keep the kit defaults.
+ * @returns The plan. Pass it to `run` or `session.call`.
+ *
+ * @example
+ * ```ts
+ * resizeExec(cli, "example", {});
+ * ```
+ */
 export function resizeExec(cli: Client, id: string, options?: EngineExecResizeOptions): PlanDocument {
 	const action: PlanAction = { op: "resizeExec" };
 	if (options) {
@@ -1338,7 +2891,22 @@ export function resizeExec(cli: Client, id: string, options?: EngineExecResizeOp
 	return doc;
 }
 
-/** restart encodes kit Restart as a plan document. Go ImportPlan / ExecJSON runs it. */
+/**
+ * restart builds a plan for kit Restart.
+ *
+ * @remarks
+ * Go ImportPlan runs the plan. A session sends it as one action.
+ *
+ * @param cli - Connected client. `connect({ fromEnv: true })` reads the local Docker host.
+ * @param id - Container, image, network, volume, or other object id
+ * @param options - EngineStopOptions. Omit it to keep the kit defaults.
+ * @returns The plan. Pass it to `run` or `session.call`.
+ *
+ * @example
+ * ```ts
+ * restart(cli, "example", {});
+ * ```
+ */
 export function restart(cli: Client, id: string, options?: EngineStopOptions): PlanDocument {
 	const action: PlanAction = { op: "restart" };
 	if (options) {
@@ -1349,7 +2917,21 @@ export function restart(cli: Client, id: string, options?: EngineStopOptions): P
 	return doc;
 }
 
-/** run encodes kit Run as a plan document. Go ImportPlan / ExecJSON runs it. */
+/**
+ * run builds a plan for kit Run.
+ *
+ * @remarks
+ * Go ImportPlan runs the plan. A session sends it as one action.
+ *
+ * @param cli - Connected client. `connect({ fromEnv: true })` reads the local Docker host.
+ * @param options - ContainerOptions. Omit it to keep the kit defaults.
+ * @returns The plan. Pass it to `run` or `session.call`.
+ *
+ * @example
+ * ```ts
+ * run(cli, {});
+ * ```
+ */
 export function run(cli: Client, options?: ContainerOptions): PlanDocument {
 	const action: PlanAction = { op: "run" };
 	if (options) {
@@ -1359,7 +2941,22 @@ export function run(cli: Client, options?: ContainerOptions): PlanDocument {
 	return doc;
 }
 
-/** saveImages encodes kit SaveImages as a plan document. Go ImportPlan / ExecJSON runs it. */
+/**
+ * saveImages builds a plan for kit SaveImages.
+ *
+ * @remarks
+ * Go ImportPlan runs the plan. A session sends it as one action.
+ *
+ * @param cli - Connected client. `connect({ fromEnv: true })` reads the local Docker host.
+ * @param refs - Image reference
+ * @param options - EngineImageSaveOptions. Omit it to keep the kit defaults.
+ * @returns The plan. Pass it to `run` or `session.call`.
+ *
+ * @example
+ * ```ts
+ * saveImages(cli, ["example"], {});
+ * ```
+ */
 export function saveImages(cli: Client, refs: string[], options?: EngineImageSaveOptions): PlanDocument {
 	const action: PlanAction = { op: "saveImages" };
 	if (options) {
@@ -1370,7 +2967,22 @@ export function saveImages(cli: Client, refs: string[], options?: EngineImageSav
 	return doc;
 }
 
-/** searchImages encodes kit SearchImages as a plan document. Go ImportPlan / ExecJSON runs it. */
+/**
+ * searchImages builds a plan for kit SearchImages.
+ *
+ * @remarks
+ * Go ImportPlan runs the plan. A session sends it as one action.
+ *
+ * @param cli - Connected client. `connect({ fromEnv: true })` reads the local Docker host.
+ * @param term - term, typed string
+ * @param options - EngineImageSearchOptions. Omit it to keep the kit defaults.
+ * @returns The plan. Pass it to `run` or `session.call`.
+ *
+ * @example
+ * ```ts
+ * searchImages(cli, "example", {});
+ * ```
+ */
 export function searchImages(cli: Client, term: string, options?: EngineImageSearchOptions): PlanDocument {
 	const action: PlanAction = { op: "searchImages" };
 	if (options) {
@@ -1381,7 +2993,22 @@ export function searchImages(cli: Client, term: string, options?: EngineImageSea
 	return doc;
 }
 
-/** setPlugin encodes kit SetPlugin as a plan document. Go ImportPlan / ExecJSON runs it. */
+/**
+ * setPlugin builds a plan for kit SetPlugin.
+ *
+ * @remarks
+ * Go ImportPlan runs the plan. A session sends it as one action.
+ *
+ * @param cli - Connected client. `connect({ fromEnv: true })` reads the local Docker host.
+ * @param name - Object name
+ * @param options - EnginePluginSetOptions. Omit it to keep the kit defaults.
+ * @returns The plan. Pass it to `run` or `session.call`.
+ *
+ * @example
+ * ```ts
+ * setPlugin(cli, "example", {});
+ * ```
+ */
 export function setPlugin(cli: Client, name: string, options?: EnginePluginSetOptions): PlanDocument {
 	const action: PlanAction = { op: "setPlugin" };
 	if (options) {
@@ -1392,7 +3019,22 @@ export function setPlugin(cli: Client, name: string, options?: EnginePluginSetOp
 	return doc;
 }
 
-/** start encodes kit Start as a plan document. Go ImportPlan / ExecJSON runs it. */
+/**
+ * start builds a plan for kit Start.
+ *
+ * @remarks
+ * Go ImportPlan runs the plan. A session sends it as one action.
+ *
+ * @param cli - Connected client. `connect({ fromEnv: true })` reads the local Docker host.
+ * @param id - Container, image, network, volume, or other object id
+ * @param options - EngineStartOptions. Omit it to keep the kit defaults.
+ * @returns The plan. Pass it to `run` or `session.call`.
+ *
+ * @example
+ * ```ts
+ * start(cli, "example", {});
+ * ```
+ */
 export function start(cli: Client, id: string, options?: EngineStartOptions): PlanDocument {
 	const action: PlanAction = { op: "start" };
 	if (options) {
@@ -1403,7 +3045,22 @@ export function start(cli: Client, id: string, options?: EngineStartOptions): Pl
 	return doc;
 }
 
-/** startExec encodes kit StartExec as a plan document. Go ImportPlan / ExecJSON runs it. */
+/**
+ * startExec builds a plan for kit StartExec.
+ *
+ * @remarks
+ * Go ImportPlan runs the plan. A session sends it as one action.
+ *
+ * @param cli - Connected client. `connect({ fromEnv: true })` reads the local Docker host.
+ * @param id - Container, image, network, volume, or other object id
+ * @param options - EngineExecStartOptions. Omit it to keep the kit defaults.
+ * @returns The plan. Pass it to `run` or `session.call`.
+ *
+ * @example
+ * ```ts
+ * startExec(cli, "example", {});
+ * ```
+ */
 export function startExec(cli: Client, id: string, options?: EngineExecStartOptions): PlanDocument {
 	const action: PlanAction = { op: "startExec" };
 	if (options) {
@@ -1414,7 +3071,22 @@ export function startExec(cli: Client, id: string, options?: EngineExecStartOpti
 	return doc;
 }
 
-/** statPath encodes kit StatPath as a plan document. Go ImportPlan / ExecJSON runs it. */
+/**
+ * statPath builds a plan for kit StatPath.
+ *
+ * @remarks
+ * Go ImportPlan runs the plan. A session sends it as one action.
+ *
+ * @param cli - Connected client. `connect({ fromEnv: true })` reads the local Docker host.
+ * @param id - Container, image, network, volume, or other object id
+ * @param options - EngineStatPathOptions. Omit it to keep the kit defaults.
+ * @returns The plan. Pass it to `run` or `session.call`.
+ *
+ * @example
+ * ```ts
+ * statPath(cli, "example", {});
+ * ```
+ */
 export function statPath(cli: Client, id: string, options?: EngineStatPathOptions): PlanDocument {
 	const action: PlanAction = { op: "statPath" };
 	if (options) {
@@ -1425,7 +3097,22 @@ export function statPath(cli: Client, id: string, options?: EngineStatPathOption
 	return doc;
 }
 
-/** statsContainer encodes kit StatsContainer as a plan document. Go ImportPlan / ExecJSON runs it. */
+/**
+ * statsContainer builds a plan for kit StatsContainer.
+ *
+ * @remarks
+ * Go ImportPlan runs the plan. A session sends it as one action.
+ *
+ * @param cli - Connected client. `connect({ fromEnv: true })` reads the local Docker host.
+ * @param id - Container, image, network, volume, or other object id
+ * @param options - EngineStatsOptions. Omit it to keep the kit defaults.
+ * @returns The plan. Pass it to `run` or `session.call`.
+ *
+ * @example
+ * ```ts
+ * statsContainer(cli, "example", {});
+ * ```
+ */
 export function statsContainer(cli: Client, id: string, options?: EngineStatsOptions): PlanDocument {
 	const action: PlanAction = { op: "statsContainer" };
 	if (options) {
@@ -1436,7 +3123,22 @@ export function statsContainer(cli: Client, id: string, options?: EngineStatsOpt
 	return doc;
 }
 
-/** stop encodes kit Stop as a plan document. Go ImportPlan / ExecJSON runs it. */
+/**
+ * stop builds a plan for kit Stop.
+ *
+ * @remarks
+ * Go ImportPlan runs the plan. A session sends it as one action.
+ *
+ * @param cli - Connected client. `connect({ fromEnv: true })` reads the local Docker host.
+ * @param id - Container, image, network, volume, or other object id
+ * @param options - EngineStopOptions. Omit it to keep the kit defaults.
+ * @returns The plan. Pass it to `run` or `session.call`.
+ *
+ * @example
+ * ```ts
+ * stop(cli, "example", {});
+ * ```
+ */
 export function stop(cli: Client, id: string, options?: EngineStopOptions): PlanDocument {
 	const action: PlanAction = { op: "stop" };
 	if (options) {
@@ -1447,7 +3149,22 @@ export function stop(cli: Client, id: string, options?: EngineStopOptions): Plan
 	return doc;
 }
 
-/** swarmServiceLogs encodes kit SwarmServiceLogs as a plan document. Go ImportPlan / ExecJSON runs it. */
+/**
+ * swarmServiceLogs builds a plan for kit SwarmServiceLogs.
+ *
+ * @remarks
+ * Go ImportPlan runs the plan. A session sends it as one action.
+ *
+ * @param cli - Connected client. `connect({ fromEnv: true })` reads the local Docker host.
+ * @param id - Container, image, network, volume, or other object id
+ * @param options - EngineServiceLogsOptions. Omit it to keep the kit defaults.
+ * @returns The plan. Pass it to `run` or `session.call`.
+ *
+ * @example
+ * ```ts
+ * swarmServiceLogs(cli, "example", {});
+ * ```
+ */
 export function swarmServiceLogs(cli: Client, id: string, options?: EngineServiceLogsOptions): PlanDocument {
 	const action: PlanAction = { op: "swarmServiceLogs" };
 	if (options) {
@@ -1458,7 +3175,21 @@ export function swarmServiceLogs(cli: Client, id: string, options?: EngineServic
 	return doc;
 }
 
-/** tagImage encodes kit TagImage as a plan document. Go ImportPlan / ExecJSON runs it. */
+/**
+ * tagImage builds a plan for kit TagImage.
+ *
+ * @remarks
+ * Go ImportPlan runs the plan. A session sends it as one action.
+ *
+ * @param cli - Connected client. `connect({ fromEnv: true })` reads the local Docker host.
+ * @param options - EngineImageTagOptions. Omit it to keep the kit defaults.
+ * @returns The plan. Pass it to `run` or `session.call`.
+ *
+ * @example
+ * ```ts
+ * tagImage(cli, {});
+ * ```
+ */
 export function tagImage(cli: Client, options?: EngineImageTagOptions): PlanDocument {
 	const action: PlanAction = { op: "tagImage" };
 	if (options) {
@@ -1468,7 +3199,22 @@ export function tagImage(cli: Client, options?: EngineImageTagOptions): PlanDocu
 	return doc;
 }
 
-/** taskLogs encodes kit TaskLogs as a plan document. Go ImportPlan / ExecJSON runs it. */
+/**
+ * taskLogs builds a plan for kit TaskLogs.
+ *
+ * @remarks
+ * Go ImportPlan runs the plan. A session sends it as one action.
+ *
+ * @param cli - Connected client. `connect({ fromEnv: true })` reads the local Docker host.
+ * @param id - Container, image, network, volume, or other object id
+ * @param options - EngineTaskLogsOptions. Omit it to keep the kit defaults.
+ * @returns The plan. Pass it to `run` or `session.call`.
+ *
+ * @example
+ * ```ts
+ * taskLogs(cli, "example", {});
+ * ```
+ */
 export function taskLogs(cli: Client, id: string, options?: EngineTaskLogsOptions): PlanDocument {
 	const action: PlanAction = { op: "taskLogs" };
 	if (options) {
@@ -1479,7 +3225,22 @@ export function taskLogs(cli: Client, id: string, options?: EngineTaskLogsOption
 	return doc;
 }
 
-/** topContainer encodes kit TopContainer as a plan document. Go ImportPlan / ExecJSON runs it. */
+/**
+ * topContainer builds a plan for kit TopContainer.
+ *
+ * @remarks
+ * Go ImportPlan runs the plan. A session sends it as one action.
+ *
+ * @param cli - Connected client. `connect({ fromEnv: true })` reads the local Docker host.
+ * @param id - Container, image, network, volume, or other object id
+ * @param options - EngineTopOptions. Omit it to keep the kit defaults.
+ * @returns The plan. Pass it to `run` or `session.call`.
+ *
+ * @example
+ * ```ts
+ * topContainer(cli, "example", {});
+ * ```
+ */
 export function topContainer(cli: Client, id: string, options?: EngineTopOptions): PlanDocument {
 	const action: PlanAction = { op: "topContainer" };
 	if (options) {
@@ -1490,7 +3251,21 @@ export function topContainer(cli: Client, id: string, options?: EngineTopOptions
 	return doc;
 }
 
-/** unlockSwarm encodes kit UnlockSwarm as a plan document. Go ImportPlan / ExecJSON runs it. */
+/**
+ * unlockSwarm builds a plan for kit UnlockSwarm.
+ *
+ * @remarks
+ * Go ImportPlan runs the plan. A session sends it as one action.
+ *
+ * @param cli - Connected client. `connect({ fromEnv: true })` reads the local Docker host.
+ * @param options - EngineSwarmUnlockOptions. Omit it to keep the kit defaults.
+ * @returns The plan. Pass it to `run` or `session.call`.
+ *
+ * @example
+ * ```ts
+ * unlockSwarm(cli, {});
+ * ```
+ */
 export function unlockSwarm(cli: Client, options?: EngineSwarmUnlockOptions): PlanDocument {
 	const action: PlanAction = { op: "unlockSwarm" };
 	if (options) {
@@ -1500,7 +3275,22 @@ export function unlockSwarm(cli: Client, options?: EngineSwarmUnlockOptions): Pl
 	return doc;
 }
 
-/** updateContainer encodes kit UpdateContainer as a plan document. Go ImportPlan / ExecJSON runs it. */
+/**
+ * updateContainer builds a plan for kit UpdateContainer.
+ *
+ * @remarks
+ * Go ImportPlan runs the plan. A session sends it as one action.
+ *
+ * @param cli - Connected client. `connect({ fromEnv: true })` reads the local Docker host.
+ * @param id - Container, image, network, volume, or other object id
+ * @param options - EngineUpdateOptions. Omit it to keep the kit defaults.
+ * @returns The plan. Pass it to `run` or `session.call`.
+ *
+ * @example
+ * ```ts
+ * updateContainer(cli, "example", {});
+ * ```
+ */
 export function updateContainer(cli: Client, id: string, options?: EngineUpdateOptions): PlanDocument {
 	const action: PlanAction = { op: "updateContainer" };
 	if (options) {
@@ -1511,7 +3301,22 @@ export function updateContainer(cli: Client, id: string, options?: EngineUpdateO
 	return doc;
 }
 
-/** updateEngineConfig encodes kit UpdateEngineConfig as a plan document. Go ImportPlan / ExecJSON runs it. */
+/**
+ * updateEngineConfig builds a plan for kit UpdateEngineConfig.
+ *
+ * @remarks
+ * Go ImportPlan runs the plan. A session sends it as one action.
+ *
+ * @param cli - Connected client. `connect({ fromEnv: true })` reads the local Docker host.
+ * @param id - Container, image, network, volume, or other object id
+ * @param options - EngineConfigUpdateOptions. Omit it to keep the kit defaults.
+ * @returns The plan. Pass it to `run` or `session.call`.
+ *
+ * @example
+ * ```ts
+ * updateEngineConfig(cli, "example", {});
+ * ```
+ */
 export function updateEngineConfig(cli: Client, id: string, options?: EngineConfigUpdateOptions): PlanDocument {
 	const action: PlanAction = { op: "updateEngineConfig" };
 	if (options) {
@@ -1522,7 +3327,22 @@ export function updateEngineConfig(cli: Client, id: string, options?: EngineConf
 	return doc;
 }
 
-/** updateEngineSecret encodes kit UpdateEngineSecret as a plan document. Go ImportPlan / ExecJSON runs it. */
+/**
+ * updateEngineSecret builds a plan for kit UpdateEngineSecret.
+ *
+ * @remarks
+ * Go ImportPlan runs the plan. A session sends it as one action.
+ *
+ * @param cli - Connected client. `connect({ fromEnv: true })` reads the local Docker host.
+ * @param id - Container, image, network, volume, or other object id
+ * @param options - EngineSecretUpdateOptions. Omit it to keep the kit defaults.
+ * @returns The plan. Pass it to `run` or `session.call`.
+ *
+ * @example
+ * ```ts
+ * updateEngineSecret(cli, "example", {});
+ * ```
+ */
 export function updateEngineSecret(cli: Client, id: string, options?: EngineSecretUpdateOptions): PlanDocument {
 	const action: PlanAction = { op: "updateEngineSecret" };
 	if (options) {
@@ -1533,7 +3353,22 @@ export function updateEngineSecret(cli: Client, id: string, options?: EngineSecr
 	return doc;
 }
 
-/** updateNode encodes kit UpdateNode as a plan document. Go ImportPlan / ExecJSON runs it. */
+/**
+ * updateNode builds a plan for kit UpdateNode.
+ *
+ * @remarks
+ * Go ImportPlan runs the plan. A session sends it as one action.
+ *
+ * @param cli - Connected client. `connect({ fromEnv: true })` reads the local Docker host.
+ * @param id - Container, image, network, volume, or other object id
+ * @param options - EngineNodeUpdateOptions. Omit it to keep the kit defaults.
+ * @returns The plan. Pass it to `run` or `session.call`.
+ *
+ * @example
+ * ```ts
+ * updateNode(cli, "example", {});
+ * ```
+ */
 export function updateNode(cli: Client, id: string, options?: EngineNodeUpdateOptions): PlanDocument {
 	const action: PlanAction = { op: "updateNode" };
 	if (options) {
@@ -1544,7 +3379,21 @@ export function updateNode(cli: Client, id: string, options?: EngineNodeUpdateOp
 	return doc;
 }
 
-/** updateSwarm encodes kit UpdateSwarm as a plan document. Go ImportPlan / ExecJSON runs it. */
+/**
+ * updateSwarm builds a plan for kit UpdateSwarm.
+ *
+ * @remarks
+ * Go ImportPlan runs the plan. A session sends it as one action.
+ *
+ * @param cli - Connected client. `connect({ fromEnv: true })` reads the local Docker host.
+ * @param options - EngineSwarmUpdateOptions. Omit it to keep the kit defaults.
+ * @returns The plan. Pass it to `run` or `session.call`.
+ *
+ * @example
+ * ```ts
+ * updateSwarm(cli, {});
+ * ```
+ */
 export function updateSwarm(cli: Client, options?: EngineSwarmUpdateOptions): PlanDocument {
 	const action: PlanAction = { op: "updateSwarm" };
 	if (options) {
@@ -1554,7 +3403,22 @@ export function updateSwarm(cli: Client, options?: EngineSwarmUpdateOptions): Pl
 	return doc;
 }
 
-/** updateSwarmService encodes kit UpdateSwarmService as a plan document. Go ImportPlan / ExecJSON runs it. */
+/**
+ * updateSwarmService builds a plan for kit UpdateSwarmService.
+ *
+ * @remarks
+ * Go ImportPlan runs the plan. A session sends it as one action.
+ *
+ * @param cli - Connected client. `connect({ fromEnv: true })` reads the local Docker host.
+ * @param id - Container, image, network, volume, or other object id
+ * @param options - EngineServiceUpdateOptions. Omit it to keep the kit defaults.
+ * @returns The plan. Pass it to `run` or `session.call`.
+ *
+ * @example
+ * ```ts
+ * updateSwarmService(cli, "example", {});
+ * ```
+ */
 export function updateSwarmService(cli: Client, id: string, options?: EngineServiceUpdateOptions): PlanDocument {
 	const action: PlanAction = { op: "updateSwarmService" };
 	if (options) {
@@ -1565,7 +3429,22 @@ export function updateSwarmService(cli: Client, id: string, options?: EngineServ
 	return doc;
 }
 
-/** updateVolume encodes kit UpdateVolume as a plan document. Go ImportPlan / ExecJSON runs it. */
+/**
+ * updateVolume builds a plan for kit UpdateVolume.
+ *
+ * @remarks
+ * Go ImportPlan runs the plan. A session sends it as one action.
+ *
+ * @param cli - Connected client. `connect({ fromEnv: true })` reads the local Docker host.
+ * @param id - Container, image, network, volume, or other object id
+ * @param options - EngineVolumeUpdateOptions. Omit it to keep the kit defaults.
+ * @returns The plan. Pass it to `run` or `session.call`.
+ *
+ * @example
+ * ```ts
+ * updateVolume(cli, "example", {});
+ * ```
+ */
 export function updateVolume(cli: Client, id: string, options?: EngineVolumeUpdateOptions): PlanDocument {
 	const action: PlanAction = { op: "updateVolume" };
 	if (options) {
@@ -1576,7 +3455,22 @@ export function updateVolume(cli: Client, id: string, options?: EngineVolumeUpda
 	return doc;
 }
 
-/** upgradePlugin encodes kit UpgradePlugin as a plan document. Go ImportPlan / ExecJSON runs it. */
+/**
+ * upgradePlugin builds a plan for kit UpgradePlugin.
+ *
+ * @remarks
+ * Go ImportPlan runs the plan. A session sends it as one action.
+ *
+ * @param cli - Connected client. `connect({ fromEnv: true })` reads the local Docker host.
+ * @param name - Object name
+ * @param options - EnginePluginUpgradeOptions. Omit it to keep the kit defaults.
+ * @returns The plan. Pass it to `run` or `session.call`.
+ *
+ * @example
+ * ```ts
+ * upgradePlugin(cli, "example", {});
+ * ```
+ */
 export function upgradePlugin(cli: Client, name: string, options?: EnginePluginUpgradeOptions): PlanDocument {
 	const action: PlanAction = { op: "upgradePlugin" };
 	if (options) {
@@ -1587,7 +3481,22 @@ export function upgradePlugin(cli: Client, name: string, options?: EnginePluginU
 	return doc;
 }
 
-/** wait encodes kit Wait as a plan document. Go ImportPlan / ExecJSON runs it. */
+/**
+ * wait builds a plan for kit Wait.
+ *
+ * @remarks
+ * Go ImportPlan runs the plan. A session sends it as one action.
+ *
+ * @param cli - Connected client. `connect({ fromEnv: true })` reads the local Docker host.
+ * @param id - Container, image, network, volume, or other object id
+ * @param options - EngineWaitOptions. Omit it to keep the kit defaults.
+ * @returns The plan. Pass it to `run` or `session.call`.
+ *
+ * @example
+ * ```ts
+ * wait(cli, "example", {});
+ * ```
+ */
 export function wait(cli: Client, id: string, options?: EngineWaitOptions): PlanDocument {
 	const action: PlanAction = { op: "wait" };
 	if (options) {
