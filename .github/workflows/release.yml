@@ -53,6 +53,9 @@ jobs:
         env:
           CONTAINERKIT_COMMIT: ${{ github.sha }}
 
+      - name: Install npm 11
+        run: npm install -g npm@11
+
       - name: Publish npm packages
         working-directory: tsx
         run: node scripts/publish-optional.mjs publish
