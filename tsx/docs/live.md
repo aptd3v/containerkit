@@ -3,8 +3,8 @@
 A containerkit program stays running. You do not write a file, execute it, and exit. `docker.ts` is the file that starts the session. It default-exports `root()`. The session stays open for the life of that process. Changing state renders the tree again and, when the Compose YAML changed, applies that project again. Containers whose YAML did not change keep running.
 
 ```tsx
-import { Compose, Service } from "containerkit";
-import { root } from "containerkit/live";
+import { Compose, Service } from "@aptd3v/containerkit";
+import { root } from "@aptd3v/containerkit/live";
 
 export default root({ fromEnv: true }, function App() {
   return (
@@ -16,6 +16,8 @@ export default root({ fromEnv: true }, function App() {
 ```
 
 `fromEnv: true` means "use the Docker this machine's `docker` command already uses." The client page explains the other ways to point at a daemon.
+
+`progress` chooses what the session prints. The default is `auto`: a terminal redraws working rows, and a pipe prints one line per event. `plain` and `tty` force those renderers. `quiet` skips `working` rows. `json` writes one event record per line to stdout. `off` prints nothing. `session.on` and `useLiveLog` still receive the events.
 
 [nginx/docker.tsx](../examples/nginx/docker.tsx) is that file as a program you can run. From `tsx/`, `npm run nginx` builds the runner and starts it. The process builds an nginx image, publishes `http://127.0.0.1:8080`, prints that address once the healthcheck passes, and stays open. `onExit: "down"` takes the project down on Ctrl+C. `npm run wordpress` and `npm run mongo-replica` are the same kind of file. `npm run terminal` is not: that file is named `terminal.tsx`.
 
@@ -31,7 +33,7 @@ What the function returns is what gets applied:
 
 `onUp` runs after an apply. `wait: true` waits until the containers are running, and until a healthcheck passes when the service has one, before `onUp` runs.
 
-`useShutdown({ removeOrphans: true })` from `containerkit/hooks` stores those down options on the same Ctrl+C path. Do not pass the tree. The project taken down is the one `root` last applied, including a later render that added a service. Pass a tree only when an async callback applied it with `session.composeUp` before `root` has applied a return value. Call it during render, or before the first `await` in an async root. The function it returns removes the listeners. When `onExit` is already `"down"`, that function only clears the options.
+`useShutdown({ removeOrphans: true })` from `@aptd3v/containerkit/hooks` stores those down options on the same Ctrl+C path. Do not pass the tree. The project taken down is the one `root` last applied, including a later render that added a service. Pass a tree only when an async callback applied it with `session.composeUp` before `root` has applied a return value. Call it during render, or before the first `await` in an async root. The function it returns removes the listeners. When `onExit` is already `"down"`, that function only clears the options.
 
 `useEnv`, `useLiveLog`, and `useServiceState` are in the same package, and they also belong to the render callback. `useEnv("IMAGE", "nginx:alpine")` reads the variable once. A later change to `process.env` is not seen. An empty string stays empty. An unset variable uses the fallback. `useLiveLog` subscribes to log and status events after the render settles, and removes that subscription when the session closes. It does not receive error events. `useServiceState("web")` is the latest status event whose source is that service, or `undefined` until one arrives. An async once callback does not run effects, so these three stay in the render callback.
 
@@ -44,8 +46,8 @@ A fragment return is applied only when it holds one `Compose`, `Service`, `Job`,
 An `async` function, or a function that takes the session, runs once. It does not render again. `await` finishes before `root` applies the tree you return.
 
 ```tsx
-import { Compose, Service } from "containerkit";
-import { root } from "containerkit/live";
+import { Compose, Service } from "@aptd3v/containerkit";
+import { root } from "@aptd3v/containerkit/live";
 
 export default root({ fromEnv: true, onExit: "down" }, async function App(session) {
   await session.pullImage("alpine:latest");
@@ -68,7 +70,7 @@ When the once callback throws, or a command it awaits fails, `onError` runs. If 
 The entry file calls `root()`. A file named `docker.ts`, `docker.tsx`, or `docker.js` starts on its own. Any other entry calls `runIfMain`. Other files export components and functions. A function that talks to Docker takes the session. `await` runs the next command after the previous one returns.
 
 ```ts
-import { isCKLoginRequiredError, type Session } from "containerkit/live";
+import { isCKLoginRequiredError, type Session } from "@aptd3v/containerkit/live";
 
 export async function pullBase(app: Session, ref: string) {
   try {
@@ -90,8 +92,8 @@ export async function pullBase(app: Session, ref: string) {
 The node has to be `Compose`, and `name` has to contain something other than spaces. A `Service`, `Job`, or `Container` is not an export root. Put it inside a named `Compose`.
 
 ```tsx
-import { Compose, Service, exportYAML } from "containerkit";
-import { root, useState } from "containerkit/live";
+import { Compose, Service, exportYAML } from "@aptd3v/containerkit";
+import { root, useState } from "@aptd3v/containerkit/live";
 
 export default root({ fromEnv: true }, function App() {
   const [replicas, setReplicas] = useState(1);
@@ -114,8 +116,8 @@ You can also call `exportYAML` outside `docker.ts`, on any `Compose` node you al
 `useState` stores a value across renders. Setting it runs `App` again.
 
 ```tsx
-import { Compose, Service } from "containerkit";
-import { root, useState } from "containerkit/live";
+import { Compose, Service } from "@aptd3v/containerkit";
+import { root, useState } from "@aptd3v/containerkit/live";
 
 export default root({ fromEnv: true }, function App() {
   const [replicas, setReplicas] = useState(1);
@@ -134,8 +136,8 @@ export default root({ fromEnv: true }, function App() {
 `useMemo(fn, deps)` saves what `fn` returns so a later render does not do that work again. Use it for a pull, a login, an `app.run` that should happen once, a list, or a file read. The dependency list is the array after `fn`. The saved value can be anything, including a node.
 
 ```tsx
-import { Compose, Service } from "containerkit";
-import { root, useMemo, useSession, useState } from "containerkit/live";
+import { Compose, Service } from "@aptd3v/containerkit";
+import { root, useMemo, useSession, useState } from "@aptd3v/containerkit/live";
 import { pullBase } from "./images";
 
 export default root({ fromEnv: true }, function App() {
@@ -158,7 +160,7 @@ export default root({ fromEnv: true }, function App() {
 });
 ```
 
-`setReplicas(2)` renders again, uses both saved results, and applies the project with two replicas. `pullBase` and `app.run` do not run again. `app.containerRun` takes the same options. The `run` you import from `"containerkit"` is the one-shot plan runner, not this method. Changing a dependency, such as the image name, finds no saved result for that list, runs that call once, and applies the project with the new tree.
+`setReplicas(2)` renders again, uses both saved results, and applies the project with two replicas. `pullBase` and `app.run` do not run again. `app.containerRun` takes the same options. The `run` you import from `"@aptd3v/containerkit"` is the one-shot plan runner, not this method. Changing a dependency, such as the image name, finds no saved result for that list, runs that call once, and applies the project with the new tree.
 
 The saved result is a file, `.containerkit/memo/<hash>.json`, in the working directory. The hash is the text of `fn` plus the dependency list. The next process, and the next `root()`, reads the file and skips `fn` when both still match. Closing the session does not delete the files. Add `.containerkit/` to `.gitignore`. It is a local cache, not part of the project.
 
@@ -167,9 +169,9 @@ If `fn` returns a promise, `useMemo` returns `undefined` on that render. Return 
 This is the end of `App`. `app` is `useSession()`. `image` is the image name you are building. `latestRun` is a function you wrote: it takes the session and returns a promise of the shell command to put in `RUN`.
 
 ```tsx
-import { Build, Compose, Service } from "containerkit";
-import { Dockerfile, From, Run } from "containerkit/dockerfile";
-import { useMemo } from "containerkit/live";
+import { Build, Compose, Service } from "@aptd3v/containerkit";
+import { Dockerfile, From, Run } from "@aptd3v/containerkit/dockerfile";
+import { useMemo } from "@aptd3v/containerkit/live";
 
 const cmd = useMemo(() => latestRun(app, image), [image]);
 if (!cmd) return null;
@@ -214,7 +216,7 @@ useEffect(() => app.on("log", (event) => {
 A failed command rejects with `ContainerKitError`. `class` is an `ErrorClass`, so a `switch` on it is exhaustive. `message` has secrets removed. `hint` is a short suggestion when there is one. `status` is a numeric code when the daemon sent one. `receiver` names the area that failed, such as a container or a network. `path` is the setting or file involved, when there is one. `exitCode` is the container's exit status. A class string the session does not know becomes `"unknown"`.
 
 ```ts
-import { isCKNotFoundError, isContainerKitError } from "containerkit/live";
+import { isCKNotFoundError, isContainerKitError } from "@aptd3v/containerkit/live";
 
 if (isContainerKitError(err, "notFound")) {
   err.class; // "notFound"

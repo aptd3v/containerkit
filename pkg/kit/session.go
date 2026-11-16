@@ -65,9 +65,8 @@ func (s *Session) client(connect map[string]any) (*Client, error) {
 	if err != nil {
 		return nil, err
 	}
-	// Compose container rows (created, started, healthy) are delivered to the
-	// event processor captured when the client is dialed. The context logger
-	// only covers the project-level up/down line.
+	// The composer carries a log bridge. Resource rows go to the logger on the
+	// call context when one is set, and otherwise to the logger passed here.
 	cli, err := Connect(s.connectOpts(opts)...)
 	if err != nil {
 		return nil, err

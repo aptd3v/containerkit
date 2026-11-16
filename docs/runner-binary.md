@@ -45,9 +45,9 @@ containerkit session
 containerkit terminal <container> [command...]
 ```
 
-`validate` calls `ImportPlan.Validate` or `ImportYAML.Validate` and does not dial the daemon. JSON is a TSX plan. YAML is compose. `exec` dials: JSON runs the plan, YAML connects from the environment and brings the project up.
+`validate` calls `ImportPlan.Validate` or `ImportYAML.Validate` and does not dial the daemon. JSON is a TSX plan. YAML is compose. `exec` dials: JSON runs the plan, YAML connects from the environment and brings the project up. Progress goes to stderr. The default is `auto`: a terminal redraws, and a pipe prints one line per event. The result JSON stays on stdout. A plan field `progress` selects `auto`, `plain`, `tty`, `quiet`, `json`, or `off`. `json` is one event record per line. `off` writes no progress. `Plan.Run` and `ExecJSON` stay silent unless that field is set.
 
-`session` keeps one process open until stdin reaches EOF or the process is signaled. Stdin and stdout are JSON, one object per line. A blank line is ignored. Diagnostics go to stderr. `containerkit/live` is the TypeScript side of this pipe.
+`session` keeps one process open until stdin reaches EOF or the process is signaled. Stdin and stdout are JSON, one object per line. A blank line is ignored. Diagnostics go to stderr. `@aptd3v/containerkit/live` is the TypeScript side of this pipe.
 
 `terminal` attaches the local stdin and stdout to an exec in a running container. The default command is `/bin/sh`.
 
@@ -88,7 +88,7 @@ The first plan dials the daemon. A later plan reuses that client while its `conn
 ## From TypeScript
 
 ```ts
-import { binaryInvoke, composeUp, connect, run, setInvoke } from "containerkit";
+import { binaryInvoke, composeUp, connect, run, setInvoke } from "@aptd3v/containerkit";
 
 process.env.CONTAINERKIT_BIN = "./dist/containerkit";
 await run(composeUp(connect({ fromEnv: true }), tree, { detach: true }));

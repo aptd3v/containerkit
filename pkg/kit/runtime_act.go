@@ -238,6 +238,7 @@ type logsAct struct {
 	stdout     field[bool]
 	stderr     field[bool]
 	details    bool
+	log        *Logger
 }
 
 func (a logsAct) composeSDK(proj *composetypes.Project) composeapi.LogOptions {

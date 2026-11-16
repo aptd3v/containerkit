@@ -21,6 +21,9 @@ import {
 
 const rootBrand = Symbol.for("containerkit.live.root");
 
+/** How the live session prints progress. `off` leaves events on `session.on` and `useLiveLog`. */
+export type RootProgress = "auto" | "plain" | "tty" | "quiet" | "json" | "off";
+
 /** Settings for {@link root}. The session stays open for the life of the process. */
 export type RootOptions = {
 	/** Read the Docker host, TLS, and context from the environment. */
@@ -48,6 +51,12 @@ export type RootOptions = {
 	bin?: string;
 	/** Extra arguments passed to the binary. */
 	args?: string[];
+	/**
+	 * How progress is printed. The default is `auto`: a terminal redraws working rows,
+	 * and a pipe prints one line per event. `off` does not print. `json` writes one
+	 * event record per line. Events still reach `session.on` and `useLiveLog`.
+	 */
+	progress?: RootProgress;
 	/**
 	 * Directory for {@link useMemo} results. The default is `.containerkit/memo` in the working directory.
 	 * `false`, or `CONTAINERKIT_MEMO=0`, keeps the result in this process only.
@@ -690,6 +699,34 @@ function isEntryDocker(): boolean {
  * @returns The open session and a `close` function. `close` does not take the project down.
  * @throws Error when `live` was not returned by {@link root}, or when that root is already running
  */
+function openProgress(mode: RootProgress | undefined): { push(event: LiveEvent): void; stop(): void } {
+	const selected = mode ?? "auto";
+	if (selected === "off") {
+		return { push() {}, stop() {} };
+	}
+	if (selected === "json") {
+		return {
+			push(event) {
+				process.stdout.write(`${JSON.stringify(event)}\n`);
+			},
+			stop() {},
+		};
+	}
+	const tty = selected === "tty" || (selected !== "plain" && process.stdout.isTTY === true);
+	const view = startProgress({ tty });
+	return {
+		push(event) {
+			if (selected === "quiet" && event.kind === "status" && event.status === "working") {
+				return;
+			}
+			view.push(event);
+		},
+		stop() {
+			view.stop();
+		},
+	};
+}
+
 export async function runRoot(live: LiveRoot, transport?: SessionTransport): Promise<Running> {
 	if (!isLiveRoot(live)) {
 		throw new Error("containerkit/live: docker.ts must default-export root()");
@@ -702,19 +739,17 @@ export async function runRoot(live: LiveRoot, transport?: SessionTransport): Pro
 	const client = clientFromRoot(live.options);
 	const session = sessionFromTransport(client, wire, { bin: live.options.bin });
 	const listeners = new Set<(event: ErrorLiveEvent) => void>();
-	const progress = startProgress({ tty: process.stdout.isTTY === true });
-	const printProgress = (event: LiveEvent) => {
-		progress.push(event);
-	};
+	const printer = openProgress(live.options.progress);
 	const stopWatching = [
 		session.on("error", (event) => {
 			for (const fn of listeners) {
 				fn(event);
 			}
 		}),
-		session.on("log", printProgress),
-		session.on("status", printProgress),
 	];
+	if (live.options.progress !== "off") {
+		stopWatching.push(session.on("log", printer.push), session.on("status", printer.push));
+	}
 	const rt: Runtime = {
 		slots: [],
 		index: 0,
@@ -787,7 +822,7 @@ export async function runRoot(live: LiveRoot, transport?: SessionTransport): Pro
 		}
 		rt.closed = true;
 		rt.stopped = true;
-		progress.stop();
+		printer.stop();
 		process.off("SIGINT", onSignal);
 		process.off("SIGTERM", onSignal);
 		for (const slot of rt.slots) {
