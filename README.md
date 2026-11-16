@@ -148,7 +148,7 @@ Go, from `go.mod` (1.26.8 or newer):
 go get github.com/aptd3v/containerkit
 ```
 
-Node 20 or newer, once `v0.8.1` is on npm:
+Node 20 or newer:
 
 ```bash
 npm install containerkit
