@@ -3,22 +3,24 @@ import { mkdtempSync, writeFileSync, chmodSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { test } from "node:test";
-import { packageName, binaryName, resolveContainerkit, run } from "./containerkit.js";
+import { platformSlug, binaryName, resolveContainerkit, run } from "./containerkit.js";
 
-test("platform package names follow the Go archive names", () => {
-	assert.equal(packageName("darwin", "arm64"), "@containerkit/darwin-arm64");
-	assert.equal(packageName("darwin", "x64"), "@containerkit/darwin-amd64");
-	assert.equal(packageName("linux", "arm64"), "@containerkit/linux-arm64");
-	assert.equal(packageName("linux", "x64"), "@containerkit/linux-amd64");
-	assert.equal(packageName("win32", "x64"), "@containerkit/windows-amd64");
-	assert.equal(packageName("win32", "arm64"), "@containerkit/windows-arm64");
+test("platform directories follow the Go archive names", () => {
+	assert.equal(platformSlug("darwin", "arm64"), "darwin-arm64");
+	assert.equal(platformSlug("darwin", "x64"), "darwin-amd64");
+	assert.equal(platformSlug("linux", "arm64"), "linux-arm64");
+	assert.equal(platformSlug("linux", "x64"), "linux-amd64");
+	assert.equal(platformSlug("win32", "x64"), "windows-amd64");
+	assert.equal(platformSlug("win32", "arm64"), "windows-arm64");
 	assert.equal(binaryName("win32"), "containerkit.exe");
 	assert.equal(binaryName("linux"), "containerkit");
 });
 
 test("resolveContainerkit returns the first path that exists", () => {
-	const hit = resolveContainerkit("linux", "x64", (path) => path.endsWith("linux-amd64/bin/containerkit"));
-	assert.equal(hit?.endsWith("npm/@containerkit/linux-amd64/bin/containerkit"), true);
+	const bundled = resolveContainerkit("linux", "x64", (path) => path.endsWith(`${join("bin", "linux-amd64", "containerkit")}`));
+	assert.equal(bundled?.endsWith(join("bin", "linux-amd64", "containerkit")), true);
+	const built = resolveContainerkit("linux", "x64", (path) => path.endsWith(join("linux-amd64", "bin", "containerkit")));
+	assert.equal(built?.endsWith(join("npm", "@aptd3v", "containerkit-linux-amd64", "bin", "containerkit")), true);
 	assert.equal(resolveContainerkit("linux", "x64", () => false), undefined);
 });
 

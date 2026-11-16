@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.8.2
+
+The npm package is `@aptd3v/containerkit`. The install includes the runner. The `containerkit` command selects the binary for this machine.
+
 ## 0.8.1
 
 `pkg/kit` is one vocabulary for Engine and Compose. The same names exist in TSX. The license is Apache 2.0.

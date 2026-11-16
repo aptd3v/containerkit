@@ -1,6 +1,6 @@
 // Command crossbuild compiles cmd/containerkit for linux, darwin, and windows
 // on amd64 and arm64 into dist/ as archives plus checksums.txt, and copies each
-// binary into npm/@containerkit/<os>-<arch>/bin. It does not publish.
+// binary into npm/@aptd3v/containerkit-<os>-<arch>/bin. It does not publish.
 package main
 
 import (
@@ -94,7 +94,7 @@ func main() {
 			}
 		}
 		archives = append(archives, archive)
-		npmBin := filepath.Join(root, "npm", "@containerkit", t.goos+"-"+t.goarch, "bin", binName)
+		npmBin := filepath.Join(root, "npm", "@aptd3v", "containerkit-"+t.goos+"-"+t.goarch, "bin", binName)
 		if err := os.MkdirAll(filepath.Dir(npmBin), 0o755); err != nil {
 			fatal(err)
 		}
@@ -104,7 +104,7 @@ func main() {
 		if err := os.Chmod(npmBin, 0o755); err != nil {
 			fatal(err)
 		}
-		npmNotice := filepath.Join(root, "npm", "@containerkit", t.goos+"-"+t.goarch, "NOTICE")
+		npmNotice := filepath.Join(root, "npm", "@aptd3v", "containerkit-"+t.goos+"-"+t.goarch, "NOTICE")
 		if err := copyFile(notice, npmNotice); err != nil {
 			fatal(err)
 		}

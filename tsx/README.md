@@ -18,8 +18,10 @@ A module is a default-export function that returns a `DockerNode`. The type argu
 Requires Node 20 or newer.
 
 ```bash
-npm install containerkit
+npm install @aptd3v/containerkit
 ```
+
+The package includes the runner. The `containerkit` command selects the binary for this machine.
 
 `jsx: "react-jsx"` is the automatic JSX transform. The import source decides which runtime a file uses. React and containerkit can live in one project. They cannot share a file: each `.tsx` file has one import source, so `<div>` and `<Compose>` stay apart.
 

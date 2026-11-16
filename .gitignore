@@ -48,9 +48,11 @@ tsx/*.tgz
 # Multi-platform runner archives
 /dist/
 
-# Go binaries and the Apache NOTICE copied into the npm platform packages by tools/crossbuild
-npm/@containerkit/*/bin/
-npm/@containerkit/*/NOTICE
+# Go binaries and the Apache NOTICE copied into the npm platform packages by tools/crossbuild.
+# prepack copies those binaries under tsx/bin/<os>-<arch>/ and postpack removes them.
+npm/@aptd3v/containerkit-*/bin/
+npm/@aptd3v/containerkit-*/NOTICE
+tsx/bin/*/
 tsx/package.json.publish-backup
 
 # Supabase example runtime (bind mounts + exported compose)

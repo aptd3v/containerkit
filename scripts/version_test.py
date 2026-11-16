@@ -68,22 +68,24 @@ class VersionScriptTests(unittest.TestCase):
             self.assertEqual(lock["packages"][key], pkg)
         pkg = json.loads((mod.root / "tsx/package.json").read_text())
         self.assertEqual(pkg["version"], nxt)
+        self.assertEqual(pkg["name"], "@aptd3v/containerkit")
+        self.assertNotIn("optionalDependencies", pkg)
         self.assertEqual(pkg["devDependencies"], before["packages"][""]["devDependencies"])
         self.assertIn(f'\tversion = "{nxt}"\n', (mod.root / "cmd/containerkit/main.go").read_text())
 
     def test_patch_refuses_drift(self):
         go = mod.root / "cmd/containerkit/main.go"
-        go.write_text(go.read_text().replace("0.8.1", "0.8.0", 1))
+        go.write_text(go.read_text().replace(mod.version_file(), "0.0.0", 1))
         version = (mod.root / "VERSION").read_text()
         with self.assertRaises(SystemExit) as raised:
             mod.main(["patch"])
         self.assertEqual(raised.exception.code, 1)
         self.assertEqual((mod.root / "VERSION").read_text(), version)
-        self.assertIn("0.8.0", go.read_text())
+        self.assertIn("0.0.0", go.read_text())
 
     def test_explicit_version_repairs_drift(self):
         go = mod.root / "cmd/containerkit/main.go"
-        go.write_text(go.read_text().replace("0.8.1", "0.8.0", 1))
+        go.write_text(go.read_text().replace(mod.version_file(), "0.0.0", 1))
         mod.main(["v1.4.0"])
         for _, got in mod.sites():
             self.assertEqual(got, "1.4.0")
@@ -91,7 +93,7 @@ class VersionScriptTests(unittest.TestCase):
     def test_failed_edit_writes_nothing(self):
         go = mod.root / "cmd/containerkit/main.go"
         original = go.read_text()
-        go.write_text(original.replace('\tversion = "0.8.1"\n', "\t// version moved\n"))
+        go.write_text(original.replace(f'\tversion = "{mod.version_file()}"\n', "\t// version moved\n"))
         before = snapshot_tree(mod.root)
         with self.assertRaises(SystemExit) as raised:
             mod.main(["9.9.9"])
@@ -102,7 +104,7 @@ class VersionScriptTests(unittest.TestCase):
         with self.assertRaises(SystemExit) as raised:
             mod.main(["1.2"])
         self.assertEqual(raised.exception.code, 2)
-        self.assertEqual((mod.root / "VERSION").read_text(), "0.8.1\n")
+        self.assertEqual((mod.root / "VERSION").read_text(), self._repo["VERSION"])
 
     def test_show_and_check(self):
         with self.assertRaises(SystemExit) as raised:

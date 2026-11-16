@@ -43,7 +43,7 @@ go generate ./pkg/kit
 
 ## Version
 
-`VERSION` is the source of truth. `scripts/version.py` copies it into `tsx/package.json`, `tsx/package-lock.json`, `cmd/containerkit/main.go`, and `npm/@containerkit/*/package.json`.
+`VERSION` is the source of truth. `scripts/version.py` copies it into `tsx/package.json`, `tsx/package-lock.json`, `cmd/containerkit/main.go`, and `npm/@aptd3v/containerkit-*/package.json`.
 
 ```bash
 python3 scripts/version.py --check
@@ -54,6 +54,6 @@ python3 scripts/version.py patch
 
 ## What stays local
 
-`.gitignore` already excludes `playground/`, `dist/`, `tsx/node_modules/`, `tsx/dist/`, the platform binaries under `npm/@containerkit/*/bin/`, and `.containerkit/`. `go run ./tools/crossbuild` fills `dist/` and those `bin/` directories. Do not commit them.
+`.gitignore` already excludes `playground/`, `dist/`, `tsx/node_modules/`, `tsx/dist/`, the platform binaries under `npm/@aptd3v/containerkit-*/bin/`, and `.containerkit/`. `go run ./tools/crossbuild` fills `dist/` and those `bin/` directories. Do not commit them.
 
 Publishing is the tag workflow in `.github/workflows/release.yml`. The tag must equal `VERSION` with a leading `v`. The repository secret `NPM_TOKEN` is what the workflow uses for npm.

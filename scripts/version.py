@@ -6,7 +6,7 @@ that cannot read it:
 
   tsx/package.json
   tsx/package-lock.json   this package only; dependency versions stay put
-  npm/@containerkit/*/package.json
+  npm/@aptd3v/containerkit-*/package.json
   cmd/containerkit/main.go  fallback when a build does not pass -X main.version
 
 tools/crossbuild reads VERSION unless CONTAINERKIT_VERSION is set.
@@ -54,8 +54,35 @@ PLATFORMS = (
 )
 
 
+def platform_package(slug):
+    return f"@aptd3v/containerkit-{slug}"
+
+
 def platform_rels():
-    return [f"npm/@containerkit/{name}/package.json" for name in PLATFORMS]
+    return [f"npm/@aptd3v/containerkit-{name}/package.json" for name in PLATFORMS]
+
+
+def replace_exact(pattern, text, version, label):
+    text, n = pattern.subn(lambda m: m.group(1) + version + m.group(3), text, count=1)
+    if n != 1:
+        die(f"{label} was not updated")
+    return text
+
+
+def replace_optional_versions(text, version):
+    for slug in PLATFORMS:
+        name = platform_package(slug)
+        pattern = re.compile(r'("' + re.escape(name) + r'"\s*:\s*")(?!file:)([^"]*)(")')
+        text = replace_exact(pattern, text, version, f"optional dependency {name}")
+    return text
+
+
+def replace_lock_platform_versions(text, version):
+    for slug in PLATFORMS:
+        key = f"../npm/@aptd3v/containerkit-{slug}"
+        pattern = re.compile(r'("' + re.escape(key) + r'"\s*:\s*\{\s*"version"\s*:\s*")([^"]*)(")')
+        text = replace_exact(pattern, text, version, f"lock entry {key}")
+    return text
 
 
 def die(msg, code=1):

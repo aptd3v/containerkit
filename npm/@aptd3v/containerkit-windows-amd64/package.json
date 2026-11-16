@@ -1,11 +1,11 @@
 {
-  "name": "@containerkit/windows-arm64",
-  "version": "0.8.1",
-  "description": "containerkit command for Windows on arm64.",
+  "name": "@aptd3v/containerkit-windows-amd64",
+  "version": "0.8.2",
+  "description": "containerkit command for Windows on x64.",
   "license": "Apache-2.0",
   "author": "aptd3v",
   "os": ["win32"],
-  "cpu": ["arm64"],
+  "cpu": ["x64"],
   "preferUnplugged": true,
   "files": ["bin", "NOTICE"],
   "publishConfig": {

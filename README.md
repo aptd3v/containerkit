@@ -151,16 +151,18 @@ go get github.com/aptd3v/containerkit
 Node 20 or newer:
 
 ```bash
-npm install containerkit
+npm install @aptd3v/containerkit
 ```
 
-[CHANGELOG.md](CHANGELOG.md) is what 0.8.1 contains.
+That install includes the runner. The `containerkit` command runs the binary for this machine.
+
+[CHANGELOG.md](CHANGELOG.md) is what 0.8.2 contains.
 
 Read the Go kit in order from [docs/README.md](docs/README.md): define a service, then run it. Read TypeScript from [tsx/docs/README.md](tsx/docs/README.md): trees, the live session, the client, commands, then Dockerfiles.
 
 The TypeScript package lives in [`tsx/`](tsx/README.md). A folder that extends `containerkit/tsconfig.jsx.json` compiles `<Compose>` without a per-file pragma. React and containerkit can share a repository. They cannot share a file.
 
-A live session needs the `containerkit` binary on `PATH`, or `CONTAINERKIT_BIN` pointing at it. [The runner](docs/runner-binary.md) is `validate`, `exec`, and `session`, and `go run ./tools/crossbuild` builds it for linux, darwin, and windows.
+A live session uses the `containerkit` command from that install. `CONTAINERKIT_BIN` overrides the bundled binary. [The runner](docs/runner-binary.md) is `validate`, `exec`, and `session`. `go run ./tools/crossbuild` builds it for linux, darwin, and windows.
 
 - [For coding agents](AGENTS.md). Emit containerkit instead of a Compose file plus a script.
 - [Contributing](CONTRIBUTING.md). Tests, `go generate`, and `VERSION`.

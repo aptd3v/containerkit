@@ -1,7 +1,7 @@
 {
-  "name": "containerkit",
-  "version": "0.8.1",
-  "description": "Write Compose files, Dockerfiles, and container actions as TSX.",
+  "name": "@aptd3v/containerkit",
+  "version": "0.8.2",
+  "description": "Compose projects, Dockerfiles, and Engine actions as TypeScript components.",
   "type": "module",
   "license": "Apache-2.0",
   "author": "aptd3v",
@@ -16,9 +16,14 @@
   "homepage": "https://github.com/aptd3v/containerkit/tree/main/tsx#readme",
   "keywords": [
     "docker",
+    "docker-compose",
+    "dockerfile",
     "compose",
-    "jsx",
+    "containers",
+    "moby",
+    "typescript",
     "tsx",
+    "jsx",
     "containerkit"
   ],
   "engines": {
@@ -72,6 +77,12 @@
   },
   "files": [
     "bin/containerkit.js",
+    "bin/darwin-amd64",
+    "bin/darwin-arm64",
+    "bin/linux-amd64",
+    "bin/linux-arm64",
+    "bin/windows-amd64",
+    "bin/windows-arm64",
     "dist",
     "README.md",
     "GUIDE.md",
@@ -85,24 +96,16 @@
   "scripts": {
     "generate": "go run ../tools/gentsx",
     "build": "tsc -p tsconfig.build.json",
-    "test": "tsc -p tsconfig.json && tsc -p tsconfig.test.json && tsc -p coexist-test/tsconfig.json && node --test dist-test/node.test.js dist-test/render.test.js dist-test/jsx.test.js dist-test/eslint.test.js dist-test/plan.test.js dist-test/runner.test.js dist-test/docker-file.test.js dist-test/vocab.test.js dist-test/live.test.js dist-test/hooks.test.js dist-test/taskflow.test.js bin/containerkit.test.js scripts/publish-optional.test.js",
+    "test": "tsc -p tsconfig.build.json && tsc -p tsconfig.json && tsc -p tsconfig.test.json && tsc -p coexist-test/tsconfig.json && node --test dist-test/node.test.js dist-test/render.test.js dist-test/jsx.test.js dist-test/eslint.test.js dist-test/plan.test.js dist-test/runner.test.js dist-test/docker-file.test.js dist-test/vocab.test.js dist-test/live.test.js dist-test/hooks.test.js dist-test/taskflow.test.js bin/containerkit.test.js scripts/publish-optional.test.js",
     "test:taskflow": "tsc -p tsconfig.test.json && node --test --experimental-test-coverage --test-coverage-include=dist-test/taskflow.js --test-coverage-lines=100 dist-test/taskflow.test.js",
     "terminal": "tsc -p tsconfig.build.json && tsc -p examples/tsconfig.json && go build -C .. -o dist/containerkit ./cmd/containerkit && CONTAINERKIT_BIN=../dist/containerkit node dist-examples/terminal/terminal.js",
     "nginx": "tsc -p tsconfig.build.json && tsc -p examples/tsconfig.json && go build -C .. -o dist/containerkit ./cmd/containerkit && CONTAINERKIT_BIN=../dist/containerkit node dist-examples/nginx/docker.js",
     "wordpress": "tsc -p tsconfig.build.json && tsc -p examples/tsconfig.json && go build -C .. -o dist/containerkit ./cmd/containerkit && CONTAINERKIT_BIN=../dist/containerkit node dist-examples/wordpress/docker.js",
     "mongo-replica": "tsc -p tsconfig.build.json && tsc -p examples/tsconfig.json && go build -C .. -o dist/containerkit ./cmd/containerkit && CONTAINERKIT_BIN=../dist/containerkit node dist-examples/mongo-replica/docker.js",
     "pack:check": "npm run build && node scripts/pack-check.mjs",
-    "prepack": "node scripts/publish-optional.mjs rewrite",
-    "postpack": "node scripts/publish-optional.mjs restore",
+    "prepack": "node scripts/publish-optional.mjs prepack",
+    "postpack": "node scripts/publish-optional.mjs postpack",
     "prepublishOnly": "npm run build && node scripts/publish-optional.mjs check"
-  },
-  "optionalDependencies": {
-    "@containerkit/darwin-amd64": "0.8.1",
-    "@containerkit/darwin-arm64": "0.8.1",
-    "@containerkit/linux-amd64": "0.8.1",
-    "@containerkit/linux-arm64": "0.8.1",
-    "@containerkit/windows-amd64": "0.8.1",
-    "@containerkit/windows-arm64": "0.8.1"
   },
   "peerDependencies": {
     "eslint": ">=10"

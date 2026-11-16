@@ -1,23 +1,27 @@
 import assert from "node:assert/strict";
-import { mkdtempSync } from "node:fs";
+import { mkdtempSync, readFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { test } from "node:test";
 import { assertReady, missingBins, publish, registryDependencies } from "./publish-optional.mjs";
 
+const platform = JSON.parse(
+	readFileSync(new URL("../../npm/@aptd3v/containerkit-darwin-arm64/package.json", import.meta.url), "utf8"),
+);
+
 test("file platform packages become their version", () => {
 	const pkg = {
 		name: "containerkit",
-		version: "0.8.1",
+		version: platform.version,
 		optionalDependencies: {
-			"@containerkit/darwin-arm64": "file:../npm/@containerkit/darwin-arm64",
+			"@aptd3v/containerkit-darwin-arm64": "file:../npm/@aptd3v/containerkit-darwin-arm64",
 			"left-alone": "1.2.3",
 		},
 	};
 	const next = registryDependencies(pkg);
-	assert.equal(next.optionalDependencies["@containerkit/darwin-arm64"], "0.8.1");
+	assert.equal(next.optionalDependencies["@aptd3v/containerkit-darwin-arm64"], platform.version);
 	assert.equal(next.optionalDependencies["left-alone"], "1.2.3");
-	assert.equal(pkg.optionalDependencies["@containerkit/darwin-arm64"].startsWith("file:"), true);
+	assert.equal(pkg.optionalDependencies["@aptd3v/containerkit-darwin-arm64"].startsWith("file:"), true);
 });
 
 test("a private package or a version mismatch cannot publish", () => {

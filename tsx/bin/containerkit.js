@@ -1,18 +1,17 @@
 #!/usr/bin/env node
 import { spawnSync } from "node:child_process";
 import { existsSync, realpathSync } from "node:fs";
-import { createRequire } from "node:module";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const here = dirname(fileURLToPath(import.meta.url));
 
-// packageName is the platform package npm installs for this machine.
+// platformSlug is the directory of the bundled Go binary.
 // Go calls x64 amd64 and calls Windows windows. Node does not.
-export function packageName(platform = process.platform, arch = process.arch) {
+export function platformSlug(platform = process.platform, arch = process.arch) {
 	const os = platform === "win32" ? "windows" : platform;
 	const cpu = arch === "x64" ? "amd64" : arch;
-	return `@containerkit/${os}-${cpu}`;
+	return `${os}-${cpu}`;
 }
 
 export function binaryName(platform = process.platform) {
@@ -27,24 +26,19 @@ function isThisScript(path) {
 	}
 }
 
-// candidateBinaries lists where the Go binary may be. The installed platform
-// package is first. The repo copy is the path crossbuild writes for a local install.
+// candidateBinaries lists where the Go binary may be. The copy beside this
+// script is the one packed into @aptd3v/containerkit. The repo path is what
+// crossbuild writes before that copy exists.
 export function candidateBinaries(platform = process.platform, arch = process.arch) {
-	const name = packageName(platform, arch);
 	const exe = binaryName(platform);
-	const slug = name.slice("@containerkit/".length);
+	const slug = platformSlug(platform, arch);
 	const found = [];
 	const fromEnv = process.env.CONTAINERKIT_BIN;
 	if (fromEnv && !isThisScript(fromEnv)) {
 		found.push(fromEnv);
 	}
-	try {
-		const require = createRequire(import.meta.url);
-		found.push(require.resolve(`${name}/bin/${exe}`));
-	} catch {
-		// The optional package is not installed in this tree.
-	}
-	found.push(join(here, "..", "..", "npm", "@containerkit", slug, "bin", exe));
+	found.push(join(here, slug, exe));
+	found.push(join(here, "..", "..", "npm", "@aptd3v", `containerkit-${slug}`, "bin", exe));
 	return found;
 }
 
@@ -61,7 +55,7 @@ export function run(argv = process.argv.slice(2)) {
 	const bin = resolveContainerkit();
 	if (!bin) {
 		process.stderr.write(
-			`containerkit: no binary for ${packageName()}. Install that package, run go run ./tools/crossbuild, or set CONTAINERKIT_BIN.\n`,
+			`containerkit: no binary for ${platformSlug()}. Run go run ./tools/crossbuild, or set CONTAINERKIT_BIN.\n`,
 		);
 		return 1;
 	}

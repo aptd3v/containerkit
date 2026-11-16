@@ -2,7 +2,7 @@
 
 `containerkit` (`cmd/containerkit`) runs a plan JSON or a compose YAML against a Docker daemon. Authoring TSX still needs Node. Executing a plan does not need the Go toolchain once this binary is on `PATH`.
 
-Pushing a tag `vX.Y.Z` that matches `VERSION` runs `.github/workflows/release.yml`. That workflow tests, builds the six archives, publishes `containerkit` and `@containerkit/<os>-<arch>` to npm, then opens the GitHub release. The repository secret `NPM_TOKEN` is the npm auth token. A local build does not publish.
+Pushing a tag `vX.Y.Z` that matches `VERSION` runs `.github/workflows/release.yml`. That workflow tests, builds the six archives, publishes `@aptd3v/containerkit` to npm, then opens the GitHub release. The repository secret `NPM_TOKEN` is the npm auth token. A local build does not publish. The npm package carries the runner for each platform.
 
 ## Build all platforms
 
@@ -83,9 +83,7 @@ The first plan dials the daemon. A later plan reuses that client while its `conn
 
 ## From npm
 
-`npm install containerkit` installs the TypeScript library and the one platform package that matches the machine, for example `@containerkit/darwin-arm64`. The other five stay optional and are skipped. The library's `bin` entry is a small script. npm links it as `node_modules/.bin/containerkit`, and that script runs the Go binary from the platform package. `npm run` puts `.bin` on `PATH`, so a package that depends on containerkit can call `containerkit` from its scripts.
-
-`tsx/package.json` lists those six packages at the same version as `VERSION`. `prepack` rewrites a `file:` spec to that version when one is present, so a published install fetches the packages from the registry. `go run ./tools/crossbuild` copies each binary into `npm/@containerkit/<os>-<arch>/bin/`.
+`npm install @aptd3v/containerkit` installs the TypeScript library and the runner. The package contains a binary for linux, darwin, and windows on amd64 and arm64. The `containerkit` command runs the one for this machine. `CONTAINERKIT_BIN` overrides that path. `go run ./tools/crossbuild` writes the same binaries into `dist/` and `npm/@aptd3v/containerkit-<os>-<arch>/bin/`. Packing the npm package copies those six files under `bin/<os>-<arch>/`.
 
 ## From TypeScript
 
