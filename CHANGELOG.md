@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.8.3
+
+The tag workflow publishes with GitHub's OIDC token.
+
 ## 0.8.2
 
 The npm package is `@aptd3v/containerkit`. The install includes the runner. The `containerkit` command selects the binary for this machine.

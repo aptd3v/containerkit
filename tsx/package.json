@@ -1,6 +1,6 @@
 {
   "name": "@aptd3v/containerkit",
-  "version": "0.8.2",
+  "version": "0.8.3",
   "description": "Compose projects, Dockerfiles, and Engine actions as TypeScript components.",
   "type": "module",
   "license": "Apache-2.0",

@@ -156,7 +156,7 @@ npm install @aptd3v/containerkit
 
 That install includes the runner. The `containerkit` command runs the binary for this machine.
 
-[CHANGELOG.md](CHANGELOG.md) is what 0.8.2 contains.
+[CHANGELOG.md](CHANGELOG.md) is what 0.8.3 contains.
 
 Read the Go kit in order from [docs/README.md](docs/README.md): define a service, then run it. Read TypeScript from [tsx/docs/README.md](tsx/docs/README.md): trees, the live session, the client, commands, then Dockerfiles.
 
