@@ -133,6 +133,14 @@ func TestImportUnknownOp(t *testing.T) {
 	}
 }
 
+func TestImportCycle(t *testing.T) {
+	doc := `{"steps":[{"name":"a","op":"containerRun","dependsOn":["b"]},{"name":"b","op":"containerRun","dependsOn":["a"]}]}`
+	_, err := Import([]byte(doc), nil)
+	if err == nil || !cycleNames(err, "a", "b") {
+		t.Fatal(err)
+	}
+}
+
 func yamlEscape(s string) string {
 	return strings.ReplaceAll(strings.ReplaceAll(s, "\n", "\\n"), `"`, `\"`)
 }

@@ -29,6 +29,7 @@ type scriptedEngine struct {
 	tagErr    error
 	created   clienttypes.ContainerCreateOptions
 	id        string
+	removed   []string
 }
 
 func (s *scriptedEngine) ContainerCreate(_ context.Context, options clienttypes.ContainerCreateOptions) (clienttypes.ContainerCreateResult, error) {
@@ -47,7 +48,8 @@ func (s *scriptedEngine) ContainerStart(context.Context, string, clienttypes.Con
 	return clienttypes.ContainerStartResult{}, s.startErr
 }
 
-func (s *scriptedEngine) ContainerRemove(context.Context, string, clienttypes.ContainerRemoveOptions) (clienttypes.ContainerRemoveResult, error) {
+func (s *scriptedEngine) ContainerRemove(_ context.Context, id string, _ clienttypes.ContainerRemoveOptions) (clienttypes.ContainerRemoveResult, error) {
+	s.removed = append(s.removed, id)
 	return clienttypes.ContainerRemoveResult{}, s.removeErr
 }
 

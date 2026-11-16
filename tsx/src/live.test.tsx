@@ -85,6 +85,54 @@ function oneAtATime(name: string, fn: () => Promise<void>) {
 	});
 }
 
+oneAtATime("a failed apply is not the last YAML", async () => {
+	let attempts = 0;
+	let effects = 0;
+	const calls: PlanDocument[] = [];
+	const errors: unknown[] = [];
+	const transport: SessionTransport = {
+		async call(plan) {
+			calls.push(plan);
+			if (plan.actions?.[0]?.op === "composeUp") {
+				attempts += 1;
+				if (attempts === 1) {
+					throw new Error("apply failed");
+				}
+			}
+			return { ok: true };
+		},
+		on() {
+			return () => undefined;
+		},
+		async close() {},
+	};
+	let setTick: (value: number) => void = () => undefined;
+	const live = root({ onError: (err) => errors.push(err) }, function App() {
+		const [, set] = useState(0);
+		setTick = set;
+		useEffect(() => {
+			effects += 1;
+		}, []);
+		return (
+			<Compose name="app">
+				<Service name="api" image="alpine:latest" />
+			</Compose>
+		);
+	});
+	const running = await runRoot(live, transport);
+	try {
+		assert.equal(ops(calls, "composeUp"), 1);
+		assert.equal(effects, 0);
+		assert.equal(errors.length, 1);
+		setTick(1);
+		await new Promise((resolve) => setImmediate(resolve));
+		assert.equal(ops(calls, "composeUp"), 2);
+		assert.equal(effects, 1);
+	} finally {
+		await running.close();
+	}
+});
+
 oneAtATime("state restarts the stack and useMemo skips the pull", async () => {
 	const mem = memoryTransport();
 	let setReplicas: (value: number) => void = () => undefined;
