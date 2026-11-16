@@ -11,26 +11,15 @@
       "containerkit/jsx-dev-runtime": ["../dist/jsx-dev-runtime.d.ts"],
       "containerkit/dockerfile": ["../dist/docker-file.d.ts"],
       "containerkit/live": ["../dist/live/index.d.ts"],
+      "containerkit/hooks": ["../dist/hooks/index.d.ts"],
       "containerkit/vocab": ["../dist/vocab.d.ts"],
       "containerkit/taskflow": ["../dist/taskflow.d.ts"]
     }
   },
   "include": [
-    "image.tsx",
-    "supabase.tsx",
-    "taskflow.tsx",
-    "docker.tsx",
-    "simple.tsx",
-    "structs.tsx",
-    "profiles.tsx",
-    "image-inline.tsx",
-    "events.tsx",
-    "terminal.tsx",
-    "docker-file.tsx",
-    "nginx.tsx",
-    "compose-commands.tsx",
-    "mongo-replica.tsx",
-    "wordpress.tsx",
-    "astronomy-shop.tsx"
+    "terminal/terminal.tsx",
+    "nginx/docker.tsx",
+    "wordpress/docker.tsx",
+    "mongo-replica/docker.tsx"
   ]
 }

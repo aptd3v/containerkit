@@ -12,8 +12,6 @@ import (
 	"syscall"
 	"time"
 
-	composeapi "github.com/docker/compose/v5/pkg/api"
-
 	. "github.com/aptd3v/containerkit/pkg/kit"
 )
 
@@ -44,7 +42,8 @@ func main() {
 		ConsumeLogs(prefixed("up")),
 		RemoveOrphans(true),
 		Detach(true),
-		Timeout(3*time.Second),
+		Log(NewLogger(OutputStream(os.Stdout))),
+		Timeout(5*time.Minute),
 	); err != nil {
 		log.Fatalf("up: %v", err)
 	}
@@ -114,11 +113,11 @@ func wordpress() []ServiceOption {
 		Env("WORDPRESS_DB_NAME", "exampledb"),
 		Expose(80, TCP),
 		Health(
-			Test("CMD", "curl", "-f", "http://localhost/wp-login.php"),
-			StartPeriod(5*time.Second),
+			Test("CMD-SHELL", "bash -c '</dev/tcp/127.0.0.1/80'"),
+			StartPeriod(30*time.Second),
 			Interval(10*time.Second),
-			Timeout(20*time.Second),
-			Retries(3),
+			Timeout(5*time.Second),
+			Retries(18),
 		),
 		Restart(Policy(UnlessStopped)),
 		Network(Name("wordpress-network")),
@@ -139,11 +138,11 @@ func database() []ServiceOption {
 		Env("MYSQL_USER", "exampleuser"),
 		Env("MYSQL_RANDOM_ROOT_PASSWORD", "1"),
 		Health(
-			Test("CMD", "mysqladmin", "ping", "-h", "127.0.0.1", "-pexamplepass"),
-			StartPeriod(5*time.Second),
-			Interval(10*time.Second),
-			Timeout(20*time.Second),
-			Retries(3),
+			Test("CMD", "mysqladmin", "ping", "-h", "127.0.0.1", "-u", "exampleuser", "-pexamplepass"),
+			StartPeriod(40*time.Second),
+			Interval(5*time.Second),
+			Timeout(5*time.Second),
+			Retries(20),
 		),
 		Network(Name("wordpress-network")),
 	}
@@ -221,4 +220,4 @@ func (l *prefixedLog) write(message string) {
 	fmt.Printf("[\x1b[32m%s\x1b[0m] %s\n", l.action, message)
 }
 
-var _ composeapi.LogConsumer = (*prefixedLog)(nil)
+var _ LogConsumer = (*prefixedLog)(nil)

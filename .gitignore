@@ -48,8 +48,9 @@ tsx/*.tgz
 # Multi-platform runner archives
 /dist/
 
-# Go binaries copied into the npm platform packages by tools/crossbuild
+# Go binaries and the Apache NOTICE copied into the npm platform packages by tools/crossbuild
 npm/@containerkit/*/bin/
+npm/@containerkit/*/NOTICE
 tsx/package.json.publish-backup
 
 # Supabase example runtime (bind mounts + exported compose)
@@ -57,6 +58,17 @@ tsx/package.json.publish-backup
 /docker-compose.yaml
 examples/supabase/volumes/
 examples/supabase/docker-compose.yaml
+
+# WordPress example runtime
+/examples/wordpress/database/
+/examples/wordpress/docker-compose.yaml
+/examples/wordpress/haproxy.cfg
+/examples/wordpress/src/
+
+#astronomy example runtime
+/examples/astronomy_shop/volumes/
+/examples/astronomy_shop/docker-compose.yaml
+astronomy-shop.compose.yaml
 
 # Python scripts
 scripts/__pycache__/

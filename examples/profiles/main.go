@@ -6,6 +6,7 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"os"
 	"strings"
 
 	. "github.com/aptd3v/containerkit/pkg/kit"
@@ -13,11 +14,13 @@ import (
 
 var (
 	paragraph = `containerkit
-is a Go library that provides a programmatic and composable interface
-for defining, running, and managing Docker containers and Compose projects.
-It abstracts both the Docker SDK and Docker Compose into a unified API.
-In this example, we'll use profiles and demonstrate how to start a service
-with a specific profile.
+is the Docker stack as a program.
+Define a stack in Go or TSX, then use one client
+to pull an image, bring the project up, and inspect its services.
+Both languages share a Docker vocabulary.
+The client covers the Engine SDK and the Compose SDK.
+This example activates one Compose profile
+and starts only the services in that profile.
 `
 
 	selectedProfile = "message-chain"
@@ -44,7 +47,7 @@ func main() {
 			Profile("kill-me"),
 		))
 
-	words := strings.Split(paragraph, "\n")
+	words := strings.Split(strings.TrimSpace(paragraph), "\n")
 	app.WithService(NewService(
 		Name("service0"),
 		Image("alpine:latest"),
@@ -71,7 +74,8 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	if err := chain.Up(context.Background(), cli.Composer(), RemoveOrphans(true)); err != nil {
+	out := NewLogger(OutputStream(os.Stdout))
+	if err := chain.Up(context.Background(), cli.Composer(), RemoveOrphans(true), Log(out)); err != nil {
 		log.Fatalf("up %s: %v", selectedProfile, err)
 	}
 

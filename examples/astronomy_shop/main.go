@@ -23,8 +23,6 @@ import (
 	"strings"
 	"time"
 
-	composeapi "github.com/docker/compose/v5/pkg/api"
-
 	. "github.com/aptd3v/containerkit/pkg/kit"
 )
 
@@ -60,7 +58,9 @@ func main() {
 		}
 	}
 
-	ctx := context.Background()
+	logger := NewLogger(OutputStream(os.Stdout))
+	ctx := logger.Context(context.Background())
+	fmt.Printf("profiles: %s\n", strings.Join(profiles, ","))
 	if *followFlag {
 		if err := runFollow(ctx, cfg, project, profiles); err != nil {
 			log.Fatal(err)
@@ -73,13 +73,18 @@ func main() {
 		log.Printf("warning: image inspect: %v (will rebuild)", err)
 		exists = false
 	}
+	if exists {
+		fmt.Printf("probe image %s already exists\n", probeImage)
+	} else {
+		fmt.Printf("building probe image %s\n", probeImage)
+	}
 	if err := runFlow(ctx, cfg, project, profiles, exists); err != nil {
 		log.Fatal(err)
 	}
 }
 
 func runFollow(ctx context.Context, cfg *Config, project *Compose, profiles []string) error {
-	cli, err := Connect(FromEnv())
+	cli, err := connectShop(ctx)
 	if err != nil {
 		return err
 	}
@@ -95,7 +100,7 @@ func runFollow(ctx context.Context, cfg *Config, project *Compose, profiles []st
 		Wait(true),
 		Timeout(900*time.Second),
 		RemoveOrphans(true),
-		OutputStream(os.Stdout),
+		Log(LoggerFrom(ctx)),
 	); err != nil {
 		return fmt.Errorf("up: %w", err)
 	}
@@ -108,7 +113,7 @@ func runFollow(ctx context.Context, cfg *Config, project *Compose, profiles []st
 	}()
 
 	go func() {
-		err := active.Events(runCtx, api, EventConsumer(func(event composeapi.Event) error {
+		err := active.Events(runCtx, api, EventConsumer(func(event Event) error {
 			b, _ := json.Marshal(event)
 			os.Stdout.WriteString("\033[36m" + string(b) + "\033[0m\n")
 			return nil
@@ -147,4 +152,12 @@ func resolveVolumesPath(explicit string) string {
 		return filepath.Join(filepath.Dir(file), "volumes")
 	}
 	return "./volumes"
+}
+
+func connectShop(ctx context.Context) (*Client, error) {
+	logger := LoggerFrom(ctx)
+	if logger == nil {
+		return Connect(FromEnv())
+	}
+	return Connect(FromEnv(), Log(logger))
 }

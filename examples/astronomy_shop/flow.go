@@ -32,7 +32,7 @@ func printURLs(w io.Writer, cfg *Config, profiles []string) {
 }
 
 func runFlow(ctx context.Context, cfg *Config, project *Compose, profiles []string, skipBuild bool) error {
-	cli, err := Connect(FromEnv())
+	cli, err := connectShop(ctx)
 	if err != nil {
 		return err
 	}
@@ -47,7 +47,7 @@ func runFlow(ctx context.Context, cfg *Config, project *Compose, profiles []stri
 		Wait(true),
 		Timeout(900*time.Second),
 		RemoveOrphans(true),
-		OutputStream(os.Stdout),
+		Log(LoggerFrom(ctx)),
 	)
 
 	flow := taskflow.New("astronomy-shop", cli)
@@ -76,7 +76,7 @@ func runFlow(ctx context.Context, cfg *Config, project *Compose, profiles []stri
 		_ = active.Down(context.Background(), cli.Composer(),
 			RemoveOrphans(true),
 			Volumes(true),
-			Log(NewLogger(OutputStream(os.Stdout))),
+			Log(LoggerFrom(ctx)),
 		)
 		_ = flow.Remove(context.Background())
 	}
@@ -85,6 +85,10 @@ func runFlow(ctx context.Context, cfg *Config, project *Compose, profiles []stri
 		Writer: os.Stdout,
 		Watch: func(e taskflow.Event) {
 			switch e.Kind {
+			case taskflow.EventStart:
+				fmt.Printf("[%s] start\n", e.Name)
+			case taskflow.EventDone:
+				fmt.Printf("[%s] done in %s\n", e.Name, e.Duration.Round(time.Millisecond))
 			case taskflow.EventRetry:
 				fmt.Printf("[%s] attempt %d failed: %v\n", e.Name, e.Attempt, e.Err)
 			case taskflow.EventSkip, taskflow.EventError:

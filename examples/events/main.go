@@ -8,8 +8,6 @@ import (
 	"log"
 	"time"
 
-	composeapi "github.com/docker/compose/v5/pkg/api"
-
 	. "github.com/aptd3v/containerkit/pkg/kit"
 )
 
@@ -59,7 +57,7 @@ func main() {
 	}
 }
 
-func printEvent(event composeapi.Event) error {
+func printEvent(event Event) error {
 	fmt.Println("========================================")
 	fmt.Printf("Event:\n")
 	fmt.Printf("  Status    : %s\n", event.Status)

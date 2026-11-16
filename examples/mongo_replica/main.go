@@ -12,13 +12,11 @@ import (
 	"strings"
 	"time"
 
-	"github.com/moby/moby/api/pkg/stdcopy"
-
 	. "github.com/aptd3v/containerkit/pkg/kit"
 )
 
 const (
-	numReplicas = 8
+	numReplicas = 4
 
 	mongoExpressUser = "admin"
 	mongoExpressPass = "password"
@@ -39,13 +37,20 @@ type member struct {
 func main() {
 	members := make([]member, 0, numReplicas)
 	urlParts := make([]string, 0, numReplicas)
-	app := NewCompose("mongo-db-cluster",
-		AddNetwork(Name("mongo-cluster"), Driver("bridge")),
-		AddVolume(Name("mongo-data")),
+	app := NewCompose(
+		"mongo-db-cluster",
+		AddNetwork(
+			Name("mongo-cluster"),
+			Driver("bridge"),
+		),
+		AddVolume(
+			Name("mongo-data"),
+		),
 	)
 	for i := range numReplicas {
 		serviceName := fmt.Sprintf("db-%d", i)
-		opts := append(mongoReplica(i),
+		opts := append(
+			mongoReplica(i),
 			Name(serviceName),
 			ContainerName(fmt.Sprintf("mongodb-%d", i)),
 		)
@@ -55,7 +60,7 @@ func main() {
 		app.WithService(NewService(opts...))
 
 		next := member{Host: serviceName + ":27017", ID: i}
-		if i >= 7 {
+		if i >= numReplicas-1 {
 			votes, priority := 0, 0.0
 			next.Votes = &votes
 			next.Priority = &priority
@@ -141,9 +146,9 @@ func mongoReplica(index int) []ServiceOption {
 func mongoExpress(url string) []ServiceOption {
 	return []ServiceOption{
 		Image("mongo-express:latest"),
+		Env("VCAP_APP_HOST", "0.0.0.0"),
 		Env("ME_CONFIG_MONGODB_URL", url),
 		Env("ME_CONFIG_MONGODB_ENABLE_ADMIN", "true"),
-		Env("VCAP_APP_HOST", "0.0.0.0"),
 		Env("ME_CONFIG_BASICAUTH_ENABLED", "true"),
 		Env("ME_CONFIG_BASICAUTH_USERNAME", mongoExpressUser),
 		Env("ME_CONFIG_BASICAUTH_PASSWORD", mongoExpressPass),
@@ -181,7 +186,10 @@ func initialize(ctx context.Context, cli *Client, containerID string, members []
 		return fmt.Errorf("attach exec: %w", err)
 	}
 	defer attached.Close()
-	_, _ = stdcopy.StdCopy(os.Stdout, os.Stderr, attached.Reader)
+	_, err = CopyMultiplexed(os.Stdout, os.Stderr, attached.Reader)
+	if err != nil {
+		return fmt.Errorf("copy multiplexed: %w", err)
+	}
 	inspected, err := InspectExec(ctx, cli.Engine(), created.ID)
 	if err != nil {
 		return fmt.Errorf("inspect exec: %w", err)

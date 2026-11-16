@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>containerkit - Docker Container Management in Go</title>
+    <title>containerkit — nginx example</title>
     <style>
         * {
             box-sizing: border-box;
@@ -17,8 +17,9 @@
             background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #f093fb 100%);
             min-height: 100vh;
             display: flex;
-            align-items: center;
+            align-items: flex-start;
             justify-content: center;
+            padding: 3rem 0;
             position: relative;
             overflow-x: hidden;
         }
@@ -43,7 +44,7 @@
                 0 25px 50px rgba(0, 0, 0, 0.15),
                 0 0 0 1px rgba(255, 255, 255, 0.1);
             text-align: center;
-            max-width: 700px;
+            max-width: 920px;
             margin: 2rem;
             position: relative;
             animation: slideUp 0.8s ease-out;
@@ -167,6 +168,15 @@
             line-height: 1.6;
         }
 
+        .code-example p code {
+            font-family: 'JetBrains Mono', 'Fira Code', 'Courier New', monospace;
+            font-size: 0.88em;
+            background: #f1f5f9;
+            color: #334155;
+            padding: 0.12em 0.4em;
+            border-radius: 6px;
+        }
+
         .code-block {
             background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
             border: 1px solid #475569;
@@ -174,6 +184,14 @@
             padding: 1.5rem;
             overflow-x: auto;
             position: relative;
+        }
+
+        .code-block.go::before {
+            content: 'Go';
+        }
+
+        .code-block.tsx::before {
+            content: 'TSX';
         }
 
         .code-block::before {
@@ -251,51 +269,106 @@
 <body>
     <div class="container">
         <h1>containerkit</h1>
-        <p class="subtitle">Docker Container Management in Go</p>
+        <p class="subtitle">The Docker stack as a program, in Go or TSX</p>
 
         <div class="status">
-            nginx server running successfully with containerkit
+            nginx-example is serving this page on port 8080
         </div>
 
         <div class="code-example">
-            <h3>This Example</h3>
-            <p>This nginx server was built and deployed using containerkit:</p>
-            <div class="code-block">
-                <pre><code><span class="comment">// 1. Create build context with Dockerfile</span>
-dctx, err := <span class="function">WithDockerContext</span>(<span class="string">"./examples/nginx"</span>)
+            <h3>Go</h3>
+            <p><code>examples/nginx</code> writes the Dockerfile, builds <code>nginx-example:latest</code>, and brings the service up. Setters are dot-imported from <code>pkg/kit</code>.</p>
+            <div class="code-block go">
+                <pre><code>df := <span class="function">nginxDockerfile</span>()
+cli, err := <span class="function">Connect</span>(<span class="function">FromEnv</span>())
+<span class="keyword">defer</span> cli.<span class="function">Close</span>()
 
-<span class="comment">// 2. Build custom nginx image</span>
-cli, err := client.<span class="function">NewClient</span>(client.<span class="function">FromEnv</span>(), client.<span class="function">WithAPIVersionNegotiation</span>())
-resp, err := cli.<span class="function">ImageBuild</span>(ctx, dctx, &amp;client.<span class="type">ImageBuild</span>{Tags: []<span class="type">string</span>{<span class="string">"nginx-example:latest"</span>}})
-
-<span class="comment">// 3. Create compose project</span>
-project := kit.<span class="function">NewProject</span>(<span class="string">"nginx-example"</span>)
-project.<span class="function">WithService</span>(kit.<span class="function">NewService</span>(<span class="string">"nginx"</span>, kit.<span class="function">NewContainer</span>().
-    <span class="function">Image</span>(<span class="string">"nginx-example:latest"</span>).
-    <span class="function">Command</span>(<span class="string">"nginx"</span>, <span class="string">"-g"</span>, <span class="string">"daemon off;"</span>).
-    <span class="function">PortBindings</span>(<span class="string">"tcp"</span>, <span class="string">"0.0.0.0"</span>, <span class="string">"8080"</span>, <span class="string">"80"</span>).
-    <span class="function">HealthCheck</span>(kit.<span class="type">Health</span>{
-        Test:         []<span class="type">string</span>{<span class="string">"CMD-SHELL"</span>, <span class="string">"curl -f http://localhost:80 || exit 1"</span>},
-        IntervalD:    <span class="string">"10s"</span>,
-        TimeoutD:     <span class="string">"5s"</span>,
-        StartPeriodD: <span class="string">"0s"</span>,
-        Retries:      <span class="number">3</span>,
-    }).
-    <span class="function">MemoryLimitString</span>(<span class="string">"100MiB"</span>)),
+ctx := context.<span class="function">Background</span>()
+err = <span class="function">BuildImage</span>(ctx, cli.<span class="function">Engine</span>(),
+    df,
+    <span class="function">Source</span>(<span class="string">"./examples/nginx"</span>),
+    <span class="function">Image</span>(<span class="string">"nginx-example:latest"</span>),
 )
 
-<span class="comment">// 4. Deploy with compose</span>
-app := kit.<span class="function">NewCompose</span>(project)
-err = app.<span class="function">Up</span>(ctx, &amp;kit.<span class="type">Up</span>{Detach: <span class="keyword">true</span>, RemoveOrphans: <span class="keyword">true</span>})
+app := <span class="function">NewCompose</span>(<span class="string">"nginx-example"</span>).<span class="function">WithService</span>(<span class="function">NewService</span>(
+    <span class="function">Name</span>(<span class="string">"nginx"</span>),
+    <span class="function">Image</span>(<span class="string">"nginx-example:latest"</span>),
+    <span class="function">Command</span>(<span class="string">"nginx"</span>, <span class="string">"-g"</span>, <span class="string">"daemon off;"</span>),
+    <span class="function">Publish</span>(<span class="function">Protocol</span>(TCP), <span class="function">HostIP</span>(<span class="string">"0.0.0.0"</span>), <span class="function">HostPort</span>(<span class="number">8080</span>), <span class="function">ContainerPort</span>(<span class="number">80</span>)),
+    <span class="function">Health</span>(
+        <span class="function">Test</span>(<span class="string">"CMD-SHELL"</span>, <span class="string">"curl -f http://localhost:80 || exit 1"</span>),
+        <span class="function">Interval</span>(<span class="number">10</span>*time.Second),
+        <span class="function">Timeout</span>(<span class="number">5</span>*time.Second),
+        <span class="function">Retries</span>(<span class="number">3</span>),
+    ),
+    <span class="function">Memory</span>(<span class="number">100</span> &lt;&lt; <span class="number">20</span>),
+    <span class="function">Develop</span>(<span class="function">WatchFiles</span>(
+        <span class="function">Action</span>(Sync),
+        <span class="function">Path</span>(<span class="string">"./src"</span>),
+        <span class="function">Target</span>(<span class="string">"/app"</span>),
+        <span class="function">Ignore</span>(<span class="string">"tmp"</span>),
+    )),
+    <span class="function">Build</span>(<span class="function">Source</span>(<span class="string">"./examples/nginx"</span>), df),
+))
+err = app.<span class="function">Up</span>(ctx, cli.<span class="function">Composer</span>(), <span class="function">Detach</span>(<span class="keyword">true</span>), <span class="function">RemoveOrphans</span>(<span class="keyword">true</span>))
 
-<span class="comment">// Helper that writes the Dockerfile into the build context</span>
-<span class="keyword">func</span> <span class="function">WithDockerContext</span>(path <span class="type">string</span>) (<span class="type">io.Reader</span>, <span class="type">error</span>) {
-    df := kit.<span class="function">NewDockerFile</span>()
-    df.<span class="function">From</span>(<span class="string">"nginx"</span>, <span class="string">"latest"</span>)
-    df.<span class="function">Copy</span>(<span class="string">"nginx.conf"</span>, <span class="string">"/etc/nginx/nginx.conf"</span>)
-    df.<span class="function">Copy</span>(<span class="string">"index.html"</span>, <span class="string">"/usr/share/nginx/html/index.html"</span>)
-    <span class="keyword">return</span> kit.<span class="function">NewBuild</span>().<span class="function">Context</span>(path).<span class="function">Dockerfile</span>(df).<span class="function">Reader</span>()
+<span class="keyword">func</span> <span class="function">nginxDockerfile</span>() *<span class="type">Dockerfile</span> {
+    <span class="keyword">return</span> <span class="function">NewDockerfile</span>().
+        <span class="function">From</span>(<span class="string">"nginx"</span>, <span class="string">"latest"</span>).
+        <span class="function">Copy</span>(<span class="string">"nginx.conf"</span>, <span class="string">"/etc/nginx/nginx.conf"</span>).
+        <span class="function">Copy</span>(<span class="string">"index.html"</span>, <span class="string">"/usr/share/nginx/html/index.html"</span>).
+        <span class="function">Expose</span>(<span class="string">"80"</span>).
+        <span class="function">Command</span>(<span class="string">"nginx"</span>, <span class="string">"-g"</span>, <span class="string">"daemon off;"</span>)
 }</code></pre>
+            </div>
+        </div>
+
+        <div class="code-example">
+            <h3>TSX</h3>
+            <p><code>tsx/examples/nginx</code> builds the same files. The session stays up, waits until the container is healthy, and takes the project down on Ctrl+C.</p>
+            <div class="code-block tsx">
+                <pre><code><span class="keyword">const</span> dockerfile = (
+    &lt;<span class="type">Dockerfile</span>&gt;
+        &lt;<span class="type">From</span> image=<span class="string">"nginx"</span> tag=<span class="string">"alpine"</span> /&gt;
+        &lt;<span class="type">Copy</span> src=<span class="string">"nginx.conf"</span> dest=<span class="string">"/etc/nginx/nginx.conf"</span> /&gt;
+        &lt;<span class="type">Copy</span> src=<span class="string">"index.html"</span> dest=<span class="string">"/usr/share/nginx/html/index.html"</span> /&gt;
+        &lt;<span class="type">Expose</span> port=<span class="string">"80"</span> /&gt;
+        &lt;<span class="type">Command</span> executable=<span class="string">"nginx"</span> args={[<span class="string">"-g"</span>, <span class="string">"daemon off;"</span>]} /&gt;
+    &lt;/<span class="type">Dockerfile</span>&gt;
+);
+
+<span class="keyword">function</span> <span class="function">App</span>() {
+    <span class="function">useShutdown</span>({ removeOrphans: <span class="keyword">true</span> });
+    <span class="keyword">return</span> (
+        &lt;<span class="type">Compose</span> name=<span class="string">"nginx-example"</span>&gt;
+            &lt;<span class="type">Service</span> name=<span class="string">"nginx"</span> image=<span class="string">"nginx-example:latest"</span>&gt;
+                &lt;<span class="type">Build</span> source={context}&gt;{dockerfile}&lt;/<span class="type">Build</span>&gt;
+                &lt;<span class="type">Publish</span>
+                    protocol={proto.TCP}
+                    hostIP=<span class="string">"127.0.0.1"</span>
+                    hostPort={<span class="number">8080</span>}
+                    containerPort={<span class="number">80</span>}
+                /&gt;
+                &lt;<span class="type">Health</span>
+                    test={[<span class="string">"CMD-SHELL"</span>, <span class="string">"wget -q -O /dev/null http://127.0.0.1/ || exit 1"</span>]}
+                    interval=<span class="string">"5s"</span>
+                    timeout=<span class="string">"3s"</span>
+                    retries={<span class="number">5</span>}
+                /&gt;
+            &lt;/<span class="type">Service</span>&gt;
+        &lt;/<span class="type">Compose</span>&gt;
+    );
+}
+
+<span class="keyword">export default</span> <span class="function">root</span>(
+    {
+        fromEnv: <span class="keyword">true</span>,
+        onExit: <span class="string">"down"</span>,
+        wait: <span class="keyword">true</span>,
+        onUp: () =&gt; console.<span class="function">log</span>(<span class="string">"nginx at http://127.0.0.1:8080"</span>),
+    },
+    App,
+);</code></pre>
             </div>
         </div>
     </div>
