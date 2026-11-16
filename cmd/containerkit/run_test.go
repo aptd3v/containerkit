@@ -80,6 +80,30 @@ func TestRunValidateBadJSON(t *testing.T) {
 	}
 }
 
+func TestRunTerminalUsage(t *testing.T) {
+	t.Parallel()
+	var out, errw bytes.Buffer
+	code := run(context.Background(), []string{"terminal"}, bytes.NewReader(nil), &out, &errw)
+	if code != 2 {
+		t.Fatalf("code = %d, err = %s", code, errw.String())
+	}
+	if !strings.Contains(errw.String(), "usage: containerkit terminal") {
+		t.Fatalf("err = %s", errw.String())
+	}
+}
+
+func TestRunTerminalNeedsFileStdin(t *testing.T) {
+	t.Parallel()
+	var out, errw bytes.Buffer
+	code := run(context.Background(), []string{"terminal", "exec-example"}, strings.NewReader(""), &out, &errw)
+	if code != 1 {
+		t.Fatalf("code = %d, err = %s", code, errw.String())
+	}
+	if !strings.Contains(errw.String(), "stdin from a file") {
+		t.Fatalf("err = %s", errw.String())
+	}
+}
+
 func TestRunSessionInvalidPlan(t *testing.T) {
 	t.Parallel()
 	var out, errw bytes.Buffer

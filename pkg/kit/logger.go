@@ -8,7 +8,7 @@ import (
 	"sync"
 	"time"
 
-	composeapi "github.com/docker/compose/v5/pkg/api"
+	composeapi "github.com/aptd3v/containerkit/internal/compose/api/types"
 	"golang.org/x/term"
 )
 
@@ -57,25 +57,28 @@ type LogEvent struct {
 // terminal. Working rows show a spinner, byte totals update in place, and a
 // finished row scrolls into the transcript above that region.
 type Logger struct {
-	mu         sync.Mutex
-	out        io.Writer
-	color      field[bool]
-	timestamps bool
-	quiet      bool
-	mode       string
-	tty        bool
-	live       []string
-	rows       map[string]LogEvent
-	lastDone   map[string]string
-	pending    []string // log lines waiting for one paint of the live region
-	drawn      int      // visual rows occupied by the live region
-	cols       int      // terminal width override; 0 measures, negative disables wrap
-	realTTY    bool
-	spin       int
-	spinEvery  time.Duration // zero uses the default; negative disables the ticker
-	spinning   bool
-	frames     bool
-	sink       func(LogEvent)
+	mu          sync.Mutex
+	out         io.Writer
+	color       field[bool]
+	timestamps  bool
+	quiet       bool
+	mode        string
+	tty         bool
+	live        []string
+	rows        map[string]LogEvent
+	lastDone    map[string]string
+	doneOnce    map[string]bool
+	pending     []string // log lines waiting for one paint of the live region
+	drawn       int      // visual rows occupied by the live region
+	cols        int      // terminal width override; 0 measures, negative disables wrap
+	realTTY     bool
+	spin        int
+	spinEvery   time.Duration // zero uses the default; negative disables the ticker
+	spinning    bool
+	frames      bool
+	sink        func(LogEvent)
+	vertexNames map[string]string
+	vertexDone  map[string]bool
 }
 
 // NewLogger constructs a stdout logger. With no options it writes to stderr,
@@ -164,6 +167,9 @@ func (l *Logger) Emit(e LogEvent) {
 	}
 	l.mu.Lock()
 	defer l.mu.Unlock()
+	if l.redundantDone(e) {
+		return
+	}
 	if e.Kind == KindCompose && e.Status == StatusDone && l.repeatDone(e) {
 		// A later waiter reports the same healthy container again. The line
 		// stays in the transcript once, but the live "waiting" row has to go.
@@ -171,6 +177,16 @@ func (l *Logger) Emit(e LogEvent) {
 		return
 	}
 	if !l.tty {
+		l.sealPlainLocked(e)
+		if e.Kind == KindBuild && e.Status == StatusWorking {
+			key := eventKey(e)
+			prev, ok := l.rows[key]
+			if ok && prev.Op == e.Op && prev.Text == e.Text && prev.Detail == e.Detail && prev.Current == e.Current && prev.Total == e.Total {
+				return
+			}
+			l.rows[key] = e
+			return
+		}
 		_, _ = io.WriteString(l.out, l.format(e)+"\n")
 		return
 	}
@@ -194,10 +210,53 @@ func (l *Logger) Emit(e LogEvent) {
 		l.paintLocked()
 		l.startSpinLocked()
 	case StatusDone, StatusError:
+		// Created and started are not the last word for a container. Keep that
+		// row in the live region until it is healthy, or the project up finishes.
+		if holdCompose(e) {
+			e.Status = StatusWorking
+			l.upsertLive(eventKey(e), e)
+			l.paintLocked()
+			l.startSpinLocked()
+			return
+		}
 		l.sealBuildLocked(e)
 		l.removeLive(eventKey(e))
 		l.commitLocked(l.format(e))
+		if e.Kind == KindCompose && (e.Op == "up" || e.Op == "down") {
+			l.settleComposeLocked(e.Status)
+		}
 	default:
+		l.commitLocked(l.format(e))
+	}
+}
+
+// holdCompose reports a compose status that should replace the container's
+// live row instead of scrolling a new line.
+func holdCompose(e LogEvent) bool {
+	if e.Kind != KindCompose || e.Status != StatusDone || e.ID == "" {
+		return false
+	}
+	switch e.Op {
+	case "up", "down", "healthy", "running", "exited", "dead", "killed", "removed", "error", "failed", "complete":
+		return false
+	default:
+		return true
+	}
+}
+
+// settleComposeLocked commits container rows still spinning after the project
+// up or down has finished.
+func (l *Logger) settleComposeLocked(status LogStatus) {
+	keys := append([]string(nil), l.live...)
+	for _, key := range keys {
+		e := l.rows[key]
+		if e.Kind != KindCompose || e.Op == "up" || e.Op == "down" {
+			continue
+		}
+		if e.Status == StatusWorking {
+			e.Status = status
+		}
+		l.removeLive(key)
 		l.commitLocked(l.format(e))
 	}
 }
@@ -225,6 +284,56 @@ func (l *Logger) retireProjectUpLocked() {
 	if dropped {
 		l.paintLocked()
 	}
+}
+
+// sealPlainLocked prints a working build row as finished when a later event
+// for the same image replaces it. A finished image also settles its layers.
+func (l *Logger) sealPlainLocked(next LogEvent) {
+	if next.Kind != KindBuild {
+		return
+	}
+	keys := []string{eventKey(next)}
+	if next.Status == StatusDone || next.Status == StatusError {
+		for key, prev := range l.rows {
+			if prev.Kind == KindBuild && (prev.ID == next.ID || prev.Parent == next.ID || (next.Parent != "" && prev.Parent == next.Parent)) {
+				keys = append(keys, key)
+			}
+		}
+	}
+	seen := map[string]bool{}
+	for _, key := range keys {
+		if seen[key] {
+			continue
+		}
+		seen[key] = true
+		prev, ok := l.rows[key]
+		if !ok || prev.Status != StatusWorking {
+			continue
+		}
+		if key == eventKey(next) && prev.Op == next.Op && prev.Detail == next.Detail && prev.Text == next.Text {
+			continue
+		}
+		prev.Status = StatusDone
+		delete(l.rows, key)
+		_, _ = io.WriteString(l.out, l.format(prev)+"\n")
+	}
+}
+
+// redundantDone drops a second finished build row that only repeats the operation.
+// The row that carries the image id is the one that stays.
+func (l *Logger) redundantDone(e LogEvent) bool {
+	if e.Kind != KindBuild || (e.Status != StatusDone && e.Status != StatusError) {
+		return false
+	}
+	if l.doneOnce == nil {
+		l.doneOnce = map[string]bool{}
+	}
+	sig := e.ID + "\x00" + e.Op
+	if eventLabel(e) == "" && l.doneOnce[sig] {
+		return true
+	}
+	l.doneOnce[sig] = true
+	return false
 }
 
 func (l *Logger) repeatDone(e LogEvent) bool {

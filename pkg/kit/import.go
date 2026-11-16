@@ -5,6 +5,7 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"maps"
 	"os"
 	"path/filepath"
 	"strings"
@@ -115,6 +116,15 @@ func loadCompose(details composetypes.ConfigDetails, act importAct) *Compose {
 		}
 		return importErr(cfgErr("compose", resource, "Import", err))
 	}
+	// The loader already kept the services for these profiles. Leaving the
+	// profile tags on them makes a later Up hide the same services again,
+	// and depends_on then fails with "no such service".
+	if len(act.profiles) > 0 {
+		for name, svc := range proj.Services {
+			svc.Profiles = nil
+			proj.Services[name] = svc
+		}
+	}
 	p, err := composeFromProject(proj)
 	if err != nil {
 		return importErr(err)
@@ -148,9 +158,7 @@ func importEnv(act importAct) composetypes.Mapping {
 		}
 		env[k] = v
 	}
-	for k, v := range act.env {
-		env[k] = v
-	}
+	maps.Copy(env, act.env)
 	return env
 }
 

@@ -3,6 +3,7 @@ package kit
 import (
 	"bytes"
 	"context"
+	"encoding/json"
 	"errors"
 	"io"
 	"iter"
@@ -12,8 +13,11 @@ import (
 	"testing"
 	"time"
 
-	composeapi "github.com/docker/compose/v5/pkg/api"
+	composeapi "github.com/aptd3v/containerkit/internal/compose/api/types"
+	controlapi "github.com/moby/buildkit/api/services/control"
 	"github.com/moby/moby/api/types/jsonstream"
+	"google.golang.org/protobuf/proto"
+	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
 func TestLoggerFormatsPullBuildCompose(t *testing.T) {
@@ -125,7 +129,7 @@ func TestLoggerComposeProgressAndLogs(t *testing.T) {
 	log.Log("api-1", "listening\n")
 	log.Err("api-1", "warn\n")
 	got := buf.String()
-	for _, want := range []string{"compose", "creating", "created", "api-1", "│", "listening", "!", "warn"} {
+	for _, want := range []string{"compose", "creating", "created", "api-1", "stdout", "listening", "stderr", "warn"} {
 		if !strings.Contains(got, want) {
 			t.Fatalf("missing %q in:\n%s", want, got)
 		}
@@ -139,14 +143,63 @@ func TestLoggerContainerLogLine(t *testing.T) {
 	log.Log("supabase-studio", "▲ Next.js 16.4.3\n")
 	log.Err("supabase-db", "FATAL: password authentication failed\n")
 	got := buf.String()
-	if strings.Contains(got, "stdout") || strings.Contains(got, "stderr") || strings.Contains(got, "log ") {
-		t.Fatalf("log row still uses the progress columns:\n%s", got)
-	}
-	if !strings.Contains(got, "supabase-studio") || !strings.Contains(got, "│ ▲ Next.js 16.4.3") {
+	if !strings.Contains(got, "log") || !strings.Contains(got, "stdout") || !strings.Contains(got, "supabase-studio") || !strings.Contains(got, "▲ Next.js 16.4.3") {
 		t.Fatalf("stdout row:\n%s", got)
 	}
-	if !strings.Contains(got, "supabase-db") || !strings.Contains(got, "! FATAL:") {
+	if !strings.Contains(got, "stderr") || !strings.Contains(got, "supabase-db") || !strings.Contains(got, "!") || !strings.Contains(got, "FATAL:") {
 		t.Fatalf("stderr row:\n%s", got)
+	}
+	stdout := formatEvent(LogEvent{Kind: KindLog, Op: "stdout", ID: "supabase-studio", Detail: "▲ Next.js 16.4.3", Status: StatusInfo}, false, false, statusGlyph(StatusInfo))
+	status := formatEvent(LogEvent{Kind: KindBuild, Op: "step", ID: "astronomy-shop-kit", Text: "exporting to image", Status: StatusWorking}, false, false, statusGlyph(StatusWorking))
+	if strings.IndexRune(stdout, '·') != strings.IndexRune(status, '●') {
+		t.Fatalf("log and status glyphs are not in the same column\nlog: %s\nstatus: %s", stdout, status)
+	}
+}
+
+func TestComposeStatusStaysOnOneRow(t *testing.T) {
+	t.Parallel()
+	var buf bytes.Buffer
+	log := NewLogger(OutputStream(&buf), Color(false), Progress("tty"))
+	log.spinEvery = -1
+	id := "Container astronomy-shop-email-1"
+	log.Emit(LogEvent{Kind: KindCompose, Op: "started", ID: id, Text: "Started", Status: StatusDone})
+	log.Emit(LogEvent{Kind: KindCompose, Op: "waiting", ID: id, Text: "Waiting", Status: StatusWorking})
+	screen := visibleScreen(buf.String())
+	if strings.Count(screen, "email-1") != 1 || strings.Count(screen, "waiting") != 1 {
+		t.Fatalf("container status scrolled:\n%s", screen)
+	}
+	if strings.Contains(screen, "astronomy-s…") {
+		t.Fatalf("id kept the shared prefix:\n%s", screen)
+	}
+	log.Emit(LogEvent{Kind: KindCompose, Op: "healthy", ID: id, Text: "Healthy", Status: StatusDone})
+	screen = visibleScreen(buf.String())
+	if strings.Count(screen, "healthy") != 1 || strings.Count(screen, "waiting") != 0 {
+		t.Fatalf("healthy row:\n%s", screen)
+	}
+}
+
+func TestPlainBuildSettlesTheStepItReplaces(t *testing.T) {
+	t.Parallel()
+	var buf bytes.Buffer
+	log := NewLogger(OutputStream(&buf), Color(false), Progress("plain"))
+	image := "astronomy-shop-kit-probe:local"
+	log.Emit(LogEvent{Kind: KindBuild, Op: "building", ID: image, Status: StatusWorking, Parent: image})
+	log.Emit(LogEvent{Kind: KindBuild, Op: "step", ID: image, Text: "[2/2] RUN apk add --no-cache curl", Status: StatusWorking, Parent: image})
+	log.Emit(LogEvent{Kind: KindBuild, Op: "progress", ID: "sha256:3f2", Text: "extracting", Status: StatusWorking, Parent: image})
+	log.Emit(LogEvent{Kind: KindBuild, Op: "progress", ID: "sha256:3f2", Text: "extracting", Status: StatusWorking, Parent: image})
+	log.Emit(LogEvent{Kind: KindBuild, Op: "built", ID: image, Detail: "sha256:143ff54", Status: StatusDone, Parent: image})
+	log.Emit(LogEvent{Kind: KindBuild, Op: "built", ID: image, Text: "built", Status: StatusDone, Parent: image})
+	got := buf.String()
+	if strings.Contains(got, "●") {
+		t.Fatalf("a finished step stayed working:\n%s", got)
+	}
+	for _, want := range []string{"building", "[2/2] RUN apk add --no-cache curl", "extracting", "sha256:143ff54"} {
+		if strings.Count(got, want) != 1 {
+			t.Fatalf("%q count = %d\n%s", want, strings.Count(got, want), got)
+		}
+	}
+	if strings.Count(got, "✓") != 4 {
+		t.Fatalf("settled rows:\n%s", got)
 	}
 }
 
@@ -266,7 +319,7 @@ func TestLoggerComposeStatusIsNotRepeated(t *testing.T) {
 	if !strings.Contains(got, "Resource is still in use") {
 		t.Fatalf("long status dropped:\n%s", got)
 	}
-	if strings.Count(got, "│") != 1 || !strings.Contains(got, "listening") {
+	if strings.Count(got, "listening") != 1 {
 		t.Fatalf("blank log line kept:\n%s", got)
 	}
 }
@@ -624,4 +677,102 @@ func TestNilLoggerDrainsPushErrors(t *testing.T) {
 	if !strings.Contains(err.Error(), "authentication required") {
 		t.Fatalf("err = %v", err)
 	}
+}
+
+func TestBuildkitTraceBecomesSessionLines(t *testing.T) {
+	t.Parallel()
+	started := &controlapi.StatusResponse{
+		Vertexes: []*controlapi.Vertex{{
+			Digest:  "sha256:step",
+			Name:    "[deps 1/1] RUN pnpm install",
+			Started: timestamppb.Now(),
+		}},
+		Logs: []*controlapi.VertexLog{{
+			Vertex: "sha256:step",
+			Msg:    []byte("Lockfile is up to date\n"),
+		}},
+		Statuses: []*controlapi.VertexStatus{{
+			ID:      "a1b2c3d4e5f6",
+			Vertex:  "sha256:step",
+			Name:    "Downloading",
+			Current: 1572864,
+			Total:   4194304,
+		}},
+	}
+	repeat := &controlapi.StatusResponse{
+		Vertexes: []*controlapi.Vertex{{
+			Digest:  "sha256:step",
+			Name:    "[deps 1/1] RUN pnpm install",
+			Started: timestamppb.Now(),
+		}},
+	}
+	finished := &controlapi.StatusResponse{
+		Vertexes: []*controlapi.Vertex{{
+			Digest:    "sha256:step",
+			Name:      "[deps 1/1] RUN pnpm install",
+			Started:   timestamppb.Now(),
+			Completed: timestamppb.Now(),
+			Cached:    true,
+		}},
+	}
+	body := buildkitTraceLine(t, started) + buildkitTraceLine(t, repeat) + buildkitTraceLine(t, finished)
+	var events []LogEvent
+	log := NewFrameLogger(func(e LogEvent) { events = append(events, e) })
+	if err := log.drainJSON(context.Background(), strings.NewReader(body), KindBuild, "ledger:0.8.1"); err != nil {
+		t.Fatal(err)
+	}
+	var steps, logs, downloads, done int
+	for _, e := range events {
+		frame := eventFrame(e)
+		switch {
+		case e.Op == "step" && e.Text == "[deps 1/1] RUN pnpm install" && e.Status == StatusWorking:
+			if frame["display"] != eventDisplay(e) || frame["group"] != "build" || frame["status"] != "working" {
+				t.Fatalf("step display = %#v", frame)
+			}
+			steps++
+		case e.Kind == KindLog && e.Detail == "Lockfile is up to date" && frame["source"] == "[deps 1/1] RUN pnpm install":
+			display, _ := frame["display"].(string)
+			if display != eventDisplay(e) || frame["parent"] != "ledger:0.8.1" || frame["group"] != "log" || !strings.Contains(display, "stdout") || !strings.Contains(display, "Lockfile is up to date") {
+				t.Fatalf("log display = %#v", frame)
+			}
+			logs++
+		case e.Op == "progress" && e.Text == "Downloading" && e.Current == 1572864 && e.Total == 4194304 && frame["line"] == "Downloading":
+			display, _ := frame["display"].(string)
+			if display != eventDisplay(e) || frame["parent"] != "ledger:0.8.1" || !strings.Contains(display, "Downloading") || !strings.Contains(display, "1.5 MB / 4.0 MB") || !strings.Contains(display, "a1b2c3d4e5f6") {
+				t.Fatalf("progress display = %#v", frame)
+			}
+			downloads++
+		case e.Op == "step" && e.Status == StatusDone && e.Detail == "CACHED":
+			display, _ := frame["display"].(string)
+			if display != eventDisplay(e) || !strings.Contains(display, "CACHED") {
+				t.Fatalf("cached display = %#v", frame)
+			}
+			done++
+		default:
+			t.Fatalf("unexpected event %#v", e)
+		}
+	}
+	if steps != 1 || logs != 1 || downloads != 1 || done != 1 {
+		t.Fatalf("steps=%d logs=%d downloads=%d done=%d", steps, logs, downloads, done)
+	}
+}
+
+func buildkitTraceLine(t *testing.T, status *controlapi.StatusResponse) string {
+	t.Helper()
+	raw, err := proto.Marshal(status)
+	if err != nil {
+		t.Fatal(err)
+	}
+	aux, err := json.Marshal(raw)
+	if err != nil {
+		t.Fatal(err)
+	}
+	line, err := json.Marshal(map[string]any{
+		"id":  "moby.buildkit.trace",
+		"aux": json.RawMessage(aux),
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	return string(line) + "\n"
 }

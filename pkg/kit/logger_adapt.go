@@ -2,14 +2,17 @@ package kit
 
 import (
 	"context"
+	"encoding/base64"
 	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
 	"strings"
 
-	composeapi "github.com/docker/compose/v5/pkg/api"
+	composeapi "github.com/aptd3v/containerkit/internal/compose/api/types"
+	controlapi "github.com/moby/buildkit/api/services/control"
 	"github.com/moby/moby/api/types/jsonstream"
+	"google.golang.org/protobuf/proto"
 )
 
 type jsonMsg struct {
@@ -51,10 +54,89 @@ func (l *Logger) drainJSON(ctx context.Context, r io.Reader, kind LogKind, paren
 			return cfgErr("engine", parent, string(kind), msg.Error)
 		}
 		if l != nil {
+			if msg.ID == "moby.buildkit.trace" {
+				l.emitBuildkitTrace(kind, parent, msg.Aux)
+				continue
+			}
 			if e, ok := eventFromJSON(kind, parent, msg); ok {
 				l.Emit(e)
 			}
 		}
+	}
+}
+
+// emitBuildkitTrace turns a BuildKit status payload into log and status events.
+// The engine sends that payload as a base64 protobuf aux message, which has no
+// human-readable status or stream fields.
+func (l *Logger) emitBuildkitTrace(kind LogKind, parent string, aux json.RawMessage) {
+	if l == nil || len(aux) == 0 {
+		return
+	}
+	var encoded string
+	if err := json.Unmarshal(aux, &encoded); err != nil || encoded == "" {
+		return
+	}
+	raw, err := base64.StdEncoding.DecodeString(encoded)
+	if err != nil {
+		return
+	}
+	var status controlapi.StatusResponse
+	if err := proto.Unmarshal(raw, &status); err != nil {
+		return
+	}
+	if l.vertexNames == nil {
+		l.vertexNames = map[string]string{}
+	}
+	if l.vertexDone == nil {
+		l.vertexDone = map[string]bool{}
+	}
+	for _, vertex := range status.GetVertexes() {
+		name := strings.TrimSpace(vertex.GetName())
+		if name != "" && l.vertexNames[vertex.GetDigest()] == "" {
+			l.vertexNames[vertex.GetDigest()] = name
+			l.Emit(LogEvent{Kind: kind, Op: "step", ID: parent, Text: name, Status: StatusWorking, Parent: parent})
+		}
+		if vertex.GetCompleted() != nil && vertex.GetDigest() != "" && !l.vertexDone[vertex.GetDigest()] {
+			l.vertexDone[vertex.GetDigest()] = true
+			errText := strings.TrimSpace(vertex.GetError())
+			if errText == "" && !vertex.GetCached() {
+				continue
+			}
+			ev := LogEvent{Kind: kind, Op: "step", ID: firstNonEmpty(name, l.vertexNames[vertex.GetDigest()]), Status: StatusDone, Parent: parent}
+			if vertex.GetCached() {
+				ev.Detail = "CACHED"
+			}
+			if errText != "" {
+				ev.Status = StatusError
+				ev.Detail = errText
+			}
+			if ev.ID != "" {
+				l.Emit(ev)
+			}
+		}
+	}
+	for _, entry := range status.GetLogs() {
+		name := l.vertexNames[entry.GetVertex()]
+		for _, line := range strings.Split(strings.TrimRight(string(entry.GetMsg()), "\r\n"), "\n") {
+			line = strings.TrimRight(line, "\r")
+			if strings.TrimSpace(line) == "" {
+				continue
+			}
+			l.Emit(LogEvent{Kind: KindLog, Op: "stdout", ID: name, Detail: line, Status: StatusInfo, Parent: parent})
+		}
+	}
+	for _, entry := range status.GetStatuses() {
+		label := strings.TrimSpace(entry.GetName())
+		if label == "" {
+			continue
+		}
+		who := firstNonEmpty(entry.GetID(), l.vertexNames[entry.GetVertex()], parent)
+		ev := LogEvent{Kind: kind, Op: "progress", ID: who, Text: label, Status: StatusWorking, Parent: parent}
+		if entry.GetTotal() > 0 {
+			ev.Current = entry.GetCurrent()
+			ev.Total = entry.GetTotal()
+		}
+		l.Emit(ev)
 	}
 }
 
@@ -210,7 +292,8 @@ func (l *Logger) On(events ...composeapi.Resource) {
 	}
 	for _, e := range events {
 		st := StatusWorking
-		switch e.Status {
+		var status composeapi.EventStatus = e.Status
+		switch status {
 		case composeapi.Done:
 			st = StatusDone
 		case composeapi.Warning:

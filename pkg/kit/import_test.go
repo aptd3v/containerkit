@@ -9,6 +9,43 @@ import (
 	composetypes "github.com/aptd3v/containerkit/internal/compose/types"
 )
 
+func TestImportProfileKeepsSelectedServices(t *testing.T) {
+	t.Parallel()
+	yml := []byte(`
+name: shop
+services:
+  email:
+    image: demo:email
+    profiles: [shop]
+  kafka:
+    image: demo:kafka
+    profiles: [full]
+  web:
+    image: demo:web
+    depends_on:
+      email:
+        condition: service_healthy
+`)
+	p := ImportYAML(yml, Profile("shop"))
+	if err := p.Validate(); err != nil {
+		t.Fatal(err)
+	}
+	proj, err := p.Project()
+	if err != nil {
+		t.Fatal(err)
+	}
+	email, ok := proj.Services["email"]
+	if !ok {
+		t.Fatalf("email missing, services = %d", len(proj.Services))
+	}
+	if len(email.Profiles) != 0 {
+		t.Fatalf("email profiles = %#v", email.Profiles)
+	}
+	if _, ok := proj.Services["kafka"]; ok {
+		t.Fatal("full profile service was kept")
+	}
+}
+
 func TestImportYAMLBasic(t *testing.T) {
 	t.Parallel()
 	yml := []byte(`

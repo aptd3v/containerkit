@@ -69,6 +69,7 @@ func BuildImage(ctx context.Context, api Engine, opts ...EngineBuildOption) erro
 	if err := join(errs...); err != nil {
 		return wrapReceiver("engine", err)
 	}
+	adoptLog(ctx, &act.log)
 	id := "image"
 	if len(act.tags) > 0 {
 		id = act.tags[0]

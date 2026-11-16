@@ -19,13 +19,19 @@ type Composer = composeapi.Compose
 // Project is a loaded compose-go project. [LoadProject] and [Generate] return one.
 type Project = composetypes.Project
 
-// Compose SDK types used by [LoadProject] so callers never import compose/v5.
+// Compose SDK types used by [LoadProject], [ConsumeLogs], and [EventConsumer]
+// so callers never import compose/v5.
 type (
 	ProjectLoadOptions   = composeapi.ProjectLoadOptions
 	LoadListener         = composeapi.LoadListener
 	OCIOptions           = composeapi.OCIOptions
 	UnsupportedAttribute = composeapi.UnsupportedAttribute
 	ProjectOptionsFn     = clitypes.ProjectOptionsFn
+	// LogConsumer receives one container's stdout, stderr, and status lines.
+	// Implement Log, Err, and Status. [ConsumeLogs] and [Compose.Logs] take one.
+	LogConsumer = composeapi.LogConsumer
+	// Event is one Compose resource event delivered to [EventConsumer].
+	Event = composeapi.Event
 )
 
 // Created is the result of [Container.Create].

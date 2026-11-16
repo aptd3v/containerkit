@@ -178,7 +178,8 @@ func (o WorkingDirOpt) applyService(s *Service) error     { return s.setWorkingD
 func (o WorkingDirOpt) applyJob(j *Job) error             { return j.setWorkingDir(o.dir) }
 func (o WorkingDirOpt) applyRun(a *runAct) error          { a.workdir = o.dir; return nil }
 
-// Hostname sets the container hostname.
+// Hostname sets the name the container uses for itself.
+// It belongs on the service or container, not on a Network.
 func Hostname(host string) SpecOpt {
 	return specFn(func(s *spec) error { return s.setHostname(host) })
 }
@@ -192,7 +193,13 @@ func DomainName(d string) SpecOpt {
 // It implements [ContainerOption], [JobOption], [NetworkOption], and [ServiceOption].
 type MacAddressOpt struct{ m string }
 
-// MacAddress sets the container MAC address, or the endpoint MAC inside [Network].
+// MacAddress sets a MAC address.
+//
+// On a Service, Job, or Container it is that container's MAC. On a Network
+// child it is the MAC of that one endpoint. Use the Network form when the
+// container joins a network you defined.
+//
+//	<Network name="backend" macAddress="02:42:0a:00:00:0a" />
 func MacAddress(m string) MacAddressOpt { return MacAddressOpt{m: m} }
 
 func (o MacAddressOpt) applyContainer(c *Container) error { return c.setMacAddress(o.m) }

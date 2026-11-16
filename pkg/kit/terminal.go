@@ -2,6 +2,7 @@ package kit
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"io"
 	"os"
@@ -57,6 +58,45 @@ func ExecTerminal(ctx context.Context, api Engine, containerID string, in *os.Fi
 		return nil, cfgErr("engine", created.ID, "ExecTerminal", err)
 	}
 	return sess, nil
+}
+
+// StartExecTerminal creates an exec, hijacks it, and copies in and out until the
+// remote process exits. When in is a terminal, the session is raw and window
+// changes call ResizeExecTerminal. A pipe skips raw mode and resize, so a test
+// can drive the same path without a keyboard.
+func StartExecTerminal(ctx context.Context, api Engine, containerID string, in *os.File, out io.Writer, opts ...EngineExecCreateOption) error {
+	opts = append([]EngineExecCreateOption{
+		Tty(true),
+		AttachStdin(true),
+		AttachStdout(true),
+		AttachStderr(true),
+		ConsoleSize(24, 80),
+	}, opts...)
+	created, err := CreateExec(ctx, api, containerID, opts...)
+	if err != nil {
+		return err
+	}
+	res, err := AttachExec(ctx, api, created.ID, Tty(true), ConsoleSize(24, 80))
+	if err != nil {
+		return err
+	}
+	sess, err := terminal.NewSession(in, out, res.Conn, res.Reader)
+	if err != nil {
+		res.Close()
+		return cfgErr("engine", created.ID, "StartExecTerminal", err)
+	}
+	defer sess.Close()
+	var resize func(terminal.Size) error
+	if _, err := sess.Size(); err == nil {
+		resize = func(sz terminal.Size) error {
+			return ResizeExecTerminal(ctx, api, created.ID, sz)
+		}
+	}
+	err = sess.Start(ctx, resize)
+	if err != nil && !errors.Is(err, context.Canceled) && !errors.Is(err, terminal.ErrClosed) {
+		return err
+	}
+	return nil
 }
 
 // ResizeTerminal reports a window size to a running container TTY.

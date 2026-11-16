@@ -12,6 +12,7 @@ import (
 	composetypes "github.com/aptd3v/containerkit/internal/compose/types"
 	containertypes "github.com/aptd3v/containerkit/internal/engine/container/types"
 	"github.com/docker/cli/opts"
+	buildapi "github.com/moby/moby/api/types/build"
 	ocispec "github.com/opencontainers/image-spec/specs-go/v1"
 )
 
@@ -150,18 +151,14 @@ type composeBuildAct struct {
 func (a composeBuildAct) sdk() composeapi.BuildOptions {
 	out := a.out
 	quiet := a.quiet
-	prog := a.progress
-	if a.log != nil {
+	if a.log != nil && out == nil {
 		quiet = true
 		out = io.Discard
-		if prog == "" {
-			prog = "quiet"
-		}
 	}
 	return composeapi.BuildOptions{
 		Pull:         a.pull,
 		Push:         a.push,
-		Progress:     prog,
+		Progress:     a.progress,
 		Args:         a.args,
 		NoCache:      a.noCache,
 		Quiet:        quiet,
@@ -708,6 +705,8 @@ func (a engineBuildAct) sdk() clienttypes.ImageBuildOptions {
 		Labels:         a.labels,
 		BuildArgs:      a.args,
 		Platforms:      append([]ocispec.Platform(nil), a.platforms...),
+		// BuildKit accepts RUN --mount and COPY --exclude. The classic builder rejects them.
+		Version: buildapi.BuilderBuildKit,
 	}
 }
 

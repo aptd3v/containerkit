@@ -55,8 +55,7 @@ func (e *Error) classify() {
 		return
 	}
 	err := e.err
-	var tmpl InvalidTemplateError
-	if errors.As(err, &tmpl) {
+	if _, ok := errors.AsType[InvalidTemplateError](err); ok {
 		e.class = ErrInvalidArgument
 		e.hint = "compose interpolation template is invalid"
 		e.status = http.StatusBadRequest

@@ -41,7 +41,13 @@ func (o AliasOpt) applyNetwork(n *netAttach) error {
 // It implements [NetworkOption].
 type IPv4Opt struct{ ip string }
 
-// IPv4 sets a static IPv4 address inside [Network].
+// IPv4 sets the static IPv4 address of a service, job, or container on one network.
+//
+// Put it on the Network element inside that service. The Network element under
+// Compose defines the network and does not take this address. The address has
+// to fall inside that network's subnet.
+//
+//	<Network name="backend" ipv4="10.0.0.10" />
 func IPv4(ip string) IPv4Opt { return IPv4Opt{ip: ip} }
 
 func (o IPv4Opt) applyNetwork(n *netAttach) error {
@@ -56,7 +62,12 @@ func (o IPv4Opt) applyNetwork(n *netAttach) error {
 // It implements [NetworkOption].
 type IPv6Opt struct{ ip string }
 
-// IPv6 sets a static IPv6 address inside [Network].
+// IPv6 sets the static IPv6 address of a service, job, or container on one network.
+//
+// Put it on the Network element inside that service, next to ipv4. The address
+// has to fall inside the project network's IPv6 subnet.
+//
+//	<Network name="backend" ipv6="fd00:1::10" />
 func IPv6(ip string) IPv6Opt { return IPv6Opt{ip: ip} }
 
 func (o IPv6Opt) applyNetwork(n *netAttach) error {
@@ -72,6 +83,11 @@ func (o IPv6Opt) applyNetwork(n *netAttach) error {
 type NetworkOpt struct{ opts []NetworkOption }
 
 // Network attaches a named network (Engine EndpointsConfig / Compose networks).
+//
+// Under Compose it defines the network: driver, subnet, and gateway. Under
+// Service, Job, or Container it joins that network and can set ipv4, ipv6, and
+// macAddress. A static address has to fall inside the subnet of the project
+// network with the same name.
 func Network(opts ...NetworkOption) NetworkOpt { return NetworkOpt{opts: opts} }
 
 func (o NetworkOpt) applyContainer(c *Container) error { return o.apply(&c.spec) }
@@ -122,7 +138,8 @@ func NetworkDisabled(v bool) SpecOpt {
 	})
 }
 
-// DNS adds a DNS server.
+// DNS adds one DNS server, such as 1.1.1.1.
+// Put it on the service or container. Repeat it for another server.
 func DNS(addr string) SpecOpt {
 	return specFn(func(s *spec) error {
 		if addr == "" {
@@ -155,8 +172,10 @@ func DNSSearch(d string) SpecOpt {
 	})
 }
 
-// ExtraHost adds a hostname-to-IP mapping (Engine extra_hosts / Compose extra_hosts).
-// Inside [Build] it maps to compose build.extra_hosts.
+// ExtraHost maps a hostname to an IP inside the container (Engine extra_hosts / Compose extra_hosts).
+// Put it on the service or container. Inside [Build] it maps to compose build.extra_hosts.
+//
+//	<ExtraHost hostname="db" ip="10.0.0.2" />
 func ExtraHost(hostname, ip string) ExtraHostOpt {
 	return ExtraHostOpt{hostname: hostname, ip: ip}
 }

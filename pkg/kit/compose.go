@@ -1,6 +1,9 @@
 package kit
 
-import "fmt"
+import (
+	"fmt"
+	"slices"
+)
 
 // Compose is a Compose file: name, services, jobs, networks, volumes, secrets, and configs.
 type Compose struct {
@@ -48,10 +51,8 @@ func (p *Compose) addService(s *Service) error {
 	if s == nil {
 		return cfgErr("compose", "service", "Service", fmt.Errorf("%w: service", errRequired))
 	}
-	for _, existing := range p.services {
-		if existing == s {
-			return cfgErr("compose", "service", "Name", fmt.Errorf("%w: duplicate service %q", errInvalid, s.Name()))
-		}
+	if slices.Contains(p.services, s) {
+		return cfgErr("compose", "service", "Name", fmt.Errorf("%w: duplicate service %q", errInvalid, s.Name()))
 	}
 	s.ensureName()
 	if s.Name() != "" && p.hasService(s.Name()) {

@@ -60,11 +60,12 @@ func TestClientRun(t *testing.T) {
 	t.Parallel()
 	eng := &fakeEngine{}
 	c := NewClient(eng, &fakeComposer{})
-	if err := c.Run(context.Background(), Name("web"), Image("nginx")); err != nil {
+	created, err := c.Run(context.Background(), Name("web"), Image("nginx"))
+	if err != nil {
 		t.Fatal(err)
 	}
-	if eng.started != "abc" {
-		t.Fatalf("started = %q", eng.started)
+	if created.ID != "abc" || eng.started != "abc" {
+		t.Fatalf("created = %+v started = %q", created, eng.started)
 	}
 }
 

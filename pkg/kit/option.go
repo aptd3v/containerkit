@@ -401,6 +401,7 @@ type SpecOpt struct {
 	fn func(*spec) error
 }
 
+// specFn returns a SpecOpt that applies the given function t
 func specFn(fn func(*spec) error) SpecOpt { return SpecOpt{fn: fn} }
 
 func (o SpecOpt) applyContainer(c *Container) error {

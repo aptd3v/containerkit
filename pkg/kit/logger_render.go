@@ -19,9 +19,6 @@ const (
 )
 
 func formatEvent(e LogEvent, color, timestamps bool, glyph string) string {
-	if e.Kind == KindLog {
-		return formatLogLine(e, color, timestamps)
-	}
 	var b strings.Builder
 	b.Grow(96)
 	if timestamps {
@@ -51,40 +48,11 @@ func formatEvent(e LogEvent, color, timestamps bool, glyph string) string {
 	return b.String()
 }
 
-// formatLogLine is the container stdout/stderr row. Progress events keep the
-// kind and operation columns; a log line is the container name, a bar, and
-// the message. Stderr uses "!" so it stays visible without color.
-func formatLogLine(e LogEvent, color, timestamps bool) string {
-	var b strings.Builder
-	b.Grow(64)
-	if timestamps {
-		b.WriteString(paint(e.Time.Format("15:04:05"), ansiDim, color))
-		b.WriteByte(' ')
-	}
-	name := e.ID
-	if name == "" {
-		name = e.Parent
-	}
-	b.WriteString(paint(pad(trunc(name, 22), 22), ansiBold, color))
-	b.WriteByte(' ')
-	bar, barColor := "│", ansiDim
-	if e.Op == "stderr" || e.Status == StatusWarn || e.Status == StatusError {
-		bar, barColor = "!", ansiMagenta
-	}
-	b.WriteString(paint(bar, barColor, color))
-	msg := strings.TrimRight(e.Detail, " \t")
-	if msg == "" {
-		msg = strings.TrimRight(e.Text, " \t")
-	}
-	if msg != "" {
-		b.WriteByte(' ')
-		b.WriteString(msg)
-	}
-	return b.String()
-}
-
 func eventRest(e LogEvent) string {
 	var parts []string
+	if label := eventLabel(e); label != "" {
+		parts = append(parts, label)
+	}
 	if e.Total > 0 {
 		bar := progressBar(e.Current, e.Total, 18)
 		pct := int(float64(e.Current) / float64(e.Total) * 100)
@@ -92,12 +60,20 @@ func eventRest(e LogEvent) string {
 			pct = 100
 		}
 		parts = append(parts, bar, fmt.Sprintf("%s / %s  %d%%", humanBytes(e.Current), humanBytes(e.Total), pct))
-	} else if detail := strings.TrimSpace(e.Detail); detail != "" && !shortEcho(detail, e.Op) && !shortEcho(detail, e.Text) {
-		parts = append(parts, detail)
-	} else if text := strings.TrimSpace(e.Text); text != "" && !shortEcho(text, e.Op) {
-		parts = append(parts, text)
 	}
 	return strings.Join(parts, "  ")
+}
+
+// eventLabel is the human text for a row. A short repeat of the operation
+// stays in the operation column, so "building" is not printed twice.
+func eventLabel(e LogEvent) string {
+	if detail := strings.TrimSpace(e.Detail); detail != "" && !shortEcho(detail, e.Op) && !shortEcho(detail, e.Text) {
+		return detail
+	}
+	if text := strings.TrimSpace(e.Text); text != "" && !shortEcho(text, e.Op) {
+		return text
+	}
+	return ""
 }
 
 var spinFrames = []string{"⠋", "⠙", "⠹", "⠸", "⠼", "⠴", "⠦", "⠧", "⠇", "⠏"}
@@ -249,7 +225,11 @@ func trunc(s string, n int) string {
 		return "…"
 	}
 	r := []rune(s)
-	return string(r[:n-1]) + "…"
+	// Keep both ends. Container names share a long prefix, and the service
+	// is the tail: "Container astronomy-shop-email-1" stays distinguishable.
+	tail := (n - 1) / 2
+	head := n - 1 - tail
+	return string(r[:head]) + "…" + string(r[len(r)-tail:])
 }
 
 func pad(s string, n int) string {

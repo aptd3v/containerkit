@@ -113,23 +113,27 @@ func (c *Client) Up(ctx context.Context, p *Compose, opts ...UpOption) error {
 }
 
 // Run creates and starts a container on this client's Engine.
-func (c *Client) Run(ctx context.Context, opts ...ContainerOption) error {
+// The returned [Created] value is the container id from create, including when start fails.
+func (c *Client) Run(ctx context.Context, opts ...ContainerOption) (Created, error) {
 	if c == nil || c.engine == nil {
-		return cfgErr("client", "run", "Run", fmt.Errorf("%w: engine client", errRequired))
+		return Created{}, cfgErr("client", "run", "Run", fmt.Errorf("%w: engine client", errRequired))
 	}
 	ctr := NewContainer(opts...)
 	created, err := ctr.Create(ctx, c.engine)
 	if err != nil {
-		return err
+		return Created{}, err
 	}
-	return ctr.Start(ctx, c.engine, created.ID)
+	if err := ctr.Start(ctx, c.engine, created.ID); err != nil {
+		return created, err
+	}
+	return created, nil
 }
 
 // Run dials [Connect], creates and starts a container, then closes the client.
-func Run(ctx context.Context, opts ...ContainerOption) error {
+func Run(ctx context.Context, opts ...ContainerOption) (Created, error) {
 	c, err := Connect()
 	if err != nil {
-		return err
+		return Created{}, err
 	}
 	defer c.Close()
 	return c.Run(ctx, opts...)

@@ -13,7 +13,7 @@
 //
 //	cli, err := kit.Connect()
 //	defer cli.Close()
-//	err = cli.Run(ctx, kit.Name("web"), kit.Image("nginx"))
+//	created, err := cli.Run(ctx, kit.Name("web"), kit.Image("nginx"))
 //
 //	compose := kit.NewCompose("app").WithService(
 //		kit.NewService(kit.Name("api"), kit.Image("alpine:latest")),

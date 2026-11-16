@@ -131,7 +131,9 @@ func (o AttachableOpt) applyComposeNet(n *projectNet) error {
 // It implements [ComposeNetOption].
 type SubnetOpt struct{ s string }
 
-// Subnet sets an IPAM subnet inside [AddNetwork].
+// Subnet sets the CIDR of a project network, such as 10.0.0.0/24.
+// Put it on the Network element under Compose. A service address on that
+// network has to fall inside this range.
 func Subnet(s string) SubnetOpt { return SubnetOpt{s: s} }
 
 func (o SubnetOpt) applyComposeNet(n *projectNet) error {
@@ -143,7 +145,8 @@ func (o SubnetOpt) applyComposeNet(n *projectNet) error {
 // It implements [ComposeNetOption].
 type GatewayOpt struct{ g string }
 
-// Gateway sets an IPAM gateway inside [AddNetwork].
+// Gateway sets the gateway of a project network, such as 10.0.0.1.
+// Put it on the Network element under Compose, next to subnet.
 func Gateway(g string) GatewayOpt { return GatewayOpt{g: g} }
 
 func (o GatewayOpt) applyComposeNet(n *projectNet) error {

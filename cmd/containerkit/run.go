@@ -19,8 +19,11 @@ Usage:
   containerkit validate [file]
   containerkit exec [file]
   containerkit session
+  containerkit terminal <container> [command...]
 
 file is a path, omitted, or "-" for stdin.
+terminal attaches the local stdin and stdout to an exec in a running container.
+The default command is /bin/sh.
 JSON is a TSX plan (encode(composeUp(...))). YAML is a compose file (connect from env, then composeUp).
 validate does not dial the daemon. exec does.
 `
@@ -69,10 +72,40 @@ func run(ctx context.Context, args []string, in io.Reader, out, errw io.Writer) 
 		return 0
 	case "session":
 		return kit.ServeSession(ctx, in, out, errw)
+	case "terminal":
+		return runTerminal(ctx, args[1:], in, out, errw)
 	default:
 		fmt.Fprintf(errw, "unknown command %q\n%s", args[0], usage)
 		return 2
 	}
+}
+
+func runTerminal(ctx context.Context, args []string, in io.Reader, out, errw io.Writer) int {
+	if len(args) == 0 || args[0] == "" {
+		fmt.Fprintln(errw, "usage: containerkit terminal <container> [command...]")
+		return 2
+	}
+	stdin, ok := in.(*os.File)
+	if !ok {
+		fmt.Fprintln(errw, "containerkit terminal needs stdin from a file")
+		return 1
+	}
+	command := []string{"/bin/sh"}
+	if len(args) > 1 {
+		command = args[1:]
+	}
+	cli, err := kit.Connect(kit.FromEnv())
+	if err != nil {
+		fmt.Fprintln(errw, err)
+		return 1
+	}
+	defer cli.Close()
+	err = kit.StartExecTerminal(ctx, cli.Engine(), args[0], stdin, out, kit.Command(command...))
+	if err != nil {
+		fmt.Fprintln(errw, err)
+		return 1
+	}
+	return 0
 }
 
 func readInput(args []string, in io.Reader) ([]byte, error) {

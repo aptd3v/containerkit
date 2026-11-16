@@ -7,6 +7,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"os"
 	"strings"
 	"sync"
 )
@@ -39,6 +40,17 @@ func (s *Session) Exec(ctx context.Context, data []byte) ([]byte, error) {
 	return p.runActions(ctx, cli)
 }
 
+// connectOpts attaches the session logger so Compose resource events use the
+// same sink as Engine build and pull progress.
+func (s *Session) connectOpts(base []ComposerClientOption) []ComposerClientOption {
+	if s == nil || s.log == nil {
+		return base
+	}
+	out := make([]ComposerClientOption, len(base), len(base)+1)
+	copy(out, base)
+	return append(out, Log(s.log))
+}
+
 func (s *Session) client(connect map[string]any) (*Client, error) {
 	key, err := connectKey(connect)
 	if err != nil {
@@ -53,7 +65,10 @@ func (s *Session) client(connect map[string]any) (*Client, error) {
 	if err != nil {
 		return nil, err
 	}
-	cli, err := Connect(opts...)
+	// Compose container rows (created, started, healthy) are delivered to the
+	// event processor captured when the client is dialed. The context logger
+	// only covers the project-level up/down line.
+	cli, err := Connect(s.connectOpts(opts)...)
 	if err != nil {
 		return nil, err
 	}
@@ -245,13 +260,49 @@ func eventFrame(e LogEvent) map[string]any {
 	if line == "" {
 		line = e.Text
 	}
-	return map[string]any{
-		"type":   "event",
-		"kind":   kind,
-		"source": source,
-		"stream": e.Op,
-		"line":   line,
+	frame := map[string]any{
+		"type":    "event",
+		"kind":    kind,
+		"group":   string(e.Kind),
+		"status":  string(e.Status),
+		"source":  source,
+		"stream":  e.Op,
+		"line":    line,
+		"display": eventDisplay(e),
 	}
+	if e.Parent != "" {
+		frame["parent"] = e.Parent
+	}
+	if e.Text != "" {
+		frame["text"] = e.Text
+	}
+	if e.Detail != "" {
+		frame["detail"] = e.Detail
+	}
+	if e.Current > 0 || e.Total > 0 {
+		frame["current"] = e.Current
+		frame["total"] = e.Total
+	}
+	return frame
+}
+
+// eventDisplay is the same plain row the terminal logger prints. The session
+// stdout is a JSON pipe, so the live spinner stays in the Go logger and this
+// line uses the settled glyph. Color follows the caller's terminal: Node sets
+// CONTAINERKIT_COLOR when its stdout is a TTY. NO_COLOR wins.
+func eventDisplay(e LogEvent) string {
+	return formatEvent(e, eventColor(), false, statusGlyph(e.Status))
+}
+
+func eventColor() bool {
+	return eventColorFrom(os.Getenv("NO_COLOR"), os.Getenv("CONTAINERKIT_COLOR"))
+}
+
+func eventColorFrom(noColor, flag string) bool {
+	if noColor != "" {
+		return false
+	}
+	return flag == "1"
 }
 
 // ServeSession reads NDJSON calls from in and writes result, error, and event

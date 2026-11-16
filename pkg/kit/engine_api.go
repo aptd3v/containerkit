@@ -817,6 +817,7 @@ func PushImage(ctx context.Context, api Engine, ref string, opts ...EngineImageP
 	if err := join(errs...); err != nil {
 		return wrapReceiver("engine", err)
 	}
+	adoptLog(ctx, &act.log)
 	out, err := api.ImagePush(ctx, ref, act.opts)
 	if err != nil {
 		return cfgErr("engine", ref, "PushImage", err)

@@ -110,6 +110,27 @@ func TestExecTerminal(t *testing.T) {
 	}
 }
 
+func TestStartExecTerminal(t *testing.T) {
+	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Minute)
+	t.Cleanup(cancel)
+	api := liveEngine(t, ctx)
+
+	id := createTTY(t, ctx, api, execName+"-start", kit.Command("sleep", "86400"))
+	if err := kit.NewContainer().Start(ctx, api, id); err != nil {
+		t.Fatalf("Start: %v", err)
+	}
+
+	inR, _ := pipeFiles(t)
+	var out bytes.Buffer
+	err := kit.StartExecTerminal(ctx, api, id, inR, &out, kit.Command("echo", marker))
+	if err != nil {
+		t.Fatalf("StartExecTerminal: %v\n%s", err, dump(out.Bytes()))
+	}
+	if !strings.Contains(out.String(), marker) {
+		t.Fatalf("output missing %q:\n%s", marker, dump(out.Bytes()))
+	}
+}
+
 func TestExecTerminalStdin(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Minute)
 	t.Cleanup(cancel)

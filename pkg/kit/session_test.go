@@ -7,6 +7,8 @@ import (
 	"errors"
 	"strings"
 	"testing"
+
+	composeapi "github.com/aptd3v/containerkit/internal/compose/api/types"
 )
 
 func TestErrorClassNotFound(t *testing.T) {
@@ -41,6 +43,50 @@ func TestErrorReportExitAndSecret(t *testing.T) {
 	rep = errorReport(secret)
 	if strings.Contains(rep.Message, "supersecret") {
 		t.Fatalf("secret leaked: %s", rep.Message)
+	}
+}
+
+func TestSessionConnectCarriesLogger(t *testing.T) {
+	t.Parallel()
+	var saw LogEvent
+	log := NewFrameLogger(func(e LogEvent) { saw = e })
+	s := &Session{log: log}
+	act, err := collectComposerAct(s.connectOpts(nil))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if act.log != log {
+		t.Fatal("session logger was not attached to the composer")
+	}
+	act.log.On(composeapi.Resource{ID: "Container supabase-imgproxy", Text: "recreated", Status: composeapi.Done})
+	if saw.ID != "Container supabase-imgproxy" || saw.Status != StatusDone {
+		t.Fatalf("container event = %#v", saw)
+	}
+	frame := eventFrame(saw)
+	display, _ := frame["display"].(string)
+	if display != eventDisplay(saw) {
+		t.Fatalf("display = %q", display)
+	}
+	if !strings.Contains(display, "compose") || !strings.Contains(display, "supabase-im…") || !strings.Contains(display, "recreated") {
+		t.Fatalf("column line = %q", display)
+	}
+	if strings.Contains(display, "supabase-imgproxy") {
+		t.Fatalf("id was not clipped to the logger column: %q", display)
+	}
+}
+
+func TestEventDisplayMatchesLoggerAndColor(t *testing.T) {
+	t.Parallel()
+	e := LogEvent{Kind: KindCompose, Op: "up", ID: "supabase", Status: StatusDone}
+	if eventDisplay(e) != formatEvent(e, eventColor(), false, statusGlyph(e.Status)) {
+		t.Fatalf("display = %q", eventDisplay(e))
+	}
+	colored := formatEvent(e, true, false, statusGlyph(e.Status))
+	if !strings.Contains(colored, "\x1b[") {
+		t.Fatalf("colored row = %q", colored)
+	}
+	if eventColorFrom("", "1") != true || eventColorFrom("1", "1") != false || eventColorFrom("", "") != false {
+		t.Fatal("color flag")
 	}
 }
 
@@ -93,12 +139,20 @@ func TestServeLogAndResult(t *testing.T) {
 	if logFrame["kind"] != "log" || logFrame["source"] != "api" || logFrame["stream"] != "stdout" || logFrame["line"] != "hello" {
 		t.Fatalf("log = %#v", logFrame)
 	}
+	wantLog := eventDisplay(LogEvent{Kind: KindLog, Op: "stdout", ID: "api", Detail: "hello", Status: StatusInfo})
+	if logFrame["group"] != "log" || logFrame["status"] != "info" || logFrame["display"] != wantLog || !strings.Contains(wantLog, "log") || !strings.Contains(wantLog, "stdout") || !strings.Contains(wantLog, "hello") {
+		t.Fatalf("log display = %#v, want %q", logFrame, wantLog)
+	}
 	var status map[string]any
 	if err := json.Unmarshal([]byte(lines[1]), &status); err != nil {
 		t.Fatal(err)
 	}
 	if status["kind"] != "status" || status["line"] != "started" {
 		t.Fatalf("status = %#v", status)
+	}
+	wantStatus := eventDisplay(LogEvent{Kind: KindCompose, Op: "status", ID: "api", Detail: "started", Status: StatusInfo})
+	if status["group"] != "compose" || status["status"] != "info" || status["display"] != wantStatus || !strings.Contains(wantStatus, "compose") || !strings.Contains(wantStatus, "started") {
+		t.Fatalf("status display = %#v, want %q", status, wantStatus)
 	}
 	var result sessionResult
 	if err := json.Unmarshal([]byte(lines[2]), &result); err != nil {

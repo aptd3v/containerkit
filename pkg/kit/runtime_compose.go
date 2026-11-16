@@ -144,6 +144,7 @@ func (p *Compose) Build(ctx context.Context, api Composer, opts ...ComposeBuildO
 	if err := join(errs...); err != nil {
 		return wrapReceiver("compose", err)
 	}
+	adoptLog(ctx, &act.log)
 	stampComposeIdentity(proj)
 	return logAround(ctx, act.log, KindBuild, "build", p.Name(), func(ctx context.Context) error {
 		if err := api.Build(ctx, proj, act.sdk()); err != nil {
