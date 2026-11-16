@@ -157,10 +157,6 @@ func TestWaitStatus(t *testing.T) {
 	if _, err := waitStatus(ctx, kit.ContainerWaitResult{Error: closed}); err == nil {
 		t.Fatal("closed error")
 	}
-	okErr := make(chan error, 1)
-	okErr <- nil
-	res := make(chan container.WaitResponse, 1)
-	res <- container.WaitResponse{StatusCode: 4}
 	openErr := make(chan error)
 	ready := make(chan container.WaitResponse, 1)
 	ready <- container.WaitResponse{StatusCode: 0}
@@ -168,9 +164,17 @@ func TestWaitStatus(t *testing.T) {
 	if err != nil || code != 0 {
 		t.Fatalf("result while error stays open: %v %d", err, code)
 	}
-	code, err = waitStatus(ctx, kit.ContainerWaitResult{Error: okErr, Result: res})
+	// The nil send is the only ready case. The result follows it, so select
+	// takes the error and readWait receives the exit.
+	nilErr := make(chan error)
+	followed := make(chan container.WaitResponse)
+	go func() {
+		nilErr <- nil
+		followed <- container.WaitResponse{StatusCode: 4}
+	}()
+	code, err = waitStatus(ctx, kit.ContainerWaitResult{Error: nilErr, Result: followed})
 	if err != nil || code != 4 {
-		t.Fatalf("follow %v %d", err, code)
+		t.Fatalf("nil error then result: %v %d", err, code)
 	}
 	closedRes := make(chan container.WaitResponse)
 	close(closedRes)
