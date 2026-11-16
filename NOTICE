@@ -1,0 +1,178 @@
+containerkit
+Copyright 2025-2026 aptd3v
+
+Licensed under the Apache License, Version 2.0. See LICENSE.
+
+The containerkit binary includes the modules below at the versions required
+by go.mod. Other linked modules are under the MIT license. Their copyright
+and permission notices are in each module's LICENSE file.
+
+Apache License, Version 2.0
+http://www.apache.org/licenses/LICENSE-2.0
+
+    github.com/DefangLabs/secret-detector
+    github.com/compose-spec/compose-go/v2
+    github.com/containerd/console
+    github.com/containerd/containerd/api
+    github.com/containerd/containerd/v2
+    github.com/containerd/continuity
+    github.com/containerd/errdefs
+    github.com/containerd/errdefs/pkg
+    github.com/containerd/log
+    github.com/containerd/log/otel
+    github.com/containerd/platforms
+    github.com/containerd/ttrpc
+    github.com/containerd/typeurl/v2
+    github.com/distribution/reference
+    github.com/docker/cli
+    github.com/docker/compose/v5
+    github.com/docker/go-connections
+    github.com/docker/go-units
+    github.com/go-logr/logr
+    github.com/go-logr/stdr
+    github.com/google/shlex
+    github.com/in-toto/attestation
+    github.com/in-toto/in-toto-golang
+    github.com/klauspost/compress
+    github.com/moby/buildkit
+    github.com/moby/docker-image-spec
+    github.com/moby/go-archive
+    github.com/moby/locker
+    github.com/moby/moby/api
+    github.com/moby/moby/client
+    github.com/moby/patternmatcher
+    github.com/moby/sys/atomicwriter
+    github.com/moby/sys/sequential
+    github.com/moby/sys/signal
+    github.com/moby/sys/symlink
+    github.com/moby/sys/user
+    github.com/moby/term
+    github.com/noneback/go-taskflow
+    github.com/opencontainers/go-digest
+    github.com/opencontainers/image-spec
+    github.com/santhosh-tekuri/jsonschema/v6
+    github.com/shibumi/go-pathspec
+    github.com/spf13/cobra
+    go.opentelemetry.io/auto/sdk
+    go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc
+    go.opentelemetry.io/contrib/instrumentation/net/http/httptrace/otelhttptrace
+    go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp
+    go.opentelemetry.io/otel
+    go.opentelemetry.io/otel/exporters/otlp/otlpmetric/otlpmetricgrpc
+    go.opentelemetry.io/otel/exporters/otlp/otlpmetric/otlpmetrichttp
+    go.opentelemetry.io/otel/exporters/otlp/otlptrace
+    go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracegrpc
+    go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracehttp
+    go.opentelemetry.io/otel/metric
+    go.opentelemetry.io/otel/sdk
+    go.opentelemetry.io/otel/sdk/metric
+    go.opentelemetry.io/otel/trace
+    go.opentelemetry.io/proto/otlp
+    go.yaml.in/yaml/v3
+    go.yaml.in/yaml/v4
+    google.golang.org/genproto/googleapis/api
+    google.golang.org/genproto/googleapis/rpc
+    google.golang.org/grpc
+    gopkg.in/ini.v1
+    gotest.tools/v3
+    tags.cncf.io/container-device-interface
+
+github.com/noneback/go-taskflow utils/queue.go is copied from
+https://github.com/eapache/queue/blob/main/v2/queue.go
+and modified to be thread safe.
+
+Notices distributed with those Apache modules:
+
+    Docker Compose V2
+    Copyright 2020 Docker Compose authors
+    This product includes software developed at Docker, Inc.
+    (https://www.docker.com).
+
+    Docker
+    Copyright 2012-2017 Docker, Inc.
+    This product includes software developed at Docker, Inc.
+    (https://www.docker.com).
+    This product contains software (https://github.com/creack/pty)
+    developed by Keith Rarick, licensed under the MIT License.
+
+    containerd
+    Copyright 2012-2015 Docker, Inc.
+    This product includes software developed at Docker, Inc.
+    (https://www.docker.com).
+
+    The Compose Specification
+    Copyright 2020 The Compose Specification Authors
+
+    gRPC
+    Copyright 2014 gRPC authors
+
+    go.yaml.in/yaml
+    Files ported from libyaml are MIT, Copyright 2006-2010 Kirill Simonov.
+    The remaining files are Apache-2.0, Copyright 2011-2019 Canonical Ltd.
+    and Copyright 2025 The go-yaml Project Contributors.
+
+Mozilla Public License, version 2.0
+https://www.mozilla.org/MPL/2.0/
+
+    github.com/hashicorp/go-version
+    Copyright IBM Corp. 2014, 2025
+    Source: https://github.com/hashicorp/go-version
+
+This license covers that module. It does not replace the Apache license on
+the rest of containerkit.
+
+BSD copyright notices that accompany binary distributions:
+
+    golang.org/x/crypto, golang.org/x/net, golang.org/x/sync,
+    golang.org/x/sys, golang.org/x/term, golang.org/x/text, golang.org/x/time
+    Copyright 2009 The Go Authors.
+
+    google.golang.org/protobuf
+    Copyright 2018 The Go Authors.
+
+    github.com/google/go-cmp
+    Copyright 2017 The Go Authors.
+
+    github.com/google/uuid
+    Copyright 2009, 2014 Google Inc.
+
+    github.com/pkg/errors
+    Copyright 2015 Dave Cheney.
+
+    github.com/spf13/pflag
+    Copyright 2012 Alex Ogier. Copyright 2012 The Go Authors.
+
+    github.com/tilt-dev/fsnotify
+    Copyright 2012 The Go Authors. Copyright 2012-2019 fsnotify Authors.
+
+    github.com/gofrs/flock
+    Copyright 2018-2025 The Gofrs. Copyright 2015-2020 Tim Heckman.
+
+    github.com/klauspost/compress
+    s2 and the Snappy reference: Copyright 2011 The Snappy-Go Authors.
+    s2 also Copyright 2019 Klaus Post.
+    The LZ4 reference: Copyright 2015 Pierre Curto.
+
+    github.com/grpc-ecosystem/grpc-gateway/v2
+    Copyright 2015 Gengo, Inc.
+
+    github.com/inhies/go-bytesize
+    Copyright 2012 The Go Authors.
+
+    github.com/moby/sys/capability
+    Copyright 2023 The Capability Authors.
+    Copyright 2013 Suryandaru Triandana.
+
+    github.com/moby/sys/symlink
+    Copyright 2014-2018 The Docker & Go Authors.
+
+    github.com/planetscale/vtprotobuf
+    Copyright 2021 PlanetScale Inc.
+    Copyright 2013 The GoGo Authors.
+    Copyright 2018 The Go Authors.
+
+    github.com/xhit/go-str2duration/v2
+    Copyright 2009 The Go Authors.
+
+    gotest.tools/v3/internal/difflib
+    Copyright 2013 Patrick Mezard.
