@@ -2,12 +2,12 @@
   "name": "@containerkit/linux-arm64",
   "version": "0.8.1",
   "description": "containerkit command for Linux on arm64.",
-  "license": "MIT",
+  "license": "Apache-2.0",
   "author": "aptd3v",
   "os": ["linux"],
   "cpu": ["arm64"],
   "preferUnplugged": true,
-  "files": ["bin"],
+  "files": ["bin", "NOTICE"],
   "publishConfig": {
     "access": "public"
   }

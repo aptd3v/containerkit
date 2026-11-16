@@ -2,12 +2,12 @@
   "name": "@containerkit/windows-amd64",
   "version": "0.8.1",
   "description": "containerkit command for Windows on x64.",
-  "license": "MIT",
+  "license": "Apache-2.0",
   "author": "aptd3v",
   "os": ["win32"],
   "cpu": ["x64"],
   "preferUnplugged": true,
-  "files": ["bin"],
+  "files": ["bin", "NOTICE"],
   "publishConfig": {
     "access": "public"
   }

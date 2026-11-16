@@ -30,6 +30,12 @@ archives:
     format_overrides:
       - goos: windows
         format: zip
+    # Setting files replaces GoReleaser's defaults, so LICENSE stays listed.
+    files:
+      - LICENSE
+      - README.md
+      - CHANGELOG.md
+      - NOTICE
 
 checksum:
   name_template: checksums.txt

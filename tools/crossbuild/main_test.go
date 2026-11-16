@@ -44,8 +44,16 @@ func TestArchiveRoundTrip(t *testing.T) {
 	if err := os.WriteFile(src, []byte("containerkit"), 0o755); err != nil {
 		t.Fatal(err)
 	}
+	notice := filepath.Join(dir, "NOTICE")
+	if err := os.WriteFile(notice, []byte("notice\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	entries := []archiveEntry{
+		{name: "containerkit", src: src, mode: 0o755},
+		{name: "NOTICE", src: notice, mode: 0o644},
+	}
 	tarPath := filepath.Join(dir, "bin.tar.gz")
-	if err := tarball(tarPath, "containerkit", src); err != nil {
+	if err := tarball(tarPath, entries); err != nil {
 		t.Fatal(err)
 	}
 	raw, err := os.ReadFile(tarPath)
@@ -71,6 +79,13 @@ func TestArchiveRoundTrip(t *testing.T) {
 	if string(body) != "containerkit" {
 		t.Fatalf("tar body %q", body)
 	}
+	hdr, err = tr.Next()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if hdr.Name != "NOTICE" {
+		t.Fatalf("tar notice %q", hdr.Name)
+	}
 	if _, err := tr.Next(); err != io.EOF {
 		t.Fatalf("tar trailer: %v", err)
 	}
@@ -79,7 +94,11 @@ func TestArchiveRoundTrip(t *testing.T) {
 	}
 
 	zipPath := filepath.Join(dir, "bin.zip")
-	if err := zipFile(zipPath, "containerkit.exe", src); err != nil {
+	zipEntries := []archiveEntry{
+		{name: "containerkit.exe", src: src, mode: 0o755},
+		{name: "NOTICE", src: notice, mode: 0o644},
+	}
+	if err := zipFile(zipPath, zipEntries); err != nil {
 		t.Fatal(err)
 	}
 	zr, err := zip.OpenReader(zipPath)
@@ -87,7 +106,7 @@ func TestArchiveRoundTrip(t *testing.T) {
 		t.Fatal(err)
 	}
 	defer zr.Close()
-	if len(zr.File) != 1 || zr.File[0].Name != "containerkit.exe" {
+	if len(zr.File) != 2 || zr.File[0].Name != "containerkit.exe" || zr.File[1].Name != "NOTICE" {
 		t.Fatalf("zip files = %+v", zr.File)
 	}
 	rc, err := zr.File[0].Open()

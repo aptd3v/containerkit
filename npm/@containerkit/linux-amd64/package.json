@@ -2,12 +2,12 @@
   "name": "@containerkit/linux-amd64",
   "version": "0.8.1",
   "description": "containerkit command for Linux on x64.",
-  "license": "MIT",
+  "license": "Apache-2.0",
   "author": "aptd3v",
   "os": ["linux"],
   "cpu": ["x64"],
   "preferUnplugged": true,
-  "files": ["bin"],
+  "files": ["bin", "NOTICE"],
   "publishConfig": {
     "access": "public"
   }

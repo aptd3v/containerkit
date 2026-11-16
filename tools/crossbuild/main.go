@@ -76,15 +76,20 @@ func main() {
 		if err := cmd.Run(); err != nil {
 			fatal(err)
 		}
+		notice := filepath.Join(root, "NOTICE")
+		entries := []archiveEntry{
+			{name: binName, src: binPath, mode: 0o755},
+			{name: "NOTICE", src: notice, mode: 0o644},
+		}
 		var archive string
 		if t.goos == "windows" {
 			archive = filepath.Join(dist, fmt.Sprintf("containerkit_%s_%s.zip", t.goos, t.goarch))
-			if err := zipFile(archive, binName, binPath); err != nil {
+			if err := zipFile(archive, entries); err != nil {
 				fatal(err)
 			}
 		} else {
 			archive = filepath.Join(dist, fmt.Sprintf("containerkit_%s_%s.tar.gz", t.goos, t.goarch))
-			if err := tarball(archive, binName, binPath); err != nil {
+			if err := tarball(archive, entries); err != nil {
 				fatal(err)
 			}
 		}
@@ -97,6 +102,10 @@ func main() {
 			fatal(err)
 		}
 		if err := os.Chmod(npmBin, 0o755); err != nil {
+			fatal(err)
+		}
+		npmNotice := filepath.Join(root, "npm", "@containerkit", t.goos+"-"+t.goarch, "NOTICE")
+		if err := copyFile(notice, npmNotice); err != nil {
 			fatal(err)
 		}
 		if t.goos == runtime.GOOS && t.goarch == runtime.GOARCH {
@@ -115,7 +124,13 @@ func main() {
 	fmt.Fprintf(os.Stderr, "wrote %s (%d archives, go %s)\n", dist, len(archives), runtime.Version())
 }
 
-func tarball(archive, name, src string) (err error) {
+type archiveEntry struct {
+	name string
+	src  string
+	mode int64
+}
+
+func tarball(archive string, entries []archiveEntry) (err error) {
 	f, err := os.Create(archive)
 	if err != nil {
 		return err
@@ -137,7 +152,16 @@ func tarball(archive, name, src string) (err error) {
 			err = cerr
 		}
 	}()
-	in, err := os.Open(src)
+	for _, entry := range entries {
+		if err := writeTar(tw, entry); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func writeTar(tw *tar.Writer, entry archiveEntry) error {
+	in, err := os.Open(entry.src)
 	if err != nil {
 		return err
 	}
@@ -146,9 +170,13 @@ func tarball(archive, name, src string) (err error) {
 	if err != nil {
 		return err
 	}
+	mode := entry.mode
+	if mode == 0 {
+		mode = 0o644
+	}
 	if err := tw.WriteHeader(&tar.Header{
-		Name: name,
-		Mode: 0o755,
+		Name: entry.name,
+		Mode: mode,
 		Size: info.Size(),
 	}); err != nil {
 		return err
@@ -157,7 +185,7 @@ func tarball(archive, name, src string) (err error) {
 	return err
 }
 
-func zipFile(archive, name, src string) (err error) {
+func zipFile(archive string, entries []archiveEntry) (err error) {
 	f, err := os.Create(archive)
 	if err != nil {
 		return err
@@ -173,7 +201,16 @@ func zipFile(archive, name, src string) (err error) {
 			err = cerr
 		}
 	}()
-	in, err := os.Open(src)
+	for _, entry := range entries {
+		if err := writeZip(zw, entry); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func writeZip(zw *zip.Writer, entry archiveEntry) error {
+	in, err := os.Open(entry.src)
 	if err != nil {
 		return err
 	}
@@ -186,8 +223,11 @@ func zipFile(archive, name, src string) (err error) {
 	if err != nil {
 		return err
 	}
-	hdr.Name = name
+	hdr.Name = entry.name
 	hdr.Method = zip.Deflate
+	if entry.mode != 0 {
+		hdr.SetMode(os.FileMode(entry.mode))
+	}
 	w, err := zw.CreateHeader(hdr)
 	if err != nil {
 		return err
