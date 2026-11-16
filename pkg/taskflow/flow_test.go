@@ -351,6 +351,15 @@ func TestCycle(t *testing.T) {
 		t.Fatalf("subflow %v ran %d", err, ran)
 	}
 
+	f = New("out", nil)
+	f.Subflow("sf", func(sf *Subflow) {
+		inner := sf.Task("inner", func(context.Context) error { return nil })
+		inner.succs = append(inner.succs, nil)
+	})
+	if err = f.Run(ctx, discardRun()); err != nil {
+		t.Fatal(err)
+	}
+
 	prev := runIDEntropy
 	runIDEntropy = bytes.NewReader(nil)
 	t.Cleanup(func() { runIDEntropy = prev })

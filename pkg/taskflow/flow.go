@@ -299,7 +299,7 @@ func (sc scope) subflow(name string, instantiate func(*Subflow) error) *Task {
 				c.addFallback()
 			}
 			f.stamp()
-			return f.cycle()
+			return cycleTasks(t.childList())
 		})
 	})
 	return t
@@ -832,9 +832,13 @@ func newRunID() (string, error) {
 	return hex.EncodeToString(b[:]), nil
 }
 
-// cycle reports a loop in Task.succs. The error names the tasks in order.
+// cycle reports a loop in the tasks that exist before Run. The error names the tasks in order.
 func (f *Flow) cycle() error {
-	tasks := f.taskList()
+	return cycleTasks(f.taskList())
+}
+
+// cycleTasks reports a loop among tasks. An edge that leaves the set is not followed.
+func cycleTasks(tasks []*Task) error {
 	index := make(map[*Task]int, len(tasks))
 	for i, t := range tasks {
 		index[t] = i
@@ -853,6 +857,9 @@ func (f *Flow) cycle() error {
 		color[i] = 1
 		path = append(path, t)
 		for _, next := range t.succs {
+			if _, ok := index[next]; !ok {
+				continue
+			}
 			if err := walk(next); err != nil {
 				return err
 			}
