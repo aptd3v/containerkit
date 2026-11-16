@@ -3,7 +3,7 @@ import { mkdtempSync, readFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { test } from "node:test";
-import { assertReady, missingBins, publish, registryDependencies } from "./publish-optional.mjs";
+import { assertReady, missingBins, publish, publishAuth, registryDependencies } from "./publish-optional.mjs";
 
 const platform = JSON.parse(
 	readFileSync(new URL("../../npm/@aptd3v/containerkit-darwin-arm64/package.json", import.meta.url), "utf8"),
@@ -38,16 +38,25 @@ test("missing platform binaries are reported from the given root", () => {
 });
 
 test("publish refuses to run without a token", () => {
-	const prevNode = process.env.NODE_AUTH_TOKEN;
-	const prevNpm = process.env.NPM_TOKEN;
+	const prev = {
+		NODE_AUTH_TOKEN: process.env.NODE_AUTH_TOKEN,
+		NPM_TOKEN: process.env.NPM_TOKEN,
+		ACTIONS_ID_TOKEN_REQUEST_URL: process.env.ACTIONS_ID_TOKEN_REQUEST_URL,
+		ACTIONS_ID_TOKEN_REQUEST_TOKEN: process.env.ACTIONS_ID_TOKEN_REQUEST_TOKEN,
+	};
 	delete process.env.NODE_AUTH_TOKEN;
 	delete process.env.NPM_TOKEN;
+	delete process.env.ACTIONS_ID_TOKEN_REQUEST_URL;
+	delete process.env.ACTIONS_ID_TOKEN_REQUEST_TOKEN;
 	try {
 		assert.throws(() => publish(), /NODE_AUTH_TOKEN or NPM_TOKEN/);
+		process.env.ACTIONS_ID_TOKEN_REQUEST_URL = "https://example.test";
+		process.env.ACTIONS_ID_TOKEN_REQUEST_TOKEN = "request";
+		assert.equal(publishAuth(), "oidc");
 	} finally {
-		if (prevNode === undefined) delete process.env.NODE_AUTH_TOKEN;
-		else process.env.NODE_AUTH_TOKEN = prevNode;
-		if (prevNpm === undefined) delete process.env.NPM_TOKEN;
-		else process.env.NPM_TOKEN = prevNpm;
+		for (const [key, value] of Object.entries(prev)) {
+			if (value === undefined) delete process.env[key];
+			else process.env[key] = value;
+		}
 	}
 });
