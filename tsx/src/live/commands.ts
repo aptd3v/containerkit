@@ -31,6 +31,15 @@ import type {
 	RegistryLogin,
 	ImageRemoveResult,
 	DiskUsage,
+	CommitResult,
+	CreatedID,
+	ServiceCreate,
+	SwarmInit,
+	ContainerUpdate,
+	ServiceUpdate,
+	BuildCachePrune,
+	ImageAttestations,
+	GeneratedProject,
 	CheckpointList,
 	ConfigList,
 	ConfigInspect,
@@ -70,6 +79,8 @@ type SessionResult = {
 	composeViz: string;
 	load: LoadedProject;
 	create: CreatedContainer;
+	run: CreatedContainer;
+	containerRun: CreatedContainer;
 	createExec: ExecCreate;
 	createNetwork: NetworkCreate;
 	ping: Ping;
@@ -107,18 +118,85 @@ type SessionResult = {
 	listTasks: TaskList;
 	inspectTask: TaskInspect;
 	inspectSwarm: SwarmInspect;
+	commitContainer: CommitResult;
+	createEngineConfig: CreatedID;
+	createEngineSecret: CreatedID;
+	createSwarmService: ServiceCreate;
+	initSwarm: SwarmInit;
+	updateContainer: ContainerUpdate;
+	updateSwarmService: ServiceUpdate;
+	pruneBuildCache: BuildCachePrune;
+	attestImage: ImageAttestations;
+	composeGenerate: GeneratedProject;
+	composeLoadProject: GeneratedProject;
 };
+
+/** Actions whose JSON result is only `{"ok":true}`. Progress arrives as session events. */
+type SessionVoid =
+	| "buildImage"
+	| "composeAttach"
+	| "composeBuild"
+	| "composeCommit"
+	| "composeCopy"
+	| "composeCreate"
+	| "composeDown"
+	| "composeEvents"
+	| "composeExport"
+	| "composeKill"
+	| "composePause"
+	| "composePublishOCI"
+	| "composePull"
+	| "composePush"
+	| "composeRemove"
+	| "composeRestart"
+	| "composeScale"
+	| "composeStart"
+	| "composeStop"
+	| "composeUnpause"
+	| "composeUp"
+	| "composeWatch"
+	| "connectNetwork"
+	| "createCheckpoint"
+	| "createPlugin"
+	| "disablePlugin"
+	| "disconnectNetwork"
+	| "enablePlugin"
+	| "joinSwarm"
+	| "kill"
+	| "leaveSwarm"
+	| "pullImage"
+	| "pushImage"
+	| "remove"
+	| "removeCheckpoint"
+	| "removeNode"
+	| "removePlugin"
+	| "removeVolume"
+	| "renameContainer"
+	| "resizeContainer"
+	| "resizeExec"
+	| "restart"
+	| "setPlugin"
+	| "copyTo"
+	| "start"
+	| "startExec"
+	| "stop"
+	| "tagImage"
+	| "unlockSwarm"
+	| "updateEngineConfig"
+	| "updateEngineSecret"
+	| "updateNode"
+	| "updateSwarm"
+	| "updateVolume";
 
 type DropClient<F, R = unknown> = F extends (cli: Client, ...args: infer A) => PlanDocument
 	? (...args: A) => Promise<R>
 	: never;
 
+type SessionReturn<K> = K extends keyof SessionResult ? SessionResult[K] : K extends SessionVoid ? void : unknown;
+
 export type SessionCommands = {
-	[K in keyof typeof generated]: DropClient<
-		(typeof generated)[K],
-		K extends keyof SessionResult ? SessionResult[K] : unknown
-	>;
+	[K in keyof typeof generated]: DropClient<(typeof generated)[K], SessionReturn<K>>;
 } & {
-	buildDockerfile: DropClient<typeof buildDockerfile>;
-	flow: DropClient<typeof Flow>;
+	buildDockerfile: DropClient<typeof buildDockerfile, void>;
+	flow: DropClient<typeof Flow, void>;
 };

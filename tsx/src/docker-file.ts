@@ -37,6 +37,8 @@ export type DockerfileNode = Node<"dockerfile", Omit<DockerfileProps, "children"
  * text inline. {@link exportDockerfile} returns that text and does not build the image.
  * `exportYAML` accepts the Dockerfile only as part of a Compose project.
  *
+ * Parent: Build
+ *
  * @example
  * ```tsx
  * <Dockerfile>
@@ -311,6 +313,8 @@ export type DirectiveProps = {
 /**
  * `FROM` instruction. Starts a build stage.
  *
+ * Parent: Dockerfile
+ *
  * @example
  * ```tsx
  * <From image="node" tag="22" as="build" platform="linux/arm64" />
@@ -323,6 +327,8 @@ export const From = instr<"dfFrom", FromProps>("dfFrom");
  * `ARG` instruction. Declares a build arg, with an optional default.
  *
  * `<Arg name="APP_ENV" />` writes `ARG APP_ENV`. `<Arg name="APP_ENV" default="" />` writes `ARG APP_ENV=`.
+ *
+ * Parent: Dockerfile
  *
  * @example
  * ```tsx
@@ -337,6 +343,8 @@ export function Arg(props: ArgProps): Node<"dfArg", { name: string; default?: st
 /**
  * `ENV` instruction, written as `ENV NAME=value`.
  *
+ * Parent: Dockerfile
+ *
  * @example
  * ```tsx
  * <Env name="NODE_ENV">production</Env>
@@ -350,15 +358,19 @@ export function Env(props: EnvProps): Node<"dfEnv", { name: string; value: strin
 /**
  * `COPY` instruction. Use `from` to copy out of an earlier stage.
  *
+ * Parent: Dockerfile
+ *
  * @example
  * ```tsx
- * <Copy from="build" src="/src/dist" dest="/app/dist" chown="node:node" link />
+ * <Copy from="build" src="/src/dist" dest="/app/dist" chown="1000:1000" link />
  * ```
  */
 export const Copy = instr<"dfCopy", CopyProps>("dfCopy");
 
 /**
  * `ADD` instruction. Copies files, fetches a URL, or unpacks a local archive.
+ *
+ * Parent: Dockerfile
  *
  * @example
  * ```tsx
@@ -370,6 +382,8 @@ export const Add = instr<"dfAdd", AddProps>("dfAdd");
 /**
  * `ENTRYPOINT` in exec form: `ENTRYPOINT ["executable", "arg"]`.
  * The process is started directly. {@link EntrypointShell} writes a shell command line.
+ *
+ * Parent: Dockerfile
  *
  * @example
  * ```tsx
@@ -387,6 +401,8 @@ export const EntrypointShell = instr<"dfEntrypointShell", ExecProps>("dfEntrypoi
 /**
  * `EXPOSE` instruction. Documents the ports the image listens on.
  *
+ * Parent: Dockerfile
+ *
  * @example
  * ```tsx
  * <Expose port="8080" />
@@ -396,6 +412,8 @@ export const Expose = instr<"dfExpose", ExposeProps>("dfExpose");
 
 /**
  * `LABEL` instruction, written as `LABEL name=value`.
+ *
+ * Parent: Dockerfile
  *
  * @example
  * ```tsx
@@ -409,6 +427,8 @@ export function Label(props: LabelProps): Node<"dfLabel", { name: string; value:
 /**
  * `ONBUILD` instruction. `command` runs when a later image uses this one in `FROM`.
  *
+ * Parent: Dockerfile
+ *
  * @example
  * ```tsx
  * <Onbuild command="RUN echo hi" />
@@ -418,6 +438,8 @@ export const Onbuild = instr<"dfOnbuild", OnbuildProps>("dfOnbuild");
 
 /**
  * `WORKDIR` instruction. Later instructions run in this directory.
+ *
+ * Parent: Dockerfile
  *
  * @example
  * ```tsx
@@ -431,6 +453,8 @@ export function Workdir(props: WorkdirProps): Node<"dfWorkdir", { path: string }
 /**
  * `STOPSIGNAL` instruction. Sets the signal used to stop a container started from this image.
  *
+ * Parent: Dockerfile
+ *
  * @example
  * ```tsx
  * <StopSignal signal="SIGTERM" />
@@ -440,6 +464,8 @@ export const StopSignal = instr<"dfStopSignal", StopSignalProps>("dfStopSignal")
 
 /**
  * `USER` instruction. Later instructions and the default process run as this user.
+ *
+ * Parent: Dockerfile
  *
  * @example
  * ```tsx
@@ -453,6 +479,8 @@ export function User(props: UserProps): Node<"dfUser", { name: string }> {
 /**
  * A `#` comment in the Dockerfile. The text is a single line.
  *
+ * Parent: Dockerfile
+ *
  * @example
  * ```tsx
  * <Comment text="runtime stage" />
@@ -462,6 +490,8 @@ export const Comment = instr<"dfComment", CommentProps>("dfComment");
 
 /**
  * `VOLUME` instruction. Creates the mount points listed in `paths`.
+ *
+ * Parent: Dockerfile
  *
  * @example
  * ```tsx
@@ -473,6 +503,8 @@ export const Volume = instr<"dfVolume", VolumeProps>("dfVolume");
 /**
  * `HEALTHCHECK` instruction. `test` begins with `CMD`, `CMD-SHELL`, or `NONE`.
  *
+ * Parent: Dockerfile
+ *
  * @example
  * ```tsx
  * <HealthCheck test={["CMD", "true"]} interval="30s" timeout="3s" retries={3} />
@@ -483,6 +515,8 @@ export const HealthCheck = instr<"dfHealth", HealthCheckProps>("dfHealth");
 /**
  * `HEALTHCHECK NONE`. Disables a healthcheck inherited from the base image.
  *
+ * Parent: Dockerfile
+ *
  * @example
  * ```tsx
  * <HealthCheckNone />
@@ -492,6 +526,8 @@ export const HealthCheckNone = instr<"dfHealthNone", Record<string, never>>("dfH
 
 /**
  * `SHELL` in exec form. Selects the shell that later shell-form instructions use.
+ *
+ * Parent: Dockerfile
  *
  * @example
  * ```tsx
@@ -504,6 +540,8 @@ export const Shell = instr<"dfShell", ExecProps>("dfShell");
  * `CMD` in exec form: `CMD ["executable", "arg"]`.
  * The process is started directly. A Dockerfile has one `CMD`; a second {@link Command} or {@link CommandShell} throws.
  *
+ * Parent: Dockerfile
+ *
  * @example
  * ```tsx
  * <Command executable="node" args={["/app/dist/server.js"]} />
@@ -514,6 +552,8 @@ export const Command = instr<"dfCommand", ExecProps>("dfCommand");
 /**
  * `CMD` in shell form: `CMD executable arg`.
  * The shell interprets the line. A Dockerfile has one `CMD`; a second {@link Command} or {@link CommandShell} throws.
+ *
+ * Parent: Dockerfile
  *
  * @example
  * ```tsx
@@ -529,6 +569,8 @@ export const CommandShell = instr<"dfCommandShell", ExecProps>("dfCommandShell")
  * A `mount`, `network`, or `security` flag starts a new `RUN`.
  * Use {@link RunLayer} to start a new layer on purpose, and {@link RunArgs} to append arguments.
  *
+ * Parent: Dockerfile
+ *
  * @example
  * ```tsx
  * <Run cmd="pnpm install --frozen-lockfile" mount="type=cache,id=pnpm,target=/pnpm/store" />
@@ -539,6 +581,8 @@ export const Run = instr<"dfRun", RunProps>("dfRun");
 /**
  * `RUN` that starts a new layer even when the previous instruction was a run.
  * A `<Run>` after a `<From>` is already a new layer; use `<RunLayer>` when the previous line was itself a run.
+ *
+ * Parent: Dockerfile
  *
  * @example
  * ```tsx
@@ -552,6 +596,8 @@ export const RunLayer = instr<"dfRunLayer", RunProps>("dfRunLayer");
  * Appends arguments to the previous {@link Run} or {@link RunLayer}, each on a continuation line.
  * Throws when no run precedes it, or when `args` is empty.
  *
+ * Parent: Dockerfile
+ *
  * @example
  * ```tsx
  * <Run cmd="apk add" />
@@ -564,6 +610,8 @@ export const RunArgs = instr<"dfRunArgs", RunArgsProps>("dfRunArgs");
  * `# syntax=` parser directive. Place it before any instruction, or set {@link DockerfileProps.syntax}.
  * Leave it unset to use the frontend bundled with the builder. Set it to pin an external frontend.
  *
+ * Parent: Dockerfile
+ *
  * @example
  * ```tsx
  * <Syntax value="docker/dockerfile:1" />
@@ -575,6 +623,8 @@ export const Syntax = instr<"dfSyntax", DirectiveProps>("dfSyntax");
  * `# escape=` parser directive. `value` is `\` or a backtick.
  * Place it before any instruction, or set {@link DockerfileProps.escape}.
  *
+ * Parent: Dockerfile
+ *
  * @example
  * ```tsx
  * <Escape value="`" />
@@ -584,6 +634,8 @@ export const Escape = instr<"dfEscape", DirectiveProps>("dfEscape");
 
 /**
  * `# check=` parser directive. Place it before any instruction, or set {@link DockerfileProps.check}.
+ *
+ * Parent: Dockerfile
  *
  * @example
  * ```tsx

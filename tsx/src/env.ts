@@ -60,7 +60,11 @@ export function resolveScalar(
 	return rest;
 }
 
-// BuildArg is the build-arg spelling of an env node. Build renders that node as an arg.
+/**
+ * BuildArg is the build-arg spelling of an env node. Build renders that node as an arg.
+ * @param props - The properties of the env node.
+ * @returns The rendered node.
+ */
 export function BuildArg(props: EnvInput | null | undefined) {
 	return element("env", resolveEnv(props));
 }

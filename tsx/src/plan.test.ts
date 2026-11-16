@@ -38,7 +38,7 @@ function _scopeTypes(cli: Client) {
 }
 void _scopeTypes;
 
-type ExactUnknown<T> = [unknown] extends [T] ? ([T] extends [unknown] ? true : false) : false;
+type Absent<T, K extends string> = K extends keyof T ? false : true;
 
 function _vocabOptions() {
 	const kill: KillOptions = { stopSignal: signal.SIGTERM };
@@ -52,16 +52,20 @@ function _vocabOptions() {
 		// @ts-expect-error stopSignal is a signal name
 		stopSignal: "nope",
 	};
-	const fromIsUnknown: ExactUnknown<Exclude<ServiceProps["fromContainer"], undefined>> = true;
-	const logIsUnknown: ExactUnknown<Exclude<PullImageOptions["log"], undefined>> = true;
+	const fromIsAbsent: Absent<ServiceProps, "fromContainer"> = true;
+	const logIsAbsent: Absent<PullImageOptions, "log"> = true;
+	const consumeIsAbsent: Absent<UpOptions, "consumeLogs"> = true;
+	const outputIsAbsent: Absent<UpOptions, "outputStream"> = true;
 	void kill;
 	void published;
 	void updated;
 	void volume;
 	void inspect;
 	void badKill;
-	void fromIsUnknown;
-	void logIsUnknown;
+	void fromIsAbsent;
+	void logIsAbsent;
+	void consumeIsAbsent;
+	void outputIsAbsent;
 }
 void _vocabOptions;
 

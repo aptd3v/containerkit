@@ -2,10 +2,17 @@ import { existsSync } from "node:fs";
 import { basename, resolve } from "node:path";
 import { pathToFileURL } from "node:url";
 import { isLiveRoot, runRoot, type LiveRoot } from "./root.js";
+import { isMissingBinaryError } from "./session.js";
+
+export { isMissingBinaryError };
+export { ensureImage, hostPlatform, stopAndRemove } from "./helpers.js";
 
 export { exportYAML } from "../render.js";
 export {
 	ContainerKitError,
+	errorClass,
+	errorFromFrame,
+	isContainerKitError,
 	isCKAbortedError,
 	isCKAlreadyExistsError,
 	isCKCanceledError,
@@ -33,12 +40,15 @@ export {
 	isCKUnsupportedFlagError,
 	isCKWrongContextTypeError,
 } from "./error.js";
-export type { ErrorClass, ErrorFrame } from "./error.js";
+export type { ErrorClass, ErrorFrame, ErrorReport } from "./error.js";
 export { root, runRoot, useContainerState, useEffect, useMemo, useResource, useSession, useState } from "./root.js";
 export type { LiveRoot, OnceRoot, RenderRoot, RootOptions, Running } from "./root.js";
-export type { LiveEvent, Session } from "./session.js";
+export type { ErrorLiveEvent, LiveEvent, LiveEventMap, LiveGroup, LiveStatus, LogLiveEvent, Session, SessionLogEvent, StatusLiveEvent } from "./session.js";
+export { eventText } from "./session.js";
 export type {
+	BuildCachePrune,
 	ClusterVolume,
+	CommitResult,
 	ComposeContainer,
 	ComposeContainerState,
 	ComposeHealthStatus,
@@ -56,9 +66,13 @@ export type {
 	ContainerRuntimeState,
 	ContainerSummary,
 	ContainerTop,
+	ContainerUpdate,
 	CreatedContainer,
+	CreatedID,
 	EndpointSettings,
 	ExecCreate,
+	GeneratedProject,
+	ImageAttestations,
 	HostConfig,
 	ImageConfig,
 	ImageDelete,
@@ -108,7 +122,9 @@ export type {
 	RegistryLogin,
 	SecretInspect,
 	SecretList,
+	ServiceCreate,
 	ServiceInspect,
+	ServiceUpdate,
 	ServiceList,
 	SwarmConfig,
 	SwarmConfigSpec,
@@ -116,6 +132,7 @@ export type {
 	SwarmDriver,
 	SwarmEndpoint,
 	SwarmInfo,
+	SwarmInit,
 	SwarmInspect,
 	SwarmNode,
 	SwarmNodeDescription,
@@ -140,8 +157,19 @@ export type {
 
 /**
  * Start `live` when `url` is the file Node is running.
+ *
+ * @remarks
  * `root()` starts on its own only for `docker.ts`, `docker.tsx`, and `docker.js`.
- * Other examples call this with `import.meta.url` so `node dist-examples/<example>.js` opens the session.
+ * Other examples call this with `import.meta.url` so `node dist-examples/<example>/<example>.js` opens the session.
+ * A failed once callback closes the session and exits the process.
+ *
+ * @param live - Handle returned by {@link root}
+ * @param url - `import.meta.url` of the example file
+ *
+ * @example
+ * ```ts
+ * await runIfMain(live, import.meta.url);
+ * ```
  */
 export async function runIfMain(live: LiveRoot, url: string): Promise<void> {
 	const entry = process.argv[1];
@@ -151,9 +179,19 @@ export async function runIfMain(live: LiveRoot, url: string): Promise<void> {
 	if (url !== pathToFileURL(resolve(entry)).href) {
 		return;
 	}
-	await runRoot(live);
+	const running = await runRoot(live);
+	if (live.failed) {
+		await running.close();
+		process.exit(1);
+	}
 }
 
+/**
+ * Load `entry` and run its default export.
+ *
+ * @param entry - Path to `docker.ts` or `docker.tsx`. The default is `docker.ts` in the working directory.
+ * @throws Error when the file is not named `docker.ts` or `docker.tsx`, is missing, or does not default-export {@link root}
+ */
 export async function start(entry = "docker.ts"): Promise<void> {
 	const file = resolve(entry);
 	const base = basename(file);

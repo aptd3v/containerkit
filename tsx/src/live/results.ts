@@ -369,6 +369,91 @@ export type CreatedContainer = {
 	Warnings: string[] | null;
 };
 
+/** Result of `commitContainer()`. */
+export type CommitResult = {
+	/** Id of the image created from the container. */
+	ID: string;
+};
+
+/** Result of `createEngineConfig()` and `createEngineSecret()`. */
+export type CreatedID = {
+	/** Id of the created object. */
+	ID: string;
+};
+
+/** Result of `createSwarmService()`. */
+export type ServiceCreate = {
+	/** Id of the created service. */
+	ID: string;
+	/** Daemon warnings. Null when there were none. */
+	Warnings: string[] | null;
+};
+
+/** Result of `initSwarm()`. */
+export type SwarmInit = {
+	/** Id of the manager node created by init. */
+	NodeID: string;
+};
+
+/** Result of `updateContainer()`. */
+export type ContainerUpdate = {
+	/** Daemon warnings. Null when there were none. */
+	Warnings: string[] | null;
+};
+
+/** Result of `updateSwarmService()`. */
+export type ServiceUpdate = {
+	/** Daemon warnings. Null when there were none. */
+	Warnings: string[] | null;
+};
+
+/** Result of `attestImage()`. */
+export type ImageAttestations = {
+	/** Attestation statements on the image. Null when the image has none. */
+	Items: {
+		/** OCI descriptor of the statement blob. */
+		Descriptor: ImageDescriptor;
+		/** in-toto predicate type URI. */
+		PredicateType: string;
+		/** Verbatim in-toto statement. Present only when the call asked for it. */
+		Statement?: unknown;
+	}[] | null;
+};
+
+/**
+ * Result of `composeGenerate()` and `composeLoadProject()`.
+ * JSON keeps the project name and the resource maps. Fields Compose marks `json:"-"` are absent.
+ */
+export type GeneratedProject = {
+	/** Compose project name. */
+	name?: string;
+	/** Services by name. */
+	services: Record<string, Record<string, unknown>>;
+	/** Jobs by name. */
+	jobs?: Record<string, Record<string, unknown>>;
+	/** Networks by name. */
+	networks?: Record<string, Record<string, unknown>>;
+	/** Volumes by name. */
+	volumes?: Record<string, Record<string, unknown>>;
+	/** Secrets by name. */
+	secrets?: Record<string, Record<string, unknown>>;
+	/** Configs by name. */
+	configs?: Record<string, Record<string, unknown>>;
+	/** Models by name. */
+	models?: Record<string, Record<string, unknown>>;
+};
+
+/** Result of `pruneBuildCache()`. */
+export type BuildCachePrune = {
+	/** Cache records the prune removed, and the bytes it reclaimed. */
+	Report: {
+		/** Ids of deleted cache records. Null when the prune removed nothing. */
+		CachesDeleted: string[] | null;
+		/** Disk space reclaimed, in bytes. */
+		SpaceReclaimed: number;
+	};
+};
+
 /** Result of `createExec()`. */
 export type ExecCreate = {
 	/** Id to pass to later exec calls for this process. */

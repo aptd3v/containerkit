@@ -19,6 +19,25 @@ export type { BinaryInvokeOptions } from "./runner.js";
 export type { Client, PlanAction, PlanDocument, Invoke } from "./plan.js";
 export type { DockerNode } from "./docker-node.js";
 
+/**
+ * Build an image from a Dockerfile tree.
+ *
+ * @param cli - Connected client. `connect({ fromEnv: true })` reads the local Docker host.
+ * @param file - `<Dockerfile>` tree from `containerkit/dockerfile`
+ * @param options - Image build settings. `parseDockerfile` is filled from `file`.
+ * @returns A plan. Pass it to `run`, or to `session.call` from a live session.
+ *
+ * @example
+ * ```tsx
+ * const plan = buildDockerfile(connect({ fromEnv: true }), (
+ *   <Dockerfile>
+ *     <From image="alpine" tag="latest" />
+ *   </Dockerfile>
+ * ), { image: "app:dev" });
+ * ```
+ *
+ * @see {@link exportDockerfile}
+ */
 export function buildDockerfile(
 	cli: Client,
 	file: DockerfileNode,

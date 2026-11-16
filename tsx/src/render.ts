@@ -1,6 +1,5 @@
 import { exportDockerfile } from "./docker-file.js";
-import { allowedChildren } from "./generated.js";
-import { isReactElement, reactCompiledJSX, type Node } from "./node.js";
+import { checkChildren, flatten, isReactElement, reactCompiledJSX, type Node } from "./node.js";
 import { toYAML } from "./yaml.js";
 
 const servicePropMap: Record<string, string> = {
@@ -75,7 +74,7 @@ export function exportYAML(node: Node): string {
 }
 
 function toDocument(node: Node): Record<string, unknown> {
-	const root = unwrapRoot(node);
+	const root = projectRoot(node);
 	switch (root.$$kind) {
 		case "compose":
 			return renderCompose(root);
@@ -85,6 +84,22 @@ function toDocument(node: Node): Record<string, unknown> {
 			return wrapNamed("jobs", root, renderService(root));
 		case "container":
 			return wrapNamed("services", root, renderService(root));
+		default:
+			throw new Error(
+				`containerkit/tsx: root must be Compose, Service, Job, or Container, got <${root.$$kind}>`,
+			);
+	}
+}
+
+/** The Compose, Service, Job, or Container a root callback applies. A fragment must hold exactly one. */
+export function projectRoot(node: Node): Node {
+	const root = unwrapRoot(node);
+	switch (root.$$kind) {
+		case "compose":
+		case "service":
+		case "job":
+		case "container":
+			return root;
 		default:
 			throw new Error(
 				`containerkit/tsx: root must be Compose, Service, Job, or Container, got <${root.$$kind}>`,
@@ -951,14 +966,12 @@ function resourceName(node: Node, fallback: string): string {
 }
 
 function assertChildren(parent: Node): void {
-	for (const child of parent.children) {
-		if (child.$$kind === "fragment") {
-			continue;
-		}
-		const allowed = allowedChildren[parent.$$kind];
-		if (!allowed || !allowed.includes(child.$$kind)) {
-			throwInvalid(parent, child);
-		}
+	const flat = flatten(parent.children);
+	if (parent.$$kind !== "fragment") {
+		checkChildren(parent.$$kind, flat, parent.props, true);
+	}
+	for (const child of flat) {
+		assertChildren(child);
 	}
 }
 

@@ -19,6 +19,7 @@
       "containerkit/jsx-dev-runtime": ["./src/jsx-dev-runtime.ts"],
       "containerkit/dockerfile": ["./src/docker-file.ts"],
       "containerkit/live": ["./src/live/index.ts"],
+      "containerkit/hooks": ["./src/hooks/index.ts"],
       "containerkit/vocab": ["./src/vocab.ts"],
       "containerkit/taskflow": ["./src/taskflow.ts"]
     }

@@ -1,3 +1,5 @@
+import { allowedChildren, exclusiveChildProps, singleChildren } from "./generated.js";
+
 export type MaybeChild<T> = T | false | null | undefined | boolean | readonly MaybeChild<T>[];
 
 export type Child = MaybeChild<Node>;
@@ -43,11 +45,63 @@ export function element<K extends string, P extends Record<string, unknown>>(
 ): Node<K, Omit<P, "children">> {
 	const p = props ?? ({} as P & { children?: Child });
 	const { children, ...rest } = p;
+	const flat = flatten(children);
+	checkChildren(kind, flat, rest, false);
 	return {
 		$$kind: kind,
 		props: rest as Omit<P, "children">,
-		children: flatten(children),
+		children: flat,
 	};
+}
+
+// checkChildren enforces the generated placement table.
+// A missing kind is skipped here and rejected by render, which passes missingIsError.
+// An empty list means the kind accepts no node children.
+// singleChildren rejects a second child from the same group.
+export function checkChildren(
+	kind: string,
+	children: readonly Node[],
+	props: object | null | undefined,
+	missingIsError: boolean,
+): void {
+	const allowed = allowedChildren[kind];
+	if (!allowed) {
+		if (!missingIsError) {
+			return;
+		}
+		for (const child of children) {
+			throw new Error(`containerkit/tsx: <${child.$$kind}> is not valid inside <${kind}>`);
+		}
+		return;
+	}
+	const groups = singleChildren[kind] ?? [];
+	const seen = new Set<number>();
+	for (const child of children) {
+		if (!allowed.includes(child.$$kind)) {
+			throw new Error(`containerkit/tsx: <${child.$$kind}> is not valid inside <${kind}>`);
+		}
+		for (let i = 0; i < groups.length; i++) {
+			const group = groups[i];
+			if (!group.kinds.includes(child.$$kind)) {
+				continue;
+			}
+			if (seen.has(i)) {
+				throw new Error(`containerkit/tsx: ${group.message}`);
+			}
+			seen.add(i);
+			break;
+		}
+	}
+	const exclusive = exclusiveChildProps[kind];
+	if (!exclusive) {
+		return;
+	}
+	const raw = (props ?? {}) as Record<string, unknown>;
+	const hasChild = children.some((child) => child.$$kind === exclusive.child);
+	const hasProp = exclusive.props.some((name) => raw[name] !== undefined && raw[name] !== "");
+	if (hasChild && hasProp) {
+		throw new Error(`containerkit/tsx: ${exclusive.message}`);
+	}
 }
 
 export function isNode(v: unknown): v is Node {

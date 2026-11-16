@@ -1,15 +1,26 @@
 process.env.CONTAINERKIT_MEMO = "0";
 
 import assert from "node:assert/strict";
-import { mkdtempSync } from "node:fs";
+import { chmodSync, mkdtempSync, readFileSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { test } from "node:test";
 import { Compose, Service } from "./generated.js";
-import { ContainerKitError, isCKLoginRequiredError, isCKNotFoundError, isCKUnavailableError, start } from "./live/index.js";
+import {
+	ContainerKitError,
+	errorFromFrame,
+	isCKLoginRequiredError,
+	isCKNotFoundError,
+	isCKUnavailableError,
+	isContainerKitError,
+	start,
+	type ErrorClass,
+	type ErrorFrame,
+} from "./live/index.js";
 import { runRoot, root, useEffect, useMemo, useSession, useState, type RootOptions } from "./live/root.js";
-import { openSession, type Session, type SessionTransport } from "./live/session.js";
-import type { PlanDocument } from "./plan.js";
+import { startProgress } from "./live/progress.js";
+import { formatProgress, openSession, sessionChildEnv, sessionFromTransport, type LiveEvent, type LiveGroup, type Session, type SessionTransport } from "./live/session.js";
+import { connect, type PlanDocument } from "./plan.js";
 
 type Memory = {
 	calls: PlanDocument[];
@@ -492,6 +503,29 @@ oneAtATime("a failed once callback exits when the file is docker.js", async () =
 	}
 });
 
+oneAtATime("several roots in one fragment is an error", async () => {
+	const mem = memoryTransport();
+	const errors: unknown[] = [];
+	const live = root({ onError: (err) => errors.push(err) }, async () => (
+		<>
+			<Compose name="a">
+				<Service name="api" image="alpine:latest" />
+			</Compose>
+			<Compose name="b">
+				<Service name="api" image="alpine:latest" />
+			</Compose>
+		</>
+	));
+	const running = await runRoot(live, mem.transport);
+	try {
+		assert.equal(ops(mem.calls, "composeUp"), 0);
+		assert.equal(live.failed, true);
+		assert.match((errors[0] as Error).message, /fragment root must have a single/);
+	} finally {
+		await running.close();
+	}
+});
+
 oneAtATime("a failed render stays open when the file is docker.js", async () => {
 	const mem = memoryTransport();
 	const prevArgv = process.argv[1];
@@ -705,14 +739,101 @@ test("session client reads a result frame", async () => {
 test("isCKNotFoundError rejects other errors", () => {
 	assert.equal(isCKNotFoundError(new Error("nope")), false);
 	assert.equal(isCKNotFoundError(new ContainerKitError({ type: "error", class: "unavailable", message: "down" })), false);
+	const foreign = errorFromFrame({ type: "error", class: "not-a-class", message: "later" });
+	assert.equal(foreign.class, "unknown");
+	assert.equal(isContainerKitError(foreign, "unknown"), true);
+	assert.equal(isContainerKitError(foreign, "notFound"), false);
+	errorTypeNarrowing(foreign);
 });
+
+function errorTypeNarrowing(err: unknown) {
+	if (isCKNotFoundError(err)) {
+		const onlyNotFound: "notFound" = err.class;
+		onlyNotFound;
+	}
+	if (isContainerKitError(err, "unavailable")) {
+		const onlyUnavailable: "unavailable" = err.class;
+		onlyUnavailable;
+	}
+	if (isContainerKitError(err)) {
+		const anyClass: ErrorClass = err.class;
+		anyClass;
+	}
+	type FrameClass = ErrorFrame["class"];
+	const frameIsClass: [FrameClass] extends [ErrorClass] ? ([ErrorClass] extends [FrameClass] ? true : false) : false = true;
+	const errorFieldIsClass: [ContainerKitError["class"]] extends [ErrorClass]
+		? [ErrorClass] extends [ContainerKitError["class"]]
+			? true
+			: false
+		: false = true;
+	frameIsClass;
+	errorFieldIsClass;
+}
 
 type ExactUnknown<T> = [unknown] extends [T] ? ([T] extends [unknown] ? true : false) : false;
 
 function sessionMethodTypes(app: Session) {
 	const tree = Compose({ name: "app" });
-	const pullIsUnknown: ExactUnknown<Awaited<ReturnType<Session["pullImage"]>>> = true;
-	const buildIsUnknown: ExactUnknown<Awaited<ReturnType<Session["composeBuild"]>>> = true;
+	const commitHasID: Awaited<ReturnType<Session["commitContainer"]>>["ID"] = "";
+	const runHasID: Awaited<ReturnType<Session["run"]>>["ID"] = "";
+	const containerRunHasID: Awaited<ReturnType<Session["containerRun"]>>["ID"] = "";
+	const swarmHasNode: Awaited<ReturnType<Session["initSwarm"]>>["NodeID"] = "";
+	const cacheHasReport: Awaited<ReturnType<Session["pruneBuildCache"]>>["Report"]["SpaceReclaimed"] = 0;
+	const connectIsVoid: [Awaited<ReturnType<Session["connectNetwork"]>>] extends [void] ? true : false = true;
+	const tagIsVoid: [Awaited<ReturnType<Session["tagImage"]>>] extends [void] ? true : false = true;
+	type IsExactUnknown<T> = [unknown] extends [T] ? ([T] extends [unknown] ? true : false) : false;
+	type UnknownSessionMethod = {
+		[K in keyof Session]: Session[K] extends (...args: never[]) => Promise<infer R>
+			? IsExactUnknown<R> extends true
+				? K
+				: never
+			: never;
+	}[keyof Session];
+	type ExpectedUnknown =
+		| "attachContainer"
+		| "attachExec"
+		| "call"
+		| "copyFrom"
+		| "installPlugin"
+		| "listenEvents"
+		| "logs"
+		| "pushPlugin"
+		| "saveImages"
+		| "statsContainer"
+		| "swarmServiceLogs"
+		| "taskLogs"
+		| "upgradePlugin"
+		| "wait";
+	const onlyStreamsRemainUnknown: [UnknownSessionMethod] extends [ExpectedUnknown]
+		? [ExpectedUnknown] extends [UnknownSessionMethod]
+			? true
+			: false
+		: false = true;
+	const attestHasItems: Awaited<ReturnType<Session["attestImage"]>>["Items"] = null;
+	const generatedHasServices: Awaited<ReturnType<Session["composeGenerate"]>>["services"] = {};
+	const pullIsVoid: [Awaited<ReturnType<Session["pullImage"]>>] extends [void] ? true : false = true;
+	const buildIsVoid: [Awaited<ReturnType<Session["composeBuild"]>>] extends [void] ? true : false = true;
+	const downIsVoid: [Awaited<ReturnType<Session["composeDown"]>>] extends [void] ? true : false = true;
+	const imageIsVoid: [Awaited<ReturnType<Session["buildImage"]>>] extends [void] ? true : false = true;
+	app.on("error", (event) => {
+		const kind: "error" = event.kind;
+		const cls: ErrorClass | undefined = event.class;
+		kind;
+		cls;
+	});
+	app.on("status", (event) => {
+		const kind: "status" = event.kind;
+		const status: "working" | "done" | "warn" | "error" | "info" | undefined = event.status;
+		kind;
+		status;
+	});
+	app.on("log", (event) => {
+		const kind: "log" = event.kind;
+		kind;
+	});
+	type Group = NonNullable<LiveEvent["group"]>;
+	const groupIsClosed: [Group] extends [LiveGroup] ? ([LiveGroup] extends [Group] ? true : false) : false = true;
+	groupIsClosed;
 	const logsAreUnknown: ExactUnknown<Awaited<ReturnType<Session["logs"]>>> = true;
 	const attachIsUnknown: ExactUnknown<Awaited<ReturnType<Session["attachContainer"]>>> = true;
 	const statsAreUnknown: ExactUnknown<Awaited<ReturnType<Session["statsContainer"]>>> = true;
@@ -767,8 +888,20 @@ function sessionMethodTypes(app: Session) {
 		inspectTask: false as ExactUnknown<Awaited<ReturnType<Session["inspectTask"]>>>,
 		inspectSwarm: false as ExactUnknown<Awaited<ReturnType<Session["inspectSwarm"]>>>,
 	};
-	void pullIsUnknown;
-	void buildIsUnknown;
+	void commitHasID;
+	void runHasID;
+	void containerRunHasID;
+	void swarmHasNode;
+	void cacheHasReport;
+	void connectIsVoid;
+	void tagIsVoid;
+	void onlyStreamsRemainUnknown;
+	void attestHasItems;
+	void generatedHasServices;
+	void pullIsVoid;
+	void buildIsVoid;
+	void downIsVoid;
+	void imageIsVoid;
 	void logsAreUnknown;
 	void attachIsUnknown;
 	void statsAreUnknown;
@@ -815,3 +948,301 @@ function sessionMethodTypes(app: Session) {
 	]);
 }
 void sessionMethodTypes;
+
+test("pull progress is a stdout line", () => {
+	assert.equal(
+		formatProgress({
+			type: "event",
+			kind: "status",
+			source: "a1b2c3d4e5f6",
+			stream: "downloading",
+			line: "Downloading",
+			current: 1_572_864,
+			total: 4_194_304,
+		}),
+		"a1b2c3d4e5f6 Downloading 1.5MB/4.0MB",
+	);
+	assert.equal(
+		formatProgress({
+			type: "event",
+			kind: "status",
+			source: "alpine:latest",
+			stream: "pulling",
+			line: "Pulling from library/alpine",
+		}),
+		"alpine:latest Pulling from library/alpine",
+	);
+	assert.equal(
+		formatProgress({
+			type: "event",
+			kind: "status",
+			source: "ledger:0.8.1",
+			stream: "building",
+		}),
+		"ledger:0.8.1 building",
+	);
+	assert.equal(
+		formatProgress({
+			type: "event",
+			kind: "log",
+			group: "log",
+			source: "[deps 1/1] RUN pnpm install",
+			parent: "ledger:0.8.1",
+			stream: "stdout",
+			line: "Lockfile is up to date",
+			display: "log      · [deps 1/1] RUN pnpm i… stdout       Lockfile is up to date",
+		}),
+		"log      · [deps 1/1] RUN pnpm i… stdout       Lockfile is up to date",
+	);
+	assert.equal(
+		formatProgress({
+			type: "event",
+			kind: "status",
+			group: "build",
+			status: "error",
+			source: "ledger:0.8.1",
+			stream: "building",
+			line: "--chown=node:node: user and group names can't be resolved when used with --link",
+			display: "build ✖ ledger:0.8.1 building --chown=node:node: user and group names can't be resolved when used with --link",
+		}),
+		"build ✖ ledger:0.8.1 building --chown=node:node: user and group names can't be resolved when used with --link",
+	);
+	const columns = "compose  \u001b[36m✓\u001b[0m Container supabase-im… recreated   ";
+	assert.equal(formatProgress({ type: "event", kind: "status", display: columns }), columns);
+});
+
+test("a terminal spins the working row and settles it when the step finishes", () => {
+	const out: string[] = [];
+	const view = startProgress({ tty: true, write: (chunk) => out.push(chunk), intervalMs: 0 });
+	const building = "build    ● ledger:0.8.1       building    ";
+	const row = (status: LiveEvent["status"], display: string): LiveEvent => ({
+		type: "event",
+		kind: "status",
+		group: "build",
+		status,
+		source: "ledger:0.8.1",
+		stream: "building",
+		display,
+	});
+	view.push(row("working", building));
+	assert.match(out.join(""), /⠋/);
+	assert.doesNotMatch(out.join(""), /●/);
+	out.length = 0;
+	view.tick();
+	const spun = out.join("");
+	assert.match(spun, /\x1b\[1A/);
+	assert.match(spun, /⠙/);
+	out.length = 0;
+	view.push({
+		type: "event",
+		kind: "log",
+		group: "log",
+		status: "info",
+		source: "[deps 1/1] RUN pnpm install",
+		display: "log      · [deps 1/1] RUN pnpm i… stdout       Lockfile is up to date",
+	});
+	assert.equal(out.length, 0);
+	view.tick();
+	assert.match(out.join(""), /Lockfile is up to date/);
+	assert.match(out.join(""), /⠹/);
+	out.length = 0;
+	const built = "build    ✓ ledger:0.8.1       built        ";
+	view.push(row("done", built));
+	const settled = out.join("");
+	assert.match(settled, /✓/);
+	assert.match(settled, /built/);
+	assert.doesNotMatch(settled, /⠋|⠙|⠹/);
+	out.length = 0;
+	view.push(row("error", "build    ✖ ledger:0.8.1       building     --chown failed"));
+	assert.match(out.join(""), /✖/);
+	assert.match(out.join(""), /--chown failed/);
+	view.stop();
+});
+
+test("a finished build settles leftover extracting rows", () => {
+	const out: string[] = [];
+	const view = startProgress({ tty: true, write: (chunk) => out.push(chunk), intervalMs: 0 });
+	view.push({
+		type: "event",
+		kind: "status",
+		group: "build",
+		status: "working",
+		source: "nginx-example:latest",
+		stream: "building",
+		display: "build    ● nginx-example:latest building    ",
+	});
+	view.push({
+		type: "event",
+		kind: "status",
+		group: "build",
+		status: "working",
+		source: "sha256:acd123",
+		parent: "nginx-example:latest",
+		stream: "progress",
+		text: "extracting",
+		display: "build    ● extracting sha256:acd… progress     extracting",
+	});
+	out.length = 0;
+	view.push({
+		type: "event",
+		kind: "status",
+		group: "build",
+		status: "done",
+		source: "nginx-example:latest",
+		stream: "built",
+		display: "build    ✓ nginx-example:latest built        ",
+	});
+	const settled = out.join("");
+	assert.match(settled, /✓/);
+	assert.match(settled, /built/);
+	assert.doesNotMatch(settled, /⠋|⠙|⠹|⠸|⠼|⠴|⠦|⠧|⠇|⠏/);
+	out.length = 0;
+	view.tick();
+	assert.equal(out.join(""), "");
+	view.stop();
+});
+
+test("a pipe prints every event on its own line", () => {
+	const out: string[] = [];
+	const view = startProgress({ tty: false, write: (chunk) => out.push(chunk), intervalMs: 0 });
+	view.push({
+		type: "event",
+		kind: "status",
+		group: "build",
+		status: "working",
+		source: "ledger:0.8.1",
+		stream: "building",
+		display: "build    ● ledger:0.8.1       building    ",
+	});
+	view.tick();
+	assert.deepEqual(out, ["build    ● ledger:0.8.1       building    \n"]);
+	view.stop();
+});
+
+test("a container row replaces the project up spinner", () => {
+	const out: string[] = [];
+	const view = startProgress({ tty: true, write: (chunk) => out.push(chunk), intervalMs: 0 });
+	view.push({
+		type: "event",
+		kind: "status",
+		group: "compose",
+		status: "working",
+		source: "supabase",
+		stream: "up",
+		display: "compose  ● supabase              up          ",
+	});
+	out.length = 0;
+	view.push({
+		type: "event",
+		kind: "status",
+		group: "compose",
+		status: "working",
+		source: "Container supabase-imgproxy",
+		stream: "recreating",
+		display: "compose  ● Container supabase-im… recreating  ",
+	});
+	const painted = out.join("");
+	assert.match(painted, /Container supabase-im…/);
+	assert.doesNotMatch(painted, /supabase {14}up/);
+	view.stop();
+});
+
+test("color around the status glyph stays put while it spins", () => {
+	const out: string[] = [];
+	const view = startProgress({ tty: true, write: (chunk) => out.push(chunk), intervalMs: 0 });
+	view.push({
+		type: "event",
+		kind: "status",
+		group: "compose",
+		status: "working",
+		source: "supabase",
+		stream: "up",
+		display: "compose  \u001b[33m●\u001b[0m supabase              up          ",
+	});
+	assert.match(out.join(""), /\u001b\[33m⠋\u001b\[0m/);
+	view.stop();
+});
+
+test("session color follows the terminal", () => {
+	assert.equal(sessionChildEnv(true, {}).CONTAINERKIT_COLOR, "1");
+	assert.equal(sessionChildEnv(false, {}).CONTAINERKIT_COLOR, undefined);
+	assert.equal(sessionChildEnv(true, { NO_COLOR: "1", CONTAINERKIT_COLOR: "1" }).CONTAINERKIT_COLOR, undefined);
+	assert.equal(sessionChildEnv(false, { CONTAINERKIT_COLOR: "1" }).CONTAINERKIT_COLOR, "1");
+});
+
+oneAtATime("a missing containerkit binary prints an error and exits", async () => {
+	const prevExit = process.exit;
+	const prevError = console.error;
+	const lines: string[] = [];
+	let code: number | undefined;
+	console.error = (...args: unknown[]) => {
+		lines.push(args.map(String).join(" "));
+	};
+	process.exit = ((status?: number) => {
+		code = status ?? 0;
+		throw new Error(`exit ${status}`);
+	}) as typeof process.exit;
+	try {
+		const live = root({ bin: "/no/such/containerkit" }, async function App(session) {
+			await session.ping();
+			return null;
+		});
+		await assert.rejects(runRoot(live), /exit 1/);
+		assert.equal(code, 1);
+		assert.match(lines.join("\n"), /cannot find containerkit at \/no\/such\/containerkit \(set CONTAINERKIT_BIN or PATH\)/);
+	} finally {
+		process.exit = prevExit;
+		console.error = prevError;
+	}
+});
+
+test("session.terminal runs the binary until the shell exits", async () => {
+	const dir = mkdtempSync(join(tmpdir(), "containerkit-terminal-"));
+	const log = join(dir, "args");
+	const bin = join(dir, "containerkit");
+	writeFileSync(
+		bin,
+		`#!/usr/bin/env node
+const fs = require("node:fs");
+fs.appendFileSync(process.env.TERMINAL_LOG, process.argv.slice(2).join("\\0"));
+process.exit(Number(process.env.TERMINAL_CODE ?? "0"));
+`,
+	);
+	chmodSync(bin, 0o755);
+	const transport: SessionTransport = {
+		async call() {
+			return { ok: true };
+		},
+		on() {
+			return () => undefined;
+		},
+		async close() {
+			return undefined;
+		},
+	};
+	const session = sessionFromTransport(connect({}), transport, { bin });
+	const prevLog = process.env.TERMINAL_LOG;
+	const prevCode = process.env.TERMINAL_CODE;
+	process.env.TERMINAL_LOG = log;
+	delete process.env.TERMINAL_CODE;
+	try {
+		await session.terminal("exec-example", { command: ["echo", "hi"] });
+		assert.equal(readFileSync(log, "utf8"), "terminal\0exec-example\0echo\0hi");
+		process.env.TERMINAL_CODE = "3";
+		await assert.rejects(session.terminal("exec-example"), /containerkit terminal exited 3/);
+		await assert.rejects(session.terminal(""), /terminal needs a container/);
+		const missing = sessionFromTransport(connect({}), transport, { bin: join(dir, "missing") });
+		await assert.rejects(missing.terminal("exec-example"), /cannot find containerkit at/);
+	} finally {
+		if (prevLog === undefined) {
+			delete process.env.TERMINAL_LOG;
+		} else {
+			process.env.TERMINAL_LOG = prevLog;
+		}
+		if (prevCode === undefined) {
+			delete process.env.TERMINAL_CODE;
+		} else {
+			process.env.TERMINAL_CODE = prevCode;
+		}
+	}
+});
