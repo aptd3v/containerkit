@@ -84,5 +84,14 @@ jobs:
       - name: Taskflow coverage
         run: npm run test:taskflow
 
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+
+      - name: Build platform binaries
+        working-directory: ${{ github.workspace }}
+        run: go run ./tools/crossbuild
+
       - name: Pack dry-run
         run: npm run pack:check
