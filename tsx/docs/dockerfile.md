@@ -1,10 +1,10 @@
 # Dockerfiles
 
-A Dockerfile is a second tree. Its components live in `containerkit/dockerfile`, not in `"containerkit"`, because both modules have an `Env`, a `Volume`, a `Command`, and an `Expose`, and they mean different things. The compose `Env` is an environment entry on a service. The Dockerfile `Env` is an `ENV` instruction. Import the one you mean.
+A Dockerfile is a second tree. Its components live in `@aptd3v/containerkit/dockerfile`, not in `"@aptd3v/containerkit"`, because both modules have an `Env`, a `Volume`, a `Command`, and an `Expose`, and they mean different things. The compose `Env` is an environment entry on a service. The Dockerfile `Env` is an `ENV` instruction. Import the one you mean.
 
 ```tsx
-import { Build, Compose, Service } from "containerkit";
-import { Command, Dockerfile, From, Run } from "containerkit/dockerfile";
+import { Build, Compose, Service } from "@aptd3v/containerkit";
+import { Command, Dockerfile, From, Run } from "@aptd3v/containerkit/dockerfile";
 
 const image = (
   <Dockerfile>
@@ -25,7 +25,7 @@ const stack = (
 
 `image` is not a project. `exportYAML` will not accept it. Nest it under `<Build>` inside a named `<Compose>`, as `stack` does, and the live session applies that project like any other tree. [nginx/docker.tsx](../examples/nginx/docker.tsx) is that shape as a program: the Dockerfile is built from the files next to the Go nginx example, and the service publishes port 8080. The build block stores the Dockerfile text inline. A build accepts one Dockerfile. It rejects a second source when `dockerfilePath`, `parseDockerfile`, or `readDockerfile` is already set on that build.
 
-`exportDockerfile`, from `containerkit/dockerfile`, returns the Dockerfile as text and does not build it:
+`exportDockerfile`, from `@aptd3v/containerkit/dockerfile`, returns the Dockerfile as text and does not build it:
 
 ```dockerfile
 FROM alpine:latest
@@ -71,7 +71,7 @@ CMD /out/app --port 8080
 ## Healthchecks
 
 ```tsx
-import { HealthCheck, HealthCheckNone } from "containerkit/dockerfile";
+import { HealthCheck, HealthCheckNone } from "@aptd3v/containerkit/dockerfile";
 
 <HealthCheck test={["CMD", "true"]} interval="5s" timeout="3s" retries={3} />
 ```
@@ -142,7 +142,7 @@ await app.buildImage({
 A file with two stages names the first one and starts a second `FROM`:
 
 ```tsx
-import { Command, Dockerfile, From, Run } from "containerkit/dockerfile";
+import { Command, Dockerfile, From, Run } from "@aptd3v/containerkit/dockerfile";
 
 const image = (
   <Dockerfile>

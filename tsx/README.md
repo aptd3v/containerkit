@@ -2,6 +2,8 @@
 
 Write Compose files, Dockerfiles, and container actions as one TypeScript framework. A program has four parts: a JSX tree, vocabulary values, a client, and commands. It is not a web UI and it does not open a Docker socket from the browser.
 
+This package is the TypeScript surface. The Go library is [containerkit](https://github.com/aptd3v/containerkit). Components and session methods are generated from that kit, from pinned Moby and Compose SDK versions. Updating the pins and regenerating picks up new upstream fields.
+
 The same words (`name`, `timeout`, `Env`) show up in three places. Where you write them is the scope:
 
 | Kind | TypeScript |
@@ -31,11 +33,11 @@ Leave the app tsconfig on React and exclude the containerkit folder:
 { "exclude": ["infra"] }
 ```
 
-Give that folder a config that extends `containerkit/tsconfig.jsx.json` (it sets `jsxImportSource` to `containerkit`):
+Give that folder a config that extends `@aptd3v/containerkit/tsconfig.jsx.json` (it sets `jsxImportSource` to `@aptd3v/containerkit`):
 
 ```json
 {
-  "extends": ["../tsconfig.json", "containerkit/tsconfig.jsx.json"],
+  "extends": ["../tsconfig.json", "@aptd3v/containerkit/tsconfig.jsx.json"],
   "include": ["./**/*.ts", "./**/*.tsx"],
   "compilerOptions": { "noEmit": true }
 }
@@ -44,10 +46,10 @@ Give that folder a config that extends `containerkit/tsconfig.jsx.json` (it sets
 A file can opt in without a second config. The first line overrides the project setting:
 
 ```tsx
-/** @jsxImportSource containerkit */
+/** @jsxImportSource @aptd3v/containerkit */
 ```
 
-A React file in a project pointed at containerkit opts back with `/** @jsxImportSource react */`.
+A React file in a project pointed at `@aptd3v/containerkit` opts back with `/** @jsxImportSource react */`.
 
 `jsx-runtime` exports its own `JSX` namespace. If that namespace is missing, or `jsxImportSource` does not resolve, TypeScript looks up a global namespace named `React`, because `react-jsx` defaults the module specifier to `"react"`. Under containerkit's namespace, HTML tags are not intrinsic elements, so `<div>` is a type error. `JSX.Element` is intentionally unset so each component keeps its own `$$kind`.
 
@@ -67,7 +69,7 @@ TypeScript checks props and the import source. It does not check which component
 
 Building that tree throws `containerkit/tsx: <dockerfile> is not valid inside <service>`. The names in the throw are the internal kinds, and the throw happens when the tree is built, not while you are editing. The `containerkit/nesting` rule marks the tag you wrote: `<Dockerfile> is not valid inside <Service>`. It also marks a second child where the parent accepts one, such as a second `<Health>` on a service.
 
-The rule only sees a tag written inline. A child kept in a variable, returned from a helper, or spread onto the parent is invisible to it, and building the tree still throws. Installing containerkit does not enable the rule.
+The rule only sees a tag written inline. A child kept in a variable, returned from a helper, or spread onto the parent is invisible to it, and building the tree still throws. Installing `@aptd3v/containerkit` does not enable the rule.
 
 ESLint 10 is an optional peer. `typescript-eslint` supplies the parser that reads TSX. Both are dev dependencies:
 
@@ -80,7 +82,7 @@ npm install --save-dev eslint typescript-eslint
 ```js
 import { defineConfig } from "eslint/config";
 import tseslint from "typescript-eslint";
-import { recommended } from "containerkit/eslint";
+import { recommended } from "@aptd3v/containerkit/eslint";
 
 export default defineConfig(
   { files: ["**/*.{jsx,tsx}"], languageOptions: { parser: tseslint.parser } },
@@ -91,13 +93,13 @@ export default defineConfig(
 ## Example
 
 ```tsx
-/** @jsxImportSource containerkit */
+/** @jsxImportSource @aptd3v/containerkit */
 import {
   Compose, Service, Publish, Volume, Health, Env, Network, Deploy, Restart,
   exportYAML,
   type DockerNode,
-} from "containerkit";
-import { cap, netDriver, proto, restartPolicy } from "containerkit/vocab";
+} from "@aptd3v/containerkit";
+import { cap, netDriver, proto, restartPolicy } from "@aptd3v/containerkit/vocab";
 
 const prod = process.env.NODE_ENV === "production";
 
@@ -136,18 +138,18 @@ These programs are in the git repository. They are not part of the npm package. 
 
 The first three are render callbacks: the function returns the tree, and a later state change applies again. `terminal` is `async` because attaching the shell has to be awaited. Ctrl+C on the first three takes the project down.
 
-Control flow is ordinary JavaScript: `&&`, `.map()`, function components and props.
+`false`, `null`, and `undefined` children are dropped. `.map()` repeats a child. A function that returns a node is a component. `&&` and props are ordinary JavaScript.
 
 A standalone `<Container>` or `<Service>` renders a one-service compose file.
 
 ## Dockerfile
 
-Instruction components live in `containerkit/dockerfile` so names like `Env` and `Volume` are the Dockerfile instructions, not the compose ones. `exportDockerfile` emits Dockerfile text. A `<Dockerfile>` child of `<Build>` becomes `dockerfile_inline`. `buildDockerfile` puts that text on `buildImage` as `parseDockerfile`.
+Instruction components live in `@aptd3v/containerkit/dockerfile` so names like `Env` and `Volume` are the Dockerfile instructions, not the compose ones. `exportDockerfile` emits Dockerfile text. `<Run>` joins into one layer. `<RunLayer>` starts the next. A `<Dockerfile>` child of `<Build>` becomes `dockerfile_inline`. `buildDockerfile` puts that text on `buildImage` as `parseDockerfile`. [`examples/nginx/docker.tsx`](https://github.com/aptd3v/containerkit/blob/main/tsx/examples/nginx/docker.tsx) builds that kind of file and publishes the site.
 
 ```tsx
-/** @jsxImportSource containerkit */
-import { Build, Compose, Service, connect, buildDockerfile } from "containerkit";
-import { Command, Dockerfile, From, Run } from "containerkit/dockerfile";
+/** @jsxImportSource @aptd3v/containerkit */
+import { Build, Compose, Service, connect, buildDockerfile } from "@aptd3v/containerkit";
+import { Command, Dockerfile, From, Run } from "@aptd3v/containerkit/dockerfile";
 
 const image = (
   <Dockerfile>
@@ -176,10 +178,10 @@ Scalars are props. Nested scopes are children. `Env` / `Label` use `name` (JSX `
 
 ## Vocabulary
 
-Import these from `containerkit/vocab`. They are the legal words for a prop or a command option. Pass the object instead of a raw string. Every group is also on `vocab`, which lists them all. `pullPolicy`, `restartPolicy`, `waitFor`, and `watchAction` use the longer name so they are not the `pull`, `restart`, `wait`, and `watch` commands.
+Import these from `@aptd3v/containerkit/vocab`. They are the legal words for a prop or a command option. Pass the object instead of a raw string. Every group is also on `vocab`, which lists them all. `pullPolicy`, `restartPolicy`, `waitFor`, and `watchAction` use the longer name so they are not the `pull`, `restart`, `wait`, and `watch` commands.
 
 ```ts
-import { cap, proto, restartPolicy } from "containerkit/vocab";
+import { cap, proto, restartPolicy } from "@aptd3v/containerkit/vocab";
 ```
 
 | Export | Use for |
@@ -234,6 +236,29 @@ Host: `ping`, `login`, `diskUsage`, `inspect`, `listenEvents`, `load`, `pruneBui
 
 `composeUp` is the project command. Signatures and the options you will actually set are in [GUIDE.md](GUIDE.md).
 
-## Run
+## It stays open
 
-A project stays live. `docker.ts` default-exports `root()` from `containerkit/live`. Commands are methods on that session: `await app.pullImage("alpine:latest")`. `exportYAML` prints a named `Compose` node as YAML at any time. It does not stop or start the session. See [Live session](docs/live.md).
+`docker.ts` default-exports `root()` from `@aptd3v/containerkit/live`. The session stays up for the life of the process. A later render applies the project only when the rendered YAML changes. `exportYAML` prints a named `Compose` node as YAML at any time. Exporting the file does not stop the session. [`examples/nginx/docker.tsx`](https://github.com/aptd3v/containerkit/blob/main/tsx/examples/nginx/docker.tsx) is a running copy: from `tsx/`, `npm run nginx` builds an nginx image, serves `http://127.0.0.1:8080`, and `onExit: "down"` takes the project down on Ctrl+C.
+
+```tsx
+import { Compose, Service, Publish, Health } from "@aptd3v/containerkit";
+import { proto } from "@aptd3v/containerkit/vocab";
+import { root } from "@aptd3v/containerkit/live";
+
+export default root({ fromEnv: true }, function App() {
+  return (
+    <Compose name="app">
+      <Service
+        name="api"
+        image="alpine:latest"
+        command={["sh", "-c", "mkdir -p /www && echo ok > /www/index.html && exec httpd -f -p 80 -h /www"]}
+      >
+        <Publish hostPort={8080} containerPort={80} protocol={proto.TCP} />
+        <Health test={["CMD", "wget", "-q", "-O", "/dev/null", "http://127.0.0.1/"]} interval="5s" retries={3} />
+      </Service>
+    </Compose>
+  );
+});
+```
+
+Commands are methods on that session. `await app.pullImage("alpine:latest")` runs, then the next line runs. `useMemo` writes the result to `.containerkit/memo` and skips the call the next time the same inputs come back. See [Live session](docs/live.md).

@@ -4,90 +4,13 @@
 [![Go Version](https://img.shields.io/github/go-mod/go-version/aptd3v/containerkit)](https://go.dev/dl/)
 [![License](https://img.shields.io/badge/license-Apache_2.0-blue)](./LICENSE)
 
-Containerkit is the Docker stack as a program. Define a stack in Go or TSX, then use one client to pull an image, bring up the Compose project, and inspect its services. Both languages share a Docker vocabulary, and the client covers both the Engine and Compose SDKs.
+Containerkit is the Docker stack as a Go program. Define a project with setters, then use one client to pull an image, bring the Compose project up, and inspect its services. The client covers the Engine and Compose SDKs. `Name`, `Image`, `Env`, `Memory`, and `ReadOnly` mean the same thing on a container, a service, and a job. The compiler rejects a setter on a scope that does not have it.
 
-Export the project as Compose YAML, or the image definition as a Dockerfile. For live development, a `docker.ts` keeps the session open and reapplies the project only when the rendered YAML changes.
+Export the project as Compose YAML, or the image definition as a Dockerfile.
 
-## A project is a component
+TypeScript docs, install, and the live session are in [tsx/README.md](tsx/README.md).
 
-```tsx
-import { Compose, Service, Publish, Volume, Health, Env, Restart, exportYAML } from "containerkit";
-import { proto, restartPolicy } from "containerkit/vocab";
-
-const prod = process.env.NODE_ENV === "production";
-
-export default function App() {
-  return (
-    <Compose name="app">
-      <Volume name="data" />
-      <Service
-        name="api"
-        image="alpine:latest"
-        command={["sh", "-c", "mkdir -p /www && echo ok > /www/index.html && exec httpd -f -p 80 -h /www"]}
-      >
-        <Publish hostPort={8080} containerPort={80} protocol={proto.TCP} />
-        <Volume source="data" target="/www" />
-        <Restart policy={restartPolicy.UnlessStopped} />
-        <Health test={["CMD", "wget", "-q", "-O", "/dev/null", "http://127.0.0.1/"]} interval="5s" retries={3} />
-        <Env name="APP" value={prod ? "prod" : "dev"} />
-      </Service>
-    </Compose>
-  );
-}
-
-export const yaml = exportYAML(<App />);
-```
-
-Containerkit generates its bindings from pinned Moby and Compose SDK versions. Updating the pins and regenerating picks up new upstream fields.
-
-`false` disappears. `.map()` repeats a child. A function that returns a node is a component. [`examples/supabase`](examples/supabase) is that stack in Go. The TypeScript programs you can run are under [`tsx/examples`](tsx/examples): nginx, WordPress and MySQL, a MongoDB replica set, and an interactive shell.
-
-A Dockerfile is the other tree, in `containerkit/dockerfile`. `<Run>` joins into one layer. `<RunLayer>` starts the next. `exportDockerfile` prints the file. [`tsx/examples/nginx/docker.tsx`](tsx/examples/nginx/docker.tsx) builds that kind of file and publishes the site.
-
-## A container becomes a service
-
-`NewContainer` and `NewService` write the same spec. `EngineConfig` turns that spec into the Engine SDK's `Config`, `HostConfig`, and `NetworkingConfig`. `AsService` copies the spec onto a Compose service, and `ComposeConfig` turns it into compose-go's `ServiceConfig`. `NewService(FromContainer(worker))` and passing the container itself do the same copy.
-
-```go
-worker := NewContainer(
-    Name("api"),
-    Image("alpine:latest"),
-    Command("sh", "-c", "mkdir -p /www && echo ok > /www/index.html && exec httpd -f -p 80 -h /www"),
-    Publish(Protocol(TCP), HostPort(8080), ContainerPort(80)),
-)
-svc := worker.AsService()
-```
-
-`AutoRemove`, `PublishAll`, `ContainerIDFile`, `Shell`, `OnBuild`, `MaskedPath`, and `ReadonlyPath` exist only on the Engine create call. They stay on the container. `Validate` on the service reports each one as an unsupported mapping.
-
-## It stays open
-
-`docker.ts` default-exports `root()`. The session stays up for the life of the process. A later render applies the project only when the rendered YAML changes. Exporting the file does not stop it. [`tsx/examples/nginx/docker.tsx`](tsx/examples/nginx/docker.tsx) is a running copy: from `tsx/`, `npm run nginx` builds an nginx image, serves `http://127.0.0.1:8080`, and `onExit: "down"` takes the project down on Ctrl+C.
-
-```tsx
-import { Compose, Service, Publish, Health } from "containerkit";
-import { proto } from "containerkit/vocab";
-import { root } from "containerkit/live";
-
-export default root({ fromEnv: true }, function App() {
-  return (
-    <Compose name="app">
-      <Service
-        name="api"
-        image="alpine:latest"
-        command={["sh", "-c", "mkdir -p /www && echo ok > /www/index.html && exec httpd -f -p 80 -h /www"]}
-      >
-        <Publish hostPort={8080} containerPort={80} protocol={proto.TCP} />
-        <Health test={["CMD", "wget", "-q", "-O", "/dev/null", "http://127.0.0.1/"]} interval="5s" retries={3} />
-      </Service>
-    </Compose>
-  );
-});
-```
-
-Commands are methods on that session. `await app.pullImage("alpine:latest")` runs, then the next line runs. `useMemo` writes the result to `.containerkit/memo` and skips the call the next time the same inputs come back.
-
-## The same words in Go
+## Bring a project up
 
 ```go
 import . "github.com/aptd3v/containerkit/pkg/kit"
@@ -117,9 +40,27 @@ if err != nil {
 return loaded.Up(ctx)
 ```
 
-`Connect` is the daemon. `Run` starts a container. `Up` applies a project. `ImportFile` reads a compose file with no daemon. `Name`, `Image`, `Env`, `Memory`, and `ReadOnly` mean the same thing on a container, a service, and a job. The compiler rejects a name on a scope that does not have it.
+`Connect` is the daemon. With no options it reads the host the `docker` command already uses. `Run` starts a container. `Up` applies a project. `ImportFile` reads a compose file with no daemon.
 
-A few words only look the same:
+[`examples/supabase`](examples/supabase) is a large stack written this way. Smaller programs are [`examples/nginx`](examples/nginx), [`examples/wordpress`](examples/wordpress), [`examples/mongo_replica`](examples/mongo_replica), and [`examples/terminal`](examples/terminal).
+
+## A container becomes a service
+
+`NewContainer` and `NewService` write the same spec. `EngineConfig` turns that spec into the Engine SDK's `Config`, `HostConfig`, and `NetworkingConfig`. `AsService` copies the spec onto a Compose service, and `ComposeConfig` turns it into compose-go's `ServiceConfig`. `NewService(FromContainer(worker))` and passing the container itself do the same copy.
+
+```go
+worker := NewContainer(
+    Name("api"),
+    Image("alpine:latest"),
+    Command("sh", "-c", "mkdir -p /www && echo ok > /www/index.html && exec httpd -f -p 80 -h /www"),
+    Publish(Protocol(TCP), HostPort(8080), ContainerPort(80)),
+)
+svc := worker.AsService()
+```
+
+`AutoRemove`, `PublishAll`, `ContainerIDFile`, `Shell`, `OnBuild`, `MaskedPath`, and `ReadonlyPath` exist only on the Engine create call. They stay on the container. `Validate` on the service reports each one as an unsupported mapping.
+
+## Names that only look the same
 
 | Word | Means |
 | --- | --- |
@@ -142,27 +83,19 @@ The kit is generated from the modules it wraps: `github.com/moby/moby/api`, `git
 
 ## Start
 
-Go, from `go.mod` (1.26.8 or newer):
+Go, from `go.mod` (1.26.11 or newer):
 
 ```bash
 go get github.com/aptd3v/containerkit
 ```
 
-Node 20 or newer:
-
-```bash
-npm install @aptd3v/containerkit
-```
-
-That install includes the runner. The `containerkit` command runs the binary for this machine.
-
 [CHANGELOG.md](CHANGELOG.md) is what 0.8.3 contains.
 
-Read the Go kit in order from [docs/README.md](docs/README.md): define a service, then run it. Read TypeScript from [tsx/docs/README.md](tsx/docs/README.md): trees, the live session, the client, commands, then Dockerfiles.
+Read the kit in order from [docs/README.md](docs/README.md): define a service, then run it.
 
-The TypeScript package lives in [`tsx/`](tsx/README.md). A folder that extends `containerkit/tsconfig.jsx.json` compiles `<Compose>` without a per-file pragma. React and containerkit can share a repository. They cannot share a file.
+Node install and the TypeScript API are in [tsx/README.md](tsx/README.md).
 
-A live session uses the `containerkit` command from that install. `CONTAINERKIT_BIN` overrides the bundled binary. [The runner](docs/runner-binary.md) is `validate`, `exec`, and `session`. `go run ./tools/crossbuild` builds it for linux, darwin, and windows.
+[The runner](docs/runner-binary.md) is `validate`, `exec`, and `session`. `go run ./tools/crossbuild` builds it for linux, darwin, and windows. The TypeScript package ships that binary.
 
 - [For coding agents](AGENTS.md). Emit containerkit instead of a Compose file plus a script.
 - [Contributing](CONTRIBUTING.md). Tests, `go generate`, and `VERSION`.

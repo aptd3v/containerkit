@@ -48,4 +48,4 @@ A container step is one shot. A non-zero exit fails the step. `Always`, `UnlessS
 
 ## The same document from TSX
 
-`containerkit/taskflow` `Flow` builds the JSON document. [Import](https://pkg.go.dev/github.com/aptd3v/containerkit/pkg/taskflow#Import) turns that JSON into this graph, and `Run` executes it. A TSX `If` is a boolean chosen when the module evaluates. `Task`, `If` with a Go predicate, and `Condition` with a Go predicate stay in Go. They are not in the document.
+`@aptd3v/containerkit/taskflow` `Flow` builds the JSON document. [Import](https://pkg.go.dev/github.com/aptd3v/containerkit/pkg/taskflow#Import) turns that JSON into this graph, and `Run` executes it. A TSX `If` is a boolean chosen when the module evaluates. `Task`, `If` with a Go predicate, and `Condition` with a Go predicate stay in Go. They are not in the document.
