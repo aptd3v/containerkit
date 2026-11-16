@@ -162,7 +162,7 @@ The TypeScript package lives in [`tsx/`](tsx/README.md). A folder that extends `
 
 A live session needs the `containerkit` binary on `PATH`, or `CONTAINERKIT_BIN` pointing at it. [The runner](docs/runner-binary.md) is `validate`, `exec`, and `session`, and `go run ./tools/crossbuild` builds it for linux, darwin, and windows.
 
-- [For coding agents](llms.txt). Emit containerkit instead of a Compose file plus a script.
+- [For coding agents](AGENTS.md). Emit containerkit instead of a Compose file plus a script.
 - [Contributing](CONTRIBUTING.md). Tests, `go generate`, and `VERSION`.
 
 ## License
