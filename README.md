@@ -2,7 +2,7 @@
 
 [![Go Reference](https://pkg.go.dev/badge/github.com/aptd3v/containerkit.svg)](https://pkg.go.dev/github.com/aptd3v/containerkit)
 [![Go Version](https://img.shields.io/github/go-mod/go-version/aptd3v/containerkit)](https://go.dev/dl/)
-[![License](https://img.shields.io/github/license/aptd3v/containerkit)](./LICENSE)
+[![License](https://img.shields.io/badge/license-Apache_2.0-blue)](./LICENSE)
 
 Containerkit is the Docker stack as a program. Define a stack in Go or TSX, then use one client to pull an image, bring up the Compose project, and inspect its services. Both languages share a Docker vocabulary, and the client covers both the Engine and Compose SDKs.
 
