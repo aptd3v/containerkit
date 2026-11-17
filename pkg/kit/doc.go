@@ -76,12 +76,12 @@
 // [ErrConflict], and the other SDK sentinels so [errors.Is] / [IsNotFound]
 // work without importing Engine or Compose.
 //
-// Configuration targets the latest stable modules verified on 2026-11-12:
+// Configuration targets the latest stable modules verified on 2026-11-16:
 //
-//   - github.com/moby/moby/api v1.56.1
-//   - github.com/moby/moby/client v0.6.2
-//   - github.com/compose-spec/compose-go/v2 v2.16.2
-//   - github.com/docker/compose/v5 v5.6.1 (runtime API + in-process Composer)
+//   - github.com/moby/moby/api v1.57.0
+//   - github.com/moby/moby/client v0.6.3
+//   - github.com/compose-spec/compose-go/v2 v2.17.0
+//   - github.com/docker/compose/v5 v5.7.1 (runtime API + in-process Composer)
 //
 // Engine AutoRemove, PublishAll, ContainerIDFile, Shell, OnBuild, MaskedPath,
 // and ReadonlyPath have no Compose equivalent; [FromContainer] reports them.

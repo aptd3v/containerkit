@@ -26,6 +26,11 @@ func TestImportPlan(t *testing.T) {
 	if err := p.Validate(); err != nil {
 		t.Fatal(err)
 	}
+	if p.hasFlow() {
+		t.Fatal("flow is set beside actions")
+	}
+	assertPlanConnect(t, p.raw.Connect)
+	assertPlanActions(t, p.raw.Actions)
 	c := p.Compose()
 	if err := c.Validate(); err != nil {
 		t.Fatal(err)
@@ -36,6 +41,156 @@ func TestImportPlan(t *testing.T) {
 	svcs := c.Services()
 	if len(svcs) != 1 || svcs[0].Name() != "api" || svcs[0].Image() != "alpine:latest" {
 		t.Fatalf("services = %+v", svcs)
+	}
+	cfg, err := svcs[0].ComposeConfig()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(cfg.Command) != 6 || cfg.Command[0] != "httpd" || cfg.User != "65534:65534" || cfg.WorkingDir != "/www" || cfg.Restart != "unless-stopped" {
+		t.Fatalf("command/user/workdir/restart = %+v %q %q %q", cfg.Command, cfg.User, cfg.WorkingDir, cfg.Restart)
+	}
+	if cfg.HealthCheck == nil || cfg.HealthCheck.Retries == nil || *cfg.HealthCheck.Retries != 3 || cfg.HealthCheck.StartPeriod == nil {
+		t.Fatalf("health = %+v", cfg.HealthCheck)
+	}
+	if len(cfg.Ports) != 1 || cfg.Ports[0].Published != "8080" || cfg.Ports[0].Target != 80 || cfg.Ports[0].Protocol != "tcp" {
+		t.Fatalf("ports = %+v", cfg.Ports)
+	}
+	if cfg.Environment["APP"] == nil || *cfg.Environment["APP"] != "1" || cfg.Environment["EMPTY"] == nil || *cfg.Environment["EMPTY"] != "" {
+		t.Fatalf("env = %+v", cfg.Environment)
+	}
+	if cfg.Labels["kit.edge"] != "yes" {
+		t.Fatalf("labels = %+v", cfg.Labels)
+	}
+	if cfg.Logging == nil || cfg.Logging.Driver != "json-file" || cfg.Logging.Options["max-size"] != "1m" {
+		t.Fatalf("logging = %+v", cfg.Logging)
+	}
+	if cfg.Deploy == nil || cfg.Deploy.Replicas == nil || *cfg.Deploy.Replicas != 1 {
+		t.Fatalf("deploy = %+v", cfg.Deploy)
+	}
+	if len(cfg.Volumes) != 1 || cfg.Volumes[0].Source != "data" || cfg.Volumes[0].Target != "/data" || !cfg.Volumes[0].ReadOnly {
+		t.Fatalf("volumes = %+v", cfg.Volumes)
+	}
+	if cfg.Networks["front"] == nil {
+		t.Fatalf("networks = %+v", cfg.Networks)
+	}
+}
+
+func assertPlanConnect(t *testing.T, connect map[string]any) {
+	t.Helper()
+	if connect["fromEnv"] != true || connect["hostFromEnv"] != false || connect["dryRun"] != false || connect["tlsFromEnv"] != false || connect["apiVersionFromEnv"] != false {
+		t.Fatalf("bools = %#v", connect)
+	}
+	if connect["negotiateAPIVersion"] != true {
+		t.Fatalf("negotiateAPIVersion = %#v", connect["negotiateAPIVersion"])
+	}
+	if connect["host"] != "unix:///var/run/docker.sock" || connect["scheme"] != "unix" || connect["apiVersion"] != "1.44" || connect["timeout"] != "10s" || connect["userAgent"] != "containerkit-tsx-test" {
+		t.Fatalf("strings = %#v", connect)
+	}
+	if connect["maxConcurrency"] != json.Number("4") {
+		t.Fatalf("maxConcurrency = %#v (%T)", connect["maxConcurrency"], connect["maxConcurrency"])
+	}
+	tls, ok := connect["tls"].(map[string]any)
+	if !ok || tls["ca"] != "/ca.pem" || tls["cert"] != "/cert.pem" || tls["key"] != "/key.pem" {
+		t.Fatalf("tls = %#v", connect["tls"])
+	}
+	headers, ok := connect["httpHeader"].([]any)
+	if !ok || len(headers) != 2 {
+		t.Fatalf("httpHeader = %#v", connect["httpHeader"])
+	}
+	last, ok := headers[1].(map[string]any)
+	if !ok || last["name"] != "X-Empty" || last["value"] != "" {
+		t.Fatalf("empty header = %#v", headers[1])
+	}
+}
+
+func assertPlanActions(t *testing.T, actions []planAction) {
+	t.Helper()
+	want := []string{
+		"pullImage",
+		"listImages",
+		"listContainers",
+		"inspectImage",
+		"inspect",
+		"load",
+		"composePs",
+		"composePort",
+		"composeKill",
+		"composeUp",
+		"composeDown",
+		"ping",
+		"composeVolumeList",
+	}
+	if len(actions) != len(want) {
+		t.Fatalf("actions = %d", len(actions))
+	}
+	byOp := map[string]planAction{}
+	for i, act := range actions {
+		if act.Op != want[i] {
+			t.Fatalf("actions[%d] = %q", i, act.Op)
+		}
+		byOp[act.Op] = act
+	}
+	pull := byOp["pullImage"]
+	if pull.fieldString("ref") != "alpine:latest" || pull.Options["all"] != true || pull.Options["platform"] != "linux/arm64" {
+		t.Fatalf("pullImage = %#v", pull)
+	}
+	images := byOp["listImages"]
+	if images.Options["all"] != "false" {
+		t.Fatalf("listImages all = %#v (%T)", images.Options["all"], images.Options["all"])
+	}
+	oneFilter, ok := images.Options["filter"].(map[string]any)
+	if !ok || oneFilter["term"] != "reference" || oneFilter["values"] != "alpine*" {
+		t.Fatalf("single filter = %#v", images.Options["filter"])
+	}
+	containers := byOp["listContainers"]
+	filters, ok := containers.Options["filter"].([]any)
+	if !ok || len(filters) != 2 || containers.Options["limit"] != json.Number("10") || containers.Options["includeSize"] != false {
+		t.Fatalf("listContainers = %#v", containers.Options)
+	}
+	first, ok := filters[0].(map[string]any)
+	values, valuesOK := first["values"].([]any)
+	if !ok || !valuesOK || len(values) != 2 {
+		t.Fatalf("filter values = %#v", filters[0])
+	}
+	inspected := byOp["inspectImage"]
+	platform, ok := inspected.Options["imagePlatform"].(map[string]any)
+	features, featuresOK := platform["os.features"].([]any)
+	if !ok || !featuresOK || platform["os.version"] != "12" || platform["variant"] != "v8" || len(features) != 1 || inspected.Options["manifests"] != false {
+		t.Fatalf("imagePlatform = %#v", inspected.Options["imagePlatform"])
+	}
+	if byOp["inspect"].fieldString("id") != "abc" || byOp["inspect"].Options["includeSize"] != false {
+		t.Fatalf("inspect = %#v", byOp["inspect"])
+	}
+	loaded := byOp["load"]
+	envFile, ok := loaded.Options["envFile"].(map[string]any)
+	services, servicesOK := loaded.Options["services"].([]any)
+	if loaded.fieldString("path") != "compose.yaml" || !ok || envFile["path"] != ".env" || envFile["required"] != false || !servicesOK || len(services) != 1 {
+		t.Fatalf("load = %#v", loaded)
+	}
+	if byOp["composePs"].Options["services"] != "api" || byOp["composePs"].Options["all"] != true {
+		t.Fatalf("composePs = %#v", byOp["composePs"].Options)
+	}
+	port := byOp["composePort"]
+	if port.fieldString("service") != "api" || port.fields["port"] != json.Number("80") || port.Options["protocol"] != "tcp" || port.Options["index"] != "0" {
+		t.Fatalf("composePort = %#v fields %#v", port.Options, port.fields)
+	}
+	killServices, ok := byOp["composeKill"].Options["services"].([]any)
+	if !ok || len(killServices) != 1 || byOp["composeKill"].Options["stopSignal"] != "SIGTERM" || byOp["composeKill"].Options["all"] != false {
+		t.Fatalf("composeKill = %#v", byOp["composeKill"].Options)
+	}
+	up := byOp["composeUp"].Options
+	if up["detach"] != true || up["timeout"] != "30s" || up["quiet"] != false || up["progress"] != "plain" || up["memory"] != json.Number("536870912") {
+		t.Fatalf("composeUp = %#v", up)
+	}
+	down := byOp["composeDown"].Options
+	if down["timeout"] != json.Number("30000000000") || down["volumes"] != false || down["services"] != "api" || down["removeOrphans"] != true {
+		t.Fatalf("composeDown = %#v", down)
+	}
+	if byOp["ping"].Options != nil {
+		t.Fatalf("ping options = %#v", byOp["ping"].Options)
+	}
+	if byOp["composeVolumeList"].Options == nil || len(byOp["composeVolumeList"].Options) != 0 {
+		t.Fatalf("composeVolumeList = %#v", byOp["composeVolumeList"].Options)
 	}
 }
 
@@ -265,6 +420,13 @@ func TestDecodeRejectsBadTimeout(t *testing.T) {
 	t.Parallel()
 	_, err := decodeUpOptions(map[string]any{"timeout": "not-a-duration"})
 	if err == nil {
+		t.Fatal("expected error")
+	}
+	opts, err := UpOptions(map[string]any{"detach": true, "wait": true})
+	if err != nil || len(opts) != 2 {
+		t.Fatalf("UpOptions %v %v", opts, err)
+	}
+	if _, err := UpOptions("nope"); err == nil {
 		t.Fatal("expected error")
 	}
 }

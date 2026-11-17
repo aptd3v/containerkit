@@ -9,7 +9,7 @@ import "github.com/moby/moby/client/pkg/security"
 // KeyValue holds a key/value pair.
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/client/pkg/security#KeyValue
-// GitHub: https://github.com/moby/moby/blob/client/v0.6.2/client/pkg/security/security_opts.go
+// GitHub: https://github.com/moby/moby/blob/client/v0.6.3/client/pkg/security/security_opts.go
 // Kind: struct
 // Usecase: wrap Engine client helper type KeyValue.
 type KeyValue = security.KeyValue
@@ -19,7 +19,7 @@ type KeyValue = security.KeyValue
 // # Option contains the name and options of a security option
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/client/pkg/security#Option
-// GitHub: https://github.com/moby/moby/blob/client/v0.6.2/client/pkg/security/security_opts.go
+// GitHub: https://github.com/moby/moby/blob/client/v0.6.3/client/pkg/security/security_opts.go
 // Kind: struct
 // Usecase: wrap Engine client helper type Option.
 type Option = security.Option

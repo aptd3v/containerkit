@@ -1,0 +1,182 @@
+{
+  "connect": {
+    "fromEnv": true,
+    "timeout": "10s",
+    "dryRun": false,
+    "maxConcurrency": 2
+  },
+  "flow": {
+    "name": "ci",
+    "steps": [
+      {
+        "name": "build",
+        "op": "buildImage",
+        "priority": "high",
+        "dependsOn": [],
+        "options": {
+          "parseDockerfile": "FROM alpine:latest\nCMD [\"true\"]\n",
+          "tag": "app:ci",
+          "noCache": false,
+          "pull": true,
+          "platform": "linux/arm64",
+          "env": { "name": "APP", "value": "1" },
+          "label": [{ "name": "kit.edge", "value": "" }]
+        }
+      },
+      {
+        "name": "lint",
+        "op": "containerRun",
+        "dependsOn": ["build"],
+        "retry": 0,
+        "priority": "normal",
+        "always": false,
+        "options": {
+          "image": "app:ci",
+          "command": ["true"]
+        }
+      },
+      {
+        "name": "up",
+        "op": "composeUp",
+        "dependsOn": ["build"],
+        "yaml": "name: app\nservices:\n  db:\n    image: postgres:16\n",
+        "options": {
+          "detach": true,
+          "wait": true,
+          "quiet": false,
+          "timeout": "30s",
+          "removeOrphans": false,
+          "services": ["db"]
+        }
+      },
+      {
+        "name": "port",
+        "op": "composePort",
+        "dependsOn": ["up"],
+        "service": "db",
+        "port": 5432,
+        "yaml": "name: app\nservices:\n  db:\n    image: postgres:16\n",
+        "options": {
+          "protocol": "tcp",
+          "index": 0
+        }
+      },
+      {
+        "name": "down",
+        "op": "composeDown",
+        "dependsOn": ["port"],
+        "yaml": "name: app\nservices:\n  db:\n    image: postgres:16\n",
+        "options": {
+          "removeOrphans": true,
+          "volumes": false,
+          "services": "db",
+          "timeout": 30000000000
+        }
+      },
+      {
+        "name": "test",
+        "op": "containerRun",
+        "dependsOn": ["lint", "up"],
+        "retry": 1,
+        "priority": "low",
+        "options": {
+          "image": "app:ci",
+          "command": ["go", "test", "./..."]
+        }
+      },
+      {
+        "name": "gate",
+        "op": "if",
+        "when": true,
+        "dependsOn": ["test"],
+        "then": ["ship"],
+        "else": ["hold"]
+      },
+      {
+        "name": "ship",
+        "op": "tagImage",
+        "service": "db",
+        "id": "abc",
+        "path": "compose.yaml",
+        "ref": "app:ci",
+        "repository": "app",
+        "port": 80,
+        "options": {
+          "source": "app:ci",
+          "target": "app:release"
+        }
+      },
+      {
+        "name": "hold",
+        "op": "pullImage",
+        "ref": "alpine:latest",
+        "options": {}
+      },
+      {
+        "name": "note",
+        "op": "if",
+        "when": false,
+        "precede": ["gate"],
+        "then": null,
+        "else": [
+          {
+            "name": "fallback",
+            "op": "tagImage",
+            "always": true,
+            "priority": "low",
+            "retry": 2,
+            "options": {
+              "source": "app:ci",
+              "target": "app:ci"
+            }
+          }
+        ]
+      },
+      {
+        "name": "inner",
+        "op": "subflow",
+        "precede": ["test"],
+        "steps": [
+          {
+            "name": "nested",
+            "op": "if",
+            "when": true,
+            "priority": "normal",
+            "then": [],
+            "else": [
+              {
+                "name": "skip",
+                "op": "listImages",
+                "options": {
+                  "all": "false",
+                  "filter": {
+                    "term": "reference",
+                    "values": "app:ci"
+                  }
+                }
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "name": "scan",
+        "op": "listContainers",
+        "options": {
+          "all": true,
+          "includeSize": false,
+          "limit": 10,
+          "filter": [
+            { "term": "status", "values": ["running"] },
+            { "term": "label", "values": "kit.edge=" }
+          ]
+        }
+      },
+      {
+        "name": "ping",
+        "op": "ping",
+        "dependsOn": ["down", "ship", "hold"]
+      }
+    ]
+  }
+}

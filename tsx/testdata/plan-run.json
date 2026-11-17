@@ -1,0 +1,14 @@
+{
+  "connect": {
+    "fromEnv": true
+  },
+  "yaml": "name: app\nservices:\n  api:\n    image: alpine:latest\n",
+  "actions": [
+    {
+      "op": "composeUp",
+      "options": {
+        "detach": true
+      }
+    }
+  ]
+}

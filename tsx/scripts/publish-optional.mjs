@@ -99,13 +99,26 @@ function check() {
 	}
 }
 
-export function publish() {
-	const token = process.env.NODE_AUTH_TOKEN || process.env.NPM_TOKEN;
-	if (!token) {
+// publishAuth is "oidc" when GitHub Actions can mint an npm token, and "token"
+// for a local publish. The tag workflow uses OIDC and does not pass a secret.
+export function publishAuth(env = process.env) {
+	const token = env.NODE_AUTH_TOKEN || env.NPM_TOKEN;
+	const oidc = env.ACTIONS_ID_TOKEN_REQUEST_URL && env.ACTIONS_ID_TOKEN_REQUEST_TOKEN;
+	if (!token && !oidc) {
 		throw new Error("NODE_AUTH_TOKEN or NPM_TOKEN is required");
 	}
+	return oidc ? "oidc" : "token";
+}
+
+export function publish() {
+	const mode = publishAuth();
 	check();
-	const env = { ...process.env, NODE_AUTH_TOKEN: token, NPM_TOKEN: token };
+	const env = { ...process.env };
+	if (mode === "token") {
+		const token = env.NODE_AUTH_TOKEN || env.NPM_TOKEN;
+		env.NODE_AUTH_TOKEN = token;
+		env.NPM_TOKEN = token;
+	}
 	execSync("npm publish --access public", {
 		cwd: packageDir,
 		stdio: "inherit",

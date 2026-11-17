@@ -12,6 +12,8 @@ import (
 const (
 	// LabelFlow is the Docker label for the flow name.
 	LabelFlow = "containerkit.flow"
+	// LabelRun is the Docker label for one Flow.Run.
+	LabelRun = "containerkit.run"
 	// LabelTask is the Docker label for the step name.
 	LabelTask = "containerkit.task"
 	// LabelDepends lists predecessor container names, sorted and comma-separated.
@@ -26,10 +28,18 @@ func List(ctx context.Context, cli *kit.Client, flowName string) (kit.ContainerL
 	if cli == nil || cli.Engine() == nil {
 		return kit.ContainerListResult{}, ErrNoClient
 	}
-	if ctx == nil {
-		ctx = context.Background()
+	return listLabeled(ctx, cli, flowName, "")
+}
+
+func listLabeled(ctx context.Context, cli *kit.Client, flowName, runID string) (kit.ContainerListResult, error) {
+	if cli == nil || cli.Engine() == nil {
+		return kit.ContainerListResult{}, ErrNoClient
 	}
-	return kit.ListContainers(ctx, cli.Engine(), kit.All(true), kit.Filter("label", LabelFlow+"="+flowName))
+	opts := []kit.EngineContainerListOption{kit.All(true), kit.Filter("label", LabelFlow+"="+flowName)}
+	if runID != "" {
+		opts = append(opts, kit.Filter("label", LabelRun+"="+runID))
+	}
+	return kit.ListContainers(ctx, cli.Engine(), opts...)
 }
 
 func (f *Flow) stamp() {
@@ -42,15 +52,27 @@ func (f *Flow) stamp() {
 	}
 }
 
+// stampTasks writes flow labels onto these tasks and the tasks nested under them.
+func stampTasks(tasks []*Task) {
+	for _, t := range tasks {
+		_ = t.stampContainer()
+		t.stampCompose()
+		stampTasks(t.childList())
+	}
+}
+
 func (t *Task) stampContainer() error {
 	if t == nil || t.kind != kindContainer || t.container == nil || t.alreadyCreated() {
 		return nil
 	}
 	var opts []kit.ContainerOption
 	if t.container.Name() == "" && t.name != "" {
-		opts = append(opts, kit.Name(t.name))
+		opts = append(opts, kit.Name(t.implicitName()))
 	}
 	opts = append(opts, kit.Label(LabelFlow, t.flow.name), kit.Label(LabelTask, t.name))
+	if t.flow.runID != "" {
+		opts = append(opts, kit.Label(LabelRun, t.flow.runID))
+	}
 	if deps := strings.Join(t.nearestNames(false), ","); deps != "" {
 		opts = append(opts, kit.Label(LabelDepends, deps))
 	}
@@ -61,11 +83,15 @@ func (t *Task) stampContainer() error {
 }
 
 func (t *Task) stampCompose() {
-	if t == nil || t.kind != kindCompose || t.composeApp == nil {
+	if t == nil || (t.kind != kindCompose && t.kind != kindService) || t.composeApp == nil {
 		return
 	}
 	for _, svc := range t.composeApp.Services() {
-		_ = svc.Apply(kit.Label(LabelFlow, t.flow.name), kit.Label(LabelTask, t.name))
+		opts := []kit.ServiceOption{kit.Label(LabelFlow, t.flow.name), kit.Label(LabelTask, t.name)}
+		if t.flow.runID != "" {
+			opts = append(opts, kit.Label(LabelRun, t.flow.runID))
+		}
+		_ = svc.Apply(opts...)
 	}
 }
 
@@ -78,6 +104,13 @@ func (t *Task) alreadyCreated() bool {
 	return t.id != ""
 }
 
+func (t *Task) implicitName() string {
+	if t == nil || t.flow == nil || t.flow.runID == "" || t.name == "" {
+		return ""
+	}
+	return t.flow.name + "-" + t.name + "-" + t.flow.runID
+}
+
 func (t *Task) containerName() string {
 	if t == nil || t.kind != kindContainer {
 		return ""
@@ -85,10 +118,10 @@ func (t *Task) containerName() string {
 	if t.container != nil && t.container.Name() != "" {
 		return t.container.Name()
 	}
-	if t.name != "" {
-		return t.name
+	if name := t.implicitName(); name != "" {
+		return name
 	}
-	return ""
+	return t.name
 }
 
 func (t *Task) composeContainerNames() []string {
@@ -138,27 +171,33 @@ func (t *Task) nearestNames(successors bool) []string {
 	return slices.Compact(names)
 }
 
-// List returns containers stamped with this flow's name, including stopped ones.
+// List returns containers stamped with this run, including stopped ones.
+// Before Run it is empty and does not query the engine.
 func (f *Flow) List(ctx context.Context) (kit.ContainerListResult, error) {
 	if f == nil {
 		return kit.ContainerListResult{}, errors.New("flow is nil")
 	}
-	return List(ctx, f.cli, f.name)
+	f.mu.Lock()
+	runID := f.runID
+	f.mu.Unlock()
+	if runID == "" {
+		return kit.ContainerListResult{}, nil
+	}
+	return listLabeled(ctx, f.cli, f.name, runID)
 }
 
 // Remove downs every Compose project the graph referenced, then force-removes
-// Container-step IDs and any leftover containers stamped with this flow's name.
+// Container-step IDs and leftover containers stamped with this run.
+// Before Run the leftover sweep is empty and does not query the engine.
 func (f *Flow) Remove(ctx context.Context) error {
 	if f == nil {
 		return errors.New("flow is nil")
-	}
-	if ctx == nil {
-		ctx = context.Background()
 	}
 	var errs []error
 	apps := f.composeList()
 	f.mu.Lock()
 	ids := append([]string(nil), f.created...)
+	runID := f.runID
 	f.mu.Unlock()
 	api := f.engine()
 	if api == nil {
@@ -180,7 +219,10 @@ func (f *Flow) Remove(ctx context.Context) error {
 			errs = append(errs, err)
 		}
 	}
-	leftover, err := f.List(ctx)
+	if runID == "" {
+		return errors.Join(errs...)
+	}
+	leftover, err := listLabeled(ctx, f.cli, f.name, runID)
 	if err != nil {
 		errs = append(errs, err)
 		return errors.Join(errs...)
@@ -189,6 +231,9 @@ func (f *Flow) Remove(ctx context.Context) error {
 		if err := removeContainer(ctx, api, ctr.ID); err != nil {
 			errs = append(errs, err)
 		}
+	}
+	if err := f.removeVolumes(ctx, api, runID); err != nil {
+		errs = append(errs, err)
 	}
 	return errors.Join(errs...)
 }

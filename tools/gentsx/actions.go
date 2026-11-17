@@ -41,6 +41,7 @@ func writeActions(root string, verbs []verb) error {
 		fmt.Fprintf(&buf, "\t| %q\n", v.op)
 	}
 	buf.WriteString(";\n\n")
+	writeComposeStepSpec(&buf, verbs)
 
 	for _, v := range verbs {
 		writeVerb(&buf, v)
@@ -52,6 +53,33 @@ func writeActions(root string, verbs []verb) error {
 	}
 	fmt.Printf("wrote %s (%d verbs)\n", out, len(verbs))
 	return nil
+}
+
+// writeComposeStepSpec pairs each compose op with the positionals and options
+// of the plan function of the same name. ComposeStep uses it.
+func writeComposeStepSpec(buf *bytes.Buffer, verbs []verb) {
+	writeJSDoc(buf, "", `One compose operation and the options that belong to it.
+
+@remarks
+The op selects the options type and the required fields.
+An inline options object is checked against that type.
+A predeclared options value is checked structurally,
+so extra properties can remain when its type overlaps.`)
+	buf.WriteString("export type ComposeStepSpec =\n")
+	for _, v := range verbs {
+		if !strings.HasPrefix(v.op, "compose") {
+			continue
+		}
+		fmt.Fprintf(buf, "\t| { op: %q", v.op)
+		for _, p := range v.positionals {
+			fmt.Fprintf(buf, "; %s: %s", p.name, p.tsType)
+		}
+		if v.bag != "" {
+			fmt.Fprintf(buf, "; options?: %s", v.bag)
+		}
+		buf.WriteString(" }\n")
+	}
+	buf.WriteString(";\n\n")
 }
 
 func writeVerb(buf *bytes.Buffer, v verb) {

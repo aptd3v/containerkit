@@ -5,10 +5,14 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"io"
 	"math"
+	"os"
 	"strconv"
+	"strings"
 	"time"
 
+	"github.com/aptd3v/containerkit/pkg/progress"
 	ocispec "github.com/opencontainers/image-spec/specs-go/v1"
 )
 
@@ -21,10 +25,11 @@ type Plan struct {
 }
 
 type jsonPlan struct {
-	Connect map[string]any  `json:"connect"`
-	YAML    string          `json:"yaml"`
-	Actions []planAction    `json:"actions"`
-	Flow    json.RawMessage `json:"flow"`
+	Connect  map[string]any  `json:"connect"`
+	YAML     string          `json:"yaml"`
+	Actions  []planAction    `json:"actions"`
+	Flow     json.RawMessage `json:"flow"`
+	Progress string          `json:"progress"`
 }
 
 // ExecFlow runs a taskflow document on an already-dialed client.
@@ -158,6 +163,9 @@ func (p *Plan) Validate() error {
 			errs = append(errs, err)
 		}
 	}
+	if _, err := progressMode(p.raw.Progress); err != nil {
+		errs = append(errs, err)
+	}
 	return join(errs...)
 }
 
@@ -170,18 +178,65 @@ func (p *Plan) Compose() *Compose {
 }
 
 // Run dials [Connect] from the plan and executes its actions.
+// Progress is written only when the plan sets progress. An empty field stays silent.
 func (p *Plan) Run(ctx context.Context) error {
 	_, err := p.exec(ctx)
 	return err
 }
 
 // ExecJSON loads a plan and runs it, returning the last action's JSON result.
+// Progress is written to stderr only when the plan sets progress.
 func ExecJSON(ctx context.Context, data []byte) ([]byte, error) {
 	return ImportPlan(data).exec(ctx)
 }
 
+// ExecCLI runs a plan the way containerkit exec does.
+// Progress is written to errw. An empty progress field uses auto.
+// "off" writes nothing. The returned bytes are the action result.
+func ExecCLI(ctx context.Context, data []byte, errw io.Writer) ([]byte, error) {
+	return ImportPlan(data).execProgress(ctx, errw, true)
+}
+
 func (p *Plan) exec(ctx context.Context) ([]byte, error) {
+	return p.execProgress(ctx, nil, false)
+}
+
+func progressMode(field string) (string, error) {
+	mode := strings.ToLower(strings.TrimSpace(field))
+	switch mode {
+	case "", "auto", "plain", "tty", "quiet", "json", "off":
+		return mode, nil
+	default:
+		return "", cfgErr("tsx", "progress", "progress", fmt.Errorf("%w: progress %q", errInvalid, field))
+	}
+}
+
+// attachPlanProgress puts a logger on ctx. An empty field stays silent unless
+// defaultAuto is set, which is the containerkit exec command. "off" writes nothing.
+func attachPlanProgress(ctx context.Context, field string, errw io.Writer, defaultAuto bool) (context.Context, error) {
+	mode, err := progressMode(field)
+	if err != nil {
+		return ctx, err
+	}
+	if mode == "" && defaultAuto {
+		mode = "auto"
+	}
+	if mode == "" || mode == "off" {
+		return ctx, nil
+	}
+	w := errw
+	if w == nil {
+		w = os.Stderr
+	}
+	return NewLogger(OutputStream(w), Progress(progress.Mode(mode))).Context(ctx), nil
+}
+
+func (p *Plan) execProgress(ctx context.Context, errw io.Writer, defaultAuto bool) ([]byte, error) {
 	if err := p.Validate(); err != nil {
+		return nil, err
+	}
+	ctx, err := attachPlanProgress(ctx, p.raw.Progress, errw, defaultAuto)
+	if err != nil {
 		return nil, err
 	}
 	opts, err := decodeConnectOptions(p.raw.Connect)

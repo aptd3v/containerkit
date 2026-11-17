@@ -9,7 +9,7 @@ import "github.com/moby/moby/api/types/swarm"
 // Annotations represents how to describe an object.
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/api/types/swarm#Annotations
-// GitHub: https://github.com/moby/moby/blob/api/v1.56.1/api/types/swarm/common.go
+// GitHub: https://github.com/moby/moby/blob/api/v1.57.0/api/types/swarm/common.go
 // Kind: struct
 // Usecase: wrap the Engine API type Annotations from swarm.
 type Annotations = swarm.Annotations
@@ -20,7 +20,7 @@ type Annotations = swarm.Annotations
 // AppArmorOpts
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/api/types/swarm#AppArmorMode
-// GitHub: https://github.com/moby/moby/blob/api/v1.56.1/api/types/swarm/container.go
+// GitHub: https://github.com/moby/moby/blob/api/v1.57.0/api/types/swarm/container.go
 // Kind: named:string
 // Underlying: string
 // Usecase: wrap the Engine API type AppArmorMode from swarm.
@@ -32,7 +32,7 @@ type AppArmorMode = swarm.AppArmorMode
 // container.  Currently, custom AppArmor profiles are not supported.
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/api/types/swarm#AppArmorOpts
-// GitHub: https://github.com/moby/moby/blob/api/v1.56.1/api/types/swarm/container.go
+// GitHub: https://github.com/moby/moby/blob/api/v1.57.0/api/types/swarm/container.go
 // Kind: struct
 // Usecase: wrap the Engine API type AppArmorOpts from swarm.
 type AppArmorOpts = swarm.AppArmorOpts
@@ -42,7 +42,7 @@ type AppArmorOpts = swarm.AppArmorOpts
 // CAConfig represents CA configuration.
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/api/types/swarm#CAConfig
-// GitHub: https://github.com/moby/moby/blob/api/v1.56.1/api/types/swarm/swarm.go
+// GitHub: https://github.com/moby/moby/blob/api/v1.57.0/api/types/swarm/swarm.go
 // Kind: struct
 // References: time.Duration
 // Usecase: wrap the Engine API type CAConfig from swarm.
@@ -54,7 +54,7 @@ type CAConfig = swarm.CAConfig
 // it contains the same information as "Swarm", but without the JoinTokens
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/api/types/swarm#ClusterInfo
-// GitHub: https://github.com/moby/moby/blob/api/v1.56.1/api/types/swarm/swarm.go
+// GitHub: https://github.com/moby/moby/blob/api/v1.57.0/api/types/swarm/swarm.go
 // Kind: struct
 // References: net/netip.Prefix
 // Usecase: wrap the Engine API type ClusterInfo from swarm.
@@ -65,7 +65,7 @@ type ClusterInfo = swarm.ClusterInfo
 // Config represents a config.
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/api/types/swarm#Config
-// GitHub: https://github.com/moby/moby/blob/api/v1.56.1/api/types/swarm/config.go
+// GitHub: https://github.com/moby/moby/blob/api/v1.57.0/api/types/swarm/config.go
 // Kind: struct
 // Usecase: wrap the Engine API type Config from swarm.
 type Config = swarm.Config
@@ -76,7 +76,7 @@ type Config = swarm.Config
 // on the creation of a new config.
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/api/types/swarm#ConfigCreateResponse
-// GitHub: https://github.com/moby/moby/blob/api/v1.56.1/api/types/swarm/config.go
+// GitHub: https://github.com/moby/moby/blob/api/v1.57.0/api/types/swarm/config.go
 // Kind: struct
 // Usecase: wrap the Engine API type ConfigCreateResponse from swarm.
 type ConfigCreateResponse = swarm.ConfigCreateResponse
@@ -86,7 +86,7 @@ type ConfigCreateResponse = swarm.ConfigCreateResponse
 // # ConfigReference is a reference to a config in swarm
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/api/types/swarm#ConfigReference
-// GitHub: https://github.com/moby/moby/blob/api/v1.56.1/api/types/swarm/config.go
+// GitHub: https://github.com/moby/moby/blob/api/v1.57.0/api/types/swarm/config.go
 // Kind: struct
 // Usecase: wrap the Engine API type ConfigReference from swarm.
 type ConfigReference = swarm.ConfigReference
@@ -96,7 +96,7 @@ type ConfigReference = swarm.ConfigReference
 // # ConfigReferenceFileTarget is a file target in a config reference
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/api/types/swarm#ConfigReferenceFileTarget
-// GitHub: https://github.com/moby/moby/blob/api/v1.56.1/api/types/swarm/config.go
+// GitHub: https://github.com/moby/moby/blob/api/v1.57.0/api/types/swarm/config.go
 // Kind: struct
 // References: os.FileMode
 // Usecase: wrap the Engine API type ConfigReferenceFileTarget from swarm.
@@ -108,7 +108,7 @@ type ConfigReferenceFileTarget = swarm.ConfigReferenceFileTarget
 // isn't mounted into the container but instead has some other purpose.
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/api/types/swarm#ConfigReferenceRuntimeTarget
-// GitHub: https://github.com/moby/moby/blob/api/v1.56.1/api/types/swarm/config.go
+// GitHub: https://github.com/moby/moby/blob/api/v1.57.0/api/types/swarm/config.go
 // Kind: struct
 // Usecase: wrap the Engine API type ConfigReferenceRuntimeTarget from swarm.
 type ConfigReferenceRuntimeTarget = swarm.ConfigReferenceRuntimeTarget
@@ -118,7 +118,7 @@ type ConfigReferenceRuntimeTarget = swarm.ConfigReferenceRuntimeTarget
 // # ConfigSpec represents a config specification from a config in swarm
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/api/types/swarm#ConfigSpec
-// GitHub: https://github.com/moby/moby/blob/api/v1.56.1/api/types/swarm/config.go
+// GitHub: https://github.com/moby/moby/blob/api/v1.57.0/api/types/swarm/config.go
 // Kind: struct
 // Usecase: wrap the Engine API type ConfigSpec from swarm.
 type ConfigSpec = swarm.ConfigSpec
@@ -128,7 +128,7 @@ type ConfigSpec = swarm.ConfigSpec
 // ContainerSpec represents the spec of a container.
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/api/types/swarm#ContainerSpec
-// GitHub: https://github.com/moby/moby/blob/api/v1.56.1/api/types/swarm/container.go
+// GitHub: https://github.com/moby/moby/blob/api/v1.57.0/api/types/swarm/container.go
 // Kind: struct
 // References: github.com/moby/moby/api/types/container.HealthConfig, github.com/moby/moby/api/types/container.Isolation, github.com/moby/moby/api/types/container.Ulimit, github.com/moby/moby/api/types/mount.Mount, time.Duration
 // Usecase: wrap the Engine API type ContainerSpec from swarm.
@@ -139,7 +139,7 @@ type ContainerSpec = swarm.ContainerSpec
 // ContainerStatus represents the status of a container.
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/api/types/swarm#ContainerStatus
-// GitHub: https://github.com/moby/moby/blob/api/v1.56.1/api/types/swarm/task.go
+// GitHub: https://github.com/moby/moby/blob/api/v1.57.0/api/types/swarm/task.go
 // Kind: struct
 // Usecase: wrap the Engine API type ContainerStatus from swarm.
 type ContainerStatus = swarm.ContainerStatus
@@ -149,7 +149,7 @@ type ContainerStatus = swarm.ContainerStatus
 // CredentialSpec for managed service account (Windows only)
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/api/types/swarm#CredentialSpec
-// GitHub: https://github.com/moby/moby/blob/api/v1.56.1/api/types/swarm/container.go
+// GitHub: https://github.com/moby/moby/blob/api/v1.57.0/api/types/swarm/container.go
 // Kind: struct
 // Usecase: wrap the Engine API type CredentialSpec from swarm.
 type CredentialSpec = swarm.CredentialSpec
@@ -163,7 +163,7 @@ type CredentialSpec = swarm.CredentialSpec
 // TODO: `domain` is not supported yet.
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/api/types/swarm#DNSConfig
-// GitHub: https://github.com/moby/moby/blob/api/v1.56.1/api/types/swarm/container.go
+// GitHub: https://github.com/moby/moby/blob/api/v1.57.0/api/types/swarm/container.go
 // Kind: struct
 // References: net/netip.Addr
 // Usecase: wrap the Engine API type DNSConfig from swarm.
@@ -177,7 +177,7 @@ type DNSConfig = swarm.DNSConfig
 // Value is used to count the resource (SSD=5, HDD=3, ...)
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/api/types/swarm#DiscreteGenericResource
-// GitHub: https://github.com/moby/moby/blob/api/v1.56.1/api/types/swarm/task.go
+// GitHub: https://github.com/moby/moby/blob/api/v1.57.0/api/types/swarm/task.go
 // Kind: struct
 // Usecase: wrap the Engine API type DiscreteGenericResource from swarm.
 type DiscreteGenericResource = swarm.DiscreteGenericResource
@@ -187,7 +187,7 @@ type DiscreteGenericResource = swarm.DiscreteGenericResource
 // DispatcherConfig represents dispatcher configuration.
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/api/types/swarm#DispatcherConfig
-// GitHub: https://github.com/moby/moby/blob/api/v1.56.1/api/types/swarm/swarm.go
+// GitHub: https://github.com/moby/moby/blob/api/v1.57.0/api/types/swarm/swarm.go
 // Kind: struct
 // References: time.Duration
 // Usecase: wrap the Engine API type DispatcherConfig from swarm.
@@ -198,7 +198,7 @@ type DispatcherConfig = swarm.DispatcherConfig
 // Driver represents a driver (network, logging, secrets backend).
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/api/types/swarm#Driver
-// GitHub: https://github.com/moby/moby/blob/api/v1.56.1/api/types/swarm/common.go
+// GitHub: https://github.com/moby/moby/blob/api/v1.57.0/api/types/swarm/common.go
 // Kind: struct
 // Usecase: wrap the Engine API type Driver from swarm.
 type Driver = swarm.Driver
@@ -208,7 +208,7 @@ type Driver = swarm.Driver
 // EncryptionConfig controls at-rest encryption of data and keys.
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/api/types/swarm#EncryptionConfig
-// GitHub: https://github.com/moby/moby/blob/api/v1.56.1/api/types/swarm/swarm.go
+// GitHub: https://github.com/moby/moby/blob/api/v1.57.0/api/types/swarm/swarm.go
 // Kind: struct
 // Usecase: wrap the Engine API type EncryptionConfig from swarm.
 type EncryptionConfig = swarm.EncryptionConfig
@@ -218,7 +218,7 @@ type EncryptionConfig = swarm.EncryptionConfig
 // Endpoint represents an endpoint.
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/api/types/swarm#Endpoint
-// GitHub: https://github.com/moby/moby/blob/api/v1.56.1/api/types/swarm/network.go
+// GitHub: https://github.com/moby/moby/blob/api/v1.57.0/api/types/swarm/network.go
 // Kind: struct
 // Usecase: wrap the Engine API type Endpoint from swarm.
 type Endpoint = swarm.Endpoint
@@ -228,7 +228,7 @@ type Endpoint = swarm.Endpoint
 // EndpointSpec represents the spec of an endpoint.
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/api/types/swarm#EndpointSpec
-// GitHub: https://github.com/moby/moby/blob/api/v1.56.1/api/types/swarm/network.go
+// GitHub: https://github.com/moby/moby/blob/api/v1.57.0/api/types/swarm/network.go
 // Kind: struct
 // Usecase: wrap the Engine API type EndpointSpec from swarm.
 type EndpointSpec = swarm.EndpointSpec
@@ -238,7 +238,7 @@ type EndpointSpec = swarm.EndpointSpec
 // EndpointVirtualIP represents the virtual ip of a port.
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/api/types/swarm#EndpointVirtualIP
-// GitHub: https://github.com/moby/moby/blob/api/v1.56.1/api/types/swarm/network.go
+// GitHub: https://github.com/moby/moby/blob/api/v1.57.0/api/types/swarm/network.go
 // Kind: struct
 // References: net/netip.Prefix
 // Usecase: wrap the Engine API type EndpointVirtualIP from swarm.
@@ -249,7 +249,7 @@ type EndpointVirtualIP = swarm.EndpointVirtualIP
 // EngineDescription represents the description of an engine.
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/api/types/swarm#EngineDescription
-// GitHub: https://github.com/moby/moby/blob/api/v1.56.1/api/types/swarm/node.go
+// GitHub: https://github.com/moby/moby/blob/api/v1.57.0/api/types/swarm/node.go
 // Kind: struct
 // Usecase: wrap the Engine API type EngineDescription from swarm.
 type EngineDescription = swarm.EngineDescription
@@ -259,7 +259,7 @@ type EngineDescription = swarm.EngineDescription
 // ExternalCA defines external CA to be used by the cluster.
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/api/types/swarm#ExternalCA
-// GitHub: https://github.com/moby/moby/blob/api/v1.56.1/api/types/swarm/swarm.go
+// GitHub: https://github.com/moby/moby/blob/api/v1.57.0/api/types/swarm/swarm.go
 // Kind: struct
 // Usecase: wrap the Engine API type ExternalCA from swarm.
 type ExternalCA = swarm.ExternalCA
@@ -269,7 +269,7 @@ type ExternalCA = swarm.ExternalCA
 // ExternalCAProtocol represents type of external CA.
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/api/types/swarm#ExternalCAProtocol
-// GitHub: https://github.com/moby/moby/blob/api/v1.56.1/api/types/swarm/swarm.go
+// GitHub: https://github.com/moby/moby/blob/api/v1.57.0/api/types/swarm/swarm.go
 // Kind: named:string
 // Underlying: string
 // Usecase: wrap the Engine API type ExternalCAProtocol from swarm.
@@ -280,7 +280,7 @@ type ExternalCAProtocol = swarm.ExternalCAProtocol
 // FailureAction is the action to perform when updating a service fails.
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/api/types/swarm#FailureAction
-// GitHub: https://github.com/moby/moby/blob/api/v1.56.1/api/types/swarm/service.go
+// GitHub: https://github.com/moby/moby/blob/api/v1.57.0/api/types/swarm/service.go
 // Kind: named:string
 // Underlying: string
 // Usecase: wrap the Engine API type FailureAction from swarm.
@@ -292,7 +292,7 @@ type FailureAction = swarm.FailureAction
 // be either an integer (e.g: SSD=3) or a string (e.g: SSD=sda1)
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/api/types/swarm#GenericResource
-// GitHub: https://github.com/moby/moby/blob/api/v1.56.1/api/types/swarm/task.go
+// GitHub: https://github.com/moby/moby/blob/api/v1.57.0/api/types/swarm/task.go
 // Kind: struct
 // Usecase: wrap the Engine API type GenericResource from swarm.
 type GenericResource = swarm.GenericResource
@@ -306,7 +306,7 @@ type GenericResource = swarm.GenericResource
 // This type is deliberately empty.
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/api/types/swarm#GlobalJob
-// GitHub: https://github.com/moby/moby/blob/api/v1.56.1/api/types/swarm/service.go
+// GitHub: https://github.com/moby/moby/blob/api/v1.57.0/api/types/swarm/service.go
 // Kind: struct
 // Usecase: wrap the Engine API type GlobalJob from swarm.
 type GlobalJob = swarm.GlobalJob
@@ -316,7 +316,7 @@ type GlobalJob = swarm.GlobalJob
 // GlobalService is a kind of ServiceMode.
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/api/types/swarm#GlobalService
-// GitHub: https://github.com/moby/moby/blob/api/v1.56.1/api/types/swarm/service.go
+// GitHub: https://github.com/moby/moby/blob/api/v1.57.0/api/types/swarm/service.go
 // Kind: struct
 // Usecase: wrap the Engine API type GlobalService from swarm.
 type GlobalService = swarm.GlobalService
@@ -326,7 +326,7 @@ type GlobalService = swarm.GlobalService
 // IPAMConfig represents ipam configuration.
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/api/types/swarm#IPAMConfig
-// GitHub: https://github.com/moby/moby/blob/api/v1.56.1/api/types/swarm/network.go
+// GitHub: https://github.com/moby/moby/blob/api/v1.57.0/api/types/swarm/network.go
 // Kind: struct
 // References: net/netip.Addr, net/netip.Prefix
 // Usecase: wrap the Engine API type IPAMConfig from swarm.
@@ -337,7 +337,7 @@ type IPAMConfig = swarm.IPAMConfig
 // IPAMOptions represents ipam options.
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/api/types/swarm#IPAMOptions
-// GitHub: https://github.com/moby/moby/blob/api/v1.56.1/api/types/swarm/network.go
+// GitHub: https://github.com/moby/moby/blob/api/v1.57.0/api/types/swarm/network.go
 // Kind: struct
 // Usecase: wrap the Engine API type IPAMOptions from swarm.
 type IPAMOptions = swarm.IPAMOptions
@@ -347,7 +347,7 @@ type IPAMOptions = swarm.IPAMOptions
 // Info represents generic information about swarm.
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/api/types/swarm#Info
-// GitHub: https://github.com/moby/moby/blob/api/v1.56.1/api/types/swarm/swarm.go
+// GitHub: https://github.com/moby/moby/blob/api/v1.57.0/api/types/swarm/swarm.go
 // Kind: struct
 // Usecase: wrap the Engine API type Info from swarm.
 type Info = swarm.Info
@@ -357,7 +357,7 @@ type Info = swarm.Info
 // InitRequest is the request used to init a swarm.
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/api/types/swarm#InitRequest
-// GitHub: https://github.com/moby/moby/blob/api/v1.56.1/api/types/swarm/swarm.go
+// GitHub: https://github.com/moby/moby/blob/api/v1.57.0/api/types/swarm/swarm.go
 // Kind: struct
 // References: net/netip.Prefix
 // Usecase: wrap the Engine API type InitRequest from swarm.
@@ -368,7 +368,7 @@ type InitRequest = swarm.InitRequest
 // JobStatus is the status of a job-type service.
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/api/types/swarm#JobStatus
-// GitHub: https://github.com/moby/moby/blob/api/v1.56.1/api/types/swarm/service.go
+// GitHub: https://github.com/moby/moby/blob/api/v1.57.0/api/types/swarm/service.go
 // Kind: struct
 // References: time.Time
 // Usecase: wrap the Engine API type JobStatus from swarm.
@@ -379,7 +379,7 @@ type JobStatus = swarm.JobStatus
 // JoinRequest is the request used to join a swarm.
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/api/types/swarm#JoinRequest
-// GitHub: https://github.com/moby/moby/blob/api/v1.56.1/api/types/swarm/swarm.go
+// GitHub: https://github.com/moby/moby/blob/api/v1.57.0/api/types/swarm/swarm.go
 // Kind: struct
 // Usecase: wrap the Engine API type JoinRequest from swarm.
 type JoinRequest = swarm.JoinRequest
@@ -389,7 +389,7 @@ type JoinRequest = swarm.JoinRequest
 // JoinTokens contains the tokens workers and managers need to join the swarm.
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/api/types/swarm#JoinTokens
-// GitHub: https://github.com/moby/moby/blob/api/v1.56.1/api/types/swarm/swarm.go
+// GitHub: https://github.com/moby/moby/blob/api/v1.57.0/api/types/swarm/swarm.go
 // Kind: struct
 // Usecase: wrap the Engine API type JoinTokens from swarm.
 type JoinTokens = swarm.JoinTokens
@@ -399,7 +399,7 @@ type JoinTokens = swarm.JoinTokens
 // Limit describes limits on resources which can be requested by a task.
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/api/types/swarm#Limit
-// GitHub: https://github.com/moby/moby/blob/api/v1.56.1/api/types/swarm/task.go
+// GitHub: https://github.com/moby/moby/blob/api/v1.57.0/api/types/swarm/task.go
 // Kind: struct
 // Usecase: wrap the Engine API type Limit from swarm.
 type Limit = swarm.Limit
@@ -409,7 +409,7 @@ type Limit = swarm.Limit
 // LocalNodeState represents the state of the local node.
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/api/types/swarm#LocalNodeState
-// GitHub: https://github.com/moby/moby/blob/api/v1.56.1/api/types/swarm/swarm.go
+// GitHub: https://github.com/moby/moby/blob/api/v1.57.0/api/types/swarm/swarm.go
 // Kind: named:string
 // Underlying: string
 // Usecase: wrap the Engine API type LocalNodeState from swarm.
@@ -420,7 +420,7 @@ type LocalNodeState = swarm.LocalNodeState
 // ManagerStatus represents the status of a manager.
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/api/types/swarm#ManagerStatus
-// GitHub: https://github.com/moby/moby/blob/api/v1.56.1/api/types/swarm/node.go
+// GitHub: https://github.com/moby/moby/blob/api/v1.57.0/api/types/swarm/node.go
 // Kind: struct
 // Usecase: wrap the Engine API type ManagerStatus from swarm.
 type ManagerStatus = swarm.ManagerStatus
@@ -430,7 +430,7 @@ type ManagerStatus = swarm.ManagerStatus
 // Meta is a base object inherited by most of the other once.
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/api/types/swarm#Meta
-// GitHub: https://github.com/moby/moby/blob/api/v1.56.1/api/types/swarm/common.go
+// GitHub: https://github.com/moby/moby/blob/api/v1.57.0/api/types/swarm/common.go
 // Kind: struct
 // References: time.Time
 // Usecase: wrap the Engine API type Meta from swarm.
@@ -444,7 +444,7 @@ type Meta = swarm.Meta
 // Value is used to identify the resource (GPU="UUID-1", FPGA="/dev/sdb5", ...)
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/api/types/swarm#NamedGenericResource
-// GitHub: https://github.com/moby/moby/blob/api/v1.56.1/api/types/swarm/task.go
+// GitHub: https://github.com/moby/moby/blob/api/v1.57.0/api/types/swarm/task.go
 // Kind: struct
 // Usecase: wrap the Engine API type NamedGenericResource from swarm.
 type NamedGenericResource = swarm.NamedGenericResource
@@ -454,7 +454,7 @@ type NamedGenericResource = swarm.NamedGenericResource
 // Network represents a network.
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/api/types/swarm#Network
-// GitHub: https://github.com/moby/moby/blob/api/v1.56.1/api/types/swarm/network.go
+// GitHub: https://github.com/moby/moby/blob/api/v1.57.0/api/types/swarm/network.go
 // Kind: struct
 // Usecase: wrap the Engine API type Network from swarm.
 type Network = swarm.Network
@@ -464,7 +464,7 @@ type Network = swarm.Network
 // NetworkAttachment represents a network attachment.
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/api/types/swarm#NetworkAttachment
-// GitHub: https://github.com/moby/moby/blob/api/v1.56.1/api/types/swarm/network.go
+// GitHub: https://github.com/moby/moby/blob/api/v1.57.0/api/types/swarm/network.go
 // Kind: struct
 // References: net/netip.Prefix
 // Usecase: wrap the Engine API type NetworkAttachment from swarm.
@@ -475,7 +475,7 @@ type NetworkAttachment = swarm.NetworkAttachment
 // NetworkAttachmentConfig represents the configuration of a network attachment.
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/api/types/swarm#NetworkAttachmentConfig
-// GitHub: https://github.com/moby/moby/blob/api/v1.56.1/api/types/swarm/network.go
+// GitHub: https://github.com/moby/moby/blob/api/v1.57.0/api/types/swarm/network.go
 // Kind: struct
 // Usecase: wrap the Engine API type NetworkAttachmentConfig from swarm.
 type NetworkAttachmentConfig = swarm.NetworkAttachmentConfig
@@ -486,7 +486,7 @@ type NetworkAttachmentConfig = swarm.NetworkAttachmentConfig
 // attachment tasks
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/api/types/swarm#NetworkAttachmentSpec
-// GitHub: https://github.com/moby/moby/blob/api/v1.56.1/api/types/swarm/runtime.go
+// GitHub: https://github.com/moby/moby/blob/api/v1.57.0/api/types/swarm/runtime.go
 // Kind: struct
 // Usecase: wrap the Engine API type NetworkAttachmentSpec from swarm.
 type NetworkAttachmentSpec = swarm.NetworkAttachmentSpec
@@ -496,7 +496,7 @@ type NetworkAttachmentSpec = swarm.NetworkAttachmentSpec
 // NetworkSpec represents the spec of a network.
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/api/types/swarm#NetworkSpec
-// GitHub: https://github.com/moby/moby/blob/api/v1.56.1/api/types/swarm/network.go
+// GitHub: https://github.com/moby/moby/blob/api/v1.57.0/api/types/swarm/network.go
 // Kind: struct
 // References: github.com/moby/moby/api/types/network.ConfigReference
 // Usecase: wrap the Engine API type NetworkSpec from swarm.
@@ -507,7 +507,7 @@ type NetworkSpec = swarm.NetworkSpec
 // Node represents a node.
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/api/types/swarm#Node
-// GitHub: https://github.com/moby/moby/blob/api/v1.56.1/api/types/swarm/node.go
+// GitHub: https://github.com/moby/moby/blob/api/v1.57.0/api/types/swarm/node.go
 // Kind: struct
 // Usecase: wrap the Engine API type Node from swarm.
 type Node = swarm.Node
@@ -517,7 +517,7 @@ type Node = swarm.Node
 // NodeAvailability represents the availability of a node.
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/api/types/swarm#NodeAvailability
-// GitHub: https://github.com/moby/moby/blob/api/v1.56.1/api/types/swarm/node.go
+// GitHub: https://github.com/moby/moby/blob/api/v1.57.0/api/types/swarm/node.go
 // Kind: named:string
 // Underlying: string
 // Usecase: wrap the Engine API type NodeAvailability from swarm.
@@ -528,7 +528,7 @@ type NodeAvailability = swarm.NodeAvailability
 // # NodeCSIInfo represents information about a CSI plugin available on the node
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/api/types/swarm#NodeCSIInfo
-// GitHub: https://github.com/moby/moby/blob/api/v1.56.1/api/types/swarm/node.go
+// GitHub: https://github.com/moby/moby/blob/api/v1.57.0/api/types/swarm/node.go
 // Kind: struct
 // Usecase: wrap the Engine API type NodeCSIInfo from swarm.
 type NodeCSIInfo = swarm.NodeCSIInfo
@@ -538,7 +538,7 @@ type NodeCSIInfo = swarm.NodeCSIInfo
 // NodeDescription represents the description of a node.
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/api/types/swarm#NodeDescription
-// GitHub: https://github.com/moby/moby/blob/api/v1.56.1/api/types/swarm/node.go
+// GitHub: https://github.com/moby/moby/blob/api/v1.57.0/api/types/swarm/node.go
 // Kind: struct
 // Usecase: wrap the Engine API type NodeDescription from swarm.
 type NodeDescription = swarm.NodeDescription
@@ -548,7 +548,7 @@ type NodeDescription = swarm.NodeDescription
 // NodeRole represents the role of a node.
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/api/types/swarm#NodeRole
-// GitHub: https://github.com/moby/moby/blob/api/v1.56.1/api/types/swarm/node.go
+// GitHub: https://github.com/moby/moby/blob/api/v1.57.0/api/types/swarm/node.go
 // Kind: named:string
 // Underlying: string
 // Usecase: wrap the Engine API type NodeRole from swarm.
@@ -559,7 +559,7 @@ type NodeRole = swarm.NodeRole
 // NodeSpec represents the spec of a node.
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/api/types/swarm#NodeSpec
-// GitHub: https://github.com/moby/moby/blob/api/v1.56.1/api/types/swarm/node.go
+// GitHub: https://github.com/moby/moby/blob/api/v1.57.0/api/types/swarm/node.go
 // Kind: struct
 // Usecase: wrap the Engine API type NodeSpec from swarm.
 type NodeSpec = swarm.NodeSpec
@@ -569,7 +569,7 @@ type NodeSpec = swarm.NodeSpec
 // NodeState represents the state of a node.
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/api/types/swarm#NodeState
-// GitHub: https://github.com/moby/moby/blob/api/v1.56.1/api/types/swarm/node.go
+// GitHub: https://github.com/moby/moby/blob/api/v1.57.0/api/types/swarm/node.go
 // Kind: named:string
 // Underlying: string
 // Usecase: wrap the Engine API type NodeState from swarm.
@@ -580,7 +580,7 @@ type NodeState = swarm.NodeState
 // NodeStatus represents the status of a node.
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/api/types/swarm#NodeStatus
-// GitHub: https://github.com/moby/moby/blob/api/v1.56.1/api/types/swarm/node.go
+// GitHub: https://github.com/moby/moby/blob/api/v1.57.0/api/types/swarm/node.go
 // Kind: struct
 // Usecase: wrap the Engine API type NodeStatus from swarm.
 type NodeStatus = swarm.NodeStatus
@@ -590,7 +590,7 @@ type NodeStatus = swarm.NodeStatus
 // OrchestrationConfig represents orchestration configuration.
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/api/types/swarm#OrchestrationConfig
-// GitHub: https://github.com/moby/moby/blob/api/v1.56.1/api/types/swarm/swarm.go
+// GitHub: https://github.com/moby/moby/blob/api/v1.57.0/api/types/swarm/swarm.go
 // Kind: struct
 // Usecase: wrap the Engine API type OrchestrationConfig from swarm.
 type OrchestrationConfig = swarm.OrchestrationConfig
@@ -600,7 +600,7 @@ type OrchestrationConfig = swarm.OrchestrationConfig
 // Peer represents a peer.
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/api/types/swarm#Peer
-// GitHub: https://github.com/moby/moby/blob/api/v1.56.1/api/types/swarm/swarm.go
+// GitHub: https://github.com/moby/moby/blob/api/v1.57.0/api/types/swarm/swarm.go
 // Kind: struct
 // Usecase: wrap the Engine API type Peer from swarm.
 type Peer = swarm.Peer
@@ -610,7 +610,7 @@ type Peer = swarm.Peer
 // Placement represents orchestration parameters.
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/api/types/swarm#Placement
-// GitHub: https://github.com/moby/moby/blob/api/v1.56.1/api/types/swarm/task.go
+// GitHub: https://github.com/moby/moby/blob/api/v1.57.0/api/types/swarm/task.go
 // Kind: struct
 // Usecase: wrap the Engine API type Placement from swarm.
 type Placement = swarm.Placement
@@ -621,7 +621,7 @@ type Placement = swarm.Placement
 // such as topology.
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/api/types/swarm#PlacementPreference
-// GitHub: https://github.com/moby/moby/blob/api/v1.56.1/api/types/swarm/task.go
+// GitHub: https://github.com/moby/moby/blob/api/v1.57.0/api/types/swarm/task.go
 // Kind: struct
 // Usecase: wrap the Engine API type PlacementPreference from swarm.
 type PlacementPreference = swarm.PlacementPreference
@@ -631,7 +631,7 @@ type PlacementPreference = swarm.PlacementPreference
 // Platform represents the platform (Arch/OS).
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/api/types/swarm#Platform
-// GitHub: https://github.com/moby/moby/blob/api/v1.56.1/api/types/swarm/node.go
+// GitHub: https://github.com/moby/moby/blob/api/v1.57.0/api/types/swarm/node.go
 // Kind: struct
 // Usecase: wrap the Engine API type Platform from swarm.
 type Platform = swarm.Platform
@@ -641,7 +641,7 @@ type Platform = swarm.Platform
 // PluginDescription represents the description of an engine plugin.
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/api/types/swarm#PluginDescription
-// GitHub: https://github.com/moby/moby/blob/api/v1.56.1/api/types/swarm/node.go
+// GitHub: https://github.com/moby/moby/blob/api/v1.57.0/api/types/swarm/node.go
 // Kind: struct
 // Usecase: wrap the Engine API type PluginDescription from swarm.
 type PluginDescription = swarm.PluginDescription
@@ -651,7 +651,7 @@ type PluginDescription = swarm.PluginDescription
 // PortConfig represents the config of a port.
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/api/types/swarm#PortConfig
-// GitHub: https://github.com/moby/moby/blob/api/v1.56.1/api/types/swarm/network.go
+// GitHub: https://github.com/moby/moby/blob/api/v1.57.0/api/types/swarm/network.go
 // Kind: struct
 // References: github.com/moby/moby/api/types/network.IPProtocol
 // Usecase: wrap the Engine API type PortConfig from swarm.
@@ -663,7 +663,7 @@ type PortConfig = swarm.PortConfig
 // be published.
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/api/types/swarm#PortConfigPublishMode
-// GitHub: https://github.com/moby/moby/blob/api/v1.56.1/api/types/swarm/network.go
+// GitHub: https://github.com/moby/moby/blob/api/v1.57.0/api/types/swarm/network.go
 // Kind: named:string
 // Underlying: string
 // Usecase: wrap the Engine API type PortConfigPublishMode from swarm.
@@ -675,7 +675,7 @@ type PortConfigPublishMode = swarm.PortConfigPublishMode
 // service has published host ports
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/api/types/swarm#PortStatus
-// GitHub: https://github.com/moby/moby/blob/api/v1.56.1/api/types/swarm/task.go
+// GitHub: https://github.com/moby/moby/blob/api/v1.57.0/api/types/swarm/task.go
 // Kind: struct
 // Usecase: wrap the Engine API type PortStatus from swarm.
 type PortStatus = swarm.PortStatus
@@ -685,7 +685,7 @@ type PortStatus = swarm.PortStatus
 // Privileges defines the security options for the container.
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/api/types/swarm#Privileges
-// GitHub: https://github.com/moby/moby/blob/api/v1.56.1/api/types/swarm/container.go
+// GitHub: https://github.com/moby/moby/blob/api/v1.57.0/api/types/swarm/container.go
 // Kind: struct
 // Usecase: wrap the Engine API type Privileges from swarm.
 type Privileges = swarm.Privileges
@@ -695,7 +695,7 @@ type Privileges = swarm.Privileges
 // RaftConfig represents raft configuration.
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/api/types/swarm#RaftConfig
-// GitHub: https://github.com/moby/moby/blob/api/v1.56.1/api/types/swarm/swarm.go
+// GitHub: https://github.com/moby/moby/blob/api/v1.57.0/api/types/swarm/swarm.go
 // Kind: struct
 // Usecase: wrap the Engine API type RaftConfig from swarm.
 type RaftConfig = swarm.RaftConfig
@@ -705,7 +705,7 @@ type RaftConfig = swarm.RaftConfig
 // Reachability represents the reachability of a node.
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/api/types/swarm#Reachability
-// GitHub: https://github.com/moby/moby/blob/api/v1.56.1/api/types/swarm/node.go
+// GitHub: https://github.com/moby/moby/blob/api/v1.57.0/api/types/swarm/node.go
 // Kind: named:string
 // Underlying: string
 // Usecase: wrap the Engine API type Reachability from swarm.
@@ -717,7 +717,7 @@ type Reachability = swarm.Reachability
 // on service update.
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/api/types/swarm#RegistryAuthSource
-// GitHub: https://github.com/moby/moby/blob/api/v1.56.1/api/types/swarm/service.go
+// GitHub: https://github.com/moby/moby/blob/api/v1.57.0/api/types/swarm/service.go
 // Kind: named:string
 // Underlying: string
 // Usecase: wrap the Engine API type RegistryAuthSource from swarm.
@@ -729,7 +729,7 @@ type RegistryAuthSource = swarm.RegistryAuthSource
 // in parallel until the specified number of Tasks have succeeded.
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/api/types/swarm#ReplicatedJob
-// GitHub: https://github.com/moby/moby/blob/api/v1.56.1/api/types/swarm/service.go
+// GitHub: https://github.com/moby/moby/blob/api/v1.57.0/api/types/swarm/service.go
 // Kind: struct
 // Usecase: wrap the Engine API type ReplicatedJob from swarm.
 type ReplicatedJob = swarm.ReplicatedJob
@@ -739,7 +739,7 @@ type ReplicatedJob = swarm.ReplicatedJob
 // ReplicatedService is a kind of ServiceMode.
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/api/types/swarm#ReplicatedService
-// GitHub: https://github.com/moby/moby/blob/api/v1.56.1/api/types/swarm/service.go
+// GitHub: https://github.com/moby/moby/blob/api/v1.57.0/api/types/swarm/service.go
 // Kind: struct
 // Usecase: wrap the Engine API type ReplicatedService from swarm.
 type ReplicatedService = swarm.ReplicatedService
@@ -749,7 +749,7 @@ type ReplicatedService = swarm.ReplicatedService
 // ResolutionMode represents a resolution mode.
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/api/types/swarm#ResolutionMode
-// GitHub: https://github.com/moby/moby/blob/api/v1.56.1/api/types/swarm/network.go
+// GitHub: https://github.com/moby/moby/blob/api/v1.57.0/api/types/swarm/network.go
 // Kind: named:string
 // Underlying: string
 // Usecase: wrap the Engine API type ResolutionMode from swarm.
@@ -760,7 +760,7 @@ type ResolutionMode = swarm.ResolutionMode
 // ResourceRequirements represents resources requirements.
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/api/types/swarm#ResourceRequirements
-// GitHub: https://github.com/moby/moby/blob/api/v1.56.1/api/types/swarm/task.go
+// GitHub: https://github.com/moby/moby/blob/api/v1.57.0/api/types/swarm/task.go
 // Kind: struct
 // Usecase: wrap the Engine API type ResourceRequirements from swarm.
 type ResourceRequirements = swarm.ResourceRequirements
@@ -771,7 +771,7 @@ type ResourceRequirements = swarm.ResourceRequirements
 // node and requested to be reserved for a task.
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/api/types/swarm#Resources
-// GitHub: https://github.com/moby/moby/blob/api/v1.56.1/api/types/swarm/task.go
+// GitHub: https://github.com/moby/moby/blob/api/v1.57.0/api/types/swarm/task.go
 // Kind: struct
 // Usecase: wrap the Engine API type Resources from swarm.
 type Resources = swarm.Resources
@@ -781,7 +781,7 @@ type Resources = swarm.Resources
 // RestartPolicy represents the restart policy.
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/api/types/swarm#RestartPolicy
-// GitHub: https://github.com/moby/moby/blob/api/v1.56.1/api/types/swarm/task.go
+// GitHub: https://github.com/moby/moby/blob/api/v1.57.0/api/types/swarm/task.go
 // Kind: struct
 // References: time.Duration
 // Usecase: wrap the Engine API type RestartPolicy from swarm.
@@ -792,7 +792,7 @@ type RestartPolicy = swarm.RestartPolicy
 // RestartPolicyCondition represents when to restart.
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/api/types/swarm#RestartPolicyCondition
-// GitHub: https://github.com/moby/moby/blob/api/v1.56.1/api/types/swarm/task.go
+// GitHub: https://github.com/moby/moby/blob/api/v1.57.0/api/types/swarm/task.go
 // Kind: named:string
 // Underlying: string
 // Usecase: wrap the Engine API type RestartPolicyCondition from swarm.
@@ -804,7 +804,7 @@ type RestartPolicyCondition = swarm.RestartPolicyCondition
 // upon installing a plugin.
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/api/types/swarm#RuntimePrivilege
-// GitHub: https://github.com/moby/moby/blob/api/v1.56.1/api/types/swarm/runtime.go
+// GitHub: https://github.com/moby/moby/blob/api/v1.57.0/api/types/swarm/runtime.go
 // Kind: struct
 // Usecase: wrap the Engine API type RuntimePrivilege from swarm.
 type RuntimePrivilege = swarm.RuntimePrivilege
@@ -815,7 +815,7 @@ type RuntimePrivilege = swarm.RuntimePrivilege
 // a service with the plugin runtime.
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/api/types/swarm#RuntimeSpec
-// GitHub: https://github.com/moby/moby/blob/api/v1.56.1/api/types/swarm/runtime.go
+// GitHub: https://github.com/moby/moby/blob/api/v1.57.0/api/types/swarm/runtime.go
 // Kind: struct
 // Usecase: wrap the Engine API type RuntimeSpec from swarm.
 type RuntimeSpec = swarm.RuntimeSpec
@@ -825,7 +825,7 @@ type RuntimeSpec = swarm.RuntimeSpec
 // # RuntimeType is the type of runtime used for the TaskSpec
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/api/types/swarm#RuntimeType
-// GitHub: https://github.com/moby/moby/blob/api/v1.56.1/api/types/swarm/runtime.go
+// GitHub: https://github.com/moby/moby/blob/api/v1.57.0/api/types/swarm/runtime.go
 // Kind: named:string
 // Underlying: string
 // Usecase: wrap the Engine API type RuntimeType from swarm.
@@ -836,7 +836,7 @@ type RuntimeType = swarm.RuntimeType
 // # RuntimeURL is the proto type url
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/api/types/swarm#RuntimeURL
-// GitHub: https://github.com/moby/moby/blob/api/v1.56.1/api/types/swarm/runtime.go
+// GitHub: https://github.com/moby/moby/blob/api/v1.57.0/api/types/swarm/runtime.go
 // Kind: named:string
 // Underlying: string
 // Usecase: wrap the Engine API type RuntimeURL from swarm.
@@ -847,7 +847,7 @@ type RuntimeURL = swarm.RuntimeURL
 // SELinuxContext contains the SELinux labels of the container.
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/api/types/swarm#SELinuxContext
-// GitHub: https://github.com/moby/moby/blob/api/v1.56.1/api/types/swarm/container.go
+// GitHub: https://github.com/moby/moby/blob/api/v1.57.0/api/types/swarm/container.go
 // Kind: struct
 // Usecase: wrap the Engine API type SELinuxContext from swarm.
 type SELinuxContext = swarm.SELinuxContext
@@ -858,7 +858,7 @@ type SELinuxContext = swarm.SELinuxContext
 // in SeccompOpts
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/api/types/swarm#SeccompMode
-// GitHub: https://github.com/moby/moby/blob/api/v1.56.1/api/types/swarm/container.go
+// GitHub: https://github.com/moby/moby/blob/api/v1.57.0/api/types/swarm/container.go
 // Kind: named:string
 // Underlying: string
 // Usecase: wrap the Engine API type SeccompMode from swarm.
@@ -870,7 +870,7 @@ type SeccompMode = swarm.SeccompMode
 // container.
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/api/types/swarm#SeccompOpts
-// GitHub: https://github.com/moby/moby/blob/api/v1.56.1/api/types/swarm/container.go
+// GitHub: https://github.com/moby/moby/blob/api/v1.57.0/api/types/swarm/container.go
 // Kind: struct
 // Usecase: wrap the Engine API type SeccompOpts from swarm.
 type SeccompOpts = swarm.SeccompOpts
@@ -880,7 +880,7 @@ type SeccompOpts = swarm.SeccompOpts
 // Secret represents a secret.
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/api/types/swarm#Secret
-// GitHub: https://github.com/moby/moby/blob/api/v1.56.1/api/types/swarm/secret.go
+// GitHub: https://github.com/moby/moby/blob/api/v1.57.0/api/types/swarm/secret.go
 // Kind: struct
 // Usecase: wrap the Engine API type Secret from swarm.
 type Secret = swarm.Secret
@@ -891,7 +891,7 @@ type Secret = swarm.Secret
 // on the creation of a new secret.
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/api/types/swarm#SecretCreateResponse
-// GitHub: https://github.com/moby/moby/blob/api/v1.56.1/api/types/swarm/secret.go
+// GitHub: https://github.com/moby/moby/blob/api/v1.57.0/api/types/swarm/secret.go
 // Kind: struct
 // Usecase: wrap the Engine API type SecretCreateResponse from swarm.
 type SecretCreateResponse = swarm.SecretCreateResponse
@@ -901,7 +901,7 @@ type SecretCreateResponse = swarm.SecretCreateResponse
 // # SecretReference is a reference to a secret in swarm
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/api/types/swarm#SecretReference
-// GitHub: https://github.com/moby/moby/blob/api/v1.56.1/api/types/swarm/secret.go
+// GitHub: https://github.com/moby/moby/blob/api/v1.57.0/api/types/swarm/secret.go
 // Kind: struct
 // Usecase: wrap the Engine API type SecretReference from swarm.
 type SecretReference = swarm.SecretReference
@@ -911,7 +911,7 @@ type SecretReference = swarm.SecretReference
 // # SecretReferenceFileTarget is a file target in a secret reference
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/api/types/swarm#SecretReferenceFileTarget
-// GitHub: https://github.com/moby/moby/blob/api/v1.56.1/api/types/swarm/secret.go
+// GitHub: https://github.com/moby/moby/blob/api/v1.57.0/api/types/swarm/secret.go
 // Kind: struct
 // References: os.FileMode
 // Usecase: wrap the Engine API type SecretReferenceFileTarget from swarm.
@@ -922,7 +922,7 @@ type SecretReferenceFileTarget = swarm.SecretReferenceFileTarget
 // # SecretSpec represents a secret specification from a secret in swarm
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/api/types/swarm#SecretSpec
-// GitHub: https://github.com/moby/moby/blob/api/v1.56.1/api/types/swarm/secret.go
+// GitHub: https://github.com/moby/moby/blob/api/v1.57.0/api/types/swarm/secret.go
 // Kind: struct
 // Usecase: wrap the Engine API type SecretSpec from swarm.
 type SecretSpec = swarm.SecretSpec
@@ -932,7 +932,7 @@ type SecretSpec = swarm.SecretSpec
 // Service represents a service.
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/api/types/swarm#Service
-// GitHub: https://github.com/moby/moby/blob/api/v1.56.1/api/types/swarm/service.go
+// GitHub: https://github.com/moby/moby/blob/api/v1.57.0/api/types/swarm/service.go
 // Kind: struct
 // Usecase: wrap the Engine API type Service from swarm.
 type Service = swarm.Service
@@ -945,7 +945,7 @@ type Service = swarm.Service
 // swagger:model ServiceCreateResponse
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/api/types/swarm#ServiceCreateResponse
-// GitHub: https://github.com/moby/moby/blob/api/v1.56.1/api/types/swarm/service_create_response.go
+// GitHub: https://github.com/moby/moby/blob/api/v1.57.0/api/types/swarm/service_create_response.go
 // Kind: struct
 // Usecase: wrap the Engine API type ServiceCreateResponse from swarm.
 type ServiceCreateResponse = swarm.ServiceCreateResponse
@@ -955,7 +955,7 @@ type ServiceCreateResponse = swarm.ServiceCreateResponse
 // ServiceMode represents the mode of a service.
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/api/types/swarm#ServiceMode
-// GitHub: https://github.com/moby/moby/blob/api/v1.56.1/api/types/swarm/service.go
+// GitHub: https://github.com/moby/moby/blob/api/v1.57.0/api/types/swarm/service.go
 // Kind: struct
 // Usecase: wrap the Engine API type ServiceMode from swarm.
 type ServiceMode = swarm.ServiceMode
@@ -965,7 +965,7 @@ type ServiceMode = swarm.ServiceMode
 // ServiceSpec represents the spec of a service.
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/api/types/swarm#ServiceSpec
-// GitHub: https://github.com/moby/moby/blob/api/v1.56.1/api/types/swarm/service.go
+// GitHub: https://github.com/moby/moby/blob/api/v1.57.0/api/types/swarm/service.go
 // Kind: struct
 // Usecase: wrap the Engine API type ServiceSpec from swarm.
 type ServiceSpec = swarm.ServiceSpec
@@ -976,7 +976,7 @@ type ServiceSpec = swarm.ServiceSpec
 // number of tasks desired to be running.
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/api/types/swarm#ServiceStatus
-// GitHub: https://github.com/moby/moby/blob/api/v1.56.1/api/types/swarm/service.go
+// GitHub: https://github.com/moby/moby/blob/api/v1.57.0/api/types/swarm/service.go
 // Kind: struct
 // Usecase: wrap the Engine API type ServiceStatus from swarm.
 type ServiceStatus = swarm.ServiceStatus
@@ -989,7 +989,7 @@ type ServiceStatus = swarm.ServiceStatus
 // swagger:model ServiceUpdateResponse
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/api/types/swarm#ServiceUpdateResponse
-// GitHub: https://github.com/moby/moby/blob/api/v1.56.1/api/types/swarm/service_update_response.go
+// GitHub: https://github.com/moby/moby/blob/api/v1.57.0/api/types/swarm/service_update_response.go
 // Kind: struct
 // Usecase: wrap the Engine API type ServiceUpdateResponse from swarm.
 type ServiceUpdateResponse = swarm.ServiceUpdateResponse
@@ -999,7 +999,7 @@ type ServiceUpdateResponse = swarm.ServiceUpdateResponse
 // Spec represents the spec of a swarm.
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/api/types/swarm#Spec
-// GitHub: https://github.com/moby/moby/blob/api/v1.56.1/api/types/swarm/swarm.go
+// GitHub: https://github.com/moby/moby/blob/api/v1.57.0/api/types/swarm/swarm.go
 // Kind: struct
 // Usecase: wrap the Engine API type Spec from swarm.
 type Spec = swarm.Spec
@@ -1010,7 +1010,7 @@ type Spec = swarm.Spec
 // tasks evenly over groups of nodes identified by labels.
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/api/types/swarm#SpreadOver
-// GitHub: https://github.com/moby/moby/blob/api/v1.56.1/api/types/swarm/task.go
+// GitHub: https://github.com/moby/moby/blob/api/v1.57.0/api/types/swarm/task.go
 // Kind: struct
 // Usecase: wrap the Engine API type SpreadOver from swarm.
 type SpreadOver = swarm.SpreadOver
@@ -1020,7 +1020,7 @@ type SpreadOver = swarm.SpreadOver
 // Swarm represents a swarm.
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/api/types/swarm#Swarm
-// GitHub: https://github.com/moby/moby/blob/api/v1.56.1/api/types/swarm/swarm.go
+// GitHub: https://github.com/moby/moby/blob/api/v1.57.0/api/types/swarm/swarm.go
 // Kind: struct
 // Usecase: wrap the Engine API type Swarm from swarm.
 type Swarm = swarm.Swarm
@@ -1031,7 +1031,7 @@ type Swarm = swarm.Swarm
 // and who the issuer for a TLS certificate is
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/api/types/swarm#TLSInfo
-// GitHub: https://github.com/moby/moby/blob/api/v1.56.1/api/types/swarm/common.go
+// GitHub: https://github.com/moby/moby/blob/api/v1.57.0/api/types/swarm/common.go
 // Kind: struct
 // Usecase: wrap the Engine API type TLSInfo from swarm.
 type TLSInfo = swarm.TLSInfo
@@ -1041,7 +1041,7 @@ type TLSInfo = swarm.TLSInfo
 // Task represents a task.
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/api/types/swarm#Task
-// GitHub: https://github.com/moby/moby/blob/api/v1.56.1/api/types/swarm/task.go
+// GitHub: https://github.com/moby/moby/blob/api/v1.57.0/api/types/swarm/task.go
 // Kind: struct
 // Usecase: wrap the Engine API type Task from swarm.
 type Task = swarm.Task
@@ -1051,7 +1051,7 @@ type Task = swarm.Task
 // TaskDefaults parameterizes cluster-level task creation with default values.
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/api/types/swarm#TaskDefaults
-// GitHub: https://github.com/moby/moby/blob/api/v1.56.1/api/types/swarm/swarm.go
+// GitHub: https://github.com/moby/moby/blob/api/v1.57.0/api/types/swarm/swarm.go
 // Kind: struct
 // Usecase: wrap the Engine API type TaskDefaults from swarm.
 type TaskDefaults = swarm.TaskDefaults
@@ -1061,7 +1061,7 @@ type TaskDefaults = swarm.TaskDefaults
 // TaskSpec represents the spec of a task.
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/api/types/swarm#TaskSpec
-// GitHub: https://github.com/moby/moby/blob/api/v1.56.1/api/types/swarm/task.go
+// GitHub: https://github.com/moby/moby/blob/api/v1.57.0/api/types/swarm/task.go
 // Kind: struct
 // Usecase: wrap the Engine API type TaskSpec from swarm.
 type TaskSpec = swarm.TaskSpec
@@ -1071,7 +1071,7 @@ type TaskSpec = swarm.TaskSpec
 // TaskState represents the state of a task.
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/api/types/swarm#TaskState
-// GitHub: https://github.com/moby/moby/blob/api/v1.56.1/api/types/swarm/task.go
+// GitHub: https://github.com/moby/moby/blob/api/v1.57.0/api/types/swarm/task.go
 // Kind: named:string
 // Underlying: string
 // Usecase: wrap the Engine API type TaskState from swarm.
@@ -1082,7 +1082,7 @@ type TaskState = swarm.TaskState
 // TaskStatus represents the status of a task.
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/api/types/swarm#TaskStatus
-// GitHub: https://github.com/moby/moby/blob/api/v1.56.1/api/types/swarm/task.go
+// GitHub: https://github.com/moby/moby/blob/api/v1.57.0/api/types/swarm/task.go
 // Kind: struct
 // References: time.Time
 // Usecase: wrap the Engine API type TaskStatus from swarm.
@@ -1096,7 +1096,7 @@ type TaskStatus = swarm.TaskStatus
 // duplicate it here. See that type for full documentation
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/api/types/swarm#Topology
-// GitHub: https://github.com/moby/moby/blob/api/v1.56.1/api/types/swarm/node.go
+// GitHub: https://github.com/moby/moby/blob/api/v1.57.0/api/types/swarm/node.go
 // Kind: struct
 // Usecase: wrap the Engine API type Topology from swarm.
 type Topology = swarm.Topology
@@ -1107,7 +1107,7 @@ type Topology = swarm.Topology
 // GET /swarm/unlockkey
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/api/types/swarm#UnlockKeyResponse
-// GitHub: https://github.com/moby/moby/blob/api/v1.56.1/api/types/swarm/swarm.go
+// GitHub: https://github.com/moby/moby/blob/api/v1.57.0/api/types/swarm/swarm.go
 // Kind: struct
 // Usecase: wrap the Engine API type UnlockKeyResponse from swarm.
 type UnlockKeyResponse = swarm.UnlockKeyResponse
@@ -1117,7 +1117,7 @@ type UnlockKeyResponse = swarm.UnlockKeyResponse
 // UnlockRequest is the request used to unlock a swarm.
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/api/types/swarm#UnlockRequest
-// GitHub: https://github.com/moby/moby/blob/api/v1.56.1/api/types/swarm/swarm.go
+// GitHub: https://github.com/moby/moby/blob/api/v1.57.0/api/types/swarm/swarm.go
 // Kind: struct
 // Usecase: wrap the Engine API type UnlockRequest from swarm.
 type UnlockRequest = swarm.UnlockRequest
@@ -1127,7 +1127,7 @@ type UnlockRequest = swarm.UnlockRequest
 // UpdateConfig represents the update configuration.
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/api/types/swarm#UpdateConfig
-// GitHub: https://github.com/moby/moby/blob/api/v1.56.1/api/types/swarm/service.go
+// GitHub: https://github.com/moby/moby/blob/api/v1.57.0/api/types/swarm/service.go
 // Kind: struct
 // References: time.Duration
 // Usecase: wrap the Engine API type UpdateConfig from swarm.
@@ -1139,7 +1139,7 @@ type UpdateConfig = swarm.UpdateConfig
 // an updated tasks for a service.
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/api/types/swarm#UpdateOrder
-// GitHub: https://github.com/moby/moby/blob/api/v1.56.1/api/types/swarm/service.go
+// GitHub: https://github.com/moby/moby/blob/api/v1.57.0/api/types/swarm/service.go
 // Kind: named:string
 // Underlying: string
 // Usecase: wrap the Engine API type UpdateOrder from swarm.
@@ -1150,7 +1150,7 @@ type UpdateOrder = swarm.UpdateOrder
 // UpdateState is the state of a service update.
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/api/types/swarm#UpdateState
-// GitHub: https://github.com/moby/moby/blob/api/v1.56.1/api/types/swarm/service.go
+// GitHub: https://github.com/moby/moby/blob/api/v1.57.0/api/types/swarm/service.go
 // Kind: named:string
 // Underlying: string
 // Usecase: wrap the Engine API type UpdateState from swarm.
@@ -1161,7 +1161,7 @@ type UpdateState = swarm.UpdateState
 // UpdateStatus reports the status of a service update.
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/api/types/swarm#UpdateStatus
-// GitHub: https://github.com/moby/moby/blob/api/v1.56.1/api/types/swarm/service.go
+// GitHub: https://github.com/moby/moby/blob/api/v1.57.0/api/types/swarm/service.go
 // Kind: struct
 // References: time.Time
 // Usecase: wrap the Engine API type UpdateStatus from swarm.
@@ -1172,7 +1172,7 @@ type UpdateStatus = swarm.UpdateStatus
 // Version represents the internal object version.
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/api/types/swarm#Version
-// GitHub: https://github.com/moby/moby/blob/api/v1.56.1/api/types/swarm/common.go
+// GitHub: https://github.com/moby/moby/blob/api/v1.57.0/api/types/swarm/common.go
 // Kind: struct
 // Usecase: wrap the Engine API type Version from swarm.
 type Version = swarm.Version
@@ -1182,7 +1182,7 @@ type Version = swarm.Version
 // VolumeAttachment contains the associating a Volume to a Task.
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/api/types/swarm#VolumeAttachment
-// GitHub: https://github.com/moby/moby/blob/api/v1.56.1/api/types/swarm/task.go
+// GitHub: https://github.com/moby/moby/blob/api/v1.57.0/api/types/swarm/task.go
 // Kind: struct
 // Usecase: wrap the Engine API type VolumeAttachment from swarm.
 type VolumeAttachment = swarm.VolumeAttachment

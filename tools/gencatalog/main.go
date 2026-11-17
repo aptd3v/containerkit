@@ -433,27 +433,27 @@ func githubURL(d *TypeDecl) string {
 		rel := strings.TrimPrefix(d.ImportPath, "github.com/moby/moby/api")
 		rel = strings.TrimPrefix(rel, "/")
 		if rel == "" {
-			return "https://github.com/moby/moby/blob/api/v1.56.1/api/" + d.RelFile
+			return "https://github.com/moby/moby/blob/api/v1.57.0/api/" + d.RelFile
 		}
-		return "https://github.com/moby/moby/blob/api/v1.56.1/api/" + rel + "/" + d.RelFile
+		return "https://github.com/moby/moby/blob/api/v1.57.0/api/" + rel + "/" + d.RelFile
 	case strings.HasPrefix(d.ImportPath, "github.com/moby/moby/client"):
 		rel := strings.TrimPrefix(d.ImportPath, "github.com/moby/moby/client")
 		rel = strings.TrimPrefix(rel, "/")
 		if rel == "" {
-			return "https://github.com/moby/moby/blob/client/v0.6.2/client/" + d.RelFile
+			return "https://github.com/moby/moby/blob/client/v0.6.3/client/" + d.RelFile
 		}
-		return "https://github.com/moby/moby/blob/client/v0.6.2/client/" + rel + "/" + d.RelFile
+		return "https://github.com/moby/moby/blob/client/v0.6.3/client/" + rel + "/" + d.RelFile
 	case strings.HasPrefix(d.ImportPath, "github.com/compose-spec/compose-go/v2"):
 		rel := strings.TrimPrefix(d.ImportPath, "github.com/compose-spec/compose-go/v2")
 		rel = strings.TrimPrefix(rel, "/")
 		if rel == "" {
-			return "https://github.com/compose-spec/compose-go/blob/v2.16.2/" + d.RelFile
+			return "https://github.com/compose-spec/compose-go/blob/v2.17.0/" + d.RelFile
 		}
-		return "https://github.com/compose-spec/compose-go/blob/v2.16.2/" + rel + "/" + d.RelFile
+		return "https://github.com/compose-spec/compose-go/blob/v2.17.0/" + rel + "/" + d.RelFile
 	case strings.HasPrefix(d.ImportPath, "github.com/docker/compose/v5"):
 		rel := strings.TrimPrefix(d.ImportPath, "github.com/docker/compose/v5")
 		rel = strings.TrimPrefix(rel, "/")
-		return "https://github.com/docker/compose/blob/v5.6.1/" + rel + "/" + d.RelFile
+		return "https://github.com/docker/compose/blob/v5.7.1/" + rel + "/" + d.RelFile
 	}
 	return ""
 }

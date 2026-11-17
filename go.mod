@@ -1,9 +1,9 @@
 module github.com/aptd3v/containerkit
 
-go 1.26.10
+go 1.26.11
 
 require (
-	github.com/compose-spec/compose-go/v2 v2.16.2
+	github.com/compose-spec/compose-go/v2 v2.17.0
 	github.com/containerd/errdefs v1.0.0
 	github.com/containerd/errdefs/pkg v0.3.0
 	github.com/distribution/reference v0.6.0
@@ -13,8 +13,8 @@ require (
 	github.com/docker/go-units v0.5.0
 	github.com/moby/buildkit v0.35.0
 	github.com/moby/docker-image-spec v1.3.1
-	github.com/moby/moby/api v1.56.1
-	github.com/moby/moby/client v0.6.2
+	github.com/moby/moby/api v1.57.0
+	github.com/moby/moby/client v0.6.3
 	github.com/noneback/go-taskflow v1.2.0
 	github.com/opencontainers/go-digest v1.0.0
 	github.com/opencontainers/image-spec v1.1.1

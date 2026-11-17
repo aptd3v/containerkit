@@ -20,6 +20,11 @@ func EngineBuildOptions(v any) ([]EngineBuildOption, error) {
 	return decodeBuildImageOptions(v)
 }
 
+// UpOptions decodes a plan compose up option bag.
+func UpOptions(v any) ([]UpOption, error) {
+	return decodeUpOptions(v)
+}
+
 // DecodeAction checks a plan option bag for op. Unknown ops are not an error
 // here; execution reports those.
 func DecodeAction(op string, v any) error {
