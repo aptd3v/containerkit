@@ -18,6 +18,17 @@ jobs:
       - name: Check version sites
         run: python3 scripts/version.py --check
 
+  pins:
+    name: Upstream pin agreement
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Check pin copies
+        run: |
+          python3 scripts/pins.py --self-test
+          python3 scripts/pins.py --check
+
   go:
     name: Go test
     runs-on: ubuntu-latest
@@ -49,6 +60,20 @@ jobs:
         run: |
           go test -coverprofile=taskflow.out ./pkg/taskflow
           go tool cover -func=taskflow.out | awk '{ gsub("%","",$NF); if ($NF+0 < 100) { print; bad=1 } } END { if (bad) exit 1 }'
+
+      - name: pkg/kit coverage
+        run: |
+          go test -coverprofile=kit.out ./pkg/kit
+          python3 scripts/ci/kitcover.py --self-test
+          python3 scripts/ci/kitcover.py --floor 50 kit.out
+
+      - name: Publish pkg/kit cover profile
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: pkg-kit-cover
+          path: kit.out
+          if-no-files-found: error
 
       - name: Multi-platform binaries
         run: go run ./tools/crossbuild
@@ -95,3 +120,66 @@ jobs:
 
       - name: Pack dry-run
         run: npm run pack:check
+
+  engine:
+    name: Engine
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Set up Go
+        uses: actions/setup-go@v7
+        with:
+          go-version-file: go.mod
+
+      - name: Set up Node
+        uses: actions/setup-node@v7
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: tsx/package-lock.json
+
+      - name: Pin Docker Engine 29.9.3
+        env:
+          ENGINE_VERSION: "29.9.3"
+        run: bash scripts/ci/pin-engine.sh
+
+      - name: Install TypeScript package
+        working-directory: tsx
+        run: |
+          npm ci
+          npm run build
+
+      - name: Host binary
+        run: go run ./tools/crossbuild
+
+      - name: Live Engine proof
+        env:
+          ENGINE_VERSION: "29.9.3"
+        run: bash scripts/ci/engine.sh
+
+  advisory:
+    name: Advisory
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Set up Go
+        uses: actions/setup-go@v7
+        with:
+          go-version-file: go.mod
+
+      - name: govulncheck
+        run: go run golang.org/x/vuln/cmd/govulncheck@latest ./...
+
+      - name: Set up Node
+        uses: actions/setup-node@v7
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: tsx/package-lock.json
+
+      - name: npm audit
+        working-directory: tsx
+        run: npm audit --package-lock-only --include=dev --audit-level=high

@@ -28,12 +28,16 @@ Read the page for the language you are writing, then copy the nearest example. D
 | Test Go | `go test -race -shuffle=on ./...` |
 | Test against a live Engine | `go test -tags e2e ./e2e/...` |
 | Generate bindings | `go generate ./pkg/kit` |
+| Check upstream pins | `python3 scripts/pins.py --check` |
+| Upstream diff | `python3 scripts/upstream.py` |
 | Test TSX | `cd tsx && npm test` |
 | Run a live example | `cd tsx && npm run nginx` |
 
 `go test ./...` does not dial a daemon. `go generate ./pkg/kit` runs `gencatalog` and `gentsx`. That rewrites `internal/`, `tsx/src/generated.ts`, `tsx/src/generated-options.ts`, `tsx/src/generated-actions.ts`, and `pkg/kit/tsx_plan_gen.go`. Commit the generated files with the change that required them. Do not edit those files by hand.
 
 `VERSION` is the semver. `python3 scripts/version.py --check` confirms the copies. Do not bump it unless the task is a release.
+
+`python3 scripts/pins.py --check` confirms `go.mod`, `pkg/kit/doc.go`, and the catalog blob URLs name the same versions of the Moby API, the Moby client, compose-go, and Compose. The historical pin line in `CHANGELOG.md` is not part of that check. `python3 scripts/upstream.py` prints the release notes and the compare diff for compose-go, the Compose SDK, and the Engine SDK.
 
 ## Go
 
@@ -117,7 +121,7 @@ A daemon failure is `*Error`. `errors.Is` matches `ErrNotFound`, `ErrConflict`, 
 
 `NewDockerfile().From(image, tag).Run(...).Copy(...).Expose(...).Command(...)` is the file. Pass it to `Build` on a service, or to `BuildImage` with `Image` and `Source`. An inline file uses `.` as the context when `Source` is omitted. `Env` inside `Build` is a build-arg. `Pull` inside `Build` pulls the base image during the build. `PullPolicy` on the service is `PullAlways`, `PullMissing`, `PullNever`, `PullBuild`, or `PullEvery`.
 
-`taskflow.New(name, cli)` holds the client. `Container` and `Build` return `ErrNoClient` without one. `Task` and a Compose func that brings its own client may use a nil client. Wire edges with `Precede` or `DependsOn`. `Retry(n)` reruns a failing step `n` more times. A panic and a canceled context are not retried. `Always` runs after a failed predecessor, and its own successors stay skipped. `If` and `Condition` close over Go state. A TSX `If` is a boolean chosen when the module evaluates. `Import` builds the graph from that JSON. The program is `examples/taskflow`.
+`taskflow.New(name, cli)` holds the client. `Container` and `Build` return `ErrNoClient` without one. `Task` and a Compose func that brings its own client may use a nil client. Wire edges with `Precede` or `DependsOn`. `Retry(n)` reruns a failing step `n` more times. `SkipIfPresent` on a Build step inspects every tag. All present finishes done with reason `already_present` and does not build. A missing tag builds once. Any other inspect error fails the step. Zero tags is an error before any inspect, and that configuration error is not retried. `SkipIfPresent` on any other step fails once. `Service` stays up until its flow or subflow finishes, including a canceled run, then downs once without a volume wipe. `Volume` allocates a physical name at the call, and `Remove` deletes that volume only when its run label matches. Compose `Remove` still deletes project volumes. A panic and a canceled context are not retried. `Remove` does not run if the process is killed. `Always` runs after a failed predecessor, and its own successors stay skipped. `If` and `Condition` close over Go state. A TSX `If` is a boolean chosen when the module evaluates. `Import` builds the graph from that JSON. The program is `examples/taskflow`.
 
 ## TSX
 
