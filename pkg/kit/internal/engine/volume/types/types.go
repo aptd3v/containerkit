@@ -9,7 +9,7 @@ import "github.com/moby/moby/api/types/volume"
 // AccessMode defines the access mode of a volume.
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/api/types/volume#AccessMode
-// GitHub: https://github.com/moby/moby/blob/api/v1.56.1/api/types/volume/cluster_volume.go
+// GitHub: https://github.com/moby/moby/blob/api/v1.57.0/api/types/volume/cluster_volume.go
 // Kind: struct
 // Usecase: wrap the Engine API type AccessMode from volume.
 type AccessMode = volume.AccessMode
@@ -19,7 +19,7 @@ type AccessMode = volume.AccessMode
 // Availability specifies the availability of the volume.
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/api/types/volume#Availability
-// GitHub: https://github.com/moby/moby/blob/api/v1.56.1/api/types/volume/cluster_volume.go
+// GitHub: https://github.com/moby/moby/blob/api/v1.57.0/api/types/volume/cluster_volume.go
 // Kind: named:string
 // Underlying: string
 // Usecase: wrap the Engine API type Availability from volume.
@@ -31,7 +31,7 @@ type Availability = volume.Availability
 // created with
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/api/types/volume#CapacityRange
-// GitHub: https://github.com/moby/moby/blob/api/v1.56.1/api/types/volume/cluster_volume.go
+// GitHub: https://github.com/moby/moby/blob/api/v1.57.0/api/types/volume/cluster_volume.go
 // Kind: struct
 // Usecase: wrap the Engine API type CapacityRange from volume.
 type CapacityRange = volume.CapacityRange
@@ -42,7 +42,7 @@ type CapacityRange = volume.CapacityRange
 // on, Swarm CSI cluster volumes.
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/api/types/volume#ClusterVolume
-// GitHub: https://github.com/moby/moby/blob/api/v1.56.1/api/types/volume/cluster_volume.go
+// GitHub: https://github.com/moby/moby/blob/api/v1.57.0/api/types/volume/cluster_volume.go
 // Kind: struct
 // References: github.com/moby/moby/api/types/swarm.Meta
 // Usecase: wrap the Engine API type ClusterVolume from volume.
@@ -53,7 +53,7 @@ type ClusterVolume = volume.ClusterVolume
 // ClusterVolumeSpec contains the spec used to create this volume.
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/api/types/volume#ClusterVolumeSpec
-// GitHub: https://github.com/moby/moby/blob/api/v1.56.1/api/types/volume/cluster_volume.go
+// GitHub: https://github.com/moby/moby/blob/api/v1.57.0/api/types/volume/cluster_volume.go
 // Kind: struct
 // Usecase: wrap the Engine API type ClusterVolumeSpec from volume.
 type ClusterVolumeSpec = volume.ClusterVolumeSpec
@@ -67,7 +67,7 @@ type ClusterVolumeSpec = volume.ClusterVolumeSpec
 // swagger:model CreateRequest
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/api/types/volume#CreateRequest
-// GitHub: https://github.com/moby/moby/blob/api/v1.56.1/api/types/volume/create_request.go
+// GitHub: https://github.com/moby/moby/blob/api/v1.57.0/api/types/volume/create_request.go
 // Kind: struct
 // Usecase: wrap the Engine API type CreateRequest from volume.
 type CreateRequest = volume.CreateRequest
@@ -79,7 +79,7 @@ type CreateRequest = volume.CreateRequest
 // swagger:model DiskUsage
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/api/types/volume#DiskUsage
-// GitHub: https://github.com/moby/moby/blob/api/v1.56.1/api/types/volume/disk_usage.go
+// GitHub: https://github.com/moby/moby/blob/api/v1.57.0/api/types/volume/disk_usage.go
 // Kind: struct
 // Usecase: wrap the Engine API type DiskUsage from volume.
 type DiskUsage = volume.DiskUsage
@@ -90,7 +90,7 @@ type DiskUsage = volume.DiskUsage
 // the CSI storage plugin.
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/api/types/volume#Info
-// GitHub: https://github.com/moby/moby/blob/api/v1.56.1/api/types/volume/cluster_volume.go
+// GitHub: https://github.com/moby/moby/blob/api/v1.57.0/api/types/volume/cluster_volume.go
 // Kind: struct
 // Usecase: wrap the Engine API type Info from volume.
 type Info = volume.Info
@@ -104,7 +104,7 @@ type Info = volume.Info
 // swagger:model ListResponse
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/api/types/volume#ListResponse
-// GitHub: https://github.com/moby/moby/blob/api/v1.56.1/api/types/volume/list_response.go
+// GitHub: https://github.com/moby/moby/blob/api/v1.57.0/api/types/volume/list_response.go
 // Kind: struct
 // Usecase: wrap the Engine API type ListResponse from volume.
 type ListResponse = volume.ListResponse
@@ -115,7 +115,7 @@ type ListResponse = volume.ListResponse
 // POST "/volumes/prune"
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/api/types/volume#PruneReport
-// GitHub: https://github.com/moby/moby/blob/api/v1.56.1/api/types/volume/prune_report.go
+// GitHub: https://github.com/moby/moby/blob/api/v1.57.0/api/types/volume/prune_report.go
 // Kind: struct
 // Usecase: wrap the Engine API type PruneReport from volume.
 type PruneReport = volume.PruneReport
@@ -126,7 +126,7 @@ type PruneReport = volume.PruneReport
 // use on a particular Node.
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/api/types/volume#PublishState
-// GitHub: https://github.com/moby/moby/blob/api/v1.56.1/api/types/volume/cluster_volume.go
+// GitHub: https://github.com/moby/moby/blob/api/v1.57.0/api/types/volume/cluster_volume.go
 // Kind: named:string
 // Underlying: string
 // Usecase: wrap the Engine API type PublishState from volume.
@@ -138,7 +138,7 @@ type PublishState = volume.PublishState
 // individual node
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/api/types/volume#PublishStatus
-// GitHub: https://github.com/moby/moby/blob/api/v1.56.1/api/types/volume/cluster_volume.go
+// GitHub: https://github.com/moby/moby/blob/api/v1.57.0/api/types/volume/cluster_volume.go
 // Kind: struct
 // Usecase: wrap the Engine API type PublishStatus from volume.
 type PublishStatus = volume.PublishStatus
@@ -149,7 +149,7 @@ type PublishStatus = volume.PublishStatus
 // Volume can be accessed simultaneously on.
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/api/types/volume#Scope
-// GitHub: https://github.com/moby/moby/blob/api/v1.56.1/api/types/volume/cluster_volume.go
+// GitHub: https://github.com/moby/moby/blob/api/v1.57.0/api/types/volume/cluster_volume.go
 // Kind: named:string
 // Underlying: string
 // Usecase: wrap the Engine API type Scope from volume.
@@ -162,7 +162,7 @@ type Scope = volume.Scope
 // pair of possibly many.
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/api/types/volume#Secret
-// GitHub: https://github.com/moby/moby/blob/api/v1.56.1/api/types/volume/cluster_volume.go
+// GitHub: https://github.com/moby/moby/blob/api/v1.57.0/api/types/volume/cluster_volume.go
 // Kind: struct
 // Usecase: wrap the Engine API type Secret from volume.
 type Secret = volume.Secret
@@ -173,7 +173,7 @@ type Secret = volume.Secret
 // Volume at the same time can use it.
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/api/types/volume#SharingMode
-// GitHub: https://github.com/moby/moby/blob/api/v1.56.1/api/types/volume/cluster_volume.go
+// GitHub: https://github.com/moby/moby/blob/api/v1.57.0/api/types/volume/cluster_volume.go
 // Kind: named:string
 // Underlying: string
 // Usecase: wrap the Engine API type SharingMode from volume.
@@ -215,7 +215,7 @@ type SharingMode = volume.SharingMode
 // between.
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/api/types/volume#Topology
-// GitHub: https://github.com/moby/moby/blob/api/v1.56.1/api/types/volume/cluster_volume.go
+// GitHub: https://github.com/moby/moby/blob/api/v1.57.0/api/types/volume/cluster_volume.go
 // Kind: struct
 // Usecase: wrap the Engine API type Topology from volume.
 type Topology = volume.Topology
@@ -226,7 +226,7 @@ type Topology = volume.Topology
 // accessible topology.
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/api/types/volume#TopologyRequirement
-// GitHub: https://github.com/moby/moby/blob/api/v1.56.1/api/types/volume/cluster_volume.go
+// GitHub: https://github.com/moby/moby/blob/api/v1.57.0/api/types/volume/cluster_volume.go
 // Kind: struct
 // Usecase: wrap the Engine API type TopologyRequirement from volume.
 type TopologyRequirement = volume.TopologyRequirement
@@ -238,7 +238,7 @@ type TopologyRequirement = volume.TopologyRequirement
 // Intentionally empty.
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/api/types/volume#TypeBlock
-// GitHub: https://github.com/moby/moby/blob/api/v1.56.1/api/types/volume/cluster_volume.go
+// GitHub: https://github.com/moby/moby/blob/api/v1.57.0/api/types/volume/cluster_volume.go
 // Kind: struct
 // Usecase: wrap the Engine API type TypeBlock from volume.
 type TypeBlock = volume.TypeBlock
@@ -249,7 +249,7 @@ type TypeBlock = volume.TypeBlock
 // volume.
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/api/types/volume#TypeMount
-// GitHub: https://github.com/moby/moby/blob/api/v1.56.1/api/types/volume/cluster_volume.go
+// GitHub: https://github.com/moby/moby/blob/api/v1.57.0/api/types/volume/cluster_volume.go
 // Kind: struct
 // Usecase: wrap the Engine API type TypeMount from volume.
 type TypeMount = volume.TypeMount
@@ -262,7 +262,7 @@ type TypeMount = volume.TypeMount
 // swagger:model UsageData
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/api/types/volume#UsageData
-// GitHub: https://github.com/moby/moby/blob/api/v1.56.1/api/types/volume/volume.go
+// GitHub: https://github.com/moby/moby/blob/api/v1.57.0/api/types/volume/volume.go
 // Kind: struct
 // Usecase: wrap the Engine API type UsageData from volume.
 type UsageData = volume.UsageData
@@ -274,7 +274,7 @@ type UsageData = volume.UsageData
 // swagger:model Volume
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/api/types/volume#Volume
-// GitHub: https://github.com/moby/moby/blob/api/v1.56.1/api/types/volume/volume.go
+// GitHub: https://github.com/moby/moby/blob/api/v1.57.0/api/types/volume/volume.go
 // Kind: struct
 // Usecase: wrap the Engine API type Volume from volume.
 type Volume = volume.Volume

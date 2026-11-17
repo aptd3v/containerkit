@@ -226,3 +226,20 @@ func TestBuildImageUsesDockerfile(t *testing.T) {
 		t.Fatalf("built = %+v", api.built)
 	}
 }
+
+func TestBuildTags(t *testing.T) {
+	t.Parallel()
+	tags, err := BuildTags(Image("app:dev"), Tag("app:other"))
+	if err != nil || len(tags) != 2 || tags[0] != "app:dev" || tags[1] != "app:other" {
+		t.Fatalf("tags %v err %v", tags, err)
+	}
+	if _, err := BuildTags(Tag("")); err == nil {
+		t.Fatal("empty tag")
+	}
+	if _, err := BuildTags(nil); err == nil {
+		t.Fatal("nil option")
+	}
+	if tags, err := BuildTags(); err != nil || len(tags) != 0 {
+		t.Fatalf("no tags: %v %v", tags, err)
+	}
+}

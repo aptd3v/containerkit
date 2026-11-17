@@ -314,12 +314,11 @@ func (p *Compose) Push(ctx context.Context, api Composer, opts ...PushOption) er
 }
 
 // Logs streams service logs.
+// A nil consumer uses Log or the logger on ctx. It is an error when neither is set.
+// A consumer other than that logger is teed, so both receive each line.
 func (p *Compose) Logs(ctx context.Context, api Composer, consumer composeapi.LogConsumer, opts ...LogsOption) error {
 	if err := p.composeAPI(api, "logs"); err != nil {
 		return err
-	}
-	if consumer == nil {
-		return cfgErr("compose", "logs", "Logs", fmt.Errorf("%w: log consumer", errRequired))
 	}
 	var act logsAct
 	var errs []error
@@ -332,6 +331,16 @@ func (p *Compose) Logs(ctx context.Context, api Composer, consumer composeapi.Lo
 	}
 	if err := join(errs...); err != nil {
 		return wrapReceiver("compose", err)
+	}
+	adoptLog(ctx, &act.log)
+	if consumer == nil && act.log != nil {
+		consumer = act.log
+	}
+	if consumer == nil {
+		return cfgErr("compose", "logs", "Logs", fmt.Errorf("%w: log consumer", errRequired))
+	}
+	if act.log != nil && consumer != act.log {
+		consumer = teeLogConsumer{first: consumer, second: act.log}
 	}
 	proj, err := p.Project()
 	if err != nil {

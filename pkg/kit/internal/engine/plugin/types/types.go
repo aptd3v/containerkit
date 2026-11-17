@@ -11,7 +11,7 @@ import "github.com/moby/moby/api/types/plugin"
 // swagger:model Args
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/api/types/plugin#Args
-// GitHub: https://github.com/moby/moby/blob/api/v1.56.1/api/types/plugin/plugin.go
+// GitHub: https://github.com/moby/moby/blob/api/v1.57.0/api/types/plugin/plugin.go
 // Kind: struct
 // Usecase: wrap the Engine API type Args from plugin.
 type Args = plugin.Args
@@ -19,7 +19,7 @@ type Args = plugin.Args
 // CapabilityID wraps plugin.CapabilityID.
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/api/types/plugin#CapabilityID
-// GitHub: https://github.com/moby/moby/blob/api/v1.56.1/api/types/plugin/capability.go
+// GitHub: https://github.com/moby/moby/blob/api/v1.57.0/api/types/plugin/capability.go
 // Kind: struct
 // Usecase: wrap the Engine API type CapabilityID from plugin.
 type CapabilityID = plugin.CapabilityID
@@ -31,7 +31,7 @@ type CapabilityID = plugin.CapabilityID
 // swagger:model Config
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/api/types/plugin#Config
-// GitHub: https://github.com/moby/moby/blob/api/v1.56.1/api/types/plugin/plugin.go
+// GitHub: https://github.com/moby/moby/blob/api/v1.57.0/api/types/plugin/plugin.go
 // Kind: struct
 // Usecase: wrap the Engine API type Config from plugin.
 type Config = plugin.Config
@@ -43,7 +43,7 @@ type Config = plugin.Config
 // swagger:model Device
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/api/types/plugin#Device
-// GitHub: https://github.com/moby/moby/blob/api/v1.56.1/api/types/plugin/device.go
+// GitHub: https://github.com/moby/moby/blob/api/v1.57.0/api/types/plugin/device.go
 // Kind: struct
 // Usecase: wrap the Engine API type Device from plugin.
 type Device = plugin.Device
@@ -55,7 +55,7 @@ type Device = plugin.Device
 // swagger:model Env
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/api/types/plugin#Env
-// GitHub: https://github.com/moby/moby/blob/api/v1.56.1/api/types/plugin/env.go
+// GitHub: https://github.com/moby/moby/blob/api/v1.57.0/api/types/plugin/env.go
 // Kind: struct
 // Usecase: wrap the Engine API type Env from plugin.
 type Env = plugin.Env
@@ -67,7 +67,7 @@ type Env = plugin.Env
 // swagger:model Interface
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/api/types/plugin#Interface
-// GitHub: https://github.com/moby/moby/blob/api/v1.56.1/api/types/plugin/plugin.go
+// GitHub: https://github.com/moby/moby/blob/api/v1.57.0/api/types/plugin/plugin.go
 // Kind: struct
 // Usecase: wrap the Engine API type Interface from plugin.
 type Interface = plugin.Interface
@@ -79,7 +79,7 @@ type Interface = plugin.Interface
 // swagger:model LinuxConfig
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/api/types/plugin#LinuxConfig
-// GitHub: https://github.com/moby/moby/blob/api/v1.56.1/api/types/plugin/plugin.go
+// GitHub: https://github.com/moby/moby/blob/api/v1.57.0/api/types/plugin/plugin.go
 // Kind: struct
 // Usecase: wrap the Engine API type LinuxConfig from plugin.
 type LinuxConfig = plugin.LinuxConfig
@@ -89,7 +89,7 @@ type LinuxConfig = plugin.LinuxConfig
 // # ListResponse contains the response for the Engine API
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/api/types/plugin#ListResponse
-// GitHub: https://github.com/moby/moby/blob/api/v1.56.1/api/types/plugin/plugin_responses.go
+// GitHub: https://github.com/moby/moby/blob/api/v1.57.0/api/types/plugin/plugin_responses.go
 // Kind: slice
 // Underlying: []Plugin
 // Usecase: wrap the Engine API type ListResponse from plugin.
@@ -102,7 +102,7 @@ type ListResponse = plugin.ListResponse
 // swagger:model Mount
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/api/types/plugin#Mount
-// GitHub: https://github.com/moby/moby/blob/api/v1.56.1/api/types/plugin/mount.go
+// GitHub: https://github.com/moby/moby/blob/api/v1.57.0/api/types/plugin/mount.go
 // Kind: struct
 // Usecase: wrap the Engine API type Mount from plugin.
 type Mount = plugin.Mount
@@ -114,7 +114,7 @@ type Mount = plugin.Mount
 // swagger:model NetworkConfig
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/api/types/plugin#NetworkConfig
-// GitHub: https://github.com/moby/moby/blob/api/v1.56.1/api/types/plugin/plugin.go
+// GitHub: https://github.com/moby/moby/blob/api/v1.57.0/api/types/plugin/plugin.go
 // Kind: struct
 // Usecase: wrap the Engine API type NetworkConfig from plugin.
 type NetworkConfig = plugin.NetworkConfig
@@ -126,7 +126,7 @@ type NetworkConfig = plugin.NetworkConfig
 // swagger:model Plugin
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/api/types/plugin#Plugin
-// GitHub: https://github.com/moby/moby/blob/api/v1.56.1/api/types/plugin/plugin.go
+// GitHub: https://github.com/moby/moby/blob/api/v1.57.0/api/types/plugin/plugin.go
 // Kind: struct
 // Usecase: wrap the Engine API type Plugin from plugin.
 type Plugin = plugin.Plugin
@@ -137,7 +137,7 @@ type Plugin = plugin.Plugin
 // upon installing a plugin.
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/api/types/plugin#Privilege
-// GitHub: https://github.com/moby/moby/blob/api/v1.56.1/api/types/plugin/plugin_responses.go
+// GitHub: https://github.com/moby/moby/blob/api/v1.57.0/api/types/plugin/plugin_responses.go
 // Kind: struct
 // Usecase: wrap the Engine API type Privilege from plugin.
 type Privilege = plugin.Privilege
@@ -147,7 +147,7 @@ type Privilege = plugin.Privilege
 // Privileges is a list of Privilege.
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/api/types/plugin#Privileges
-// GitHub: https://github.com/moby/moby/blob/api/v1.56.1/api/types/plugin/plugin_responses.go
+// GitHub: https://github.com/moby/moby/blob/api/v1.57.0/api/types/plugin/plugin_responses.go
 // Kind: slice
 // Underlying: []Privilege
 // Usecase: wrap the Engine API type Privileges from plugin.
@@ -160,7 +160,7 @@ type Privileges = plugin.Privileges
 // swagger:model RootFS
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/api/types/plugin#RootFS
-// GitHub: https://github.com/moby/moby/blob/api/v1.56.1/api/types/plugin/plugin.go
+// GitHub: https://github.com/moby/moby/blob/api/v1.57.0/api/types/plugin/plugin.go
 // Kind: struct
 // Usecase: wrap the Engine API type RootFS from plugin.
 type RootFS = plugin.RootFS
@@ -172,7 +172,7 @@ type RootFS = plugin.RootFS
 // swagger:model Settings
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/api/types/plugin#Settings
-// GitHub: https://github.com/moby/moby/blob/api/v1.56.1/api/types/plugin/plugin.go
+// GitHub: https://github.com/moby/moby/blob/api/v1.57.0/api/types/plugin/plugin.go
 // Kind: struct
 // Usecase: wrap the Engine API type Settings from plugin.
 type Settings = plugin.Settings
@@ -184,7 +184,7 @@ type Settings = plugin.Settings
 // swagger:model User
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/api/types/plugin#User
-// GitHub: https://github.com/moby/moby/blob/api/v1.56.1/api/types/plugin/plugin.go
+// GitHub: https://github.com/moby/moby/blob/api/v1.57.0/api/types/plugin/plugin.go
 // Kind: struct
 // Usecase: wrap the Engine API type User from plugin.
 type User = plugin.User

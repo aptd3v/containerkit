@@ -1,0 +1,37 @@
+# Healthcheck project for the Engine job. Not tsx/testdata/plan.json.
+# ready sleeps for a fixed 3s, then serves ck-ready-marker.
+# check runs one wget when it starts and exits if that read fails.
+# It does not poll. depends_on service_healthy is what waits out the delay.
+name: ck-health
+services:
+  ready:
+    image: alpine:3.22
+    command:
+      - sh
+      - -c
+      - |
+        sleep 3
+        echo ck-ready-marker
+        while true; do
+          printf 'HTTP/1.0 200 OK\r\nContent-Length: 16\r\nConnection: close\r\n\r\nck-ready-marker\n' | nc -l -p 8080
+        done
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - wget -q -O - http://127.0.0.1:8080/ | grep -q ck-ready-marker
+      interval: 1s
+      timeout: 2s
+      retries: 5
+      start_period: 4s
+  check:
+    image: alpine:3.22
+    depends_on:
+      ready:
+        condition: service_healthy
+    command:
+      - sh
+      - -c
+      - |
+        wget -q -T 1 -O - http://ready:8080/ | grep -q ck-ready-marker || exit 1
+        echo ck-check-marker
+        exec sleep infinity

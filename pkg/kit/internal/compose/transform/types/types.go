@@ -9,7 +9,7 @@ import "github.com/compose-spec/compose-go/v2/transform"
 // # Func is a function that can transform data at a specific path
 //
 // Source: https://pkg.go.dev/github.com/compose-spec/compose-go/v2/transform#Func
-// GitHub: https://github.com/compose-spec/compose-go/blob/v2.16.2/transform/canonical.go
+// GitHub: https://github.com/compose-spec/compose-go/blob/v2.17.0/transform/canonical.go
 // Kind: func
 // Underlying: func(data any, p tree.Path, ignoreParseError bool) (any, error)
 // References: github.com/compose-spec/compose-go/v2/tree.Path

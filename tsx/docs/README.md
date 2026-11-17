@@ -12,7 +12,7 @@ These pages assume you know TypeScript and have used Compose: a `compose.yaml`, 
 | [Commands](commands.md) | You want to pull an image, run a container, or do something other than apply the tree |
 | [Dockerfiles](dockerfile.md) | A service is built from instructions, not from an image you already have |
 
-Named values such as `cap`, `proto`, and `restartPolicy` come from `containerkit/vocab`. Components, `exportYAML`, and `connect` stay on `containerkit`. Hooks such as `useShutdown` come from `containerkit/hooks`. The session, `root`, and `useState` come from `containerkit/live`.
+Named values such as `cap`, `proto`, and `restartPolicy` come from `@aptd3v/containerkit/vocab`. Components, `exportYAML`, and `connect` stay on `@aptd3v/containerkit`. Hooks such as `useShutdown` come from `@aptd3v/containerkit/hooks`. The session, `root`, and `useState` come from `@aptd3v/containerkit/live`.
 
 Install, the TypeScript setup, and sharing a repository with React are in the package [README](../README.md). [GUIDE.md](../GUIDE.md) is the longer list of prop names and command names.
 

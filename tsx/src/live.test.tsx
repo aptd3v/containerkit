@@ -20,6 +20,7 @@ import {
 import { runRoot, root, useEffect, useMemo, useSession, useState, type RootOptions } from "./live/root.js";
 import { startProgress } from "./live/progress.js";
 import { formatProgress, openSession, sessionChildEnv, sessionFromTransport, type LiveEvent, type LiveGroup, type Session, type SessionTransport } from "./live/session.js";
+import { useLiveLog } from "./hooks/index.js";
 import { connect, type PlanDocument } from "./plan.js";
 
 type Memory = {
@@ -84,6 +85,54 @@ function oneAtATime(name: string, fn: () => Promise<void>) {
 		return run;
 	});
 }
+
+oneAtATime("a failed apply is not the last YAML", async () => {
+	let attempts = 0;
+	let effects = 0;
+	const calls: PlanDocument[] = [];
+	const errors: unknown[] = [];
+	const transport: SessionTransport = {
+		async call(plan) {
+			calls.push(plan);
+			if (plan.actions?.[0]?.op === "composeUp") {
+				attempts += 1;
+				if (attempts === 1) {
+					throw new Error("apply failed");
+				}
+			}
+			return { ok: true };
+		},
+		on() {
+			return () => undefined;
+		},
+		async close() {},
+	};
+	let setTick: (value: number) => void = () => undefined;
+	const live = root({ onError: (err) => errors.push(err) }, function App() {
+		const [, set] = useState(0);
+		setTick = set;
+		useEffect(() => {
+			effects += 1;
+		}, []);
+		return (
+			<Compose name="app">
+				<Service name="api" image="alpine:latest" />
+			</Compose>
+		);
+	});
+	const running = await runRoot(live, transport);
+	try {
+		assert.equal(ops(calls, "composeUp"), 1);
+		assert.equal(effects, 0);
+		assert.equal(errors.length, 1);
+		setTick(1);
+		await new Promise((resolve) => setImmediate(resolve));
+		assert.equal(ops(calls, "composeUp"), 2);
+		assert.equal(effects, 1);
+	} finally {
+		await running.close();
+	}
+});
 
 oneAtATime("state restarts the stack and useMemo skips the pull", async () => {
 	const mem = memoryTransport();
@@ -796,7 +845,6 @@ function sessionMethodTypes(app: Session) {
 		| "copyFrom"
 		| "installPlugin"
 		| "listenEvents"
-		| "logs"
 		| "pushPlugin"
 		| "saveImages"
 		| "statsContainer"
@@ -834,7 +882,7 @@ function sessionMethodTypes(app: Session) {
 	type Group = NonNullable<LiveEvent["group"]>;
 	const groupIsClosed: [Group] extends [LiveGroup] ? ([LiveGroup] extends [Group] ? true : false) : false = true;
 	groupIsClosed;
-	const logsAreUnknown: ExactUnknown<Awaited<ReturnType<Session["logs"]>>> = true;
+	const logsAreVoid: [Awaited<ReturnType<Session["logs"]>>] extends [void] ? true : false = true;
 	const attachIsUnknown: ExactUnknown<Awaited<ReturnType<Session["attachContainer"]>>> = true;
 	const statsAreUnknown: ExactUnknown<Awaited<ReturnType<Session["statsContainer"]>>> = true;
 	const copyIsUnknown: ExactUnknown<Awaited<ReturnType<Session["copyFrom"]>>> = true;
@@ -902,7 +950,7 @@ function sessionMethodTypes(app: Session) {
 	void buildIsVoid;
 	void downIsVoid;
 	void imageIsVoid;
-	void logsAreUnknown;
+	void logsAreVoid;
 	void attachIsUnknown;
 	void statsAreUnknown;
 	void copyIsUnknown;
@@ -1193,6 +1241,46 @@ oneAtATime("a missing containerkit binary prints an error and exits", async () =
 	} finally {
 		process.exit = prevExit;
 		console.error = prevError;
+	}
+});
+
+oneAtATime("root progress off does not paint and still delivers the log", async () => {
+	const writes: string[] = [];
+	const original = process.stdout.write.bind(process.stdout);
+	process.stdout.write = ((chunk: string | Uint8Array) => {
+		writes.push(String(chunk));
+		return true;
+	}) as typeof process.stdout.write;
+	let emit: (event: LiveEvent) => void = () => undefined;
+	const transport: SessionTransport = {
+		async call() {
+			return { ok: true };
+		},
+		on(kind, handler) {
+			if (kind === "event") {
+				emit = handler;
+			}
+			return () => undefined;
+		},
+		async close() {},
+	};
+	const seen: string[] = [];
+	const live = root({ progress: "off" }, function App() {
+		useLiveLog((event) => {
+			if (event.kind === "log" && event.line) {
+				seen.push(event.line);
+			}
+		});
+		return null;
+	});
+	const running = await runRoot(live, transport);
+	try {
+		emit({ type: "event", kind: "log", line: "hello", display: "log hello" });
+		assert.deepEqual(seen, ["hello"]);
+		assert.equal(writes.join(""), "");
+	} finally {
+		process.stdout.write = original;
+		await running.close();
 	}
 });
 

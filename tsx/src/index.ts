@@ -16,7 +16,7 @@ export * from "./generated-actions.js";
 export { connect, encode, run, setInvoke } from "./plan.js";
 export { binaryInvoke, resolveBinary } from "./runner.js";
 export type { BinaryInvokeOptions } from "./runner.js";
-export type { Client, PlanAction, PlanDocument, Invoke } from "./plan.js";
+export type { Client, Invoke, PlanAction, PlanDocument, RunOptions, RunProgress } from "./plan.js";
 export type { DockerNode } from "./docker-node.js";
 
 /**

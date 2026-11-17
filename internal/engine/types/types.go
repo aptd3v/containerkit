@@ -14,7 +14,7 @@ import apitypes "github.com/moby/moby/api/types"
 // endpoints, such as raw TTY streams and multiplexed stdout/stderr streams.
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/api/types#MediaType
-// GitHub: https://github.com/moby/moby/blob/api/v1.56.1/api/types/types.go
+// GitHub: https://github.com/moby/moby/blob/api/v1.57.0/api/types/types.go
 // Kind: named:string
 // Underlying: string
 // Usecase: wrap the Engine API type MediaType from types.

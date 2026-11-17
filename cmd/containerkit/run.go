@@ -57,7 +57,7 @@ func run(ctx context.Context, args []string, in io.Reader, out, errw io.Writer) 
 			fmt.Fprintln(errw, err)
 			return 1
 		}
-		result, err := execPlan(ctx, data)
+		result, err := execPlan(ctx, data, errw)
 		if err != nil {
 			fmt.Fprintln(errw, err)
 			return 1
@@ -126,9 +126,9 @@ func validate(data []byte) error {
 	return kit.ImportYAML(data).Validate()
 }
 
-func execPlan(ctx context.Context, data []byte) ([]byte, error) {
+func execPlan(ctx context.Context, data []byte, errw io.Writer) ([]byte, error) {
 	if isJSON(data) {
-		return kit.ExecJSON(ctx, data)
+		return kit.ExecCLI(ctx, data, errw)
 	}
 	wrapped, err := json.Marshal(map[string]any{
 		"connect": map[string]any{"fromEnv": true},
@@ -138,7 +138,7 @@ func execPlan(ctx context.Context, data []byte) ([]byte, error) {
 	if err != nil {
 		return nil, err
 	}
-	return kit.ExecJSON(ctx, wrapped)
+	return kit.ExecCLI(ctx, wrapped, errw)
 }
 
 func isJSON(data []byte) bool {

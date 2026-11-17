@@ -9,7 +9,7 @@ import "github.com/moby/moby/api/types/build"
 // # BuilderVersion sets the version of underlying builder to use
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/api/types/build#BuilderVersion
-// GitHub: https://github.com/moby/moby/blob/api/v1.56.1/api/types/build/build.go
+// GitHub: https://github.com/moby/moby/blob/api/v1.57.0/api/types/build/build.go
 // Kind: named:string
 // Underlying: string
 // Usecase: wrap the Engine API type BuilderVersion from build.
@@ -21,7 +21,7 @@ type BuilderVersion = build.BuilderVersion
 // POST "/build/prune"
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/api/types/build#CachePruneReport
-// GitHub: https://github.com/moby/moby/blob/api/v1.56.1/api/types/build/cache.go
+// GitHub: https://github.com/moby/moby/blob/api/v1.57.0/api/types/build/cache.go
 // Kind: struct
 // Usecase: wrap the Engine API type CachePruneReport from build.
 type CachePruneReport = build.CachePruneReport
@@ -31,7 +31,7 @@ type CachePruneReport = build.CachePruneReport
 // CacheRecord contains information about a build cache record.
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/api/types/build#CacheRecord
-// GitHub: https://github.com/moby/moby/blob/api/v1.56.1/api/types/build/cache.go
+// GitHub: https://github.com/moby/moby/blob/api/v1.57.0/api/types/build/cache.go
 // Kind: struct
 // References: time.Time
 // Usecase: wrap the Engine API type CacheRecord from build.
@@ -44,7 +44,7 @@ type CacheRecord = build.CacheRecord
 // swagger:model DiskUsage
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/api/types/build#DiskUsage
-// GitHub: https://github.com/moby/moby/blob/api/v1.56.1/api/types/build/disk_usage.go
+// GitHub: https://github.com/moby/moby/blob/api/v1.57.0/api/types/build/disk_usage.go
 // Kind: struct
 // Usecase: wrap the Engine API type DiskUsage from build.
 type DiskUsage = build.DiskUsage
@@ -54,7 +54,7 @@ type DiskUsage = build.DiskUsage
 // Result contains the image id of a successful build.
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/api/types/build#Result
-// GitHub: https://github.com/moby/moby/blob/api/v1.56.1/api/types/build/build.go
+// GitHub: https://github.com/moby/moby/blob/api/v1.57.0/api/types/build/build.go
 // Kind: struct
 // Usecase: wrap the Engine API type Result from build.
 type Result = build.Result

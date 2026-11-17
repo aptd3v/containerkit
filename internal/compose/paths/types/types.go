@@ -7,7 +7,7 @@ import "github.com/compose-spec/compose-go/v2/paths"
 // RemoteResource wraps paths.RemoteResource.
 //
 // Source: https://pkg.go.dev/github.com/compose-spec/compose-go/v2/paths#RemoteResource
-// GitHub: https://github.com/compose-spec/compose-go/blob/v2.16.2/paths/resolve.go
+// GitHub: https://github.com/compose-spec/compose-go/blob/v2.17.0/paths/resolve.go
 // Kind: func
 // Underlying: func(path string) bool
 // Usecase: wrap compose-go paths machinery used while loading a Project.

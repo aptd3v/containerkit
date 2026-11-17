@@ -256,6 +256,50 @@ export type PlanOp =
 ;
 
 /**
+ * One compose operation and the options that belong to it.
+ *
+ * @remarks
+ * The op selects the options type and the required fields.
+ * An inline options object is checked against that type.
+ * A predeclared options value is checked structurally,
+ * so extra properties can remain when its type overlaps.
+ */
+export type ComposeStepSpec =
+	| { op: "composeAttach"; service: string; options?: AttachOptions }
+	| { op: "composeBuild"; options?: ComposeBuildOptions }
+	| { op: "composeCommit"; service: string; options?: CommitOptions }
+	| { op: "composeCopy"; options?: CopyOptions }
+	| { op: "composeCreate"; options?: ComposeCreateOptions }
+	| { op: "composeDown"; options?: DownOptions }
+	| { op: "composeEvents"; options?: EventsOptions }
+	| { op: "composeExec"; service: string; options?: RunOptions }
+	| { op: "composeExport"; service: string; options?: ExportOptions }
+	| { op: "composeGenerate"; options?: GenerateOptions }
+	| { op: "composeImages"; options?: ImagesOptions }
+	| { op: "composeKill"; options?: KillOptions }
+	| { op: "composeList"; options?: ListOptions }
+	| { op: "composeLoadProject"; options?: LoadProjectOptions }
+	| { op: "composePause"; options?: PauseOptions }
+	| { op: "composePort"; service: string; port: number; options?: ComposePortOptions }
+	| { op: "composePs"; options?: PsOptions }
+	| { op: "composePublishOCI"; repository: string; options?: PublishOptions }
+	| { op: "composePull"; options?: PullOptions }
+	| { op: "composePush"; options?: PushOptions }
+	| { op: "composeRemove"; options?: RemoveOptions }
+	| { op: "composeRestart"; options?: ComposeRestartOptions }
+	| { op: "composeRun"; service: string; options?: RunOptions }
+	| { op: "composeScale"; options?: ScaleOptions }
+	| { op: "composeStart"; options?: ComposeStartOptions }
+	| { op: "composeStop"; options?: ComposeStopOptions }
+	| { op: "composeUnpause"; options?: PauseOptions }
+	| { op: "composeUp"; options?: UpOptions }
+	| { op: "composeViz"; options?: VizOptions }
+	| { op: "composeVolumeList"; options?: VolumesListOptions }
+	| { op: "composeWait"; options?: WaitOptions }
+	| { op: "composeWatch"; options?: WatchOptions }
+;
+
+/**
  * attachContainer builds a plan for kit AttachContainer.
  *
  * @remarks

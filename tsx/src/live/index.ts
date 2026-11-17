@@ -42,7 +42,7 @@ export {
 } from "./error.js";
 export type { ErrorClass, ErrorFrame, ErrorReport } from "./error.js";
 export { root, runRoot, useContainerState, useEffect, useMemo, useResource, useSession, useState } from "./root.js";
-export type { LiveRoot, OnceRoot, RenderRoot, RootOptions, Running } from "./root.js";
+export type { LiveRoot, OnceRoot, RenderRoot, RootOptions, RootProgress, Running } from "./root.js";
 export type { ErrorLiveEvent, LiveEvent, LiveEventMap, LiveGroup, LiveStatus, LogLiveEvent, Session, SessionLogEvent, StatusLiveEvent } from "./session.js";
 export { eventText } from "./session.js";
 export type {
