@@ -1078,7 +1078,8 @@ func (o OnExitOpt) applyComposeStart(a *startAct) error {
 // It implements [ComposeStartOption] and [UpOption].
 type NavigationMenuOpt struct{ v bool }
 
-// NavigationMenu toggles the compose navigation menu on up/start, including explicit false.
+// NavigationMenu sets the up/start menu flag, including explicit false.
+// The composer does not install a menu implementation, so a true value does not draw a menu.
 func NavigationMenu(v bool) NavigationMenuOpt { return NavigationMenuOpt{v: v} }
 
 func (o NavigationMenuOpt) applyUp(a *upAct) error              { a.start.navMenu = o.v; return nil }

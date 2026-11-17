@@ -121,7 +121,7 @@ func (a downAct) sdk() composeapi.DownOptions {
 	return composeapi.DownOptions{
 		RemoveOrphans: a.removeOrphan,
 		Timeout:       a.timeout,
-		Images:        a.images,
+		Images:        composeapi.ImagePruneMode(a.images),
 		Volumes:       a.volumes,
 		Services:      append([]string(nil), a.services...),
 	}

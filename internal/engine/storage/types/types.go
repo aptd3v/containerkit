@@ -12,7 +12,7 @@ import "github.com/moby/moby/api/types/storage"
 // swagger:model DriverData
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/api/types/storage#DriverData
-// GitHub: https://github.com/moby/moby/blob/api/v1.56.1/api/types/storage/driver_data.go
+// GitHub: https://github.com/moby/moby/blob/api/v1.57.0/api/types/storage/driver_data.go
 // Kind: struct
 // Usecase: wrap the Engine API type DriverData from storage.
 type DriverData = storage.DriverData
@@ -24,7 +24,7 @@ type DriverData = storage.DriverData
 // swagger:model RootFSStorage
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/api/types/storage#RootFSStorage
-// GitHub: https://github.com/moby/moby/blob/api/v1.56.1/api/types/storage/root_f_s_storage.go
+// GitHub: https://github.com/moby/moby/blob/api/v1.57.0/api/types/storage/root_f_s_storage.go
 // Kind: struct
 // Usecase: wrap the Engine API type RootFSStorage from storage.
 type RootFSStorage = storage.RootFSStorage
@@ -36,7 +36,7 @@ type RootFSStorage = storage.RootFSStorage
 // swagger:model RootFSStorageSnapshot
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/api/types/storage#RootFSStorageSnapshot
-// GitHub: https://github.com/moby/moby/blob/api/v1.56.1/api/types/storage/root_f_s_storage_snapshot.go
+// GitHub: https://github.com/moby/moby/blob/api/v1.57.0/api/types/storage/root_f_s_storage_snapshot.go
 // Kind: struct
 // Usecase: wrap the Engine API type RootFSStorageSnapshot from storage.
 type RootFSStorageSnapshot = storage.RootFSStorageSnapshot
@@ -48,7 +48,7 @@ type RootFSStorageSnapshot = storage.RootFSStorageSnapshot
 // swagger:model Storage
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/api/types/storage#Storage
-// GitHub: https://github.com/moby/moby/blob/api/v1.56.1/api/types/storage/storage.go
+// GitHub: https://github.com/moby/moby/blob/api/v1.57.0/api/types/storage/storage.go
 // Kind: struct
 // Usecase: wrap the Engine API type Storage from storage.
 type Storage = storage.Storage

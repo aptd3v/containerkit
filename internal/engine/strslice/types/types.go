@@ -11,7 +11,7 @@ import "github.com/moby/moby/api/types/strslice"
 // Deprecated: this type was used for compatibility with deprecated API versions. Use []string instead.
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/api/types/strslice#StrSlice
-// GitHub: https://github.com/moby/moby/blob/api/v1.56.1/api/types/strslice/strslice.go
+// GitHub: https://github.com/moby/moby/blob/api/v1.57.0/api/types/strslice/strslice.go
 // Kind: slice
 // Underlying: []string
 // Usecase: wrap the Engine API type StrSlice from strslice.

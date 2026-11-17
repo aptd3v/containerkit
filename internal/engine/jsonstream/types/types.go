@@ -10,7 +10,7 @@ import "github.com/moby/moby/api/types/jsonstream"
 // an integer error code, Message is the error message.
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/api/types/jsonstream#Error
-// GitHub: https://github.com/moby/moby/blob/api/v1.56.1/api/types/jsonstream/json_error.go
+// GitHub: https://github.com/moby/moby/blob/api/v1.57.0/api/types/jsonstream/json_error.go
 // Kind: struct
 // Usecase: wrap the Engine API type Error from jsonstream.
 type Error = jsonstream.Error
@@ -22,7 +22,7 @@ type Error = jsonstream.Error
 // message.
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/api/types/jsonstream#Message
-// GitHub: https://github.com/moby/moby/blob/api/v1.56.1/api/types/jsonstream/message.go
+// GitHub: https://github.com/moby/moby/blob/api/v1.57.0/api/types/jsonstream/message.go
 // Kind: struct
 // References: encoding/json.RawMessage
 // Usecase: wrap the Engine API type Message from jsonstream.
@@ -33,7 +33,7 @@ type Message = jsonstream.Message
 // Progress describes a progress message in a JSON stream.
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/api/types/jsonstream#Progress
-// GitHub: https://github.com/moby/moby/blob/api/v1.56.1/api/types/jsonstream/progress.go
+// GitHub: https://github.com/moby/moby/blob/api/v1.57.0/api/types/jsonstream/progress.go
 // Kind: struct
 // Usecase: wrap the Engine API type Progress from jsonstream.
 type Progress = jsonstream.Progress

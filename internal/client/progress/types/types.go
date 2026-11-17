@@ -12,7 +12,7 @@ import "github.com/moby/moby/client/pkg/progress"
 // doesn't implement the io.Writer interface).
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/client/pkg/progress#Output
-// GitHub: https://github.com/moby/moby/blob/client/v0.6.2/client/pkg/progress/progress.go
+// GitHub: https://github.com/moby/moby/blob/client/v0.6.3/client/pkg/progress/progress.go
 // Kind: interface
 // Usecase: wrap Engine client helper type Output.
 type Output = progress.Output
@@ -22,7 +22,7 @@ type Output = progress.Output
 // Progress represents the progress of a transfer.
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/client/pkg/progress#Progress
-// GitHub: https://github.com/moby/moby/blob/client/v0.6.2/client/pkg/progress/progress.go
+// GitHub: https://github.com/moby/moby/blob/client/v0.6.3/client/pkg/progress/progress.go
 // Kind: struct
 // Usecase: wrap Engine client helper type Progress.
 type Progress = progress.Progress
@@ -32,7 +32,7 @@ type Progress = progress.Progress
 // Reader is a Reader with progress bar.
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/client/pkg/progress#Reader
-// GitHub: https://github.com/moby/moby/blob/client/v0.6.2/client/pkg/progress/progressreader.go
+// GitHub: https://github.com/moby/moby/blob/client/v0.6.3/client/pkg/progress/progressreader.go
 // Kind: struct
 // References: golang.org/x/time/rate.Limiter, io.ReadCloser
 // Usecase: wrap Engine client helper type Reader.
