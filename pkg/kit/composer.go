@@ -65,9 +65,10 @@ func composerFromEngine(api Engine, act composerAct) (Composer, error) {
 		return nil, cfgErr("composer", "client", "NewComposer", err)
 	}
 	var composeOpts []compose.Option
-	if act.log != nil {
-		composeOpts = append(composeOpts, compose.WithEventProcessor(act.log))
-	}
+	// The bridge is always installed. A logger passed to Connect is the fallback.
+	// A logger on the call context, from Log on Up or Logger.Context, receives
+	// the resource rows for that call.
+	composeOpts = append(composeOpts, compose.WithEventProcessor(newLogBridge(act.log)))
 	if act.out != nil {
 		composeOpts = append(composeOpts, compose.WithOutputStream(act.out))
 	}

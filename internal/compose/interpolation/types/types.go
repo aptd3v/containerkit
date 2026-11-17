@@ -9,7 +9,7 @@ import "github.com/compose-spec/compose-go/v2/interpolation"
 // Cast a value to a new type, or return an error if the value can't be cast
 //
 // Source: https://pkg.go.dev/github.com/compose-spec/compose-go/v2/interpolation#Cast
-// GitHub: https://github.com/compose-spec/compose-go/blob/v2.16.2/interpolation/interpolation.go
+// GitHub: https://github.com/compose-spec/compose-go/blob/v2.17.0/interpolation/interpolation.go
 // Kind: func
 // Underlying: func(value string) (interface{}, error)
 // Usecase: wrap compose-go interpolation machinery used while loading a Project.
@@ -23,7 +23,7 @@ type Cast = interpolation.Cast
 // and the absence of a value.
 //
 // Source: https://pkg.go.dev/github.com/compose-spec/compose-go/v2/interpolation#LookupValue
-// GitHub: https://github.com/compose-spec/compose-go/blob/v2.16.2/interpolation/interpolation.go
+// GitHub: https://github.com/compose-spec/compose-go/blob/v2.17.0/interpolation/interpolation.go
 // Kind: func
 // Underlying: func(key string) (string, bool)
 // Usecase: wrap compose-go interpolation machinery used while loading a Project.
@@ -34,7 +34,7 @@ type LookupValue = interpolation.LookupValue
 // # Options supported by Interpolate
 //
 // Source: https://pkg.go.dev/github.com/compose-spec/compose-go/v2/interpolation#Options
-// GitHub: https://github.com/compose-spec/compose-go/blob/v2.16.2/interpolation/interpolation.go
+// GitHub: https://github.com/compose-spec/compose-go/blob/v2.17.0/interpolation/interpolation.go
 // Kind: struct
 // References: github.com/compose-spec/compose-go/v2/template.Mapping, github.com/compose-spec/compose-go/v2/tree.Path
 // Usecase: wrap compose-go interpolation machinery used while loading a Project.

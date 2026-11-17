@@ -9,7 +9,7 @@ import composeapi "github.com/docker/compose/v5/pkg/api"
 // # AttachOptions group options of the Attach API
 //
 // Source: https://pkg.go.dev/github.com/docker/compose/v5/pkg/api#AttachOptions
-// GitHub: https://github.com/docker/compose/blob/v5.6.1/pkg/api/api.go
+// GitHub: https://github.com/docker/compose/blob/v5.7.1/pkg/api/api.go
 // Kind: struct
 // References: github.com/compose-spec/compose-go/v2/types.Project
 // Usecase: wrap the Compose runtime SDK (AttachOptions) used to build/up/down/ps/logs a project.
@@ -20,7 +20,7 @@ type AttachOptions = composeapi.AttachOptions
 // # BuildOptions group options of the Build API
 //
 // Source: https://pkg.go.dev/github.com/docker/compose/v5/pkg/api#BuildOptions
-// GitHub: https://github.com/docker/compose/blob/v5.6.1/pkg/api/api.go
+// GitHub: https://github.com/docker/compose/blob/v5.7.1/pkg/api/api.go
 // Kind: struct
 // References: github.com/compose-spec/compose-go/v2/types.MappingWithEquals, github.com/compose-spec/compose-go/v2/types.SSHKey, io.Writer
 // Usecase: wrap the Compose runtime SDK (BuildOptions) used to build/up/down/ps/logs a project.
@@ -29,7 +29,7 @@ type BuildOptions = composeapi.BuildOptions
 // Cascade wraps api.Cascade.
 //
 // Source: https://pkg.go.dev/github.com/docker/compose/v5/pkg/api#Cascade
-// GitHub: https://github.com/docker/compose/blob/v5.6.1/pkg/api/api.go
+// GitHub: https://github.com/docker/compose/blob/v5.7.1/pkg/api/api.go
 // Kind: named:int
 // Underlying: int
 // Usecase: wrap the Compose runtime SDK (Cascade) used to build/up/down/ps/logs a project.
@@ -40,7 +40,7 @@ type Cascade = composeapi.Cascade
 // # CommitOptions group options of the Commit API
 //
 // Source: https://pkg.go.dev/github.com/docker/compose/v5/pkg/api#CommitOptions
-// GitHub: https://github.com/docker/compose/blob/v5.6.1/pkg/api/api.go
+// GitHub: https://github.com/docker/compose/blob/v5.7.1/pkg/api/api.go
 // Kind: struct
 // References: github.com/docker/cli/opts.ListOpts
 // Usecase: wrap the Compose runtime SDK (CommitOptions) used to build/up/down/ps/logs a project.
@@ -60,9 +60,8 @@ type CommitOptions = composeapi.CommitOptions
 // documented on each field.
 //
 // Source: https://pkg.go.dev/github.com/docker/compose/v5/pkg/api#Compose
-// GitHub: https://github.com/docker/compose/blob/v5.6.1/pkg/api/api.go
+// GitHub: https://github.com/docker/compose/blob/v5.7.1/pkg/api/api.go
 // Kind: interface
-// References: context.Context, github.com/compose-spec/compose-go/v2/types.Project
 // Usecase: wrap the Compose runtime SDK (Compose) used to build/up/down/ps/logs a project.
 type Compose = composeapi.Compose
 
@@ -71,7 +70,7 @@ type Compose = composeapi.Compose
 // # ConfigOptions group options of the Config API
 //
 // Source: https://pkg.go.dev/github.com/docker/compose/v5/pkg/api#ConfigOptions
-// GitHub: https://github.com/docker/compose/blob/v5.6.1/pkg/api/api.go
+// GitHub: https://github.com/docker/compose/blob/v5.7.1/pkg/api/api.go
 // Kind: struct
 // Usecase: wrap the Compose runtime SDK (ConfigOptions) used to build/up/down/ps/logs a project.
 type ConfigOptions = composeapi.ConfigOptions
@@ -81,7 +80,7 @@ type ConfigOptions = composeapi.ConfigOptions
 // # ContainerEvent notify an event has been collected on source container implementing Service
 //
 // Source: https://pkg.go.dev/github.com/docker/compose/v5/pkg/api#ContainerEvent
-// GitHub: https://github.com/docker/compose/blob/v5.6.1/pkg/api/api.go
+// GitHub: https://github.com/docker/compose/blob/v5.7.1/pkg/api/api.go
 // Kind: struct
 // Usecase: wrap the Compose runtime SDK (ContainerEvent) used to build/up/down/ps/logs a project.
 type ContainerEvent = composeapi.ContainerEvent
@@ -91,7 +90,7 @@ type ContainerEvent = composeapi.ContainerEvent
 // # ContainerEventListener is a callback to process ContainerEvent from services
 //
 // Source: https://pkg.go.dev/github.com/docker/compose/v5/pkg/api#ContainerEventListener
-// GitHub: https://github.com/docker/compose/blob/v5.6.1/pkg/api/api.go
+// GitHub: https://github.com/docker/compose/blob/v5.7.1/pkg/api/api.go
 // Kind: func
 // Underlying: func(event ContainerEvent)
 // Usecase: wrap the Compose runtime SDK (ContainerEventListener) used to build/up/down/ps/logs a project.
@@ -102,7 +101,7 @@ type ContainerEventListener = composeapi.ContainerEventListener
 // # ContainerProcSummary holds container processes top data
 //
 // Source: https://pkg.go.dev/github.com/docker/compose/v5/pkg/api#ContainerProcSummary
-// GitHub: https://github.com/docker/compose/blob/v5.6.1/pkg/api/api.go
+// GitHub: https://github.com/docker/compose/blob/v5.7.1/pkg/api/api.go
 // Kind: struct
 // Usecase: wrap the Compose runtime SDK (ContainerProcSummary) used to build/up/down/ps/logs a project.
 type ContainerProcSummary = composeapi.ContainerProcSummary
@@ -112,7 +111,7 @@ type ContainerProcSummary = composeapi.ContainerProcSummary
 // # ContainerSummary hold high-level description of a container
 //
 // Source: https://pkg.go.dev/github.com/docker/compose/v5/pkg/api#ContainerSummary
-// GitHub: https://github.com/docker/compose/blob/v5.6.1/pkg/api/api.go
+// GitHub: https://github.com/docker/compose/blob/v5.7.1/pkg/api/api.go
 // Kind: struct
 // References: github.com/moby/moby/api/types/container.ContainerState, github.com/moby/moby/api/types/container.HealthStatus
 // Usecase: wrap the Compose runtime SDK (ContainerSummary) used to build/up/down/ps/logs a project.
@@ -123,7 +122,7 @@ type ContainerSummary = composeapi.ContainerSummary
 // # ContextInfo provides Docker context information for advanced scenarios
 //
 // Source: https://pkg.go.dev/github.com/docker/compose/v5/pkg/api#ContextInfo
-// GitHub: https://github.com/docker/compose/blob/v5.6.1/pkg/api/context.go
+// GitHub: https://github.com/docker/compose/blob/v5.7.1/pkg/api/context.go
 // Kind: interface
 // Usecase: wrap the Compose runtime SDK (ContextInfo) used to build/up/down/ps/logs a project.
 type ContextInfo = composeapi.ContextInfo
@@ -133,7 +132,7 @@ type ContextInfo = composeapi.ContextInfo
 // # CopyOptions group options of the cp API
 //
 // Source: https://pkg.go.dev/github.com/docker/compose/v5/pkg/api#CopyOptions
-// GitHub: https://github.com/docker/compose/blob/v5.6.1/pkg/api/api.go
+// GitHub: https://github.com/docker/compose/blob/v5.7.1/pkg/api/api.go
 // Kind: struct
 // Usecase: wrap the Compose runtime SDK (CopyOptions) used to build/up/down/ps/logs a project.
 type CopyOptions = composeapi.CopyOptions
@@ -143,7 +142,7 @@ type CopyOptions = composeapi.CopyOptions
 // # CreateOptions group options of the Create API
 //
 // Source: https://pkg.go.dev/github.com/docker/compose/v5/pkg/api#CreateOptions
-// GitHub: https://github.com/docker/compose/blob/v5.6.1/pkg/api/api.go
+// GitHub: https://github.com/docker/compose/blob/v5.7.1/pkg/api/api.go
 // Kind: struct
 // References: time.Duration
 // Usecase: wrap the Compose runtime SDK (CreateOptions) used to build/up/down/ps/logs a project.
@@ -154,7 +153,7 @@ type CreateOptions = composeapi.CreateOptions
 // # DownOptions group options of the Down API
 //
 // Source: https://pkg.go.dev/github.com/docker/compose/v5/pkg/api#DownOptions
-// GitHub: https://github.com/docker/compose/blob/v5.6.1/pkg/api/api.go
+// GitHub: https://github.com/docker/compose/blob/v5.7.1/pkg/api/api.go
 // Kind: struct
 // References: github.com/compose-spec/compose-go/v2/types.Project, time.Duration
 // Usecase: wrap the Compose runtime SDK (DownOptions) used to build/up/down/ps/logs a project.
@@ -165,7 +164,7 @@ type DownOptions = composeapi.DownOptions
 // # Event is a container runtime event served by Events API
 //
 // Source: https://pkg.go.dev/github.com/docker/compose/v5/pkg/api#Event
-// GitHub: https://github.com/docker/compose/blob/v5.6.1/pkg/api/api.go
+// GitHub: https://github.com/docker/compose/blob/v5.7.1/pkg/api/api.go
 // Kind: struct
 // References: time.Time
 // Usecase: wrap the Compose runtime SDK (Event) used to build/up/down/ps/logs a project.
@@ -175,8 +174,30 @@ type Event = composeapi.Event
 //
 // # EventProcessor is notified about Compose operations and tasks
 //
+// # Event contract
+//
+// The event stream is ordered per resource, not globally: operations run
+// concurrently and events of distinct resources interleave freely, but a
+// given resource's events follow a fixed progression. Consumers must key on
+// Resource.ID and must not rely on global ordering.
+//
+// Typical per-resource progressions (statuses from the Status* constants):
+//
+//	container being created:  Creating → Created
+//	container being started:  Starting → Started (pre_start/post_start
+//	                           hooks, when declared, run silently within it)
+//	container being replaced: Recreate → Recreated
+//	container stop/removal:   Stopping → Stopped, Removing → Removed
+//	dependency being waited:  Waiting → Healthy | Exited
+//	networks and volumes:     Creating → Created, Removing → Removed
+//
+// Any progression can end early with an Error status, or — for optional
+// outcomes such as a dependency declared with required: false — with a
+// Skipped status carrying the reason. Status texts are stable identifiers:
+// tools may match on them.
+//
 // Source: https://pkg.go.dev/github.com/docker/compose/v5/pkg/api#EventProcessor
-// GitHub: https://github.com/docker/compose/blob/v5.6.1/pkg/api/event.go
+// GitHub: https://github.com/docker/compose/blob/v5.7.1/pkg/api/event.go
 // Kind: interface
 // References: context.Context
 // Usecase: wrap the Compose runtime SDK (EventProcessor) used to build/up/down/ps/logs a project.
@@ -187,7 +208,7 @@ type EventProcessor = composeapi.EventProcessor
 // # EventStatus indicates the status of an action
 //
 // Source: https://pkg.go.dev/github.com/docker/compose/v5/pkg/api#EventStatus
-// GitHub: https://github.com/docker/compose/blob/v5.6.1/pkg/api/event.go
+// GitHub: https://github.com/docker/compose/blob/v5.7.1/pkg/api/event.go
 // Kind: named:int
 // Underlying: int
 // Usecase: wrap the Compose runtime SDK (EventStatus) used to build/up/down/ps/logs a project.
@@ -198,7 +219,7 @@ type EventStatus = composeapi.EventStatus
 // # EventsOptions group options of the Events API
 //
 // Source: https://pkg.go.dev/github.com/docker/compose/v5/pkg/api#EventsOptions
-// GitHub: https://github.com/docker/compose/blob/v5.6.1/pkg/api/api.go
+// GitHub: https://github.com/docker/compose/blob/v5.7.1/pkg/api/api.go
 // Kind: struct
 // Usecase: wrap the Compose runtime SDK (EventsOptions) used to build/up/down/ps/logs a project.
 type EventsOptions = composeapi.EventsOptions
@@ -208,25 +229,60 @@ type EventsOptions = composeapi.EventsOptions
 // # ExportOptions group options of the Export API
 //
 // Source: https://pkg.go.dev/github.com/docker/compose/v5/pkg/api#ExportOptions
-// GitHub: https://github.com/docker/compose/blob/v5.6.1/pkg/api/api.go
+// GitHub: https://github.com/docker/compose/blob/v5.7.1/pkg/api/api.go
 // Kind: struct
 // Usecase: wrap the Compose runtime SDK (ExportOptions) used to build/up/down/ps/logs a project.
 type ExportOptions = composeapi.ExportOptions
 
+// Feature wraps api.Feature.
+//
+// Feature is a compose feature that can be started and stopped on demand,
+// e.g. by a command of the interactive menu of `compose up`.
+//
+// Source: https://pkg.go.dev/github.com/docker/compose/v5/pkg/api#Feature
+// GitHub: https://github.com/docker/compose/blob/v5.7.1/pkg/api/feature.go
+// Kind: interface
+// References: context.Context
+// Usecase: wrap the Compose runtime SDK (Feature) used to build/up/down/ps/logs a project.
+type Feature = composeapi.Feature
+
 // GenerateOptions wraps api.GenerateOptions.
 //
 // Source: https://pkg.go.dev/github.com/docker/compose/v5/pkg/api#GenerateOptions
-// GitHub: https://github.com/docker/compose/blob/v5.6.1/pkg/api/api.go
+// GitHub: https://github.com/docker/compose/blob/v5.7.1/pkg/api/api.go
 // Kind: struct
 // Usecase: wrap the Compose runtime SDK (GenerateOptions) used to build/up/down/ps/logs a project.
 type GenerateOptions = composeapi.GenerateOptions
+
+// ImageManager wraps api.ImageManager.
+//
+// ImageManager groups the operations on the images of a project: building them and moving them to or from a registry.
+//
+// Source: https://pkg.go.dev/github.com/docker/compose/v5/pkg/api#ImageManager
+// GitHub: https://github.com/docker/compose/blob/v5.7.1/pkg/api/api.go
+// Kind: interface
+// References: context.Context, github.com/compose-spec/compose-go/v2/types.Project
+// Usecase: wrap the Compose runtime SDK (ImageManager) used to build/up/down/ps/logs a project.
+type ImageManager = composeapi.ImageManager
+
+// ImagePruneMode wraps api.ImagePruneMode.
+//
+// ImagePruneMode controls how aggressively `down` removes the images
+// associated with the project.
+//
+// Source: https://pkg.go.dev/github.com/docker/compose/v5/pkg/api#ImagePruneMode
+// GitHub: https://github.com/docker/compose/blob/v5.7.1/pkg/api/api.go
+// Kind: named:string
+// Underlying: string
+// Usecase: wrap the Compose runtime SDK (ImagePruneMode) used to build/up/down/ps/logs a project.
+type ImagePruneMode = composeapi.ImagePruneMode
 
 // ImageSummary wraps api.ImageSummary.
 //
 // # ImageSummary holds container image description
 //
 // Source: https://pkg.go.dev/github.com/docker/compose/v5/pkg/api#ImageSummary
-// GitHub: https://github.com/docker/compose/blob/v5.6.1/pkg/api/api.go
+// GitHub: https://github.com/docker/compose/blob/v5.7.1/pkg/api/api.go
 // Kind: struct
 // References: github.com/containerd/platforms.Platform, time.Time
 // Usecase: wrap the Compose runtime SDK (ImageSummary) used to build/up/down/ps/logs a project.
@@ -237,28 +293,70 @@ type ImageSummary = composeapi.ImageSummary
 // # ImagesOptions group options of the Images API
 //
 // Source: https://pkg.go.dev/github.com/docker/compose/v5/pkg/api#ImagesOptions
-// GitHub: https://github.com/docker/compose/blob/v5.6.1/pkg/api/api.go
+// GitHub: https://github.com/docker/compose/blob/v5.7.1/pkg/api/api.go
 // Kind: struct
 // Usecase: wrap the Compose runtime SDK (ImagesOptions) used to build/up/down/ps/logs a project.
 type ImagesOptions = composeapi.ImagesOptions
+
+// IncompatibleOptionsError wraps api.IncompatibleOptionsError.
+//
+// IncompatibleOptionsError reports options, or option values, that were
+// requested together but cannot be honored together. It is returned, before any side effect, by
+// UpOptions.Validate and therefore by Compose.Up.
+//
+// It matches ErrIncompatibleOptions with errors.Is, and callers needing the
+// details can retrieve it with errors.As:
+//
+//	var incompatible *api.IncompatibleOptionsError
+//	if errors.As(err, &incompatible) {
+//		log.Printf("conflict between %v: %s", incompatible.Options, incompatible.Reason)
+//	}
+//
+// Source: https://pkg.go.dev/github.com/docker/compose/v5/pkg/api#IncompatibleOptionsError
+// GitHub: https://github.com/docker/compose/blob/v5.7.1/pkg/api/up_options.go
+// Kind: struct
+// Usecase: wrap the Compose runtime SDK (IncompatibleOptionsError) used to build/up/down/ps/logs a project.
+type IncompatibleOptionsError = composeapi.IncompatibleOptionsError
+
+// Inspector wraps api.Inspector.
+//
+// Inspector groups the read-only operations that report on a project and its resources.
+//
+// Source: https://pkg.go.dev/github.com/docker/compose/v5/pkg/api#Inspector
+// GitHub: https://github.com/docker/compose/blob/v5.7.1/pkg/api/api.go
+// Kind: interface
+// References: context.Context, github.com/compose-spec/compose-go/v2/types.Project
+// Usecase: wrap the Compose runtime SDK (Inspector) used to build/up/down/ps/logs a project.
+type Inspector = composeapi.Inspector
 
 // KillOptions wraps api.KillOptions.
 //
 // # KillOptions group options of the Kill API
 //
 // Source: https://pkg.go.dev/github.com/docker/compose/v5/pkg/api#KillOptions
-// GitHub: https://github.com/docker/compose/blob/v5.6.1/pkg/api/api.go
+// GitHub: https://github.com/docker/compose/blob/v5.7.1/pkg/api/api.go
 // Kind: struct
 // References: github.com/compose-spec/compose-go/v2/types.Project
 // Usecase: wrap the Compose runtime SDK (KillOptions) used to build/up/down/ps/logs a project.
 type KillOptions = composeapi.KillOptions
+
+// Lifecycle wraps api.Lifecycle.
+//
+// Lifecycle groups the operations that create, run, change and remove a project's resources.
+//
+// Source: https://pkg.go.dev/github.com/docker/compose/v5/pkg/api#Lifecycle
+// GitHub: https://github.com/docker/compose/blob/v5.7.1/pkg/api/api.go
+// Kind: interface
+// References: context.Context, github.com/compose-spec/compose-go/v2/types.Project
+// Usecase: wrap the Compose runtime SDK (Lifecycle) used to build/up/down/ps/logs a project.
+type Lifecycle = composeapi.Lifecycle
 
 // ListOptions wraps api.ListOptions.
 //
 // # ListOptions group options of the ls API
 //
 // Source: https://pkg.go.dev/github.com/docker/compose/v5/pkg/api#ListOptions
-// GitHub: https://github.com/docker/compose/blob/v5.6.1/pkg/api/api.go
+// GitHub: https://github.com/docker/compose/blob/v5.7.1/pkg/api/api.go
 // Kind: struct
 // Usecase: wrap the Compose runtime SDK (ListOptions) used to build/up/down/ps/logs a project.
 type ListOptions = composeapi.ListOptions
@@ -273,7 +371,7 @@ type ListOptions = composeapi.ListOptions
 // Multiple listeners can be registered, and all will be notified of events.
 //
 // Source: https://pkg.go.dev/github.com/docker/compose/v5/pkg/api#LoadListener
-// GitHub: https://github.com/docker/compose/blob/v5.6.1/pkg/api/api.go
+// GitHub: https://github.com/docker/compose/blob/v5.7.1/pkg/api/api.go
 // Kind: func
 // Underlying: func(event string, metadata map[string]any)
 // Usecase: wrap the Compose runtime SDK (LoadListener) used to build/up/down/ps/logs a project.
@@ -284,7 +382,7 @@ type LoadListener = composeapi.LoadListener
 // # LogConsumer is a callback to process log messages from services
 //
 // Source: https://pkg.go.dev/github.com/docker/compose/v5/pkg/api#LogConsumer
-// GitHub: https://github.com/docker/compose/blob/v5.6.1/pkg/api/api.go
+// GitHub: https://github.com/docker/compose/blob/v5.7.1/pkg/api/api.go
 // Kind: interface
 // Usecase: wrap the Compose runtime SDK (LogConsumer) used to build/up/down/ps/logs a project.
 type LogConsumer = composeapi.LogConsumer
@@ -294,7 +392,7 @@ type LogConsumer = composeapi.LogConsumer
 // # LogOptions defines optional parameters for the `Log` API
 //
 // Source: https://pkg.go.dev/github.com/docker/compose/v5/pkg/api#LogOptions
-// GitHub: https://github.com/docker/compose/blob/v5.6.1/pkg/api/api.go
+// GitHub: https://github.com/docker/compose/blob/v5.7.1/pkg/api/api.go
 // Kind: struct
 // References: github.com/compose-spec/compose-go/v2/types.Project
 // Usecase: wrap the Compose runtime SDK (LogOptions) used to build/up/down/ps/logs a project.
@@ -303,7 +401,7 @@ type LogOptions = composeapi.LogOptions
 // OCIOptions wraps api.OCIOptions.
 //
 // Source: https://pkg.go.dev/github.com/docker/compose/v5/pkg/api#OCIOptions
-// GitHub: https://github.com/docker/compose/blob/v5.6.1/pkg/api/api.go
+// GitHub: https://github.com/docker/compose/blob/v5.7.1/pkg/api/api.go
 // Kind: struct
 // Usecase: wrap the Compose runtime SDK (OCIOptions) used to build/up/down/ps/logs a project.
 type OCIOptions = composeapi.OCIOptions
@@ -322,7 +420,7 @@ type OCIOptions = composeapi.OCIOptions
 // there's a way to generically probe the registry for support level.
 //
 // Source: https://pkg.go.dev/github.com/docker/compose/v5/pkg/api#OCIVersion
-// GitHub: https://github.com/docker/compose/blob/v5.6.1/pkg/api/api.go
+// GitHub: https://github.com/docker/compose/blob/v5.7.1/pkg/api/api.go
 // Kind: named:string
 // Underlying: string
 // Usecase: wrap the Compose runtime SDK (OCIVersion) used to build/up/down/ps/logs a project.
@@ -333,7 +431,7 @@ type OCIVersion = composeapi.OCIVersion
 // # PauseOptions group options of the Pause API
 //
 // Source: https://pkg.go.dev/github.com/docker/compose/v5/pkg/api#PauseOptions
-// GitHub: https://github.com/docker/compose/blob/v5.6.1/pkg/api/api.go
+// GitHub: https://github.com/docker/compose/blob/v5.7.1/pkg/api/api.go
 // Kind: struct
 // References: github.com/compose-spec/compose-go/v2/types.Project
 // Usecase: wrap the Compose runtime SDK (PauseOptions) used to build/up/down/ps/logs a project.
@@ -344,7 +442,7 @@ type PauseOptions = composeapi.PauseOptions
 // # PortOptions group options of the Port API
 //
 // Source: https://pkg.go.dev/github.com/docker/compose/v5/pkg/api#PortOptions
-// GitHub: https://github.com/docker/compose/blob/v5.6.1/pkg/api/api.go
+// GitHub: https://github.com/docker/compose/blob/v5.7.1/pkg/api/api.go
 // Kind: struct
 // Usecase: wrap the Compose runtime SDK (PortOptions) used to build/up/down/ps/logs a project.
 type PortOptions = composeapi.PortOptions
@@ -354,7 +452,7 @@ type PortOptions = composeapi.PortOptions
 // # PortPublisher hold status about published port
 //
 // Source: https://pkg.go.dev/github.com/docker/compose/v5/pkg/api#PortPublisher
-// GitHub: https://github.com/docker/compose/blob/v5.6.1/pkg/api/api.go
+// GitHub: https://github.com/docker/compose/blob/v5.7.1/pkg/api/api.go
 // Kind: struct
 // Usecase: wrap the Compose runtime SDK (PortPublisher) used to build/up/down/ps/logs a project.
 type PortPublisher = composeapi.PortPublisher
@@ -364,7 +462,7 @@ type PortPublisher = composeapi.PortPublisher
 // # PortPublishers is a slice of PortPublisher
 //
 // Source: https://pkg.go.dev/github.com/docker/compose/v5/pkg/api#PortPublishers
-// GitHub: https://github.com/docker/compose/blob/v5.6.1/pkg/api/api.go
+// GitHub: https://github.com/docker/compose/blob/v5.7.1/pkg/api/api.go
 // Kind: slice
 // Underlying: []PortPublisher
 // Usecase: wrap the Compose runtime SDK (PortPublishers) used to build/up/down/ps/logs a project.
@@ -375,18 +473,29 @@ type PortPublishers = composeapi.PortPublishers
 // # ProjectLoadOptions configures how a Compose project should be loaded
 //
 // Source: https://pkg.go.dev/github.com/docker/compose/v5/pkg/api#ProjectLoadOptions
-// GitHub: https://github.com/docker/compose/blob/v5.6.1/pkg/api/api.go
+// GitHub: https://github.com/docker/compose/blob/v5.7.1/pkg/api/api.go
 // Kind: struct
 // References: github.com/compose-spec/compose-go/v2/cli.ProjectOptionsFn
 // Usecase: wrap the Compose runtime SDK (ProjectLoadOptions) used to build/up/down/ps/logs a project.
 type ProjectLoadOptions = composeapi.ProjectLoadOptions
+
+// ProjectLoader wraps api.ProjectLoader.
+//
+// ProjectLoader groups the operations that obtain a Compose project, from configuration files or from existing containers.
+//
+// Source: https://pkg.go.dev/github.com/docker/compose/v5/pkg/api#ProjectLoader
+// GitHub: https://github.com/docker/compose/blob/v5.7.1/pkg/api/api.go
+// Kind: interface
+// References: context.Context, github.com/compose-spec/compose-go/v2/types.Project
+// Usecase: wrap the Compose runtime SDK (ProjectLoader) used to build/up/down/ps/logs a project.
+type ProjectLoader = composeapi.ProjectLoader
 
 // PsOptions wraps api.PsOptions.
 //
 // # PsOptions group options of the Ps API
 //
 // Source: https://pkg.go.dev/github.com/docker/compose/v5/pkg/api#PsOptions
-// GitHub: https://github.com/docker/compose/blob/v5.6.1/pkg/api/api.go
+// GitHub: https://github.com/docker/compose/blob/v5.7.1/pkg/api/api.go
 // Kind: struct
 // References: github.com/compose-spec/compose-go/v2/types.Project
 // Usecase: wrap the Compose runtime SDK (PsOptions) used to build/up/down/ps/logs a project.
@@ -397,7 +506,7 @@ type PsOptions = composeapi.PsOptions
 // # PublishOptions group options of the Publish API
 //
 // Source: https://pkg.go.dev/github.com/docker/compose/v5/pkg/api#PublishOptions
-// GitHub: https://github.com/docker/compose/blob/v5.6.1/pkg/api/api.go
+// GitHub: https://github.com/docker/compose/blob/v5.7.1/pkg/api/api.go
 // Kind: struct
 // Usecase: wrap the Compose runtime SDK (PublishOptions) used to build/up/down/ps/logs a project.
 type PublishOptions = composeapi.PublishOptions
@@ -407,7 +516,7 @@ type PublishOptions = composeapi.PublishOptions
 // # PullOptions group options of the Pull API
 //
 // Source: https://pkg.go.dev/github.com/docker/compose/v5/pkg/api#PullOptions
-// GitHub: https://github.com/docker/compose/blob/v5.6.1/pkg/api/api.go
+// GitHub: https://github.com/docker/compose/blob/v5.7.1/pkg/api/api.go
 // Kind: struct
 // Usecase: wrap the Compose runtime SDK (PullOptions) used to build/up/down/ps/logs a project.
 type PullOptions = composeapi.PullOptions
@@ -417,7 +526,7 @@ type PullOptions = composeapi.PullOptions
 // # PushOptions group options of the Push API
 //
 // Source: https://pkg.go.dev/github.com/docker/compose/v5/pkg/api#PushOptions
-// GitHub: https://github.com/docker/compose/blob/v5.6.1/pkg/api/api.go
+// GitHub: https://github.com/docker/compose/blob/v5.7.1/pkg/api/api.go
 // Kind: struct
 // Usecase: wrap the Compose runtime SDK (PushOptions) used to build/up/down/ps/logs a project.
 type PushOptions = composeapi.PushOptions
@@ -427,7 +536,7 @@ type PushOptions = composeapi.PushOptions
 // # RemoveOptions group options of the Remove API
 //
 // Source: https://pkg.go.dev/github.com/docker/compose/v5/pkg/api#RemoveOptions
-// GitHub: https://github.com/docker/compose/blob/v5.6.1/pkg/api/api.go
+// GitHub: https://github.com/docker/compose/blob/v5.7.1/pkg/api/api.go
 // Kind: struct
 // References: github.com/compose-spec/compose-go/v2/types.Project
 // Usecase: wrap the Compose runtime SDK (RemoveOptions) used to build/up/down/ps/logs a project.
@@ -438,7 +547,7 @@ type RemoveOptions = composeapi.RemoveOptions
 // Resource represents status change and progress for a compose resource.
 //
 // Source: https://pkg.go.dev/github.com/docker/compose/v5/pkg/api#Resource
-// GitHub: https://github.com/docker/compose/blob/v5.6.1/pkg/api/event.go
+// GitHub: https://github.com/docker/compose/blob/v5.7.1/pkg/api/event.go
 // Kind: struct
 // Usecase: wrap the Compose runtime SDK (Resource) used to build/up/down/ps/logs a project.
 type Resource = composeapi.Resource
@@ -448,7 +557,7 @@ type Resource = composeapi.Resource
 // # RestartOptions group options of the Restart API
 //
 // Source: https://pkg.go.dev/github.com/docker/compose/v5/pkg/api#RestartOptions
-// GitHub: https://github.com/docker/compose/blob/v5.6.1/pkg/api/api.go
+// GitHub: https://github.com/docker/compose/blob/v5.7.1/pkg/api/api.go
 // Kind: struct
 // References: github.com/compose-spec/compose-go/v2/types.Project, time.Duration
 // Usecase: wrap the Compose runtime SDK (RestartOptions) used to build/up/down/ps/logs a project.
@@ -462,16 +571,27 @@ type RestartOptions = composeapi.RestartOptions
 // Detach.
 //
 // Source: https://pkg.go.dev/github.com/docker/compose/v5/pkg/api#RunOptions
-// GitHub: https://github.com/docker/compose/blob/v5.6.1/pkg/api/api.go
+// GitHub: https://github.com/docker/compose/blob/v5.7.1/pkg/api/api.go
 // Kind: struct
 // References: github.com/compose-spec/compose-go/v2/types.Labels, github.com/compose-spec/compose-go/v2/types.Project
 // Usecase: wrap the Compose runtime SDK (RunOptions) used to build/up/down/ps/logs a project.
 type RunOptions = composeapi.RunOptions
 
+// Runner wraps api.Runner.
+//
+// Runner groups the operations that run, or interact with, a command in a service container.
+//
+// Source: https://pkg.go.dev/github.com/docker/compose/v5/pkg/api#Runner
+// GitHub: https://github.com/docker/compose/blob/v5.7.1/pkg/api/api.go
+// Kind: interface
+// References: context.Context, github.com/compose-spec/compose-go/v2/types.Project
+// Usecase: wrap the Compose runtime SDK (Runner) used to build/up/down/ps/logs a project.
+type Runner = composeapi.Runner
+
 // ScaleOptions wraps api.ScaleOptions.
 //
 // Source: https://pkg.go.dev/github.com/docker/compose/v5/pkg/api#ScaleOptions
-// GitHub: https://github.com/docker/compose/blob/v5.6.1/pkg/api/api.go
+// GitHub: https://github.com/docker/compose/blob/v5.7.1/pkg/api/api.go
 // Kind: struct
 // Usecase: wrap the Compose runtime SDK (ScaleOptions) used to build/up/down/ps/logs a project.
 type ScaleOptions = composeapi.ScaleOptions
@@ -481,7 +601,7 @@ type ScaleOptions = composeapi.ScaleOptions
 // # ServiceStatus hold status about a service
 //
 // Source: https://pkg.go.dev/github.com/docker/compose/v5/pkg/api#ServiceStatus
-// GitHub: https://github.com/docker/compose/blob/v5.6.1/pkg/api/api.go
+// GitHub: https://github.com/docker/compose/blob/v5.7.1/pkg/api/api.go
 // Kind: struct
 // Usecase: wrap the Compose runtime SDK (ServiceStatus) used to build/up/down/ps/logs a project.
 type ServiceStatus = composeapi.ServiceStatus
@@ -491,7 +611,7 @@ type ServiceStatus = composeapi.ServiceStatus
 // Stack holds the name and state of a compose application/stack
 //
 // Source: https://pkg.go.dev/github.com/docker/compose/v5/pkg/api#Stack
-// GitHub: https://github.com/docker/compose/blob/v5.6.1/pkg/api/api.go
+// GitHub: https://github.com/docker/compose/blob/v5.7.1/pkg/api/api.go
 // Kind: struct
 // Usecase: wrap the Compose runtime SDK (Stack) used to build/up/down/ps/logs a project.
 type Stack = composeapi.Stack
@@ -501,7 +621,7 @@ type Stack = composeapi.Stack
 // # StartOptions group options of the Start API
 //
 // Source: https://pkg.go.dev/github.com/docker/compose/v5/pkg/api#StartOptions
-// GitHub: https://github.com/docker/compose/blob/v5.6.1/pkg/api/api.go
+// GitHub: https://github.com/docker/compose/blob/v5.7.1/pkg/api/api.go
 // Kind: struct
 // References: github.com/compose-spec/compose-go/v2/types.Project, time.Duration
 // Usecase: wrap the Compose runtime SDK (StartOptions) used to build/up/down/ps/logs a project.
@@ -512,7 +632,7 @@ type StartOptions = composeapi.StartOptions
 // # StopOptions group options of the Stop API
 //
 // Source: https://pkg.go.dev/github.com/docker/compose/v5/pkg/api#StopOptions
-// GitHub: https://github.com/docker/compose/blob/v5.6.1/pkg/api/api.go
+// GitHub: https://github.com/docker/compose/blob/v5.7.1/pkg/api/api.go
 // Kind: struct
 // References: github.com/compose-spec/compose-go/v2/types.Project, time.Duration
 // Usecase: wrap the Compose runtime SDK (StopOptions) used to build/up/down/ps/logs a project.
@@ -524,7 +644,7 @@ type StopOptions = composeapi.StopOptions
 // the schema but has no effect on this runtime outside Swarm mode.
 //
 // Source: https://pkg.go.dev/github.com/docker/compose/v5/pkg/api#UnsupportedAttribute
-// GitHub: https://github.com/docker/compose/blob/v5.6.1/pkg/api/api.go
+// GitHub: https://github.com/docker/compose/blob/v5.7.1/pkg/api/api.go
 // Kind: struct
 // Usecase: wrap the Compose runtime SDK (UnsupportedAttribute) used to build/up/down/ps/logs a project.
 type UnsupportedAttribute = composeapi.UnsupportedAttribute
@@ -534,7 +654,7 @@ type UnsupportedAttribute = composeapi.UnsupportedAttribute
 // # UpOptions group options of the Up API
 //
 // Source: https://pkg.go.dev/github.com/docker/compose/v5/pkg/api#UpOptions
-// GitHub: https://github.com/docker/compose/blob/v5.6.1/pkg/api/api.go
+// GitHub: https://github.com/docker/compose/blob/v5.7.1/pkg/api/api.go
 // Kind: struct
 // Usecase: wrap the Compose runtime SDK (UpOptions) used to build/up/down/ps/logs a project.
 type UpOptions = composeapi.UpOptions
@@ -542,7 +662,7 @@ type UpOptions = composeapi.UpOptions
 // VizOptions wraps api.VizOptions.
 //
 // Source: https://pkg.go.dev/github.com/docker/compose/v5/pkg/api#VizOptions
-// GitHub: https://github.com/docker/compose/blob/v5.6.1/pkg/api/api.go
+// GitHub: https://github.com/docker/compose/blob/v5.7.1/pkg/api/api.go
 // Kind: struct
 // Usecase: wrap the Compose runtime SDK (VizOptions) used to build/up/down/ps/logs a project.
 type VizOptions = composeapi.VizOptions
@@ -550,7 +670,7 @@ type VizOptions = composeapi.VizOptions
 // VolumesOptions wraps api.VolumesOptions.
 //
 // Source: https://pkg.go.dev/github.com/docker/compose/v5/pkg/api#VolumesOptions
-// GitHub: https://github.com/docker/compose/blob/v5.6.1/pkg/api/api.go
+// GitHub: https://github.com/docker/compose/blob/v5.7.1/pkg/api/api.go
 // Kind: struct
 // Usecase: wrap the Compose runtime SDK (VolumesOptions) used to build/up/down/ps/logs a project.
 type VolumesOptions = composeapi.VolumesOptions
@@ -558,7 +678,7 @@ type VolumesOptions = composeapi.VolumesOptions
 // VolumesSummary wraps api.VolumesSummary.
 //
 // Source: https://pkg.go.dev/github.com/docker/compose/v5/pkg/api#VolumesSummary
-// GitHub: https://github.com/docker/compose/blob/v5.6.1/pkg/api/api.go
+// GitHub: https://github.com/docker/compose/blob/v5.7.1/pkg/api/api.go
 // Kind: named:volume.Volume
 // Underlying: volume.Volume
 // References: github.com/moby/moby/api/types/volume.Volume
@@ -568,7 +688,7 @@ type VolumesSummary = composeapi.VolumesSummary
 // WaitOptions wraps api.WaitOptions.
 //
 // Source: https://pkg.go.dev/github.com/docker/compose/v5/pkg/api#WaitOptions
-// GitHub: https://github.com/docker/compose/blob/v5.6.1/pkg/api/api.go
+// GitHub: https://github.com/docker/compose/blob/v5.7.1/pkg/api/api.go
 // Kind: struct
 // Usecase: wrap the Compose runtime SDK (WaitOptions) used to build/up/down/ps/logs a project.
 type WaitOptions = composeapi.WaitOptions
@@ -578,7 +698,18 @@ type WaitOptions = composeapi.WaitOptions
 // # WatchOptions group options of the Watch API
 //
 // Source: https://pkg.go.dev/github.com/docker/compose/v5/pkg/api#WatchOptions
-// GitHub: https://github.com/docker/compose/blob/v5.6.1/pkg/api/api.go
+// GitHub: https://github.com/docker/compose/blob/v5.7.1/pkg/api/api.go
 // Kind: struct
 // Usecase: wrap the Compose runtime SDK (WatchOptions) used to build/up/down/ps/logs a project.
 type WatchOptions = composeapi.WatchOptions
+
+// Watcher wraps api.Watcher.
+//
+// Watcher groups the development-loop operations.
+//
+// Source: https://pkg.go.dev/github.com/docker/compose/v5/pkg/api#Watcher
+// GitHub: https://github.com/docker/compose/blob/v5.7.1/pkg/api/api.go
+// Kind: interface
+// References: context.Context, github.com/compose-spec/compose-go/v2/types.Project
+// Usecase: wrap the Compose runtime SDK (Watcher) used to build/up/down/ps/logs a project.
+type Watcher = composeapi.Watcher

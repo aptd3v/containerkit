@@ -7,7 +7,7 @@ import "github.com/compose-spec/compose-go/v2/consts"
 // ComposeFileKey wraps consts.ComposeFileKey.
 //
 // Source: https://pkg.go.dev/github.com/compose-spec/compose-go/v2/consts#ComposeFileKey
-// GitHub: https://github.com/compose-spec/compose-go/blob/v2.16.2/consts/consts.go
+// GitHub: https://github.com/compose-spec/compose-go/blob/v2.17.0/consts/consts.go
 // Kind: struct
 // Usecase: wrap compose-go consts machinery used while loading a Project.
 type ComposeFileKey = consts.ComposeFileKey

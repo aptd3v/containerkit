@@ -87,14 +87,28 @@ func TestContainerFailures(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	eng = &scriptedEngine{removeErr: errors.New("busy")}
-	f = New("rm", newClient(eng, nil))
+	eng = &scriptedEngine{createErr: cerrdefs.ErrConflict}
+	f = New("conflict", newClient(eng, nil))
 	f.Container("c", kit.NewContainer(kit.Name("c"), kit.Image("app")), nil)
-	if err := f.Run(ctx, discardRun()); err == nil {
-		t.Fatal("remove")
+	if err := f.Run(ctx, discardRun()); !errors.Is(err, kit.ErrConflict) || len(eng.removed) != 0 {
+		t.Fatalf("conflict %v removed %v", err, eng.removed)
 	}
 
-	eng = &scriptedEngine{removeErr: cerrdefs.ErrNotFound, createErr: errors.New("create")}
+	eng = &scriptedEngine{id: "busyid", startErr: errors.New("start"), removeErr: errors.New("busy")}
+	f = New("rm", newClient(eng, nil))
+	f.Container("c", kit.NewContainer(kit.Image("app")), nil).Retry(1)
+	if err := f.Run(ctx, discardRun()); err == nil || !strings.Contains(err.Error(), "busy") || len(eng.removed) != 1 || eng.removed[0] != "busyid" {
+		t.Fatalf("retry remove %v %v", err, eng.removed)
+	}
+
+	eng = &scriptedEngine{id: "gone", startErr: errors.New("start"), removeErr: cerrdefs.ErrNotFound}
+	f = New("notfound", newClient(eng, nil))
+	f.Container("c", kit.NewContainer(kit.Image("app")), nil).Retry(1)
+	if err := f.Run(ctx, discardRun()); err == nil || !strings.Contains(err.Error(), "start") {
+		t.Fatal(err)
+	}
+
+	eng = &scriptedEngine{createErr: errors.New("create")}
 	f = New("create", newClient(eng, nil))
 	f.Container("c", kit.NewContainer(kit.Image("app")), nil)
 	if err := f.Run(ctx, discardRun()); err == nil {
@@ -171,7 +185,7 @@ func TestContainerOwnership(t *testing.T) {
 	if err := f.Run(ctx, discardRun()); err == nil {
 		t.Fatal("start")
 	}
-	if len(eng.removed) != 2 || eng.removed[1] != "made" || !strings.HasPrefix(eng.removed[0], "job-c-") {
+	if len(eng.removed) != 1 || eng.removed[0] != "made" {
 		t.Fatalf("retry removes %v", eng.removed)
 	}
 
@@ -186,6 +200,80 @@ func TestContainerOwnership(t *testing.T) {
 	cfg, _, _, err := earlier.container.EngineConfig()
 	if err != nil || !strings.Contains(cfg.Labels[LabelPrecedes], "edge-b-") {
 		t.Fatalf("precedes %v %v", err, cfg)
+	}
+}
+
+func TestRunSweep(t *testing.T) {
+	ctx := context.Background()
+	eng := &scriptedEngine{}
+	cli := newClient(eng, nil)
+	early := New("ci", cli)
+	if _, err := early.List(ctx); err != nil {
+		t.Fatal(err)
+	}
+	if err := early.Remove(ctx); err != nil {
+		t.Fatal(err)
+	}
+	if eng.lists != 0 {
+		t.Fatalf("lists before run %d", eng.lists)
+	}
+
+	a := New("ci", cli)
+	stepA := a.Container("a", kit.NewContainer(kit.Image("app")), nil)
+	b := New("ci", cli)
+	stepB := b.Container("b", kit.NewContainer(kit.Image("app")), nil)
+	if err := a.Run(ctx, discardRun()); err != nil {
+		t.Fatal(err)
+	}
+	if err := b.Run(ctx, discardRun()); err != nil {
+		t.Fatal(err)
+	}
+	if stepA.ID() == "" || stepA.ID() == stepB.ID() {
+		t.Fatalf("ids %s %s", stepA.ID(), stepB.ID())
+	}
+	var labels map[string]string
+	for _, c := range eng.live {
+		if c.id == stepA.ID() {
+			labels = c.labels
+		}
+	}
+	if labels[LabelFlow] != "ci" || labels[LabelRun] == "" {
+		t.Fatalf("labels %#v", labels)
+	}
+	eng.live = append(eng.live, scriptedContainer{id: "left", labels: map[string]string{
+		LabelFlow: labels[LabelFlow],
+		LabelRun:  labels[LabelRun],
+	}})
+	if err := a.Remove(ctx); err != nil {
+		t.Fatal(err)
+	}
+	left := map[string]bool{}
+	for _, c := range eng.live {
+		left[c.id] = true
+	}
+	if left[stepA.ID()] || left["left"] || !left[stepB.ID()] {
+		t.Fatalf("live %#v removed %v", left, eng.removed)
+	}
+}
+
+func TestSkippedContainer(t *testing.T) {
+	ctx := context.Background()
+	eng := &scriptedEngine{}
+	f := New("skip", newClient(eng, nil))
+	bad := f.Task("bad", func(context.Context) error { return errors.New("no") })
+	step := f.Container("c", kit.NewContainer(kit.Image("app")), nil)
+	bad.Precede(step)
+	var saw Status
+	err := f.Run(ctx, &Run{Writer: io.Discard, Watch: func(e Event) {
+		if e.Kind == EventSkip {
+			saw = e.Task.Status()
+		}
+	}})
+	if err == nil || step.Status() != StatusSkip || step.Err() != nil || step.ExitCode() != 0 || saw != StatusSkip {
+		t.Fatalf("skip %v status %s err %v code %d saw %s", err, step.Status(), step.Err(), step.ExitCode(), saw)
+	}
+	if eng.created.Name != "" || len(eng.live) != 0 {
+		t.Fatalf("created %#v live %d", eng.created, len(eng.live))
 	}
 }
 

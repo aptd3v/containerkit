@@ -9,7 +9,7 @@ import engineclient "github.com/moby/moby/client"
 // APIClient is an interface that clients that talk with a docker server must implement.
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/client#APIClient
-// GitHub: https://github.com/moby/moby/blob/client/v0.6.2/client/client_interfaces.go
+// GitHub: https://github.com/moby/moby/blob/client/v0.6.3/client/client_interfaces.go
 // Kind: interface
 // Usecase: wrap the Engine client type APIClient.
 type APIClient = engineclient.APIClient
@@ -19,7 +19,7 @@ type APIClient = engineclient.APIClient
 // BuildCacheDiskUsage contains disk usage information for build cache.
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/client#BuildCacheDiskUsage
-// GitHub: https://github.com/moby/moby/blob/client/v0.6.2/client/system_disk_usage.go
+// GitHub: https://github.com/moby/moby/blob/client/v0.6.3/client/system_disk_usage.go
 // Kind: struct
 // References: github.com/moby/moby/api/types/build.CacheRecord
 // Usecase: wrap the Engine client type BuildCacheDiskUsage.
@@ -30,7 +30,7 @@ type BuildCacheDiskUsage = engineclient.BuildCacheDiskUsage
 // BuildCachePruneOptions hold parameters to prune the build cache.
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/client#BuildCachePruneOptions
-// GitHub: https://github.com/moby/moby/blob/client/v0.6.2/client/build_prune.go
+// GitHub: https://github.com/moby/moby/blob/client/v0.6.3/client/build_prune.go
 // Kind: struct
 // Usecase: wrap the Engine client type BuildCachePruneOptions.
 type BuildCachePruneOptions = engineclient.BuildCachePruneOptions
@@ -40,7 +40,7 @@ type BuildCachePruneOptions = engineclient.BuildCachePruneOptions
 // BuildCachePruneResult holds the result from the BuildCachePrune method.
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/client#BuildCachePruneResult
-// GitHub: https://github.com/moby/moby/blob/client/v0.6.2/client/build_prune.go
+// GitHub: https://github.com/moby/moby/blob/client/v0.6.3/client/build_prune.go
 // Kind: struct
 // References: github.com/moby/moby/api/types/build.CachePruneReport
 // Usecase: wrap the Engine client type BuildCachePruneResult.
@@ -51,7 +51,7 @@ type BuildCachePruneResult = engineclient.BuildCachePruneResult
 // BuildCancelOptions holds options for [Client.BuildCancel].
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/client#BuildCancelOptions
-// GitHub: https://github.com/moby/moby/blob/client/v0.6.2/client/build_cancel.go
+// GitHub: https://github.com/moby/moby/blob/client/v0.6.3/client/build_cancel.go
 // Kind: struct
 // Usecase: wrap the Engine client type BuildCancelOptions.
 type BuildCancelOptions = engineclient.BuildCancelOptions
@@ -61,7 +61,7 @@ type BuildCancelOptions = engineclient.BuildCancelOptions
 // BuildCancelResult holds the result of [Client.BuildCancel].
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/client#BuildCancelResult
-// GitHub: https://github.com/moby/moby/blob/client/v0.6.2/client/build_cancel.go
+// GitHub: https://github.com/moby/moby/blob/client/v0.6.3/client/build_cancel.go
 // Kind: struct
 // Usecase: wrap the Engine client type BuildCancelResult.
 type BuildCancelResult = engineclient.BuildCancelResult
@@ -75,7 +75,7 @@ type BuildCancelResult = engineclient.BuildCancelResult
 // enabled.
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/client#CheckpointAPIClient
-// GitHub: https://github.com/moby/moby/blob/client/v0.6.2/client/client_interfaces.go
+// GitHub: https://github.com/moby/moby/blob/client/v0.6.3/client/client_interfaces.go
 // Kind: interface
 // References: context.Context
 // Usecase: wrap the Engine client type CheckpointAPIClient.
@@ -86,7 +86,7 @@ type CheckpointAPIClient = engineclient.CheckpointAPIClient
 // CheckpointCreateOptions holds parameters to create a checkpoint from a container.
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/client#CheckpointCreateOptions
-// GitHub: https://github.com/moby/moby/blob/client/v0.6.2/client/checkpoint_create.go
+// GitHub: https://github.com/moby/moby/blob/client/v0.6.3/client/checkpoint_create.go
 // Kind: struct
 // Usecase: wrap the Engine client type CheckpointCreateOptions.
 type CheckpointCreateOptions = engineclient.CheckpointCreateOptions
@@ -96,7 +96,7 @@ type CheckpointCreateOptions = engineclient.CheckpointCreateOptions
 // CheckpointCreateResult holds the result from [client.CheckpointCreate].
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/client#CheckpointCreateResult
-// GitHub: https://github.com/moby/moby/blob/client/v0.6.2/client/checkpoint_create.go
+// GitHub: https://github.com/moby/moby/blob/client/v0.6.3/client/checkpoint_create.go
 // Kind: struct
 // Usecase: wrap the Engine client type CheckpointCreateResult.
 type CheckpointCreateResult = engineclient.CheckpointCreateResult
@@ -106,7 +106,7 @@ type CheckpointCreateResult = engineclient.CheckpointCreateResult
 // CheckpointListOptions holds parameters to list checkpoints for a container.
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/client#CheckpointListOptions
-// GitHub: https://github.com/moby/moby/blob/client/v0.6.2/client/checkpoint_list.go
+// GitHub: https://github.com/moby/moby/blob/client/v0.6.3/client/checkpoint_list.go
 // Kind: struct
 // Usecase: wrap the Engine client type CheckpointListOptions.
 type CheckpointListOptions = engineclient.CheckpointListOptions
@@ -116,7 +116,7 @@ type CheckpointListOptions = engineclient.CheckpointListOptions
 // CheckpointListResult holds the result from the CheckpointList method.
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/client#CheckpointListResult
-// GitHub: https://github.com/moby/moby/blob/client/v0.6.2/client/checkpoint_list.go
+// GitHub: https://github.com/moby/moby/blob/client/v0.6.3/client/checkpoint_list.go
 // Kind: struct
 // References: github.com/moby/moby/api/types/checkpoint.Summary
 // Usecase: wrap the Engine client type CheckpointListResult.
@@ -127,7 +127,7 @@ type CheckpointListResult = engineclient.CheckpointListResult
 // CheckpointRemoveOptions holds parameters to delete a checkpoint from a container.
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/client#CheckpointRemoveOptions
-// GitHub: https://github.com/moby/moby/blob/client/v0.6.2/client/checkpoint_remove.go
+// GitHub: https://github.com/moby/moby/blob/client/v0.6.3/client/checkpoint_remove.go
 // Kind: struct
 // Usecase: wrap the Engine client type CheckpointRemoveOptions.
 type CheckpointRemoveOptions = engineclient.CheckpointRemoveOptions
@@ -137,7 +137,7 @@ type CheckpointRemoveOptions = engineclient.CheckpointRemoveOptions
 // CheckpointRemoveResult represents the result of [Client.CheckpointRemove].
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/client#CheckpointRemoveResult
-// GitHub: https://github.com/moby/moby/blob/client/v0.6.2/client/checkpoint_remove.go
+// GitHub: https://github.com/moby/moby/blob/client/v0.6.3/client/checkpoint_remove.go
 // Kind: struct
 // Usecase: wrap the Engine client type CheckpointRemoveResult.
 type CheckpointRemoveResult = engineclient.CheckpointRemoveResult
@@ -148,7 +148,7 @@ type CheckpointRemoveResult = engineclient.CheckpointRemoveResult
 // against a docker server.
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/client#Client
-// GitHub: https://github.com/moby/moby/blob/client/v0.6.2/client/client.go
+// GitHub: https://github.com/moby/moby/blob/client/v0.6.3/client/client.go
 // Kind: struct
 // References: net/http.Transport, sync.Mutex, sync/atomic.Bool
 // Usecase: wrap the Engine client type Client.
@@ -160,7 +160,7 @@ type Client = engineclient.Client
 // that close input streams to prevent from writing.
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/client#CloseWriter
-// GitHub: https://github.com/moby/moby/blob/client/v0.6.2/client/hijack.go
+// GitHub: https://github.com/moby/moby/blob/client/v0.6.3/client/hijack.go
 // Kind: interface
 // Usecase: wrap the Engine client type CloseWriter.
 type CloseWriter = engineclient.CloseWriter
@@ -170,7 +170,7 @@ type CloseWriter = engineclient.CloseWriter
 // # ConfigAPIClient defines API client methods for configs
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/client#ConfigAPIClient
-// GitHub: https://github.com/moby/moby/blob/client/v0.6.2/client/client_interfaces.go
+// GitHub: https://github.com/moby/moby/blob/client/v0.6.3/client/client_interfaces.go
 // Kind: interface
 // References: context.Context
 // Usecase: wrap the Engine client type ConfigAPIClient.
@@ -181,7 +181,7 @@ type ConfigAPIClient = engineclient.ConfigAPIClient
 // ConfigCreateOptions holds options for creating a config.
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/client#ConfigCreateOptions
-// GitHub: https://github.com/moby/moby/blob/client/v0.6.2/client/config_create.go
+// GitHub: https://github.com/moby/moby/blob/client/v0.6.3/client/config_create.go
 // Kind: struct
 // References: github.com/moby/moby/api/types/swarm.ConfigSpec
 // Usecase: wrap the Engine client type ConfigCreateOptions.
@@ -192,7 +192,7 @@ type ConfigCreateOptions = engineclient.ConfigCreateOptions
 // ConfigCreateResult holds the result from the ConfigCreate method.
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/client#ConfigCreateResult
-// GitHub: https://github.com/moby/moby/blob/client/v0.6.2/client/config_create.go
+// GitHub: https://github.com/moby/moby/blob/client/v0.6.3/client/config_create.go
 // Kind: struct
 // Usecase: wrap the Engine client type ConfigCreateResult.
 type ConfigCreateResult = engineclient.ConfigCreateResult
@@ -202,7 +202,7 @@ type ConfigCreateResult = engineclient.ConfigCreateResult
 // ConfigInspectOptions holds options for inspecting a config.
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/client#ConfigInspectOptions
-// GitHub: https://github.com/moby/moby/blob/client/v0.6.2/client/config_inspect.go
+// GitHub: https://github.com/moby/moby/blob/client/v0.6.3/client/config_inspect.go
 // Kind: struct
 // Usecase: wrap the Engine client type ConfigInspectOptions.
 type ConfigInspectOptions = engineclient.ConfigInspectOptions
@@ -212,7 +212,7 @@ type ConfigInspectOptions = engineclient.ConfigInspectOptions
 // ConfigInspectResult holds the result from the ConfigInspect method.
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/client#ConfigInspectResult
-// GitHub: https://github.com/moby/moby/blob/client/v0.6.2/client/config_inspect.go
+// GitHub: https://github.com/moby/moby/blob/client/v0.6.3/client/config_inspect.go
 // Kind: struct
 // References: encoding/json.RawMessage, github.com/moby/moby/api/types/swarm.Config
 // Usecase: wrap the Engine client type ConfigInspectResult.
@@ -223,7 +223,7 @@ type ConfigInspectResult = engineclient.ConfigInspectResult
 // # ConfigListOptions holds parameters to list configs
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/client#ConfigListOptions
-// GitHub: https://github.com/moby/moby/blob/client/v0.6.2/client/config_list.go
+// GitHub: https://github.com/moby/moby/blob/client/v0.6.3/client/config_list.go
 // Kind: struct
 // Usecase: wrap the Engine client type ConfigListOptions.
 type ConfigListOptions = engineclient.ConfigListOptions
@@ -233,7 +233,7 @@ type ConfigListOptions = engineclient.ConfigListOptions
 // ConfigListResult holds the result from the [client.ConfigList] method.
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/client#ConfigListResult
-// GitHub: https://github.com/moby/moby/blob/client/v0.6.2/client/config_list.go
+// GitHub: https://github.com/moby/moby/blob/client/v0.6.3/client/config_list.go
 // Kind: struct
 // References: github.com/moby/moby/api/types/swarm.Config
 // Usecase: wrap the Engine client type ConfigListResult.
@@ -244,7 +244,7 @@ type ConfigListResult = engineclient.ConfigListResult
 // ConfigRemoveOptions holds options for [Client.ConfigRemove].
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/client#ConfigRemoveOptions
-// GitHub: https://github.com/moby/moby/blob/client/v0.6.2/client/config_remove.go
+// GitHub: https://github.com/moby/moby/blob/client/v0.6.3/client/config_remove.go
 // Kind: struct
 // Usecase: wrap the Engine client type ConfigRemoveOptions.
 type ConfigRemoveOptions = engineclient.ConfigRemoveOptions
@@ -254,7 +254,7 @@ type ConfigRemoveOptions = engineclient.ConfigRemoveOptions
 // ConfigRemoveResult holds the result of [Client.ConfigRemove].
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/client#ConfigRemoveResult
-// GitHub: https://github.com/moby/moby/blob/client/v0.6.2/client/config_remove.go
+// GitHub: https://github.com/moby/moby/blob/client/v0.6.3/client/config_remove.go
 // Kind: struct
 // Usecase: wrap the Engine client type ConfigRemoveResult.
 type ConfigRemoveResult = engineclient.ConfigRemoveResult
@@ -264,7 +264,7 @@ type ConfigRemoveResult = engineclient.ConfigRemoveResult
 // ConfigUpdateOptions holds options for updating a config.
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/client#ConfigUpdateOptions
-// GitHub: https://github.com/moby/moby/blob/client/v0.6.2/client/config_update.go
+// GitHub: https://github.com/moby/moby/blob/client/v0.6.3/client/config_update.go
 // Kind: struct
 // References: github.com/moby/moby/api/types/swarm.ConfigSpec, github.com/moby/moby/api/types/swarm.Version
 // Usecase: wrap the Engine client type ConfigUpdateOptions.
@@ -275,7 +275,7 @@ type ConfigUpdateOptions = engineclient.ConfigUpdateOptions
 // ConfigUpdateResult holds the result of [Client.ConfigUpdate].
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/client#ConfigUpdateResult
-// GitHub: https://github.com/moby/moby/blob/client/v0.6.2/client/config_update.go
+// GitHub: https://github.com/moby/moby/blob/client/v0.6.3/client/config_update.go
 // Kind: struct
 // Usecase: wrap the Engine client type ConfigUpdateResult.
 type ConfigUpdateResult = engineclient.ConfigUpdateResult
@@ -283,7 +283,7 @@ type ConfigUpdateResult = engineclient.ConfigUpdateResult
 // ConsoleSize wraps client.ConsoleSize.
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/client#ConsoleSize
-// GitHub: https://github.com/moby/moby/blob/client/v0.6.2/client/container_exec.go
+// GitHub: https://github.com/moby/moby/blob/client/v0.6.3/client/container_exec.go
 // Kind: struct
 // Usecase: wrap the Engine client type ConsoleSize.
 type ConsoleSize = engineclient.ConsoleSize
@@ -293,7 +293,7 @@ type ConsoleSize = engineclient.ConsoleSize
 // # ContainerAPIClient defines API client methods for the containers
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/client#ContainerAPIClient
-// GitHub: https://github.com/moby/moby/blob/client/v0.6.2/client/client_interfaces.go
+// GitHub: https://github.com/moby/moby/blob/client/v0.6.3/client/client_interfaces.go
 // Kind: interface
 // References: context.Context
 // Usecase: wrap the Engine client type ContainerAPIClient.
@@ -304,7 +304,7 @@ type ContainerAPIClient = engineclient.ContainerAPIClient
 // ContainerAttachOptions holds parameters to attach to a container.
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/client#ContainerAttachOptions
-// GitHub: https://github.com/moby/moby/blob/client/v0.6.2/client/container_attach.go
+// GitHub: https://github.com/moby/moby/blob/client/v0.6.3/client/container_attach.go
 // Kind: struct
 // Usecase: wrap the Engine client type ContainerAttachOptions.
 type ContainerAttachOptions = engineclient.ContainerAttachOptions
@@ -314,7 +314,7 @@ type ContainerAttachOptions = engineclient.ContainerAttachOptions
 // ContainerAttachResult is the result from attaching to a container.
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/client#ContainerAttachResult
-// GitHub: https://github.com/moby/moby/blob/client/v0.6.2/client/container_attach.go
+// GitHub: https://github.com/moby/moby/blob/client/v0.6.3/client/container_attach.go
 // Kind: struct
 // Usecase: wrap the Engine client type ContainerAttachResult.
 type ContainerAttachResult = engineclient.ContainerAttachResult
@@ -324,7 +324,7 @@ type ContainerAttachResult = engineclient.ContainerAttachResult
 // ContainerCommitOptions holds parameters to commit changes into a container.
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/client#ContainerCommitOptions
-// GitHub: https://github.com/moby/moby/blob/client/v0.6.2/client/container_commit.go
+// GitHub: https://github.com/moby/moby/blob/client/v0.6.3/client/container_commit.go
 // Kind: struct
 // References: github.com/moby/moby/api/types/container.Config
 // Usecase: wrap the Engine client type ContainerCommitOptions.
@@ -335,7 +335,7 @@ type ContainerCommitOptions = engineclient.ContainerCommitOptions
 // ContainerCommitResult is the result from committing a container.
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/client#ContainerCommitResult
-// GitHub: https://github.com/moby/moby/blob/client/v0.6.2/client/container_commit.go
+// GitHub: https://github.com/moby/moby/blob/client/v0.6.3/client/container_commit.go
 // Kind: struct
 // Usecase: wrap the Engine client type ContainerCommitResult.
 type ContainerCommitResult = engineclient.ContainerCommitResult
@@ -345,7 +345,7 @@ type ContainerCommitResult = engineclient.ContainerCommitResult
 // ContainerCreateOptions holds parameters to create a container.
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/client#ContainerCreateOptions
-// GitHub: https://github.com/moby/moby/blob/client/v0.6.2/client/container_create_opts.go
+// GitHub: https://github.com/moby/moby/blob/client/v0.6.3/client/container_create_opts.go
 // Kind: struct
 // References: github.com/moby/moby/api/types/container.Config, github.com/moby/moby/api/types/container.HostConfig, github.com/moby/moby/api/types/network.NetworkingConfig, github.com/opencontainers/image-spec/specs-go/v1.Platform
 // Usecase: wrap the Engine client type ContainerCreateOptions.
@@ -356,7 +356,7 @@ type ContainerCreateOptions = engineclient.ContainerCreateOptions
 // ContainerCreateResult is the result from creating a container.
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/client#ContainerCreateResult
-// GitHub: https://github.com/moby/moby/blob/client/v0.6.2/client/container_create_opts.go
+// GitHub: https://github.com/moby/moby/blob/client/v0.6.3/client/container_create_opts.go
 // Kind: struct
 // Usecase: wrap the Engine client type ContainerCreateResult.
 type ContainerCreateResult = engineclient.ContainerCreateResult
@@ -366,7 +366,7 @@ type ContainerCreateResult = engineclient.ContainerCreateResult
 // ContainerDiffOptions holds parameters to show differences in a container filesystem.
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/client#ContainerDiffOptions
-// GitHub: https://github.com/moby/moby/blob/client/v0.6.2/client/container_diff_opts.go
+// GitHub: https://github.com/moby/moby/blob/client/v0.6.3/client/container_diff_opts.go
 // Kind: struct
 // Usecase: wrap the Engine client type ContainerDiffOptions.
 type ContainerDiffOptions = engineclient.ContainerDiffOptions
@@ -376,7 +376,7 @@ type ContainerDiffOptions = engineclient.ContainerDiffOptions
 // ContainerDiffResult is the result from showing differences in a container filesystem.
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/client#ContainerDiffResult
-// GitHub: https://github.com/moby/moby/blob/client/v0.6.2/client/container_diff_opts.go
+// GitHub: https://github.com/moby/moby/blob/client/v0.6.3/client/container_diff_opts.go
 // Kind: struct
 // References: github.com/moby/moby/api/types/container.FilesystemChange
 // Usecase: wrap the Engine client type ContainerDiffResult.
@@ -387,7 +387,7 @@ type ContainerDiffResult = engineclient.ContainerDiffResult
 // ContainerExportOptions specifies options for container export operations.
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/client#ContainerExportOptions
-// GitHub: https://github.com/moby/moby/blob/client/v0.6.2/client/container_export.go
+// GitHub: https://github.com/moby/moby/blob/client/v0.6.3/client/container_export.go
 // Kind: struct
 // Usecase: wrap the Engine client type ContainerExportOptions.
 type ContainerExportOptions = engineclient.ContainerExportOptions
@@ -397,7 +397,7 @@ type ContainerExportOptions = engineclient.ContainerExportOptions
 // ContainerExportResult represents the result of a container export operation.
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/client#ContainerExportResult
-// GitHub: https://github.com/moby/moby/blob/client/v0.6.2/client/container_export.go
+// GitHub: https://github.com/moby/moby/blob/client/v0.6.3/client/container_export.go
 // Kind: interface
 // References: io.ReadCloser
 // Usecase: wrap the Engine client type ContainerExportResult.
@@ -409,7 +409,7 @@ type ContainerExportResult = engineclient.ContainerExportResult
 // the [Client.ConfigInspect] method.
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/client#ContainerInspectOptions
-// GitHub: https://github.com/moby/moby/blob/client/v0.6.2/client/container_inspect.go
+// GitHub: https://github.com/moby/moby/blob/client/v0.6.3/client/container_inspect.go
 // Kind: struct
 // Usecase: wrap the Engine client type ContainerInspectOptions.
 type ContainerInspectOptions = engineclient.ContainerInspectOptions
@@ -419,7 +419,7 @@ type ContainerInspectOptions = engineclient.ContainerInspectOptions
 // ContainerInspectResult holds the result from the [Client.ConfigInspect] method.
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/client#ContainerInspectResult
-// GitHub: https://github.com/moby/moby/blob/client/v0.6.2/client/container_inspect.go
+// GitHub: https://github.com/moby/moby/blob/client/v0.6.3/client/container_inspect.go
 // Kind: struct
 // References: encoding/json.RawMessage, github.com/moby/moby/api/types/container.InspectResponse
 // Usecase: wrap the Engine client type ContainerInspectResult.
@@ -430,7 +430,7 @@ type ContainerInspectResult = engineclient.ContainerInspectResult
 // ContainerKillOptions holds options for [Client.ContainerKill].
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/client#ContainerKillOptions
-// GitHub: https://github.com/moby/moby/blob/client/v0.6.2/client/container_kill.go
+// GitHub: https://github.com/moby/moby/blob/client/v0.6.3/client/container_kill.go
 // Kind: struct
 // Usecase: wrap the Engine client type ContainerKillOptions.
 type ContainerKillOptions = engineclient.ContainerKillOptions
@@ -440,7 +440,7 @@ type ContainerKillOptions = engineclient.ContainerKillOptions
 // ContainerKillResult holds the result of [Client.ContainerKill],
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/client#ContainerKillResult
-// GitHub: https://github.com/moby/moby/blob/client/v0.6.2/client/container_kill.go
+// GitHub: https://github.com/moby/moby/blob/client/v0.6.3/client/container_kill.go
 // Kind: struct
 // Usecase: wrap the Engine client type ContainerKillResult.
 type ContainerKillResult = engineclient.ContainerKillResult
@@ -450,7 +450,7 @@ type ContainerKillResult = engineclient.ContainerKillResult
 // ContainerListOptions holds parameters to list containers with.
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/client#ContainerListOptions
-// GitHub: https://github.com/moby/moby/blob/client/v0.6.2/client/container_list.go
+// GitHub: https://github.com/moby/moby/blob/client/v0.6.3/client/container_list.go
 // Kind: struct
 // Usecase: wrap the Engine client type ContainerListOptions.
 type ContainerListOptions = engineclient.ContainerListOptions
@@ -458,7 +458,7 @@ type ContainerListOptions = engineclient.ContainerListOptions
 // ContainerListResult wraps client.ContainerListResult.
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/client#ContainerListResult
-// GitHub: https://github.com/moby/moby/blob/client/v0.6.2/client/container_list.go
+// GitHub: https://github.com/moby/moby/blob/client/v0.6.3/client/container_list.go
 // Kind: struct
 // References: github.com/moby/moby/api/types/container.Summary
 // Usecase: wrap the Engine client type ContainerListResult.
@@ -469,7 +469,7 @@ type ContainerListResult = engineclient.ContainerListResult
 // ContainerLogsOptions holds parameters to filter logs with.
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/client#ContainerLogsOptions
-// GitHub: https://github.com/moby/moby/blob/client/v0.6.2/client/container_logs.go
+// GitHub: https://github.com/moby/moby/blob/client/v0.6.3/client/container_logs.go
 // Kind: struct
 // Usecase: wrap the Engine client type ContainerLogsOptions.
 type ContainerLogsOptions = engineclient.ContainerLogsOptions
@@ -479,7 +479,7 @@ type ContainerLogsOptions = engineclient.ContainerLogsOptions
 // ContainerLogsResult is the result of a container logs operation.
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/client#ContainerLogsResult
-// GitHub: https://github.com/moby/moby/blob/client/v0.6.2/client/container_logs.go
+// GitHub: https://github.com/moby/moby/blob/client/v0.6.3/client/container_logs.go
 // Kind: interface
 // References: io.ReadCloser
 // Usecase: wrap the Engine client type ContainerLogsResult.
@@ -490,7 +490,7 @@ type ContainerLogsResult = engineclient.ContainerLogsResult
 // ContainerPauseOptions holds options for [Client.ContainerPause].
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/client#ContainerPauseOptions
-// GitHub: https://github.com/moby/moby/blob/client/v0.6.2/client/container_pause.go
+// GitHub: https://github.com/moby/moby/blob/client/v0.6.3/client/container_pause.go
 // Kind: struct
 // Usecase: wrap the Engine client type ContainerPauseOptions.
 type ContainerPauseOptions = engineclient.ContainerPauseOptions
@@ -500,7 +500,7 @@ type ContainerPauseOptions = engineclient.ContainerPauseOptions
 // ContainerPauseResult holds the result of [Client.ContainerPause],
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/client#ContainerPauseResult
-// GitHub: https://github.com/moby/moby/blob/client/v0.6.2/client/container_pause.go
+// GitHub: https://github.com/moby/moby/blob/client/v0.6.3/client/container_pause.go
 // Kind: struct
 // Usecase: wrap the Engine client type ContainerPauseResult.
 type ContainerPauseResult = engineclient.ContainerPauseResult
@@ -510,7 +510,7 @@ type ContainerPauseResult = engineclient.ContainerPauseResult
 // ContainerPruneOptions holds parameters to prune containers.
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/client#ContainerPruneOptions
-// GitHub: https://github.com/moby/moby/blob/client/v0.6.2/client/container_prune.go
+// GitHub: https://github.com/moby/moby/blob/client/v0.6.3/client/container_prune.go
 // Kind: struct
 // Usecase: wrap the Engine client type ContainerPruneOptions.
 type ContainerPruneOptions = engineclient.ContainerPruneOptions
@@ -520,7 +520,7 @@ type ContainerPruneOptions = engineclient.ContainerPruneOptions
 // ContainerPruneResult holds the result from the [Client.ContainerPrune] method.
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/client#ContainerPruneResult
-// GitHub: https://github.com/moby/moby/blob/client/v0.6.2/client/container_prune.go
+// GitHub: https://github.com/moby/moby/blob/client/v0.6.3/client/container_prune.go
 // Kind: struct
 // References: github.com/moby/moby/api/types/container.PruneReport
 // Usecase: wrap the Engine client type ContainerPruneResult.
@@ -531,7 +531,7 @@ type ContainerPruneResult = engineclient.ContainerPruneResult
 // ContainerRemoveOptions holds parameters to remove containers.
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/client#ContainerRemoveOptions
-// GitHub: https://github.com/moby/moby/blob/client/v0.6.2/client/container_remove.go
+// GitHub: https://github.com/moby/moby/blob/client/v0.6.3/client/container_remove.go
 // Kind: struct
 // Usecase: wrap the Engine client type ContainerRemoveOptions.
 type ContainerRemoveOptions = engineclient.ContainerRemoveOptions
@@ -541,7 +541,7 @@ type ContainerRemoveOptions = engineclient.ContainerRemoveOptions
 // ContainerRemoveResult holds the result of [Client.ContainerRemove],
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/client#ContainerRemoveResult
-// GitHub: https://github.com/moby/moby/blob/client/v0.6.2/client/container_remove.go
+// GitHub: https://github.com/moby/moby/blob/client/v0.6.3/client/container_remove.go
 // Kind: struct
 // Usecase: wrap the Engine client type ContainerRemoveResult.
 type ContainerRemoveResult = engineclient.ContainerRemoveResult
@@ -551,7 +551,7 @@ type ContainerRemoveResult = engineclient.ContainerRemoveResult
 // ContainerRenameOptions represents the options for renaming a container.
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/client#ContainerRenameOptions
-// GitHub: https://github.com/moby/moby/blob/client/v0.6.2/client/container_rename.go
+// GitHub: https://github.com/moby/moby/blob/client/v0.6.3/client/container_rename.go
 // Kind: struct
 // Usecase: wrap the Engine client type ContainerRenameOptions.
 type ContainerRenameOptions = engineclient.ContainerRenameOptions
@@ -561,7 +561,7 @@ type ContainerRenameOptions = engineclient.ContainerRenameOptions
 // ContainerRenameResult represents the result of a container rename operation.
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/client#ContainerRenameResult
-// GitHub: https://github.com/moby/moby/blob/client/v0.6.2/client/container_rename.go
+// GitHub: https://github.com/moby/moby/blob/client/v0.6.3/client/container_rename.go
 // Kind: struct
 // Usecase: wrap the Engine client type ContainerRenameResult.
 type ContainerRenameResult = engineclient.ContainerRenameResult
@@ -573,7 +573,7 @@ type ContainerRenameResult = engineclient.ContainerRenameResult
 // exec process TTYs too.
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/client#ContainerResizeOptions
-// GitHub: https://github.com/moby/moby/blob/client/v0.6.2/client/container_resize.go
+// GitHub: https://github.com/moby/moby/blob/client/v0.6.3/client/container_resize.go
 // Kind: struct
 // Usecase: wrap the Engine client type ContainerResizeOptions.
 type ContainerResizeOptions = engineclient.ContainerResizeOptions
@@ -583,7 +583,7 @@ type ContainerResizeOptions = engineclient.ContainerResizeOptions
 // ContainerResizeResult holds the result of [Client.ContainerResize],
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/client#ContainerResizeResult
-// GitHub: https://github.com/moby/moby/blob/client/v0.6.2/client/container_resize.go
+// GitHub: https://github.com/moby/moby/blob/client/v0.6.3/client/container_resize.go
 // Kind: struct
 // Usecase: wrap the Engine client type ContainerResizeResult.
 type ContainerResizeResult = engineclient.ContainerResizeResult
@@ -593,7 +593,7 @@ type ContainerResizeResult = engineclient.ContainerResizeResult
 // ContainerRestartOptions holds options for [Client.ContainerRestart].
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/client#ContainerRestartOptions
-// GitHub: https://github.com/moby/moby/blob/client/v0.6.2/client/container_restart.go
+// GitHub: https://github.com/moby/moby/blob/client/v0.6.3/client/container_restart.go
 // Kind: struct
 // Usecase: wrap the Engine client type ContainerRestartOptions.
 type ContainerRestartOptions = engineclient.ContainerRestartOptions
@@ -603,7 +603,7 @@ type ContainerRestartOptions = engineclient.ContainerRestartOptions
 // ContainerRestartResult holds the result of [Client.ContainerRestart],
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/client#ContainerRestartResult
-// GitHub: https://github.com/moby/moby/blob/client/v0.6.2/client/container_restart.go
+// GitHub: https://github.com/moby/moby/blob/client/v0.6.3/client/container_restart.go
 // Kind: struct
 // Usecase: wrap the Engine client type ContainerRestartResult.
 type ContainerRestartResult = engineclient.ContainerRestartResult
@@ -613,7 +613,7 @@ type ContainerRestartResult = engineclient.ContainerRestartResult
 // ContainerStartOptions holds options for [Client.ContainerStart].
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/client#ContainerStartOptions
-// GitHub: https://github.com/moby/moby/blob/client/v0.6.2/client/container_start.go
+// GitHub: https://github.com/moby/moby/blob/client/v0.6.3/client/container_start.go
 // Kind: struct
 // Usecase: wrap the Engine client type ContainerStartOptions.
 type ContainerStartOptions = engineclient.ContainerStartOptions
@@ -623,7 +623,7 @@ type ContainerStartOptions = engineclient.ContainerStartOptions
 // ContainerStartResult holds the result of [Client.ContainerStart],
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/client#ContainerStartResult
-// GitHub: https://github.com/moby/moby/blob/client/v0.6.2/client/container_start.go
+// GitHub: https://github.com/moby/moby/blob/client/v0.6.3/client/container_start.go
 // Kind: struct
 // Usecase: wrap the Engine client type ContainerStartResult.
 type ContainerStartResult = engineclient.ContainerStartResult
@@ -633,7 +633,7 @@ type ContainerStartResult = engineclient.ContainerStartResult
 // ContainerStatPathOptions holds options for [Client.ContainerStatPath].
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/client#ContainerStatPathOptions
-// GitHub: https://github.com/moby/moby/blob/client/v0.6.2/client/container_copy.go
+// GitHub: https://github.com/moby/moby/blob/client/v0.6.3/client/container_copy.go
 // Kind: struct
 // Usecase: wrap the Engine client type ContainerStatPathOptions.
 type ContainerStatPathOptions = engineclient.ContainerStatPathOptions
@@ -643,7 +643,7 @@ type ContainerStatPathOptions = engineclient.ContainerStatPathOptions
 // ContainerStatPathResult holds the result of [Client.ContainerStatPath].
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/client#ContainerStatPathResult
-// GitHub: https://github.com/moby/moby/blob/client/v0.6.2/client/container_copy.go
+// GitHub: https://github.com/moby/moby/blob/client/v0.6.3/client/container_copy.go
 // Kind: struct
 // References: github.com/moby/moby/api/types/container.PathStat
 // Usecase: wrap the Engine client type ContainerStatPathResult.
@@ -655,7 +655,7 @@ type ContainerStatPathResult = engineclient.ContainerStatPathResult
 // using the [Client.ContainerStats] method.
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/client#ContainerStatsOptions
-// GitHub: https://github.com/moby/moby/blob/client/v0.6.2/client/container_stats.go
+// GitHub: https://github.com/moby/moby/blob/client/v0.6.3/client/container_stats.go
 // Kind: struct
 // Usecase: wrap the Engine client type ContainerStatsOptions.
 type ContainerStatsOptions = engineclient.ContainerStatsOptions
@@ -669,7 +669,7 @@ type ContainerStatsOptions = engineclient.ContainerStatsOptions
 // If streaming is disabled, the stream contains a single record.
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/client#ContainerStatsResult
-// GitHub: https://github.com/moby/moby/blob/client/v0.6.2/client/container_stats.go
+// GitHub: https://github.com/moby/moby/blob/client/v0.6.3/client/container_stats.go
 // Kind: struct
 // References: io.ReadCloser
 // Usecase: wrap the Engine client type ContainerStatsResult.
@@ -680,7 +680,7 @@ type ContainerStatsResult = engineclient.ContainerStatsResult
 // ContainerStopOptions holds the options for [Client.ContainerStop].
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/client#ContainerStopOptions
-// GitHub: https://github.com/moby/moby/blob/client/v0.6.2/client/container_stop.go
+// GitHub: https://github.com/moby/moby/blob/client/v0.6.3/client/container_stop.go
 // Kind: struct
 // Usecase: wrap the Engine client type ContainerStopOptions.
 type ContainerStopOptions = engineclient.ContainerStopOptions
@@ -690,7 +690,7 @@ type ContainerStopOptions = engineclient.ContainerStopOptions
 // ContainerStopResult holds the result of [Client.ContainerStop],
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/client#ContainerStopResult
-// GitHub: https://github.com/moby/moby/blob/client/v0.6.2/client/container_stop.go
+// GitHub: https://github.com/moby/moby/blob/client/v0.6.3/client/container_stop.go
 // Kind: struct
 // Usecase: wrap the Engine client type ContainerStopResult.
 type ContainerStopResult = engineclient.ContainerStopResult
@@ -700,7 +700,7 @@ type ContainerStopResult = engineclient.ContainerStopResult
 // ContainerTopOptions defines options for container top operations.
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/client#ContainerTopOptions
-// GitHub: https://github.com/moby/moby/blob/client/v0.6.2/client/container_top.go
+// GitHub: https://github.com/moby/moby/blob/client/v0.6.3/client/container_top.go
 // Kind: struct
 // Usecase: wrap the Engine client type ContainerTopOptions.
 type ContainerTopOptions = engineclient.ContainerTopOptions
@@ -710,7 +710,7 @@ type ContainerTopOptions = engineclient.ContainerTopOptions
 // ContainerTopResult represents the result of a ContainerTop operation.
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/client#ContainerTopResult
-// GitHub: https://github.com/moby/moby/blob/client/v0.6.2/client/container_top.go
+// GitHub: https://github.com/moby/moby/blob/client/v0.6.3/client/container_top.go
 // Kind: struct
 // Usecase: wrap the Engine client type ContainerTopResult.
 type ContainerTopResult = engineclient.ContainerTopResult
@@ -720,7 +720,7 @@ type ContainerTopResult = engineclient.ContainerTopResult
 // ContainerUnpauseOptions holds options for [Client.ContainerUnpause].
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/client#ContainerUnpauseOptions
-// GitHub: https://github.com/moby/moby/blob/client/v0.6.2/client/container_unpause.go
+// GitHub: https://github.com/moby/moby/blob/client/v0.6.3/client/container_unpause.go
 // Kind: struct
 // Usecase: wrap the Engine client type ContainerUnpauseOptions.
 type ContainerUnpauseOptions = engineclient.ContainerUnpauseOptions
@@ -730,7 +730,7 @@ type ContainerUnpauseOptions = engineclient.ContainerUnpauseOptions
 // ContainerUnpauseResult holds the result of [Client.ContainerUnpause],
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/client#ContainerUnpauseResult
-// GitHub: https://github.com/moby/moby/blob/client/v0.6.2/client/container_unpause.go
+// GitHub: https://github.com/moby/moby/blob/client/v0.6.3/client/container_unpause.go
 // Kind: struct
 // Usecase: wrap the Engine client type ContainerUnpauseResult.
 type ContainerUnpauseResult = engineclient.ContainerUnpauseResult
@@ -740,7 +740,7 @@ type ContainerUnpauseResult = engineclient.ContainerUnpauseResult
 // ContainerUpdateOptions holds options for [Client.ContainerUpdate].
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/client#ContainerUpdateOptions
-// GitHub: https://github.com/moby/moby/blob/client/v0.6.2/client/container_update.go
+// GitHub: https://github.com/moby/moby/blob/client/v0.6.3/client/container_update.go
 // Kind: struct
 // References: github.com/moby/moby/api/types/container.Resources, github.com/moby/moby/api/types/container.RestartPolicy
 // Usecase: wrap the Engine client type ContainerUpdateOptions.
@@ -751,7 +751,7 @@ type ContainerUpdateOptions = engineclient.ContainerUpdateOptions
 // ContainerUpdateResult is the result from updating a container.
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/client#ContainerUpdateResult
-// GitHub: https://github.com/moby/moby/blob/client/v0.6.2/client/container_update.go
+// GitHub: https://github.com/moby/moby/blob/client/v0.6.3/client/container_update.go
 // Kind: struct
 // Usecase: wrap the Engine client type ContainerUpdateResult.
 type ContainerUpdateResult = engineclient.ContainerUpdateResult
@@ -761,7 +761,7 @@ type ContainerUpdateResult = engineclient.ContainerUpdateResult
 // ContainerWaitOptions holds options for [Client.ContainerWait].
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/client#ContainerWaitOptions
-// GitHub: https://github.com/moby/moby/blob/client/v0.6.2/client/container_wait.go
+// GitHub: https://github.com/moby/moby/blob/client/v0.6.3/client/container_wait.go
 // Kind: struct
 // References: github.com/moby/moby/api/types/container.WaitCondition
 // Usecase: wrap the Engine client type ContainerWaitOptions.
@@ -772,7 +772,7 @@ type ContainerWaitOptions = engineclient.ContainerWaitOptions
 // ContainerWaitResult defines the result from the [Client.ContainerWait] method.
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/client#ContainerWaitResult
-// GitHub: https://github.com/moby/moby/blob/client/v0.6.2/client/container_wait.go
+// GitHub: https://github.com/moby/moby/blob/client/v0.6.3/client/container_wait.go
 // Kind: struct
 // References: github.com/moby/moby/api/types/container.WaitResponse
 // Usecase: wrap the Engine client type ContainerWaitResult.
@@ -783,7 +783,7 @@ type ContainerWaitResult = engineclient.ContainerWaitResult
 // ContainersDiskUsage contains disk usage information for containers.
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/client#ContainersDiskUsage
-// GitHub: https://github.com/moby/moby/blob/client/v0.6.2/client/system_disk_usage.go
+// GitHub: https://github.com/moby/moby/blob/client/v0.6.3/client/system_disk_usage.go
 // Kind: struct
 // References: github.com/moby/moby/api/types/container.Summary
 // Usecase: wrap the Engine client type ContainersDiskUsage.
@@ -794,7 +794,7 @@ type ContainersDiskUsage = engineclient.ContainersDiskUsage
 // CopyFromContainerOptions holds options for [Client.CopyFromContainer].
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/client#CopyFromContainerOptions
-// GitHub: https://github.com/moby/moby/blob/client/v0.6.2/client/container_copy.go
+// GitHub: https://github.com/moby/moby/blob/client/v0.6.3/client/container_copy.go
 // Kind: struct
 // Usecase: wrap the Engine client type CopyFromContainerOptions.
 type CopyFromContainerOptions = engineclient.CopyFromContainerOptions
@@ -804,7 +804,7 @@ type CopyFromContainerOptions = engineclient.CopyFromContainerOptions
 // CopyFromContainerResult holds the result of [Client.CopyFromContainer].
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/client#CopyFromContainerResult
-// GitHub: https://github.com/moby/moby/blob/client/v0.6.2/client/container_copy.go
+// GitHub: https://github.com/moby/moby/blob/client/v0.6.3/client/container_copy.go
 // Kind: struct
 // References: github.com/moby/moby/api/types/container.PathStat, io.ReadCloser
 // Usecase: wrap the Engine client type CopyFromContainerResult.
@@ -816,7 +816,7 @@ type CopyFromContainerResult = engineclient.CopyFromContainerResult
 // about files to copy into a container
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/client#CopyToContainerOptions
-// GitHub: https://github.com/moby/moby/blob/client/v0.6.2/client/container_copy.go
+// GitHub: https://github.com/moby/moby/blob/client/v0.6.3/client/container_copy.go
 // Kind: struct
 // References: io.Reader
 // Usecase: wrap the Engine client type CopyToContainerOptions.
@@ -827,7 +827,7 @@ type CopyToContainerOptions = engineclient.CopyToContainerOptions
 // CopyToContainerResult holds the result of [Client.CopyToContainer].
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/client#CopyToContainerResult
-// GitHub: https://github.com/moby/moby/blob/client/v0.6.2/client/container_copy.go
+// GitHub: https://github.com/moby/moby/blob/client/v0.6.3/client/container_copy.go
 // Kind: struct
 // Usecase: wrap the Engine client type CopyToContainerResult.
 type CopyToContainerResult = engineclient.CopyToContainerResult
@@ -837,7 +837,7 @@ type CopyToContainerResult = engineclient.CopyToContainerResult
 // DiskUsageOptions holds parameters for [Client.DiskUsage] operations.
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/client#DiskUsageOptions
-// GitHub: https://github.com/moby/moby/blob/client/v0.6.2/client/system_disk_usage.go
+// GitHub: https://github.com/moby/moby/blob/client/v0.6.3/client/system_disk_usage.go
 // Kind: struct
 // Usecase: wrap the Engine client type DiskUsageOptions.
 type DiskUsageOptions = engineclient.DiskUsageOptions
@@ -847,7 +847,7 @@ type DiskUsageOptions = engineclient.DiskUsageOptions
 // DiskUsageResult is the result of [Client.DiskUsage] operations.
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/client#DiskUsageResult
-// GitHub: https://github.com/moby/moby/blob/client/v0.6.2/client/system_disk_usage.go
+// GitHub: https://github.com/moby/moby/blob/client/v0.6.3/client/system_disk_usage.go
 // Kind: struct
 // Usecase: wrap the Engine client type DiskUsageResult.
 type DiskUsageResult = engineclient.DiskUsageResult
@@ -857,7 +857,7 @@ type DiskUsageResult = engineclient.DiskUsageResult
 // # DistributionAPIClient defines API client methods for the registry
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/client#DistributionAPIClient
-// GitHub: https://github.com/moby/moby/blob/client/v0.6.2/client/client_interfaces.go
+// GitHub: https://github.com/moby/moby/blob/client/v0.6.3/client/client_interfaces.go
 // Kind: interface
 // References: context.Context
 // Usecase: wrap the Engine client type DistributionAPIClient.
@@ -868,7 +868,7 @@ type DistributionAPIClient = engineclient.DistributionAPIClient
 // DistributionInspectOptions holds options for the DistributionInspect operation.
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/client#DistributionInspectOptions
-// GitHub: https://github.com/moby/moby/blob/client/v0.6.2/client/distribution_inspect.go
+// GitHub: https://github.com/moby/moby/blob/client/v0.6.3/client/distribution_inspect.go
 // Kind: struct
 // Usecase: wrap the Engine client type DistributionInspectOptions.
 type DistributionInspectOptions = engineclient.DistributionInspectOptions
@@ -878,7 +878,7 @@ type DistributionInspectOptions = engineclient.DistributionInspectOptions
 // DistributionInspectResult holds the result of the DistributionInspect operation.
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/client#DistributionInspectResult
-// GitHub: https://github.com/moby/moby/blob/client/v0.6.2/client/distribution_inspect.go
+// GitHub: https://github.com/moby/moby/blob/client/v0.6.3/client/distribution_inspect.go
 // Kind: struct
 // References: github.com/moby/moby/api/types/registry.DistributionInspect
 // Usecase: wrap the Engine client type DistributionInspectResult.
@@ -889,7 +889,7 @@ type DistributionInspectResult = engineclient.DistributionInspectResult
 // EventsListOptions holds parameters to filter events with.
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/client#EventsListOptions
-// GitHub: https://github.com/moby/moby/blob/client/v0.6.2/client/system_events.go
+// GitHub: https://github.com/moby/moby/blob/client/v0.6.3/client/system_events.go
 // Kind: struct
 // Usecase: wrap the Engine client type EventsListOptions.
 type EventsListOptions = engineclient.EventsListOptions
@@ -899,7 +899,7 @@ type EventsListOptions = engineclient.EventsListOptions
 // EventsResult holds the result of an Events query.
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/client#EventsResult
-// GitHub: https://github.com/moby/moby/blob/client/v0.6.2/client/system_events.go
+// GitHub: https://github.com/moby/moby/blob/client/v0.6.3/client/system_events.go
 // Kind: struct
 // References: github.com/moby/moby/api/types/events.Message
 // Usecase: wrap the Engine client type EventsResult.
@@ -908,7 +908,7 @@ type EventsResult = engineclient.EventsResult
 // ExecAPIClient wraps client.ExecAPIClient.
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/client#ExecAPIClient
-// GitHub: https://github.com/moby/moby/blob/client/v0.6.2/client/client_interfaces.go
+// GitHub: https://github.com/moby/moby/blob/client/v0.6.3/client/client_interfaces.go
 // Kind: interface
 // References: context.Context
 // Usecase: wrap the Engine client type ExecAPIClient.
@@ -919,7 +919,7 @@ type ExecAPIClient = engineclient.ExecAPIClient
 // ExecAttachOptions holds options for attaching to a container exec.
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/client#ExecAttachOptions
-// GitHub: https://github.com/moby/moby/blob/client/v0.6.2/client/container_exec.go
+// GitHub: https://github.com/moby/moby/blob/client/v0.6.3/client/container_exec.go
 // Kind: struct
 // Usecase: wrap the Engine client type ExecAttachOptions.
 type ExecAttachOptions = engineclient.ExecAttachOptions
@@ -929,7 +929,7 @@ type ExecAttachOptions = engineclient.ExecAttachOptions
 // ExecAttachResult holds the result of attaching to a container exec.
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/client#ExecAttachResult
-// GitHub: https://github.com/moby/moby/blob/client/v0.6.2/client/container_exec.go
+// GitHub: https://github.com/moby/moby/blob/client/v0.6.3/client/container_exec.go
 // Kind: struct
 // Usecase: wrap the Engine client type ExecAttachResult.
 type ExecAttachResult = engineclient.ExecAttachResult
@@ -940,7 +940,7 @@ type ExecAttachResult = engineclient.ExecAttachResult
 // for the exec feature of docker.
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/client#ExecCreateOptions
-// GitHub: https://github.com/moby/moby/blob/client/v0.6.2/client/container_exec.go
+// GitHub: https://github.com/moby/moby/blob/client/v0.6.3/client/container_exec.go
 // Kind: struct
 // Usecase: wrap the Engine client type ExecCreateOptions.
 type ExecCreateOptions = engineclient.ExecCreateOptions
@@ -950,7 +950,7 @@ type ExecCreateOptions = engineclient.ExecCreateOptions
 // ExecCreateResult holds the result of creating a container exec.
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/client#ExecCreateResult
-// GitHub: https://github.com/moby/moby/blob/client/v0.6.2/client/container_exec.go
+// GitHub: https://github.com/moby/moby/blob/client/v0.6.3/client/container_exec.go
 // Kind: struct
 // Usecase: wrap the Engine client type ExecCreateResult.
 type ExecCreateResult = engineclient.ExecCreateResult
@@ -960,7 +960,7 @@ type ExecCreateResult = engineclient.ExecCreateResult
 // ExecInspectOptions holds options for inspecting a container exec.
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/client#ExecInspectOptions
-// GitHub: https://github.com/moby/moby/blob/client/v0.6.2/client/container_exec.go
+// GitHub: https://github.com/moby/moby/blob/client/v0.6.3/client/container_exec.go
 // Kind: struct
 // Usecase: wrap the Engine client type ExecInspectOptions.
 type ExecInspectOptions = engineclient.ExecInspectOptions
@@ -974,7 +974,7 @@ type ExecInspectOptions = engineclient.ExecInspectOptions
 // TODO(thaJeztah): include all fields of [container.ExecInspectResponse] ?
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/client#ExecInspectResult
-// GitHub: https://github.com/moby/moby/blob/client/v0.6.2/client/container_exec.go
+// GitHub: https://github.com/moby/moby/blob/client/v0.6.3/client/container_exec.go
 // Kind: struct
 // Usecase: wrap the Engine client type ExecInspectResult.
 type ExecInspectResult = engineclient.ExecInspectResult
@@ -984,7 +984,7 @@ type ExecInspectResult = engineclient.ExecInspectResult
 // ExecResizeOptions holds options for resizing a container exec TTY.
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/client#ExecResizeOptions
-// GitHub: https://github.com/moby/moby/blob/client/v0.6.2/client/container_resize.go
+// GitHub: https://github.com/moby/moby/blob/client/v0.6.3/client/container_resize.go
 // Kind: named:ContainerResizeOptions
 // Underlying: ContainerResizeOptions
 // Usecase: wrap the Engine client type ExecResizeOptions.
@@ -995,7 +995,7 @@ type ExecResizeOptions = engineclient.ExecResizeOptions
 // ExecResizeResult holds the result of resizing a container exec TTY.
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/client#ExecResizeResult
-// GitHub: https://github.com/moby/moby/blob/client/v0.6.2/client/container_resize.go
+// GitHub: https://github.com/moby/moby/blob/client/v0.6.3/client/container_resize.go
 // Kind: struct
 // Usecase: wrap the Engine client type ExecResizeResult.
 type ExecResizeResult = engineclient.ExecResizeResult
@@ -1005,7 +1005,7 @@ type ExecResizeResult = engineclient.ExecResizeResult
 // ExecStartOptions holds options for starting a container exec.
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/client#ExecStartOptions
-// GitHub: https://github.com/moby/moby/blob/client/v0.6.2/client/container_exec.go
+// GitHub: https://github.com/moby/moby/blob/client/v0.6.3/client/container_exec.go
 // Kind: struct
 // Usecase: wrap the Engine client type ExecStartOptions.
 type ExecStartOptions = engineclient.ExecStartOptions
@@ -1015,7 +1015,7 @@ type ExecStartOptions = engineclient.ExecStartOptions
 // ExecStartResult holds the result of starting a container exec.
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/client#ExecStartResult
-// GitHub: https://github.com/moby/moby/blob/client/v0.6.2/client/container_exec.go
+// GitHub: https://github.com/moby/moby/blob/client/v0.6.3/client/container_exec.go
 // Kind: struct
 // Usecase: wrap the Engine client type ExecStartResult.
 type ExecStartResult = engineclient.ExecStartResult
@@ -1032,7 +1032,7 @@ type ExecStartResult = engineclient.ExecStartResult
 // Like all other map types in Go, the zero value is empty and read-only.
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/client#Filters
-// GitHub: https://github.com/moby/moby/blob/client/v0.6.2/client/filters.go
+// GitHub: https://github.com/moby/moby/blob/client/v0.6.3/client/filters.go
 // Kind: map
 // Underlying: map[string]map[string]bool
 // Usecase: wrap the Engine client type Filters.
@@ -1043,7 +1043,7 @@ type Filters = engineclient.Filters
 // HijackDialer defines methods for a hijack dialer.
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/client#HijackDialer
-// GitHub: https://github.com/moby/moby/blob/client/v0.6.2/client/client_interfaces.go
+// GitHub: https://github.com/moby/moby/blob/client/v0.6.3/client/client_interfaces.go
 // Kind: interface
 // References: context.Context, net.Conn
 // Usecase: wrap the Engine client type HijackDialer.
@@ -1054,7 +1054,7 @@ type HijackDialer = engineclient.HijackDialer
 // HijackedResponse holds connection information for a hijacked request.
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/client#HijackedResponse
-// GitHub: https://github.com/moby/moby/blob/client/v0.6.2/client/hijack.go
+// GitHub: https://github.com/moby/moby/blob/client/v0.6.3/client/hijack.go
 // Kind: struct
 // References: bufio.Reader, net.Conn
 // Usecase: wrap the Engine client type HijackedResponse.
@@ -1065,7 +1065,7 @@ type HijackedResponse = engineclient.HijackedResponse
 // # ImageAPIClient defines API client methods for the images
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/client#ImageAPIClient
-// GitHub: https://github.com/moby/moby/blob/client/v0.6.2/client/client_interfaces.go
+// GitHub: https://github.com/moby/moby/blob/client/v0.6.3/client/client_interfaces.go
 // Kind: interface
 // References: context.Context, io.Reader
 // Usecase: wrap the Engine client type ImageAPIClient.
@@ -1076,7 +1076,7 @@ type ImageAPIClient = engineclient.ImageAPIClient
 // ImageAttestationsOption is a functional option for the ImageAttestations operation.
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/client#ImageAttestationsOption
-// GitHub: https://github.com/moby/moby/blob/client/v0.6.2/client/image_attestations_opts.go
+// GitHub: https://github.com/moby/moby/blob/client/v0.6.3/client/image_attestations_opts.go
 // Kind: interface
 // Usecase: wrap the Engine client type ImageAttestationsOption.
 type ImageAttestationsOption = engineclient.ImageAttestationsOption
@@ -1086,7 +1086,7 @@ type ImageAttestationsOption = engineclient.ImageAttestationsOption
 // ImageAttestationsResult is the result of an ImageAttestations operation.
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/client#ImageAttestationsResult
-// GitHub: https://github.com/moby/moby/blob/client/v0.6.2/client/image_attestations_opts.go
+// GitHub: https://github.com/moby/moby/blob/client/v0.6.3/client/image_attestations_opts.go
 // Kind: struct
 // References: github.com/moby/moby/api/types/image.AttestationStatement
 // Usecase: wrap the Engine client type ImageAttestationsResult.
@@ -1098,7 +1098,7 @@ type ImageAttestationsResult = engineclient.ImageAttestationsResult
 // using the REST API.
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/client#ImageBuildAPIClient
-// GitHub: https://github.com/moby/moby/blob/client/v0.6.2/client/client_interfaces.go
+// GitHub: https://github.com/moby/moby/blob/client/v0.6.3/client/client_interfaces.go
 // Kind: interface
 // References: context.Context, io.Reader
 // Usecase: wrap the Engine client type ImageBuildAPIClient.
@@ -1110,7 +1110,7 @@ type ImageBuildAPIClient = engineclient.ImageBuildAPIClient
 // necessary to build images.
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/client#ImageBuildOptions
-// GitHub: https://github.com/moby/moby/blob/client/v0.6.2/client/image_build_opts.go
+// GitHub: https://github.com/moby/moby/blob/client/v0.6.3/client/image_build_opts.go
 // Kind: struct
 // References: github.com/moby/moby/api/types/build.BuilderVersion, github.com/moby/moby/api/types/container.Isolation, github.com/moby/moby/api/types/container.Ulimit, github.com/moby/moby/api/types/registry.AuthConfig, github.com/opencontainers/image-spec/specs-go/v1.Platform, io.Reader
 // Usecase: wrap the Engine client type ImageBuildOptions.
@@ -1121,7 +1121,7 @@ type ImageBuildOptions = engineclient.ImageBuildOptions
 // # ImageBuildOutput defines configuration for exporting a build result
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/client#ImageBuildOutput
-// GitHub: https://github.com/moby/moby/blob/client/v0.6.2/client/image_build_opts.go
+// GitHub: https://github.com/moby/moby/blob/client/v0.6.3/client/image_build_opts.go
 // Kind: struct
 // Usecase: wrap the Engine client type ImageBuildOutput.
 type ImageBuildOutput = engineclient.ImageBuildOutput
@@ -1133,7 +1133,7 @@ type ImageBuildOutput = engineclient.ImageBuildOutput
 // an image.
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/client#ImageBuildResult
-// GitHub: https://github.com/moby/moby/blob/client/v0.6.2/client/image_build_opts.go
+// GitHub: https://github.com/moby/moby/blob/client/v0.6.3/client/image_build_opts.go
 // Kind: struct
 // References: io.ReadCloser
 // Usecase: wrap the Engine client type ImageBuildResult.
@@ -1144,7 +1144,7 @@ type ImageBuildResult = engineclient.ImageBuildResult
 // ImageHistoryOption is a type representing functional options for the image history operation.
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/client#ImageHistoryOption
-// GitHub: https://github.com/moby/moby/blob/client/v0.6.2/client/image_history_opts.go
+// GitHub: https://github.com/moby/moby/blob/client/v0.6.3/client/image_history_opts.go
 // Kind: interface
 // Usecase: wrap the Engine client type ImageHistoryOption.
 type ImageHistoryOption = engineclient.ImageHistoryOption
@@ -1152,7 +1152,7 @@ type ImageHistoryOption = engineclient.ImageHistoryOption
 // ImageHistoryResult wraps client.ImageHistoryResult.
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/client#ImageHistoryResult
-// GitHub: https://github.com/moby/moby/blob/client/v0.6.2/client/image_history_opts.go
+// GitHub: https://github.com/moby/moby/blob/client/v0.6.3/client/image_history_opts.go
 // Kind: struct
 // References: github.com/moby/moby/api/types/image.HistoryResponseItem
 // Usecase: wrap the Engine client type ImageHistoryResult.
@@ -1163,7 +1163,7 @@ type ImageHistoryResult = engineclient.ImageHistoryResult
 // ImageImportOptions holds information to import images from the client host.
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/client#ImageImportOptions
-// GitHub: https://github.com/moby/moby/blob/client/v0.6.2/client/image_import_opts.go
+// GitHub: https://github.com/moby/moby/blob/client/v0.6.3/client/image_import_opts.go
 // Kind: struct
 // References: github.com/opencontainers/image-spec/specs-go/v1.Platform
 // Usecase: wrap the Engine client type ImageImportOptions.
@@ -1174,7 +1174,7 @@ type ImageImportOptions = engineclient.ImageImportOptions
 // ImageImportResult holds the response body returned by the daemon for image import.
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/client#ImageImportResult
-// GitHub: https://github.com/moby/moby/blob/client/v0.6.2/client/image_import.go
+// GitHub: https://github.com/moby/moby/blob/client/v0.6.3/client/image_import.go
 // Kind: interface
 // References: io.ReadCloser
 // Usecase: wrap the Engine client type ImageImportResult.
@@ -1185,7 +1185,7 @@ type ImageImportResult = engineclient.ImageImportResult
 // # ImageImportSource holds source information for ImageImport
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/client#ImageImportSource
-// GitHub: https://github.com/moby/moby/blob/client/v0.6.2/client/image_import_opts.go
+// GitHub: https://github.com/moby/moby/blob/client/v0.6.3/client/image_import_opts.go
 // Kind: struct
 // References: io.Reader
 // Usecase: wrap the Engine client type ImageImportSource.
@@ -1196,7 +1196,7 @@ type ImageImportSource = engineclient.ImageImportSource
 // ImageInspectOption is a type representing functional options for the image inspect operation.
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/client#ImageInspectOption
-// GitHub: https://github.com/moby/moby/blob/client/v0.6.2/client/image_inspect_opts.go
+// GitHub: https://github.com/moby/moby/blob/client/v0.6.3/client/image_inspect_opts.go
 // Kind: interface
 // Usecase: wrap the Engine client type ImageInspectOption.
 type ImageInspectOption = engineclient.ImageInspectOption
@@ -1204,7 +1204,7 @@ type ImageInspectOption = engineclient.ImageInspectOption
 // ImageInspectResult wraps client.ImageInspectResult.
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/client#ImageInspectResult
-// GitHub: https://github.com/moby/moby/blob/client/v0.6.2/client/image_inspect_opts.go
+// GitHub: https://github.com/moby/moby/blob/client/v0.6.3/client/image_inspect_opts.go
 // Kind: struct
 // References: github.com/moby/moby/api/types/image.InspectResponse
 // Usecase: wrap the Engine client type ImageInspectResult.
@@ -1215,7 +1215,7 @@ type ImageInspectResult = engineclient.ImageInspectResult
 // ImageListOptions holds parameters to list images with.
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/client#ImageListOptions
-// GitHub: https://github.com/moby/moby/blob/client/v0.6.2/client/image_list_opts.go
+// GitHub: https://github.com/moby/moby/blob/client/v0.6.3/client/image_list_opts.go
 // Kind: struct
 // Usecase: wrap the Engine client type ImageListOptions.
 type ImageListOptions = engineclient.ImageListOptions
@@ -1225,7 +1225,7 @@ type ImageListOptions = engineclient.ImageListOptions
 // ImageListResult holds the result from ImageList.
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/client#ImageListResult
-// GitHub: https://github.com/moby/moby/blob/client/v0.6.2/client/image_list_opts.go
+// GitHub: https://github.com/moby/moby/blob/client/v0.6.3/client/image_list_opts.go
 // Kind: struct
 // References: github.com/moby/moby/api/types/image.Summary
 // Usecase: wrap the Engine client type ImageListResult.
@@ -1236,7 +1236,7 @@ type ImageListResult = engineclient.ImageListResult
 // ImageLoadOption is a type representing functional options for the image load operation.
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/client#ImageLoadOption
-// GitHub: https://github.com/moby/moby/blob/client/v0.6.2/client/image_load_opts.go
+// GitHub: https://github.com/moby/moby/blob/client/v0.6.3/client/image_load_opts.go
 // Kind: interface
 // Usecase: wrap the Engine client type ImageLoadOption.
 type ImageLoadOption = engineclient.ImageLoadOption
@@ -1247,7 +1247,7 @@ type ImageLoadOption = engineclient.ImageLoadOption
 // It implements [io.ReadCloser] and must be closed to avoid a resource leak.
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/client#ImageLoadResult
-// GitHub: https://github.com/moby/moby/blob/client/v0.6.2/client/image_load.go
+// GitHub: https://github.com/moby/moby/blob/client/v0.6.3/client/image_load.go
 // Kind: interface
 // References: io.ReadCloser
 // Usecase: wrap the Engine client type ImageLoadResult.
@@ -1258,7 +1258,7 @@ type ImageLoadResult = engineclient.ImageLoadResult
 // ImagePruneOptions holds parameters to prune images.
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/client#ImagePruneOptions
-// GitHub: https://github.com/moby/moby/blob/client/v0.6.2/client/image_prune.go
+// GitHub: https://github.com/moby/moby/blob/client/v0.6.3/client/image_prune.go
 // Kind: struct
 // Usecase: wrap the Engine client type ImagePruneOptions.
 type ImagePruneOptions = engineclient.ImagePruneOptions
@@ -1268,7 +1268,7 @@ type ImagePruneOptions = engineclient.ImagePruneOptions
 // ImagePruneResult holds the result from the [Client.ImagePrune] method.
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/client#ImagePruneResult
-// GitHub: https://github.com/moby/moby/blob/client/v0.6.2/client/image_prune.go
+// GitHub: https://github.com/moby/moby/blob/client/v0.6.3/client/image_prune.go
 // Kind: struct
 // References: github.com/moby/moby/api/types/image.PruneReport
 // Usecase: wrap the Engine client type ImagePruneResult.
@@ -1279,7 +1279,7 @@ type ImagePruneResult = engineclient.ImagePruneResult
 // ImagePullOptions holds information to pull images.
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/client#ImagePullOptions
-// GitHub: https://github.com/moby/moby/blob/client/v0.6.2/client/image_pull_opts.go
+// GitHub: https://github.com/moby/moby/blob/client/v0.6.3/client/image_pull_opts.go
 // Kind: struct
 // References: context.Context, github.com/opencontainers/image-spec/specs-go/v1.Platform
 // Usecase: wrap the Engine client type ImagePullOptions.
@@ -1288,7 +1288,7 @@ type ImagePullOptions = engineclient.ImagePullOptions
 // ImagePullResponse wraps client.ImagePullResponse.
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/client#ImagePullResponse
-// GitHub: https://github.com/moby/moby/blob/client/v0.6.2/client/image_pull.go
+// GitHub: https://github.com/moby/moby/blob/client/v0.6.3/client/image_pull.go
 // Kind: interface
 // References: context.Context, github.com/moby/moby/api/types/jsonstream.Message, io.ReadCloser, iter.Seq2
 // Usecase: wrap the Engine client type ImagePullResponse.
@@ -1299,7 +1299,7 @@ type ImagePullResponse = engineclient.ImagePullResponse
 // ImagePushOptions holds information to push images.
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/client#ImagePushOptions
-// GitHub: https://github.com/moby/moby/blob/client/v0.6.2/client/image_push_opts.go
+// GitHub: https://github.com/moby/moby/blob/client/v0.6.3/client/image_push_opts.go
 // Kind: struct
 // References: context.Context, github.com/opencontainers/image-spec/specs-go/v1.Platform
 // Usecase: wrap the Engine client type ImagePushOptions.
@@ -1308,7 +1308,7 @@ type ImagePushOptions = engineclient.ImagePushOptions
 // ImagePushResponse wraps client.ImagePushResponse.
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/client#ImagePushResponse
-// GitHub: https://github.com/moby/moby/blob/client/v0.6.2/client/image_push.go
+// GitHub: https://github.com/moby/moby/blob/client/v0.6.3/client/image_push.go
 // Kind: interface
 // References: context.Context, github.com/moby/moby/api/types/jsonstream.Message, io.ReadCloser, iter.Seq2
 // Usecase: wrap the Engine client type ImagePushResponse.
@@ -1319,7 +1319,7 @@ type ImagePushResponse = engineclient.ImagePushResponse
 // ImageRemoveOptions holds parameters to remove images.
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/client#ImageRemoveOptions
-// GitHub: https://github.com/moby/moby/blob/client/v0.6.2/client/image_remove_opts.go
+// GitHub: https://github.com/moby/moby/blob/client/v0.6.3/client/image_remove_opts.go
 // Kind: struct
 // References: github.com/opencontainers/image-spec/specs-go/v1.Platform
 // Usecase: wrap the Engine client type ImageRemoveOptions.
@@ -1330,7 +1330,7 @@ type ImageRemoveOptions = engineclient.ImageRemoveOptions
 // ImageRemoveResult holds the delete responses returned by the daemon.
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/client#ImageRemoveResult
-// GitHub: https://github.com/moby/moby/blob/client/v0.6.2/client/image_remove_opts.go
+// GitHub: https://github.com/moby/moby/blob/client/v0.6.3/client/image_remove_opts.go
 // Kind: struct
 // References: github.com/moby/moby/api/types/image.DeleteResponse
 // Usecase: wrap the Engine client type ImageRemoveResult.
@@ -1339,7 +1339,7 @@ type ImageRemoveResult = engineclient.ImageRemoveResult
 // ImageSaveOption wraps client.ImageSaveOption.
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/client#ImageSaveOption
-// GitHub: https://github.com/moby/moby/blob/client/v0.6.2/client/image_save_opts.go
+// GitHub: https://github.com/moby/moby/blob/client/v0.6.3/client/image_save_opts.go
 // Kind: interface
 // Usecase: wrap the Engine client type ImageSaveOption.
 type ImageSaveOption = engineclient.ImageSaveOption
@@ -1347,7 +1347,7 @@ type ImageSaveOption = engineclient.ImageSaveOption
 // ImageSaveResult wraps client.ImageSaveResult.
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/client#ImageSaveResult
-// GitHub: https://github.com/moby/moby/blob/client/v0.6.2/client/image_save.go
+// GitHub: https://github.com/moby/moby/blob/client/v0.6.3/client/image_save.go
 // Kind: interface
 // References: io.ReadCloser
 // Usecase: wrap the Engine client type ImageSaveResult.
@@ -1358,7 +1358,7 @@ type ImageSaveResult = engineclient.ImageSaveResult
 // ImageSearchOptions holds parameters to search images with.
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/client#ImageSearchOptions
-// GitHub: https://github.com/moby/moby/blob/client/v0.6.2/client/image_search_opts.go
+// GitHub: https://github.com/moby/moby/blob/client/v0.6.3/client/image_search_opts.go
 // Kind: struct
 // References: context.Context
 // Usecase: wrap the Engine client type ImageSearchOptions.
@@ -1369,7 +1369,7 @@ type ImageSearchOptions = engineclient.ImageSearchOptions
 // ImageSearchResult wraps results returned by ImageSearch.
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/client#ImageSearchResult
-// GitHub: https://github.com/moby/moby/blob/client/v0.6.2/client/image_search_opts.go
+// GitHub: https://github.com/moby/moby/blob/client/v0.6.3/client/image_search_opts.go
 // Kind: struct
 // References: github.com/moby/moby/api/types/registry.SearchResult
 // Usecase: wrap the Engine client type ImageSearchResult.
@@ -1380,7 +1380,7 @@ type ImageSearchResult = engineclient.ImageSearchResult
 // ImageTagOptions holds options for [Client.ImageTag].
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/client#ImageTagOptions
-// GitHub: https://github.com/moby/moby/blob/client/v0.6.2/client/image_tag.go
+// GitHub: https://github.com/moby/moby/blob/client/v0.6.3/client/image_tag.go
 // Kind: struct
 // Usecase: wrap the Engine client type ImageTagOptions.
 type ImageTagOptions = engineclient.ImageTagOptions
@@ -1390,7 +1390,7 @@ type ImageTagOptions = engineclient.ImageTagOptions
 // ImageTagResult holds the result of [Client.ImageTag].
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/client#ImageTagResult
-// GitHub: https://github.com/moby/moby/blob/client/v0.6.2/client/image_tag.go
+// GitHub: https://github.com/moby/moby/blob/client/v0.6.3/client/image_tag.go
 // Kind: struct
 // Usecase: wrap the Engine client type ImageTagResult.
 type ImageTagResult = engineclient.ImageTagResult
@@ -1400,7 +1400,7 @@ type ImageTagResult = engineclient.ImageTagResult
 // ImagesDiskUsage contains disk usage information for images.
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/client#ImagesDiskUsage
-// GitHub: https://github.com/moby/moby/blob/client/v0.6.2/client/system_disk_usage.go
+// GitHub: https://github.com/moby/moby/blob/client/v0.6.3/client/system_disk_usage.go
 // Kind: struct
 // References: github.com/moby/moby/api/types/image.Summary
 // Usecase: wrap the Engine client type ImagesDiskUsage.
@@ -1411,7 +1411,7 @@ type ImagesDiskUsage = engineclient.ImagesDiskUsage
 // InfoOptions holds options for [Client.Info].
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/client#InfoOptions
-// GitHub: https://github.com/moby/moby/blob/client/v0.6.2/client/system_info.go
+// GitHub: https://github.com/moby/moby/blob/client/v0.6.3/client/system_info.go
 // Kind: struct
 // Usecase: wrap the Engine client type InfoOptions.
 type InfoOptions = engineclient.InfoOptions
@@ -1421,7 +1421,7 @@ type InfoOptions = engineclient.InfoOptions
 // # NetworkAPIClient defines API client methods for the networks
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/client#NetworkAPIClient
-// GitHub: https://github.com/moby/moby/blob/client/v0.6.2/client/client_interfaces.go
+// GitHub: https://github.com/moby/moby/blob/client/v0.6.3/client/client_interfaces.go
 // Kind: interface
 // References: context.Context
 // Usecase: wrap the Engine client type NetworkAPIClient.
@@ -1433,7 +1433,7 @@ type NetworkAPIClient = engineclient.NetworkAPIClient
 // network.
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/client#NetworkConnectOptions
-// GitHub: https://github.com/moby/moby/blob/client/v0.6.2/client/network_connect.go
+// GitHub: https://github.com/moby/moby/blob/client/v0.6.3/client/network_connect.go
 // Kind: struct
 // References: github.com/moby/moby/api/types/network.EndpointSettings
 // Usecase: wrap the Engine client type NetworkConnectOptions.
@@ -1444,7 +1444,7 @@ type NetworkConnectOptions = engineclient.NetworkConnectOptions
 // NetworkConnectResult represents the result of a NetworkConnect operation.
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/client#NetworkConnectResult
-// GitHub: https://github.com/moby/moby/blob/client/v0.6.2/client/network_connect.go
+// GitHub: https://github.com/moby/moby/blob/client/v0.6.3/client/network_connect.go
 // Kind: struct
 // Usecase: wrap the Engine client type NetworkConnectResult.
 type NetworkConnectResult = engineclient.NetworkConnectResult
@@ -1454,7 +1454,7 @@ type NetworkConnectResult = engineclient.NetworkConnectResult
 // NetworkCreateOptions holds options to create a network.
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/client#NetworkCreateOptions
-// GitHub: https://github.com/moby/moby/blob/client/v0.6.2/client/network_create.go
+// GitHub: https://github.com/moby/moby/blob/client/v0.6.3/client/network_create.go
 // Kind: struct
 // References: github.com/moby/moby/api/types/network.IPAM
 // Usecase: wrap the Engine client type NetworkCreateOptions.
@@ -1465,7 +1465,7 @@ type NetworkCreateOptions = engineclient.NetworkCreateOptions
 // NetworkCreateResult represents the result of a network create operation.
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/client#NetworkCreateResult
-// GitHub: https://github.com/moby/moby/blob/client/v0.6.2/client/network_create.go
+// GitHub: https://github.com/moby/moby/blob/client/v0.6.3/client/network_create.go
 // Kind: struct
 // Usecase: wrap the Engine client type NetworkCreateResult.
 type NetworkCreateResult = engineclient.NetworkCreateResult
@@ -1476,7 +1476,7 @@ type NetworkCreateResult = engineclient.NetworkCreateResult
 // from the network.
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/client#NetworkDisconnectOptions
-// GitHub: https://github.com/moby/moby/blob/client/v0.6.2/client/network_disconnect.go
+// GitHub: https://github.com/moby/moby/blob/client/v0.6.3/client/network_disconnect.go
 // Kind: struct
 // Usecase: wrap the Engine client type NetworkDisconnectOptions.
 type NetworkDisconnectOptions = engineclient.NetworkDisconnectOptions
@@ -1486,7 +1486,7 @@ type NetworkDisconnectOptions = engineclient.NetworkDisconnectOptions
 // NetworkDisconnectResult represents the result of a NetworkDisconnect operation.
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/client#NetworkDisconnectResult
-// GitHub: https://github.com/moby/moby/blob/client/v0.6.2/client/network_disconnect.go
+// GitHub: https://github.com/moby/moby/blob/client/v0.6.3/client/network_disconnect.go
 // Kind: struct
 // Usecase: wrap the Engine client type NetworkDisconnectResult.
 type NetworkDisconnectResult = engineclient.NetworkDisconnectResult
@@ -1496,7 +1496,7 @@ type NetworkDisconnectResult = engineclient.NetworkDisconnectResult
 // NetworkInspectOptions holds parameters to inspect network.
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/client#NetworkInspectOptions
-// GitHub: https://github.com/moby/moby/blob/client/v0.6.2/client/network_inspect_opts.go
+// GitHub: https://github.com/moby/moby/blob/client/v0.6.3/client/network_inspect_opts.go
 // Kind: struct
 // Usecase: wrap the Engine client type NetworkInspectOptions.
 type NetworkInspectOptions = engineclient.NetworkInspectOptions
@@ -1506,7 +1506,7 @@ type NetworkInspectOptions = engineclient.NetworkInspectOptions
 // NetworkInspectResult contains the result of a network inspection.
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/client#NetworkInspectResult
-// GitHub: https://github.com/moby/moby/blob/client/v0.6.2/client/network_inspect.go
+// GitHub: https://github.com/moby/moby/blob/client/v0.6.3/client/network_inspect.go
 // Kind: struct
 // References: encoding/json.RawMessage, github.com/moby/moby/api/types/network.Inspect
 // Usecase: wrap the Engine client type NetworkInspectResult.
@@ -1517,7 +1517,7 @@ type NetworkInspectResult = engineclient.NetworkInspectResult
 // NetworkListOptions holds parameters to filter the list of networks with.
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/client#NetworkListOptions
-// GitHub: https://github.com/moby/moby/blob/client/v0.6.2/client/network_list_opts.go
+// GitHub: https://github.com/moby/moby/blob/client/v0.6.3/client/network_list_opts.go
 // Kind: struct
 // Usecase: wrap the Engine client type NetworkListOptions.
 type NetworkListOptions = engineclient.NetworkListOptions
@@ -1527,7 +1527,7 @@ type NetworkListOptions = engineclient.NetworkListOptions
 // NetworkListResult holds the result from the [Client.NetworkList] method.
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/client#NetworkListResult
-// GitHub: https://github.com/moby/moby/blob/client/v0.6.2/client/network_list.go
+// GitHub: https://github.com/moby/moby/blob/client/v0.6.3/client/network_list.go
 // Kind: struct
 // References: github.com/moby/moby/api/types/network.Summary
 // Usecase: wrap the Engine client type NetworkListResult.
@@ -1538,7 +1538,7 @@ type NetworkListResult = engineclient.NetworkListResult
 // NetworkPruneOptions holds parameters to prune networks.
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/client#NetworkPruneOptions
-// GitHub: https://github.com/moby/moby/blob/client/v0.6.2/client/network_prune.go
+// GitHub: https://github.com/moby/moby/blob/client/v0.6.3/client/network_prune.go
 // Kind: struct
 // Usecase: wrap the Engine client type NetworkPruneOptions.
 type NetworkPruneOptions = engineclient.NetworkPruneOptions
@@ -1548,7 +1548,7 @@ type NetworkPruneOptions = engineclient.NetworkPruneOptions
 // NetworkPruneResult holds the result from the [Client.NetworkPrune] method.
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/client#NetworkPruneResult
-// GitHub: https://github.com/moby/moby/blob/client/v0.6.2/client/network_prune.go
+// GitHub: https://github.com/moby/moby/blob/client/v0.6.3/client/network_prune.go
 // Kind: struct
 // References: github.com/moby/moby/api/types/network.PruneReport
 // Usecase: wrap the Engine client type NetworkPruneResult.
@@ -1559,7 +1559,7 @@ type NetworkPruneResult = engineclient.NetworkPruneResult
 // NetworkRemoveOptions specifies options for removing a network.
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/client#NetworkRemoveOptions
-// GitHub: https://github.com/moby/moby/blob/client/v0.6.2/client/network_remove.go
+// GitHub: https://github.com/moby/moby/blob/client/v0.6.3/client/network_remove.go
 // Kind: struct
 // Usecase: wrap the Engine client type NetworkRemoveOptions.
 type NetworkRemoveOptions = engineclient.NetworkRemoveOptions
@@ -1569,7 +1569,7 @@ type NetworkRemoveOptions = engineclient.NetworkRemoveOptions
 // NetworkRemoveResult represents the result of a network removal operation.
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/client#NetworkRemoveResult
-// GitHub: https://github.com/moby/moby/blob/client/v0.6.2/client/network_remove.go
+// GitHub: https://github.com/moby/moby/blob/client/v0.6.3/client/network_remove.go
 // Kind: struct
 // Usecase: wrap the Engine client type NetworkRemoveResult.
 type NetworkRemoveResult = engineclient.NetworkRemoveResult
@@ -1579,7 +1579,7 @@ type NetworkRemoveResult = engineclient.NetworkRemoveResult
 // # NodeAPIClient defines API client methods for the nodes
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/client#NodeAPIClient
-// GitHub: https://github.com/moby/moby/blob/client/v0.6.2/client/client_interfaces.go
+// GitHub: https://github.com/moby/moby/blob/client/v0.6.3/client/client_interfaces.go
 // Kind: interface
 // References: context.Context
 // Usecase: wrap the Engine client type NodeAPIClient.
@@ -1590,7 +1590,7 @@ type NodeAPIClient = engineclient.NodeAPIClient
 // NodeInspectOptions holds parameters to inspect nodes with.
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/client#NodeInspectOptions
-// GitHub: https://github.com/moby/moby/blob/client/v0.6.2/client/node_inspect.go
+// GitHub: https://github.com/moby/moby/blob/client/v0.6.3/client/node_inspect.go
 // Kind: struct
 // Usecase: wrap the Engine client type NodeInspectOptions.
 type NodeInspectOptions = engineclient.NodeInspectOptions
@@ -1600,7 +1600,7 @@ type NodeInspectOptions = engineclient.NodeInspectOptions
 // NodeInspectResult holds the result of [Client.NodeInspect].
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/client#NodeInspectResult
-// GitHub: https://github.com/moby/moby/blob/client/v0.6.2/client/node_inspect.go
+// GitHub: https://github.com/moby/moby/blob/client/v0.6.3/client/node_inspect.go
 // Kind: struct
 // References: encoding/json.RawMessage, github.com/moby/moby/api/types/swarm.Node
 // Usecase: wrap the Engine client type NodeInspectResult.
@@ -1611,7 +1611,7 @@ type NodeInspectResult = engineclient.NodeInspectResult
 // NodeListOptions holds parameters to list nodes with.
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/client#NodeListOptions
-// GitHub: https://github.com/moby/moby/blob/client/v0.6.2/client/node_list.go
+// GitHub: https://github.com/moby/moby/blob/client/v0.6.3/client/node_list.go
 // Kind: struct
 // Usecase: wrap the Engine client type NodeListOptions.
 type NodeListOptions = engineclient.NodeListOptions
@@ -1621,7 +1621,7 @@ type NodeListOptions = engineclient.NodeListOptions
 // NodeListResult holds the result of [Client.NodeList].
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/client#NodeListResult
-// GitHub: https://github.com/moby/moby/blob/client/v0.6.2/client/node_list.go
+// GitHub: https://github.com/moby/moby/blob/client/v0.6.3/client/node_list.go
 // Kind: struct
 // References: github.com/moby/moby/api/types/swarm.Node
 // Usecase: wrap the Engine client type NodeListResult.
@@ -1632,7 +1632,7 @@ type NodeListResult = engineclient.NodeListResult
 // NodeRemoveOptions holds parameters to remove nodes with.
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/client#NodeRemoveOptions
-// GitHub: https://github.com/moby/moby/blob/client/v0.6.2/client/node_remove.go
+// GitHub: https://github.com/moby/moby/blob/client/v0.6.3/client/node_remove.go
 // Kind: struct
 // Usecase: wrap the Engine client type NodeRemoveOptions.
 type NodeRemoveOptions = engineclient.NodeRemoveOptions
@@ -1642,7 +1642,7 @@ type NodeRemoveOptions = engineclient.NodeRemoveOptions
 // NodeRemoveResult holds the result of [Client.NodeRemove].
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/client#NodeRemoveResult
-// GitHub: https://github.com/moby/moby/blob/client/v0.6.2/client/node_remove.go
+// GitHub: https://github.com/moby/moby/blob/client/v0.6.3/client/node_remove.go
 // Kind: struct
 // Usecase: wrap the Engine client type NodeRemoveResult.
 type NodeRemoveResult = engineclient.NodeRemoveResult
@@ -1652,7 +1652,7 @@ type NodeRemoveResult = engineclient.NodeRemoveResult
 // NodeUpdateOptions holds parameters to update nodes with.
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/client#NodeUpdateOptions
-// GitHub: https://github.com/moby/moby/blob/client/v0.6.2/client/node_update.go
+// GitHub: https://github.com/moby/moby/blob/client/v0.6.3/client/node_update.go
 // Kind: struct
 // References: github.com/moby/moby/api/types/swarm.NodeSpec, github.com/moby/moby/api/types/swarm.Version
 // Usecase: wrap the Engine client type NodeUpdateOptions.
@@ -1663,7 +1663,7 @@ type NodeUpdateOptions = engineclient.NodeUpdateOptions
 // NodeUpdateResult holds the result of [Client.NodeUpdate].
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/client#NodeUpdateResult
-// GitHub: https://github.com/moby/moby/blob/client/v0.6.2/client/node_update.go
+// GitHub: https://github.com/moby/moby/blob/client/v0.6.3/client/node_update.go
 // Kind: struct
 // Usecase: wrap the Engine client type NodeUpdateResult.
 type NodeUpdateResult = engineclient.NodeUpdateResult
@@ -1673,7 +1673,7 @@ type NodeUpdateResult = engineclient.NodeUpdateResult
 // Opt is a configuration option to initialize a [Client].
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/client#Opt
-// GitHub: https://github.com/moby/moby/blob/client/v0.6.2/client/client_options.go
+// GitHub: https://github.com/moby/moby/blob/client/v0.6.3/client/client_options.go
 // Kind: func
 // Underlying: func(*clientConfig) error
 // Usecase: wrap the Engine client type Opt.
@@ -1684,7 +1684,7 @@ type Opt = engineclient.Opt
 // PingOptions holds options for [client.Ping].
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/client#PingOptions
-// GitHub: https://github.com/moby/moby/blob/client/v0.6.2/client/ping.go
+// GitHub: https://github.com/moby/moby/blob/client/v0.6.3/client/ping.go
 // Kind: struct
 // Usecase: wrap the Engine client type PingOptions.
 type PingOptions = engineclient.PingOptions
@@ -1694,7 +1694,7 @@ type PingOptions = engineclient.PingOptions
 // PingResult holds the result of a [Client.Ping] API call.
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/client#PingResult
-// GitHub: https://github.com/moby/moby/blob/client/v0.6.2/client/ping.go
+// GitHub: https://github.com/moby/moby/blob/client/v0.6.3/client/ping.go
 // Kind: struct
 // References: github.com/moby/moby/api/types/build.BuilderVersion
 // Usecase: wrap the Engine client type PingResult.
@@ -1706,7 +1706,7 @@ type PingResult = engineclient.PingResult
 // server is running on.
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/client#PlatformInfo
-// GitHub: https://github.com/moby/moby/blob/client/v0.6.2/client/version.go
+// GitHub: https://github.com/moby/moby/blob/client/v0.6.3/client/version.go
 // Kind: struct
 // Usecase: wrap the Engine client type PlatformInfo.
 type PlatformInfo = engineclient.PlatformInfo
@@ -1716,7 +1716,7 @@ type PlatformInfo = engineclient.PlatformInfo
 // # PluginAPIClient defines API client methods for the plugins
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/client#PluginAPIClient
-// GitHub: https://github.com/moby/moby/blob/client/v0.6.2/client/client_interfaces.go
+// GitHub: https://github.com/moby/moby/blob/client/v0.6.3/client/client_interfaces.go
 // Kind: interface
 // References: context.Context, io.Reader
 // Usecase: wrap the Engine client type PluginAPIClient.
@@ -1727,7 +1727,7 @@ type PluginAPIClient = engineclient.PluginAPIClient
 // PluginCreateOptions hold all options to plugin create.
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/client#PluginCreateOptions
-// GitHub: https://github.com/moby/moby/blob/client/v0.6.2/client/plugin_create.go
+// GitHub: https://github.com/moby/moby/blob/client/v0.6.3/client/plugin_create.go
 // Kind: struct
 // Usecase: wrap the Engine client type PluginCreateOptions.
 type PluginCreateOptions = engineclient.PluginCreateOptions
@@ -1737,7 +1737,7 @@ type PluginCreateOptions = engineclient.PluginCreateOptions
 // PluginCreateResult represents the result of a plugin create operation.
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/client#PluginCreateResult
-// GitHub: https://github.com/moby/moby/blob/client/v0.6.2/client/plugin_create.go
+// GitHub: https://github.com/moby/moby/blob/client/v0.6.3/client/plugin_create.go
 // Kind: struct
 // Usecase: wrap the Engine client type PluginCreateResult.
 type PluginCreateResult = engineclient.PluginCreateResult
@@ -1747,7 +1747,7 @@ type PluginCreateResult = engineclient.PluginCreateResult
 // PluginDisableOptions holds parameters to disable plugins.
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/client#PluginDisableOptions
-// GitHub: https://github.com/moby/moby/blob/client/v0.6.2/client/plugin_disable.go
+// GitHub: https://github.com/moby/moby/blob/client/v0.6.3/client/plugin_disable.go
 // Kind: struct
 // Usecase: wrap the Engine client type PluginDisableOptions.
 type PluginDisableOptions = engineclient.PluginDisableOptions
@@ -1757,7 +1757,7 @@ type PluginDisableOptions = engineclient.PluginDisableOptions
 // PluginDisableResult represents the result of a plugin disable operation.
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/client#PluginDisableResult
-// GitHub: https://github.com/moby/moby/blob/client/v0.6.2/client/plugin_disable.go
+// GitHub: https://github.com/moby/moby/blob/client/v0.6.3/client/plugin_disable.go
 // Kind: struct
 // Usecase: wrap the Engine client type PluginDisableResult.
 type PluginDisableResult = engineclient.PluginDisableResult
@@ -1767,7 +1767,7 @@ type PluginDisableResult = engineclient.PluginDisableResult
 // PluginEnableOptions holds parameters to enable plugins.
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/client#PluginEnableOptions
-// GitHub: https://github.com/moby/moby/blob/client/v0.6.2/client/plugin_enable.go
+// GitHub: https://github.com/moby/moby/blob/client/v0.6.3/client/plugin_enable.go
 // Kind: struct
 // Usecase: wrap the Engine client type PluginEnableOptions.
 type PluginEnableOptions = engineclient.PluginEnableOptions
@@ -1777,7 +1777,7 @@ type PluginEnableOptions = engineclient.PluginEnableOptions
 // PluginEnableResult represents the result of a plugin enable operation.
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/client#PluginEnableResult
-// GitHub: https://github.com/moby/moby/blob/client/v0.6.2/client/plugin_enable.go
+// GitHub: https://github.com/moby/moby/blob/client/v0.6.3/client/plugin_enable.go
 // Kind: struct
 // Usecase: wrap the Engine client type PluginEnableResult.
 type PluginEnableResult = engineclient.PluginEnableResult
@@ -1787,7 +1787,7 @@ type PluginEnableResult = engineclient.PluginEnableResult
 // PluginInspectOptions holds parameters to inspect a plugin.
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/client#PluginInspectOptions
-// GitHub: https://github.com/moby/moby/blob/client/v0.6.2/client/plugin_inspect.go
+// GitHub: https://github.com/moby/moby/blob/client/v0.6.3/client/plugin_inspect.go
 // Kind: struct
 // Usecase: wrap the Engine client type PluginInspectOptions.
 type PluginInspectOptions = engineclient.PluginInspectOptions
@@ -1797,7 +1797,7 @@ type PluginInspectOptions = engineclient.PluginInspectOptions
 // PluginInspectResult holds the result from the [Client.PluginInspect] method.
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/client#PluginInspectResult
-// GitHub: https://github.com/moby/moby/blob/client/v0.6.2/client/plugin_inspect.go
+// GitHub: https://github.com/moby/moby/blob/client/v0.6.3/client/plugin_inspect.go
 // Kind: struct
 // References: encoding/json.RawMessage, github.com/moby/moby/api/types/plugin.Plugin
 // Usecase: wrap the Engine client type PluginInspectResult.
@@ -1808,7 +1808,7 @@ type PluginInspectResult = engineclient.PluginInspectResult
 // PluginInstallOptions holds parameters to install a plugin.
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/client#PluginInstallOptions
-// GitHub: https://github.com/moby/moby/blob/client/v0.6.2/client/plugin_install.go
+// GitHub: https://github.com/moby/moby/blob/client/v0.6.3/client/plugin_install.go
 // Kind: struct
 // References: context.Context, github.com/moby/moby/api/types/plugin.Privileges
 // Usecase: wrap the Engine client type PluginInstallOptions.
@@ -1820,7 +1820,7 @@ type PluginInstallOptions = engineclient.PluginInstallOptions
 // It is an io.ReadCloser from which the caller can read installation progress or result.
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/client#PluginInstallResult
-// GitHub: https://github.com/moby/moby/blob/client/v0.6.2/client/plugin_install.go
+// GitHub: https://github.com/moby/moby/blob/client/v0.6.3/client/plugin_install.go
 // Kind: struct
 // References: io.ReadCloser
 // Usecase: wrap the Engine client type PluginInstallResult.
@@ -1831,7 +1831,7 @@ type PluginInstallResult = engineclient.PluginInstallResult
 // PluginListOptions holds parameters to list plugins.
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/client#PluginListOptions
-// GitHub: https://github.com/moby/moby/blob/client/v0.6.2/client/plugin_list.go
+// GitHub: https://github.com/moby/moby/blob/client/v0.6.3/client/plugin_list.go
 // Kind: struct
 // Usecase: wrap the Engine client type PluginListOptions.
 type PluginListOptions = engineclient.PluginListOptions
@@ -1841,7 +1841,7 @@ type PluginListOptions = engineclient.PluginListOptions
 // PluginListResult represents the result of a plugin list operation.
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/client#PluginListResult
-// GitHub: https://github.com/moby/moby/blob/client/v0.6.2/client/plugin_list.go
+// GitHub: https://github.com/moby/moby/blob/client/v0.6.3/client/plugin_list.go
 // Kind: struct
 // References: github.com/moby/moby/api/types/plugin.Plugin
 // Usecase: wrap the Engine client type PluginListResult.
@@ -1852,7 +1852,7 @@ type PluginListResult = engineclient.PluginListResult
 // PluginPushOptions holds parameters to push a plugin.
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/client#PluginPushOptions
-// GitHub: https://github.com/moby/moby/blob/client/v0.6.2/client/plugin_push.go
+// GitHub: https://github.com/moby/moby/blob/client/v0.6.3/client/plugin_push.go
 // Kind: struct
 // Usecase: wrap the Engine client type PluginPushOptions.
 type PluginPushOptions = engineclient.PluginPushOptions
@@ -1862,7 +1862,7 @@ type PluginPushOptions = engineclient.PluginPushOptions
 // # PluginPushResult is the result of a plugin push operation
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/client#PluginPushResult
-// GitHub: https://github.com/moby/moby/blob/client/v0.6.2/client/plugin_push.go
+// GitHub: https://github.com/moby/moby/blob/client/v0.6.3/client/plugin_push.go
 // Kind: struct
 // References: io.ReadCloser
 // Usecase: wrap the Engine client type PluginPushResult.
@@ -1873,7 +1873,7 @@ type PluginPushResult = engineclient.PluginPushResult
 // PluginRemoveOptions holds parameters to remove plugins.
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/client#PluginRemoveOptions
-// GitHub: https://github.com/moby/moby/blob/client/v0.6.2/client/plugin_remove.go
+// GitHub: https://github.com/moby/moby/blob/client/v0.6.3/client/plugin_remove.go
 // Kind: struct
 // Usecase: wrap the Engine client type PluginRemoveOptions.
 type PluginRemoveOptions = engineclient.PluginRemoveOptions
@@ -1883,7 +1883,7 @@ type PluginRemoveOptions = engineclient.PluginRemoveOptions
 // PluginRemoveResult represents the result of a plugin removal.
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/client#PluginRemoveResult
-// GitHub: https://github.com/moby/moby/blob/client/v0.6.2/client/plugin_remove.go
+// GitHub: https://github.com/moby/moby/blob/client/v0.6.3/client/plugin_remove.go
 // Kind: struct
 // Usecase: wrap the Engine client type PluginRemoveResult.
 type PluginRemoveResult = engineclient.PluginRemoveResult
@@ -1893,7 +1893,7 @@ type PluginRemoveResult = engineclient.PluginRemoveResult
 // PluginSetOptions defines options for modifying a plugin's settings.
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/client#PluginSetOptions
-// GitHub: https://github.com/moby/moby/blob/client/v0.6.2/client/plugin_set.go
+// GitHub: https://github.com/moby/moby/blob/client/v0.6.3/client/plugin_set.go
 // Kind: struct
 // Usecase: wrap the Engine client type PluginSetOptions.
 type PluginSetOptions = engineclient.PluginSetOptions
@@ -1903,7 +1903,7 @@ type PluginSetOptions = engineclient.PluginSetOptions
 // PluginSetResult represents the result of a plugin set operation.
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/client#PluginSetResult
-// GitHub: https://github.com/moby/moby/blob/client/v0.6.2/client/plugin_set.go
+// GitHub: https://github.com/moby/moby/blob/client/v0.6.3/client/plugin_set.go
 // Kind: struct
 // Usecase: wrap the Engine client type PluginSetResult.
 type PluginSetResult = engineclient.PluginSetResult
@@ -1913,7 +1913,7 @@ type PluginSetResult = engineclient.PluginSetResult
 // PluginUpgradeOptions holds parameters to upgrade a plugin.
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/client#PluginUpgradeOptions
-// GitHub: https://github.com/moby/moby/blob/client/v0.6.2/client/plugin_upgrade.go
+// GitHub: https://github.com/moby/moby/blob/client/v0.6.3/client/plugin_upgrade.go
 // Kind: struct
 // References: context.Context, github.com/moby/moby/api/types/plugin.Privileges
 // Usecase: wrap the Engine client type PluginUpgradeOptions.
@@ -1924,7 +1924,7 @@ type PluginUpgradeOptions = engineclient.PluginUpgradeOptions
 // PluginUpgradeResult holds the result of a plugin upgrade operation.
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/client#PluginUpgradeResult
-// GitHub: https://github.com/moby/moby/blob/client/v0.6.2/client/plugin_upgrade.go
+// GitHub: https://github.com/moby/moby/blob/client/v0.6.3/client/plugin_upgrade.go
 // Kind: named:io.ReadCloser
 // Underlying: io.ReadCloser
 // References: io.ReadCloser
@@ -1934,7 +1934,7 @@ type PluginUpgradeResult = engineclient.PluginUpgradeResult
 // RegistryLoginOptions wraps client.RegistryLoginOptions.
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/client#RegistryLoginOptions
-// GitHub: https://github.com/moby/moby/blob/client/v0.6.2/client/login.go
+// GitHub: https://github.com/moby/moby/blob/client/v0.6.3/client/login.go
 // Kind: struct
 // Usecase: wrap the Engine client type RegistryLoginOptions.
 type RegistryLoginOptions = engineclient.RegistryLoginOptions
@@ -1944,7 +1944,7 @@ type RegistryLoginOptions = engineclient.RegistryLoginOptions
 // RegistryLoginResult holds the result of a RegistryLogin query.
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/client#RegistryLoginResult
-// GitHub: https://github.com/moby/moby/blob/client/v0.6.2/client/login.go
+// GitHub: https://github.com/moby/moby/blob/client/v0.6.3/client/login.go
 // Kind: struct
 // References: github.com/moby/moby/api/types/registry.AuthResponse
 // Usecase: wrap the Engine client type RegistryLoginResult.
@@ -1953,7 +1953,7 @@ type RegistryLoginResult = engineclient.RegistryLoginResult
 // RegistrySearchClient wraps client.RegistrySearchClient.
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/client#RegistrySearchClient
-// GitHub: https://github.com/moby/moby/blob/client/v0.6.2/client/client_interfaces.go
+// GitHub: https://github.com/moby/moby/blob/client/v0.6.3/client/client_interfaces.go
 // Kind: interface
 // References: context.Context
 // Usecase: wrap the Engine client type RegistrySearchClient.
@@ -1969,7 +1969,7 @@ type RegistrySearchClient = engineclient.RegistrySearchClient
 // the hook.
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/client#RequestHook
-// GitHub: https://github.com/moby/moby/blob/client/v0.6.2/client/client_options.go
+// GitHub: https://github.com/moby/moby/blob/client/v0.6.3/client/client_options.go
 // Kind: func
 // Underlying: func(*http.Request) error
 // References: net/http.Request
@@ -1984,7 +1984,7 @@ type RequestHook = engineclient.RequestHook
 // Hooks must not read or close resp.Body.
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/client#ResponseHook
-// GitHub: https://github.com/moby/moby/blob/client/v0.6.2/client/client_options.go
+// GitHub: https://github.com/moby/moby/blob/client/v0.6.3/client/client_options.go
 // Kind: func
 // Underlying: func(*http.Response)
 // References: net/http.Response
@@ -1996,7 +1996,7 @@ type ResponseHook = engineclient.ResponseHook
 // # SecretAPIClient defines API client methods for secrets
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/client#SecretAPIClient
-// GitHub: https://github.com/moby/moby/blob/client/v0.6.2/client/client_interfaces.go
+// GitHub: https://github.com/moby/moby/blob/client/v0.6.3/client/client_interfaces.go
 // Kind: interface
 // References: context.Context
 // Usecase: wrap the Engine client type SecretAPIClient.
@@ -2007,7 +2007,7 @@ type SecretAPIClient = engineclient.SecretAPIClient
 // SecretCreateOptions holds options for creating a secret.
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/client#SecretCreateOptions
-// GitHub: https://github.com/moby/moby/blob/client/v0.6.2/client/secret_create.go
+// GitHub: https://github.com/moby/moby/blob/client/v0.6.3/client/secret_create.go
 // Kind: struct
 // References: github.com/moby/moby/api/types/swarm.SecretSpec
 // Usecase: wrap the Engine client type SecretCreateOptions.
@@ -2018,7 +2018,7 @@ type SecretCreateOptions = engineclient.SecretCreateOptions
 // SecretCreateResult holds the result from the [Client.SecretCreate] method.
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/client#SecretCreateResult
-// GitHub: https://github.com/moby/moby/blob/client/v0.6.2/client/secret_create.go
+// GitHub: https://github.com/moby/moby/blob/client/v0.6.3/client/secret_create.go
 // Kind: struct
 // Usecase: wrap the Engine client type SecretCreateResult.
 type SecretCreateResult = engineclient.SecretCreateResult
@@ -2028,7 +2028,7 @@ type SecretCreateResult = engineclient.SecretCreateResult
 // SecretInspectOptions holds options for inspecting a secret.
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/client#SecretInspectOptions
-// GitHub: https://github.com/moby/moby/blob/client/v0.6.2/client/secret_inspect.go
+// GitHub: https://github.com/moby/moby/blob/client/v0.6.3/client/secret_inspect.go
 // Kind: struct
 // Usecase: wrap the Engine client type SecretInspectOptions.
 type SecretInspectOptions = engineclient.SecretInspectOptions
@@ -2038,7 +2038,7 @@ type SecretInspectOptions = engineclient.SecretInspectOptions
 // SecretInspectResult holds the result from the [Client.SecretInspect]. method.
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/client#SecretInspectResult
-// GitHub: https://github.com/moby/moby/blob/client/v0.6.2/client/secret_inspect.go
+// GitHub: https://github.com/moby/moby/blob/client/v0.6.3/client/secret_inspect.go
 // Kind: struct
 // References: encoding/json.RawMessage, github.com/moby/moby/api/types/swarm.Secret
 // Usecase: wrap the Engine client type SecretInspectResult.
@@ -2049,7 +2049,7 @@ type SecretInspectResult = engineclient.SecretInspectResult
 // # SecretListOptions holds parameters to list secrets
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/client#SecretListOptions
-// GitHub: https://github.com/moby/moby/blob/client/v0.6.2/client/secret_list.go
+// GitHub: https://github.com/moby/moby/blob/client/v0.6.3/client/secret_list.go
 // Kind: struct
 // Usecase: wrap the Engine client type SecretListOptions.
 type SecretListOptions = engineclient.SecretListOptions
@@ -2059,7 +2059,7 @@ type SecretListOptions = engineclient.SecretListOptions
 // SecretListResult holds the result from the [client.SecretList] method.
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/client#SecretListResult
-// GitHub: https://github.com/moby/moby/blob/client/v0.6.2/client/secret_list.go
+// GitHub: https://github.com/moby/moby/blob/client/v0.6.3/client/secret_list.go
 // Kind: struct
 // References: github.com/moby/moby/api/types/swarm.Secret
 // Usecase: wrap the Engine client type SecretListResult.
@@ -2070,7 +2070,7 @@ type SecretListResult = engineclient.SecretListResult
 // SecretRemoveOptions holds options for [Client.SecretRemove].
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/client#SecretRemoveOptions
-// GitHub: https://github.com/moby/moby/blob/client/v0.6.2/client/secret_remove.go
+// GitHub: https://github.com/moby/moby/blob/client/v0.6.3/client/secret_remove.go
 // Kind: struct
 // Usecase: wrap the Engine client type SecretRemoveOptions.
 type SecretRemoveOptions = engineclient.SecretRemoveOptions
@@ -2080,7 +2080,7 @@ type SecretRemoveOptions = engineclient.SecretRemoveOptions
 // SecretRemoveResult holds the result of [Client.SecretRemove].
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/client#SecretRemoveResult
-// GitHub: https://github.com/moby/moby/blob/client/v0.6.2/client/secret_remove.go
+// GitHub: https://github.com/moby/moby/blob/client/v0.6.3/client/secret_remove.go
 // Kind: struct
 // Usecase: wrap the Engine client type SecretRemoveResult.
 type SecretRemoveResult = engineclient.SecretRemoveResult
@@ -2090,7 +2090,7 @@ type SecretRemoveResult = engineclient.SecretRemoveResult
 // SecretUpdateOptions holds options for updating a secret.
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/client#SecretUpdateOptions
-// GitHub: https://github.com/moby/moby/blob/client/v0.6.2/client/secret_update.go
+// GitHub: https://github.com/moby/moby/blob/client/v0.6.3/client/secret_update.go
 // Kind: struct
 // References: github.com/moby/moby/api/types/swarm.SecretSpec, github.com/moby/moby/api/types/swarm.Version
 // Usecase: wrap the Engine client type SecretUpdateOptions.
@@ -2101,7 +2101,7 @@ type SecretUpdateOptions = engineclient.SecretUpdateOptions
 // SecretUpdateResult holds the result of [Client.SecretUpdate].
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/client#SecretUpdateResult
-// GitHub: https://github.com/moby/moby/blob/client/v0.6.2/client/secret_update.go
+// GitHub: https://github.com/moby/moby/blob/client/v0.6.3/client/secret_update.go
 // Kind: struct
 // Usecase: wrap the Engine client type SecretUpdateResult.
 type SecretUpdateResult = engineclient.SecretUpdateResult
@@ -2111,7 +2111,7 @@ type SecretUpdateResult = engineclient.SecretUpdateResult
 // ServerVersionOptions specifies options for the server version request.
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/client#ServerVersionOptions
-// GitHub: https://github.com/moby/moby/blob/client/v0.6.2/client/version.go
+// GitHub: https://github.com/moby/moby/blob/client/v0.6.3/client/version.go
 // Kind: struct
 // Usecase: wrap the Engine client type ServerVersionOptions.
 type ServerVersionOptions = engineclient.ServerVersionOptions
@@ -2121,7 +2121,7 @@ type ServerVersionOptions = engineclient.ServerVersionOptions
 // ServerVersionResult contains information about the Docker server host.
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/client#ServerVersionResult
-// GitHub: https://github.com/moby/moby/blob/client/v0.6.2/client/version.go
+// GitHub: https://github.com/moby/moby/blob/client/v0.6.3/client/version.go
 // Kind: struct
 // References: github.com/moby/moby/api/types/system.ComponentVersion
 // Usecase: wrap the Engine client type ServerVersionResult.
@@ -2132,7 +2132,7 @@ type ServerVersionResult = engineclient.ServerVersionResult
 // # ServiceAPIClient defines API client methods for the services
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/client#ServiceAPIClient
-// GitHub: https://github.com/moby/moby/blob/client/v0.6.2/client/client_interfaces.go
+// GitHub: https://github.com/moby/moby/blob/client/v0.6.3/client/client_interfaces.go
 // Kind: interface
 // References: context.Context
 // Usecase: wrap the Engine client type ServiceAPIClient.
@@ -2143,7 +2143,7 @@ type ServiceAPIClient = engineclient.ServiceAPIClient
 // ServiceCreateOptions contains the options to use when creating a service.
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/client#ServiceCreateOptions
-// GitHub: https://github.com/moby/moby/blob/client/v0.6.2/client/service_create.go
+// GitHub: https://github.com/moby/moby/blob/client/v0.6.3/client/service_create.go
 // Kind: struct
 // References: github.com/moby/moby/api/types/swarm.ServiceSpec
 // Usecase: wrap the Engine client type ServiceCreateOptions.
@@ -2154,7 +2154,7 @@ type ServiceCreateOptions = engineclient.ServiceCreateOptions
 // ServiceCreateResult represents the result of creating a service.
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/client#ServiceCreateResult
-// GitHub: https://github.com/moby/moby/blob/client/v0.6.2/client/service_create.go
+// GitHub: https://github.com/moby/moby/blob/client/v0.6.3/client/service_create.go
 // Kind: struct
 // Usecase: wrap the Engine client type ServiceCreateResult.
 type ServiceCreateResult = engineclient.ServiceCreateResult
@@ -2164,7 +2164,7 @@ type ServiceCreateResult = engineclient.ServiceCreateResult
 // ServiceInspectOptions holds parameters related to the service inspect operation.
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/client#ServiceInspectOptions
-// GitHub: https://github.com/moby/moby/blob/client/v0.6.2/client/service_inspect.go
+// GitHub: https://github.com/moby/moby/blob/client/v0.6.3/client/service_inspect.go
 // Kind: struct
 // Usecase: wrap the Engine client type ServiceInspectOptions.
 type ServiceInspectOptions = engineclient.ServiceInspectOptions
@@ -2174,7 +2174,7 @@ type ServiceInspectOptions = engineclient.ServiceInspectOptions
 // ServiceInspectResult represents the result of a service inspect operation.
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/client#ServiceInspectResult
-// GitHub: https://github.com/moby/moby/blob/client/v0.6.2/client/service_inspect.go
+// GitHub: https://github.com/moby/moby/blob/client/v0.6.3/client/service_inspect.go
 // Kind: struct
 // References: encoding/json.RawMessage, github.com/moby/moby/api/types/swarm.Service
 // Usecase: wrap the Engine client type ServiceInspectResult.
@@ -2185,7 +2185,7 @@ type ServiceInspectResult = engineclient.ServiceInspectResult
 // ServiceListOptions holds parameters to list services with.
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/client#ServiceListOptions
-// GitHub: https://github.com/moby/moby/blob/client/v0.6.2/client/service_list.go
+// GitHub: https://github.com/moby/moby/blob/client/v0.6.3/client/service_list.go
 // Kind: struct
 // Usecase: wrap the Engine client type ServiceListOptions.
 type ServiceListOptions = engineclient.ServiceListOptions
@@ -2195,7 +2195,7 @@ type ServiceListOptions = engineclient.ServiceListOptions
 // ServiceListResult represents the result of a service list operation.
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/client#ServiceListResult
-// GitHub: https://github.com/moby/moby/blob/client/v0.6.2/client/service_list.go
+// GitHub: https://github.com/moby/moby/blob/client/v0.6.3/client/service_list.go
 // Kind: struct
 // References: github.com/moby/moby/api/types/swarm.Service
 // Usecase: wrap the Engine client type ServiceListResult.
@@ -2206,7 +2206,7 @@ type ServiceListResult = engineclient.ServiceListResult
 // ServiceLogsOptions holds parameters to filter logs with.
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/client#ServiceLogsOptions
-// GitHub: https://github.com/moby/moby/blob/client/v0.6.2/client/service_logs.go
+// GitHub: https://github.com/moby/moby/blob/client/v0.6.3/client/service_logs.go
 // Kind: struct
 // Usecase: wrap the Engine client type ServiceLogsOptions.
 type ServiceLogsOptions = engineclient.ServiceLogsOptions
@@ -2218,7 +2218,7 @@ type ServiceLogsOptions = engineclient.ServiceLogsOptions
 // It's up to the caller to close the stream.
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/client#ServiceLogsResult
-// GitHub: https://github.com/moby/moby/blob/client/v0.6.2/client/service_logs.go
+// GitHub: https://github.com/moby/moby/blob/client/v0.6.3/client/service_logs.go
 // Kind: interface
 // References: io.ReadCloser
 // Usecase: wrap the Engine client type ServiceLogsResult.
@@ -2229,7 +2229,7 @@ type ServiceLogsResult = engineclient.ServiceLogsResult
 // ServiceRemoveOptions contains options for removing a service.
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/client#ServiceRemoveOptions
-// GitHub: https://github.com/moby/moby/blob/client/v0.6.2/client/service_remove.go
+// GitHub: https://github.com/moby/moby/blob/client/v0.6.3/client/service_remove.go
 // Kind: struct
 // Usecase: wrap the Engine client type ServiceRemoveOptions.
 type ServiceRemoveOptions = engineclient.ServiceRemoveOptions
@@ -2239,7 +2239,7 @@ type ServiceRemoveOptions = engineclient.ServiceRemoveOptions
 // ServiceRemoveResult contains the result of removing a service.
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/client#ServiceRemoveResult
-// GitHub: https://github.com/moby/moby/blob/client/v0.6.2/client/service_remove.go
+// GitHub: https://github.com/moby/moby/blob/client/v0.6.3/client/service_remove.go
 // Kind: struct
 // Usecase: wrap the Engine client type ServiceRemoveResult.
 type ServiceRemoveResult = engineclient.ServiceRemoveResult
@@ -2249,7 +2249,7 @@ type ServiceRemoveResult = engineclient.ServiceRemoveResult
 // ServiceUpdateOptions contains the options to be used for updating services.
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/client#ServiceUpdateOptions
-// GitHub: https://github.com/moby/moby/blob/client/v0.6.2/client/service_update.go
+// GitHub: https://github.com/moby/moby/blob/client/v0.6.3/client/service_update.go
 // Kind: struct
 // References: github.com/moby/moby/api/types/swarm.RegistryAuthSource, github.com/moby/moby/api/types/swarm.ServiceSpec, github.com/moby/moby/api/types/swarm.Version
 // Usecase: wrap the Engine client type ServiceUpdateOptions.
@@ -2260,7 +2260,7 @@ type ServiceUpdateOptions = engineclient.ServiceUpdateOptions
 // ServiceUpdateResult represents the result of a service update.
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/client#ServiceUpdateResult
-// GitHub: https://github.com/moby/moby/blob/client/v0.6.2/client/service_update.go
+// GitHub: https://github.com/moby/moby/blob/client/v0.6.3/client/service_update.go
 // Kind: struct
 // Usecase: wrap the Engine client type ServiceUpdateResult.
 type ServiceUpdateResult = engineclient.ServiceUpdateResult
@@ -2270,7 +2270,7 @@ type ServiceUpdateResult = engineclient.ServiceUpdateResult
 // # SwarmAPIClient defines API client methods for the swarm
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/client#SwarmAPIClient
-// GitHub: https://github.com/moby/moby/blob/client/v0.6.2/client/client_interfaces.go
+// GitHub: https://github.com/moby/moby/blob/client/v0.6.3/client/client_interfaces.go
 // Kind: interface
 // References: context.Context
 // Usecase: wrap the Engine client type SwarmAPIClient.
@@ -2281,7 +2281,7 @@ type SwarmAPIClient = engineclient.SwarmAPIClient
 // SwarmGetUnlockKeyResult contains the swarm unlock key.
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/client#SwarmGetUnlockKeyResult
-// GitHub: https://github.com/moby/moby/blob/client/v0.6.2/client/swarm_get_unlock_key.go
+// GitHub: https://github.com/moby/moby/blob/client/v0.6.3/client/swarm_get_unlock_key.go
 // Kind: struct
 // Usecase: wrap the Engine client type SwarmGetUnlockKeyResult.
 type SwarmGetUnlockKeyResult = engineclient.SwarmGetUnlockKeyResult
@@ -2291,7 +2291,7 @@ type SwarmGetUnlockKeyResult = engineclient.SwarmGetUnlockKeyResult
 // SwarmInitOptions contains options for initializing a new swarm.
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/client#SwarmInitOptions
-// GitHub: https://github.com/moby/moby/blob/client/v0.6.2/client/swarm_init.go
+// GitHub: https://github.com/moby/moby/blob/client/v0.6.3/client/swarm_init.go
 // Kind: struct
 // References: github.com/moby/moby/api/types/swarm.NodeAvailability, github.com/moby/moby/api/types/swarm.Spec, net/netip.Prefix
 // Usecase: wrap the Engine client type SwarmInitOptions.
@@ -2302,7 +2302,7 @@ type SwarmInitOptions = engineclient.SwarmInitOptions
 // SwarmInitResult contains the result of a SwarmInit operation.
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/client#SwarmInitResult
-// GitHub: https://github.com/moby/moby/blob/client/v0.6.2/client/swarm_init.go
+// GitHub: https://github.com/moby/moby/blob/client/v0.6.3/client/swarm_init.go
 // Kind: struct
 // Usecase: wrap the Engine client type SwarmInitResult.
 type SwarmInitResult = engineclient.SwarmInitResult
@@ -2312,7 +2312,7 @@ type SwarmInitResult = engineclient.SwarmInitResult
 // SwarmInspectOptions holds options for inspecting a swarm.
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/client#SwarmInspectOptions
-// GitHub: https://github.com/moby/moby/blob/client/v0.6.2/client/swarm_inspect.go
+// GitHub: https://github.com/moby/moby/blob/client/v0.6.3/client/swarm_inspect.go
 // Kind: struct
 // Usecase: wrap the Engine client type SwarmInspectOptions.
 type SwarmInspectOptions = engineclient.SwarmInspectOptions
@@ -2322,7 +2322,7 @@ type SwarmInspectOptions = engineclient.SwarmInspectOptions
 // SwarmInspectResult represents the result of a SwarmInspect operation.
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/client#SwarmInspectResult
-// GitHub: https://github.com/moby/moby/blob/client/v0.6.2/client/swarm_inspect.go
+// GitHub: https://github.com/moby/moby/blob/client/v0.6.3/client/swarm_inspect.go
 // Kind: struct
 // References: github.com/moby/moby/api/types/swarm.Swarm
 // Usecase: wrap the Engine client type SwarmInspectResult.
@@ -2333,7 +2333,7 @@ type SwarmInspectResult = engineclient.SwarmInspectResult
 // SwarmJoinOptions specifies options for joining a swarm.
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/client#SwarmJoinOptions
-// GitHub: https://github.com/moby/moby/blob/client/v0.6.2/client/swarm_join.go
+// GitHub: https://github.com/moby/moby/blob/client/v0.6.3/client/swarm_join.go
 // Kind: struct
 // References: github.com/moby/moby/api/types/swarm.NodeAvailability
 // Usecase: wrap the Engine client type SwarmJoinOptions.
@@ -2344,7 +2344,7 @@ type SwarmJoinOptions = engineclient.SwarmJoinOptions
 // SwarmJoinResult contains the result of joining a swarm.
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/client#SwarmJoinResult
-// GitHub: https://github.com/moby/moby/blob/client/v0.6.2/client/swarm_join.go
+// GitHub: https://github.com/moby/moby/blob/client/v0.6.3/client/swarm_join.go
 // Kind: struct
 // Usecase: wrap the Engine client type SwarmJoinResult.
 type SwarmJoinResult = engineclient.SwarmJoinResult
@@ -2354,7 +2354,7 @@ type SwarmJoinResult = engineclient.SwarmJoinResult
 // SwarmLeaveOptions contains options for leaving a swarm.
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/client#SwarmLeaveOptions
-// GitHub: https://github.com/moby/moby/blob/client/v0.6.2/client/swarm_leave.go
+// GitHub: https://github.com/moby/moby/blob/client/v0.6.3/client/swarm_leave.go
 // Kind: struct
 // Usecase: wrap the Engine client type SwarmLeaveOptions.
 type SwarmLeaveOptions = engineclient.SwarmLeaveOptions
@@ -2364,7 +2364,7 @@ type SwarmLeaveOptions = engineclient.SwarmLeaveOptions
 // SwarmLeaveResult represents the result of a SwarmLeave operation.
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/client#SwarmLeaveResult
-// GitHub: https://github.com/moby/moby/blob/client/v0.6.2/client/swarm_leave.go
+// GitHub: https://github.com/moby/moby/blob/client/v0.6.3/client/swarm_leave.go
 // Kind: struct
 // Usecase: wrap the Engine client type SwarmLeaveResult.
 type SwarmLeaveResult = engineclient.SwarmLeaveResult
@@ -2375,7 +2375,7 @@ type SwarmLeaveResult = engineclient.SwarmLeaveResult
 // objects.
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/client#SwarmManagementAPIClient
-// GitHub: https://github.com/moby/moby/blob/client/v0.6.2/client/client_interfaces.go
+// GitHub: https://github.com/moby/moby/blob/client/v0.6.3/client/client_interfaces.go
 // Kind: interface
 // Usecase: wrap the Engine client type SwarmManagementAPIClient.
 type SwarmManagementAPIClient = engineclient.SwarmManagementAPIClient
@@ -2386,7 +2386,7 @@ type SwarmManagementAPIClient = engineclient.SwarmManagementAPIClient
 // obtained from the "Swarm" header in the API response.
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/client#SwarmStatus
-// GitHub: https://github.com/moby/moby/blob/client/v0.6.2/client/ping.go
+// GitHub: https://github.com/moby/moby/blob/client/v0.6.3/client/ping.go
 // Kind: struct
 // References: github.com/moby/moby/api/types/swarm.LocalNodeState
 // Usecase: wrap the Engine client type SwarmStatus.
@@ -2397,7 +2397,7 @@ type SwarmStatus = engineclient.SwarmStatus
 // SwarmUnlockOptions specifies options for unlocking a swarm.
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/client#SwarmUnlockOptions
-// GitHub: https://github.com/moby/moby/blob/client/v0.6.2/client/swarm_unlock.go
+// GitHub: https://github.com/moby/moby/blob/client/v0.6.3/client/swarm_unlock.go
 // Kind: struct
 // Usecase: wrap the Engine client type SwarmUnlockOptions.
 type SwarmUnlockOptions = engineclient.SwarmUnlockOptions
@@ -2407,7 +2407,7 @@ type SwarmUnlockOptions = engineclient.SwarmUnlockOptions
 // SwarmUnlockResult represents the result of unlocking a swarm.
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/client#SwarmUnlockResult
-// GitHub: https://github.com/moby/moby/blob/client/v0.6.2/client/swarm_unlock.go
+// GitHub: https://github.com/moby/moby/blob/client/v0.6.3/client/swarm_unlock.go
 // Kind: struct
 // Usecase: wrap the Engine client type SwarmUnlockResult.
 type SwarmUnlockResult = engineclient.SwarmUnlockResult
@@ -2417,7 +2417,7 @@ type SwarmUnlockResult = engineclient.SwarmUnlockResult
 // SwarmUpdateOptions contains options for updating a swarm.
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/client#SwarmUpdateOptions
-// GitHub: https://github.com/moby/moby/blob/client/v0.6.2/client/swarm_update.go
+// GitHub: https://github.com/moby/moby/blob/client/v0.6.3/client/swarm_update.go
 // Kind: struct
 // References: github.com/moby/moby/api/types/swarm.Spec, github.com/moby/moby/api/types/swarm.Version
 // Usecase: wrap the Engine client type SwarmUpdateOptions.
@@ -2428,7 +2428,7 @@ type SwarmUpdateOptions = engineclient.SwarmUpdateOptions
 // SwarmUpdateResult represents the result of a SwarmUpdate operation.
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/client#SwarmUpdateResult
-// GitHub: https://github.com/moby/moby/blob/client/v0.6.2/client/swarm_update.go
+// GitHub: https://github.com/moby/moby/blob/client/v0.6.3/client/swarm_update.go
 // Kind: struct
 // Usecase: wrap the Engine client type SwarmUpdateResult.
 type SwarmUpdateResult = engineclient.SwarmUpdateResult
@@ -2438,7 +2438,7 @@ type SwarmUpdateResult = engineclient.SwarmUpdateResult
 // # SystemAPIClient defines API client methods for the system
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/client#SystemAPIClient
-// GitHub: https://github.com/moby/moby/blob/client/v0.6.2/client/client_interfaces.go
+// GitHub: https://github.com/moby/moby/blob/client/v0.6.3/client/client_interfaces.go
 // Kind: interface
 // References: context.Context
 // Usecase: wrap the Engine client type SystemAPIClient.
@@ -2449,7 +2449,7 @@ type SystemAPIClient = engineclient.SystemAPIClient
 // SystemInfoResult holds the result of [Client.Info].
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/client#SystemInfoResult
-// GitHub: https://github.com/moby/moby/blob/client/v0.6.2/client/system_info.go
+// GitHub: https://github.com/moby/moby/blob/client/v0.6.3/client/system_info.go
 // Kind: struct
 // References: github.com/moby/moby/api/types/system.Info
 // Usecase: wrap the Engine client type SystemInfoResult.
@@ -2460,7 +2460,7 @@ type SystemInfoResult = engineclient.SystemInfoResult
 // TaskAPIClient defines API client methods to manage swarm tasks.
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/client#TaskAPIClient
-// GitHub: https://github.com/moby/moby/blob/client/v0.6.2/client/client_interfaces.go
+// GitHub: https://github.com/moby/moby/blob/client/v0.6.3/client/client_interfaces.go
 // Kind: interface
 // References: context.Context
 // Usecase: wrap the Engine client type TaskAPIClient.
@@ -2471,7 +2471,7 @@ type TaskAPIClient = engineclient.TaskAPIClient
 // TaskInspectOptions contains options for inspecting a task.
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/client#TaskInspectOptions
-// GitHub: https://github.com/moby/moby/blob/client/v0.6.2/client/task_inspect.go
+// GitHub: https://github.com/moby/moby/blob/client/v0.6.3/client/task_inspect.go
 // Kind: struct
 // Usecase: wrap the Engine client type TaskInspectOptions.
 type TaskInspectOptions = engineclient.TaskInspectOptions
@@ -2481,7 +2481,7 @@ type TaskInspectOptions = engineclient.TaskInspectOptions
 // TaskInspectResult contains the result of a task inspection.
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/client#TaskInspectResult
-// GitHub: https://github.com/moby/moby/blob/client/v0.6.2/client/task_inspect.go
+// GitHub: https://github.com/moby/moby/blob/client/v0.6.3/client/task_inspect.go
 // Kind: struct
 // References: encoding/json.RawMessage, github.com/moby/moby/api/types/swarm.Task
 // Usecase: wrap the Engine client type TaskInspectResult.
@@ -2492,7 +2492,7 @@ type TaskInspectResult = engineclient.TaskInspectResult
 // TaskListOptions holds parameters to list tasks with.
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/client#TaskListOptions
-// GitHub: https://github.com/moby/moby/blob/client/v0.6.2/client/task_list.go
+// GitHub: https://github.com/moby/moby/blob/client/v0.6.3/client/task_list.go
 // Kind: struct
 // Usecase: wrap the Engine client type TaskListOptions.
 type TaskListOptions = engineclient.TaskListOptions
@@ -2502,7 +2502,7 @@ type TaskListOptions = engineclient.TaskListOptions
 // TaskListResult contains the result of a task list operation.
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/client#TaskListResult
-// GitHub: https://github.com/moby/moby/blob/client/v0.6.2/client/task_list.go
+// GitHub: https://github.com/moby/moby/blob/client/v0.6.3/client/task_list.go
 // Kind: struct
 // References: github.com/moby/moby/api/types/swarm.Task
 // Usecase: wrap the Engine client type TaskListResult.
@@ -2513,7 +2513,7 @@ type TaskListResult = engineclient.TaskListResult
 // TaskLogsOptions holds parameters to filter logs with.
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/client#TaskLogsOptions
-// GitHub: https://github.com/moby/moby/blob/client/v0.6.2/client/task_logs.go
+// GitHub: https://github.com/moby/moby/blob/client/v0.6.3/client/task_logs.go
 // Kind: struct
 // Usecase: wrap the Engine client type TaskLogsOptions.
 type TaskLogsOptions = engineclient.TaskLogsOptions
@@ -2524,7 +2524,7 @@ type TaskLogsOptions = engineclient.TaskLogsOptions
 // It implements [io.ReadCloser].
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/client#TaskLogsResult
-// GitHub: https://github.com/moby/moby/blob/client/v0.6.2/client/task_logs.go
+// GitHub: https://github.com/moby/moby/blob/client/v0.6.3/client/task_logs.go
 // Kind: interface
 // References: io.ReadCloser
 // Usecase: wrap the Engine client type TaskLogsResult.
@@ -2535,7 +2535,7 @@ type TaskLogsResult = engineclient.TaskLogsResult
 // # VolumeAPIClient defines API client methods for the volumes
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/client#VolumeAPIClient
-// GitHub: https://github.com/moby/moby/blob/client/v0.6.2/client/client_interfaces.go
+// GitHub: https://github.com/moby/moby/blob/client/v0.6.3/client/client_interfaces.go
 // Kind: interface
 // References: context.Context
 // Usecase: wrap the Engine client type VolumeAPIClient.
@@ -2546,7 +2546,7 @@ type VolumeAPIClient = engineclient.VolumeAPIClient
 // VolumeCreateOptions specifies the options to create a volume.
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/client#VolumeCreateOptions
-// GitHub: https://github.com/moby/moby/blob/client/v0.6.2/client/volume_create.go
+// GitHub: https://github.com/moby/moby/blob/client/v0.6.3/client/volume_create.go
 // Kind: struct
 // References: github.com/moby/moby/api/types/volume.ClusterVolumeSpec
 // Usecase: wrap the Engine client type VolumeCreateOptions.
@@ -2557,7 +2557,7 @@ type VolumeCreateOptions = engineclient.VolumeCreateOptions
 // VolumeCreateResult is the result of a volume creation.
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/client#VolumeCreateResult
-// GitHub: https://github.com/moby/moby/blob/client/v0.6.2/client/volume_create.go
+// GitHub: https://github.com/moby/moby/blob/client/v0.6.3/client/volume_create.go
 // Kind: struct
 // References: github.com/moby/moby/api/types/volume.Volume
 // Usecase: wrap the Engine client type VolumeCreateResult.
@@ -2568,7 +2568,7 @@ type VolumeCreateResult = engineclient.VolumeCreateResult
 // VolumeInspectOptions holds options for inspecting a volume.
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/client#VolumeInspectOptions
-// GitHub: https://github.com/moby/moby/blob/client/v0.6.2/client/volume_inspect.go
+// GitHub: https://github.com/moby/moby/blob/client/v0.6.3/client/volume_inspect.go
 // Kind: struct
 // Usecase: wrap the Engine client type VolumeInspectOptions.
 type VolumeInspectOptions = engineclient.VolumeInspectOptions
@@ -2578,7 +2578,7 @@ type VolumeInspectOptions = engineclient.VolumeInspectOptions
 // VolumeInspectResult holds the result from the [Client.VolumeInspect] method.
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/client#VolumeInspectResult
-// GitHub: https://github.com/moby/moby/blob/client/v0.6.2/client/volume_inspect.go
+// GitHub: https://github.com/moby/moby/blob/client/v0.6.3/client/volume_inspect.go
 // Kind: struct
 // References: encoding/json.RawMessage, github.com/moby/moby/api/types/volume.Volume
 // Usecase: wrap the Engine client type VolumeInspectResult.
@@ -2589,7 +2589,7 @@ type VolumeInspectResult = engineclient.VolumeInspectResult
 // VolumeListOptions holds parameters to list volumes.
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/client#VolumeListOptions
-// GitHub: https://github.com/moby/moby/blob/client/v0.6.2/client/volume_list.go
+// GitHub: https://github.com/moby/moby/blob/client/v0.6.3/client/volume_list.go
 // Kind: struct
 // Usecase: wrap the Engine client type VolumeListOptions.
 type VolumeListOptions = engineclient.VolumeListOptions
@@ -2599,7 +2599,7 @@ type VolumeListOptions = engineclient.VolumeListOptions
 // VolumeListResult holds the result from the [Client.VolumeList] method.
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/client#VolumeListResult
-// GitHub: https://github.com/moby/moby/blob/client/v0.6.2/client/volume_list.go
+// GitHub: https://github.com/moby/moby/blob/client/v0.6.3/client/volume_list.go
 // Kind: struct
 // References: github.com/moby/moby/api/types/volume.Volume
 // Usecase: wrap the Engine client type VolumeListResult.
@@ -2610,7 +2610,7 @@ type VolumeListResult = engineclient.VolumeListResult
 // VolumePruneOptions holds parameters to prune volumes.
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/client#VolumePruneOptions
-// GitHub: https://github.com/moby/moby/blob/client/v0.6.2/client/volume_prune.go
+// GitHub: https://github.com/moby/moby/blob/client/v0.6.3/client/volume_prune.go
 // Kind: struct
 // Usecase: wrap the Engine client type VolumePruneOptions.
 type VolumePruneOptions = engineclient.VolumePruneOptions
@@ -2620,7 +2620,7 @@ type VolumePruneOptions = engineclient.VolumePruneOptions
 // VolumePruneResult holds the result from the [Client.VolumePrune] method.
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/client#VolumePruneResult
-// GitHub: https://github.com/moby/moby/blob/client/v0.6.2/client/volume_prune.go
+// GitHub: https://github.com/moby/moby/blob/client/v0.6.3/client/volume_prune.go
 // Kind: struct
 // References: github.com/moby/moby/api/types/volume.PruneReport
 // Usecase: wrap the Engine client type VolumePruneResult.
@@ -2631,7 +2631,7 @@ type VolumePruneResult = engineclient.VolumePruneResult
 // VolumeRemoveOptions holds options for [Client.VolumeRemove].
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/client#VolumeRemoveOptions
-// GitHub: https://github.com/moby/moby/blob/client/v0.6.2/client/volume_remove.go
+// GitHub: https://github.com/moby/moby/blob/client/v0.6.3/client/volume_remove.go
 // Kind: struct
 // Usecase: wrap the Engine client type VolumeRemoveOptions.
 type VolumeRemoveOptions = engineclient.VolumeRemoveOptions
@@ -2641,7 +2641,7 @@ type VolumeRemoveOptions = engineclient.VolumeRemoveOptions
 // VolumeRemoveResult holds the result of [Client.VolumeRemove],
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/client#VolumeRemoveResult
-// GitHub: https://github.com/moby/moby/blob/client/v0.6.2/client/volume_remove.go
+// GitHub: https://github.com/moby/moby/blob/client/v0.6.3/client/volume_remove.go
 // Kind: struct
 // Usecase: wrap the Engine client type VolumeRemoveResult.
 type VolumeRemoveResult = engineclient.VolumeRemoveResult
@@ -2651,7 +2651,7 @@ type VolumeRemoveResult = engineclient.VolumeRemoveResult
 // VolumeUpdateOptions holds options for [Client.VolumeUpdate].
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/client#VolumeUpdateOptions
-// GitHub: https://github.com/moby/moby/blob/client/v0.6.2/client/volume_update.go
+// GitHub: https://github.com/moby/moby/blob/client/v0.6.3/client/volume_update.go
 // Kind: struct
 // References: github.com/moby/moby/api/types/swarm.Version, github.com/moby/moby/api/types/volume.ClusterVolumeSpec
 // Usecase: wrap the Engine client type VolumeUpdateOptions.
@@ -2662,7 +2662,7 @@ type VolumeUpdateOptions = engineclient.VolumeUpdateOptions
 // VolumeUpdateResult holds the result of [Client.VolumeUpdate],
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/client#VolumeUpdateResult
-// GitHub: https://github.com/moby/moby/blob/client/v0.6.2/client/volume_update.go
+// GitHub: https://github.com/moby/moby/blob/client/v0.6.3/client/volume_update.go
 // Kind: struct
 // Usecase: wrap the Engine client type VolumeUpdateResult.
 type VolumeUpdateResult = engineclient.VolumeUpdateResult
@@ -2672,7 +2672,7 @@ type VolumeUpdateResult = engineclient.VolumeUpdateResult
 // VolumesDiskUsage contains disk usage information for volumes.
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/client#VolumesDiskUsage
-// GitHub: https://github.com/moby/moby/blob/client/v0.6.2/client/system_disk_usage.go
+// GitHub: https://github.com/moby/moby/blob/client/v0.6.3/client/system_disk_usage.go
 // Kind: struct
 // References: github.com/moby/moby/api/types/volume.Volume
 // Usecase: wrap the Engine client type VolumesDiskUsage.
@@ -2691,7 +2691,6 @@ Unexported named types in github.com/moby/moby/client (not aliasable; listed for
   hijackedConnCloseWriter (struct) hijackedConnCloseWriter is a hijackedConn which additionally implements CloseWrite().
   hookBody (struct) hookBody (struct)
   hookTransport (struct) hookTransport (struct)
-  httpError (struct) httpError (struct)
   imageAttestationsOptionFunc (func) imageAttestationsOptionFunc (func)
   imageAttestationsOpts (struct) imageAttestationsOpts (struct)
   imageHistoryOptionFunc (func) imageHistoryOptionFunc (func)

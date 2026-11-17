@@ -9,16 +9,16 @@ Read the page for the language you are writing, then copy the nearest example. D
 | The task | Emit |
 | --- | --- |
 | Compose text, no daemon | A named `<Compose>`, then `exportYAML`. In Go, `NewCompose(...).ExportYAML` or `Write`. |
-| A program that stays up | `docker.ts` / `docker.tsx` / `docker.js` default-exporting `root()` from `containerkit/live`. In Go, `Connect` then `Client.Up` or `Compose.Up`. |
+| A program that stays up | `docker.ts` / `docker.tsx` / `docker.js` default-exporting `root()` from `@aptd3v/containerkit/live`. In Go, `Connect` then `Client.Up` or `Compose.Up`. |
 | Any other TSX filename | `root()`, then `await runIfMain(live, import.meta.url)`. `root()` does not start itself. |
 | One container, then exit | Go `Run` or `Client.Run`. On a session, `app.run`. |
-| A Dockerfile as text | `exportDockerfile` from `containerkit/dockerfile`. In Go, `NewDockerfile`. |
+| A Dockerfile as text | `exportDockerfile` from `@aptd3v/containerkit/dockerfile`. In Go, `NewDockerfile`. |
 | An image built on the daemon | Nest `<Dockerfile>` under `<Build>`, or call `app.buildDockerfile` / `app.buildImage`. In Go, `Build` on the service or `BuildImage`. |
 | An existing compose file | Go `ImportFile` with no daemon, or `Client.Load` when the daemon must resolve includes. Do not re-type the file as setters unless the task is to replace it. |
-| A DAG of build, up, and one-shot containers | `pkg/taskflow` in Go. `containerkit/taskflow` `Flow`, or `app.flow`, in TSX. |
+| A DAG of build, up, and one-shot containers | `pkg/taskflow` in Go. `@aptd3v/containerkit/taskflow` `Flow`, or `app.flow`, in TSX. |
 | A plan JSON the binary should run | `encode(composeUp(...))` in TSX. Go loads it with `ImportPlan` and `Plan.Run`. |
 
-`<div>` and `<Compose>` cannot share a file. One file has one JSX import source. Leave the app tsconfig on React and exclude the containerkit folder. That folder extends `containerkit/tsconfig.jsx.json`, or the file starts with `/** @jsxImportSource containerkit */`.
+`<div>` and `<Compose>` cannot share a file. One file has one JSX import source. Leave the app tsconfig on React and exclude the containerkit folder. That folder extends `@aptd3v/containerkit/tsconfig.jsx.json`, or the file starts with `/** @jsxImportSource @aptd3v/containerkit */`.
 
 ## Commands
 
@@ -28,12 +28,16 @@ Read the page for the language you are writing, then copy the nearest example. D
 | Test Go | `go test -race -shuffle=on ./...` |
 | Test against a live Engine | `go test -tags e2e ./e2e/...` |
 | Generate bindings | `go generate ./pkg/kit` |
+| Check upstream pins | `python3 scripts/pins.py --check` |
+| Upstream diff | `python3 scripts/upstream.py` |
 | Test TSX | `cd tsx && npm test` |
 | Run a live example | `cd tsx && npm run nginx` |
 
 `go test ./...` does not dial a daemon. `go generate ./pkg/kit` runs `gencatalog` and `gentsx`. That rewrites `internal/`, `tsx/src/generated.ts`, `tsx/src/generated-options.ts`, `tsx/src/generated-actions.ts`, and `pkg/kit/tsx_plan_gen.go`. Commit the generated files with the change that required them. Do not edit those files by hand.
 
 `VERSION` is the semver. `python3 scripts/version.py --check` confirms the copies. Do not bump it unless the task is a release.
+
+`python3 scripts/pins.py --check` confirms `go.mod`, `pkg/kit/doc.go`, and the catalog blob URLs name the same versions of the Moby API, the Moby client, compose-go, and Compose. The historical pin line in `CHANGELOG.md` is not part of that check. `python3 scripts/upstream.py` prints the release notes and the compare diff for compose-go, the Compose SDK, and the Engine SDK.
 
 ## Go
 
@@ -117,28 +121,28 @@ A daemon failure is `*Error`. `errors.Is` matches `ErrNotFound`, `ErrConflict`, 
 
 `NewDockerfile().From(image, tag).Run(...).Copy(...).Expose(...).Command(...)` is the file. Pass it to `Build` on a service, or to `BuildImage` with `Image` and `Source`. An inline file uses `.` as the context when `Source` is omitted. `Env` inside `Build` is a build-arg. `Pull` inside `Build` pulls the base image during the build. `PullPolicy` on the service is `PullAlways`, `PullMissing`, `PullNever`, `PullBuild`, or `PullEvery`.
 
-`taskflow.New(name, cli)` holds the client. `Container` and `Build` return `ErrNoClient` without one. `Task` and a Compose func that brings its own client may use a nil client. Wire edges with `Precede` or `DependsOn`. `Retry(n)` reruns a failing step `n` more times. A panic and a canceled context are not retried. `Always` runs after a failed predecessor, and its own successors stay skipped. `If` and `Condition` close over Go state. A TSX `If` is a boolean chosen when the module evaluates. `Import` builds the graph from that JSON. The program is `examples/taskflow`.
+`taskflow.New(name, cli)` holds the client. `Container` and `Build` return `ErrNoClient` without one. `Task` and a Compose func that brings its own client may use a nil client. Wire edges with `Precede` or `DependsOn`. `Retry(n)` reruns a failing step `n` more times. `SkipIfPresent` on a Build step inspects every tag. All present finishes done with reason `already_present` and does not build. A missing tag builds once. Any other inspect error fails the step. Zero tags is an error before any inspect, and that configuration error is not retried. `SkipIfPresent` on any other step fails once. `Service` stays up until its flow or subflow finishes, including a canceled run, then downs once without a volume wipe. `Volume` allocates a physical name at the call, and `Remove` deletes that volume only when its run label matches. Compose `Remove` still deletes project volumes. A panic and a canceled context are not retried. `Remove` does not run if the process is killed. `Always` runs after a failed predecessor, and its own successors stay skipped. `If` and `Condition` close over Go state. A TSX `If` is a boolean chosen when the module evaluates. `Import` builds the graph from that JSON. The program is `examples/taskflow`.
 
 ## TSX
 
 | Import | What it is |
 | --- | --- |
-| `containerkit` | Components, `exportYAML`, `render`, `connect`, `encode`, and the plan-runner `run` |
-| `containerkit/vocab` | `proto`, `cap`, `restartPolicy`, `netDriver`, `scheme`, `signal`, `cascade`, `progress`, `depend` |
-| `containerkit/live` | `root`, `runIfMain`, `start`, `useSession`, `useState`, `useMemo`, `useEffect`, `useResource` |
-| `containerkit/hooks` | `useShutdown`, `useEnv`, `useLiveLog`, `useServiceState` |
-| `containerkit/dockerfile` | Dockerfile instructions and `exportDockerfile` |
-| `containerkit/taskflow` | `Flow` and the step builders |
+| `@aptd3v/containerkit` | Components, `exportYAML`, `render`, `connect`, `encode`, and the plan-runner `run` |
+| `@aptd3v/containerkit/vocab` | `proto`, `cap`, `restartPolicy`, `netDriver`, `scheme`, `signal`, `cascade`, `progress`, `depend` |
+| `@aptd3v/containerkit/live` | `root`, `runIfMain`, `start`, `useSession`, `useState`, `useMemo`, `useEffect`, `useResource` |
+| `@aptd3v/containerkit/hooks` | `useShutdown`, `useEnv`, `useLiveLog`, `useServiceState` |
+| `@aptd3v/containerkit/dockerfile` | Dockerfile instructions and `exportDockerfile` |
+| `@aptd3v/containerkit/taskflow` | `Flow` and the step builders |
 
-Closed unions come from `containerkit/vocab`. `pullPolicy`, `networkMode`, `ipc`, and `pid` also accept the prefix the helpers return. `mode` and `driver` stay strings. `StopSignal` on a Dockerfile is a POSIX name such as `SIGTERM`. The kit re-exports `SIGTERM` and `SIGKILL` in Go. The rest are `pkg/signal` and `signal` in `containerkit/vocab`.
+Closed unions come from `@aptd3v/containerkit/vocab`. `pullPolicy`, `networkMode`, `ipc`, and `pid` also accept the prefix the helpers return. `mode` and `driver` stay strings. `StopSignal` on a Dockerfile is a POSIX name such as `SIGTERM`. The kit re-exports `SIGTERM` and `SIGKILL` in Go. The rest are `pkg/signal` and `signal` in `@aptd3v/containerkit/vocab`.
 
 ### The tree
 
 A simple setting is a prop. A nested scope is a child. `Env`, `Label`, and `BuildArg` use `name` because JSX already uses `key`. A literal is the child text. A string that already lives in code is the `value` prop. Pass one of them, not both.
 
 ```tsx
-import { Compose, Env, Publish, Service, exportYAML } from "containerkit";
-import { proto } from "containerkit/vocab";
+import { Compose, Env, Publish, Service, exportYAML } from "@aptd3v/containerkit";
+import { proto } from "@aptd3v/containerkit/vocab";
 
 export const yaml = exportYAML(
   <Compose name="app">
@@ -184,21 +188,21 @@ An `async` function, or a function that takes the session, runs once. It does no
 
 ### Session methods
 
-Inside `docker.ts`, call methods on `useSession()` or on the session argument. Do not pass a client. The same names imported from `"containerkit"` return a plan and do not talk to Docker. A script that exits passes that plan to the imported `run`.
+Inside `docker.ts`, call methods on `useSession()` or on the session argument. Do not pass a client. The same names imported from `"@aptd3v/containerkit"` return a plan and do not talk to Docker. A script that exits passes that plan to the imported `run`.
 
-`run` imported from `"containerkit"` sends one plan. `app.run` creates and starts one container and returns `{ ID, Warnings }`. `app.containerRun` takes the same options and returns the same shape. They are not the imported `run`. The session does not keep that container across renders unless `useMemo` remembered the call.
+`run` imported from `"@aptd3v/containerkit"` sends one plan. `app.run` creates and starts one container and returns `{ ID, Warnings }`. `app.containerRun` takes the same options and returns the same shape. They are not the imported `run`. The session does not keep that container across renders unless `useMemo` remembered the call.
 
-`app.terminal(id)` attaches this process's stdin and stdout to a shell in that container and blocks until it exits. The default command is `/bin/sh`. `app.flow({ name, steps })` runs a `containerkit/taskflow` document. You do not pass a client.
+`app.terminal(id)` attaches this process's stdin and stdout to a shell in that container and blocks until it exits. The default command is `/bin/sh`. `app.flow({ name, steps })` runs a `@aptd3v/containerkit/taskflow` document. You do not pass a client.
 
 `composeUp`, `composePs`, `composeDown`, and the other `compose*` methods take the tree first. `composeExec(tree, service, options)` takes the service name before the options. Options are not written back onto the tree.
 
 Typed results are `SessionResult` in `tsx/src/live/commands.ts`. `run` and `containerRun` are `CreatedContainer`. `SessionVoid` resolves to `void` and the JSON body is `{ ok: true }`. That list includes `pullImage`, `pushImage`, `buildImage`, `composeBuild`, and `composeUp`. A nil list is `null`. Methods that are in neither set stay `unknown`, including `logs`, `attachContainer`, `statsContainer`, `copyFrom`, and `saveImages`, because they return a stream or a hijacked connection.
 
-A failure rejects with `ContainerKitError`. Branch on `isCKNotFoundError` and the other `isCK*` checks from `containerkit/live`. `isCKUnavailableError` means Docker cannot be reached, and that failure closes the session after `onError`. Other errors from a render callback leave the session open.
+A failure rejects with `ContainerKitError`. Branch on `isCKNotFoundError` and the other `isCK*` checks from `@aptd3v/containerkit/live`. `isCKUnavailableError` means Docker cannot be reached, and that failure closes the session after `onError`. Other errors from a render callback leave the session open.
 
 ### Dockerfile
 
-Import Dockerfile instructions from `containerkit/dockerfile`, not from `"containerkit"`. Both modules have `Env`, `Volume`, `Command`, and `Expose`, and they mean different things. The compose `Env` is a service environment entry. The Dockerfile `Env` is an `ENV` instruction.
+Import Dockerfile instructions from `@aptd3v/containerkit/dockerfile`, not from `"@aptd3v/containerkit"`. Both modules have `Env`, `Volume`, `Command`, and `Expose`, and they mean different things. The compose `Env` is a service environment entry. The Dockerfile `Env` is an `ENV` instruction.
 
 `<Run>` with no flags joins into one layer. `<RunLayer>` starts the next. A `<Run>` that sets `mount`, `network`, or `security` stays its own layer. One file has one `CMD`. A second `<Command>` throws. `<Command>` is exec form. `<CommandShell>` is shell form. Nest the tree under `<Build>` inside a named `<Compose>` when the live session should build it. `app.buildDockerfile(file, { image })` builds it now without making it the returned project. `app.buildImage({ source, dockerfilePath, image })` builds a Dockerfile that is already on disk.
 

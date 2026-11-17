@@ -164,6 +164,7 @@ type SessionVoid =
 	| "joinSwarm"
 	| "kill"
 	| "leaveSwarm"
+	| "logs"
 	| "pullImage"
 	| "pushImage"
 	| "remove"

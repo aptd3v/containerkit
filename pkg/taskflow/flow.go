@@ -33,6 +33,8 @@ const (
 	kindContainer
 	kindBuild
 	kindCompose
+	kindService
+	kindFinalizer
 	kindSubflow
 	kindCondition
 	kindIf
@@ -57,16 +59,19 @@ type Flow struct {
 	cli  *kit.Client
 	tf   *gtf.TaskFlow
 
-	mu      sync.Mutex
-	tasks   []*Task
-	created []string
-	compose []*kit.Compose
-	ctx     context.Context
-	writer  io.Writer
-	ran     bool
-	runID   string
-	watch   func(Event)
-	logfn   func(string, []byte)
+	mu       sync.Mutex
+	tasks    []*Task
+	created  []string
+	compose  []*kit.Compose
+	volumes  []*Volume
+	volNames map[string]string
+	ctx      context.Context
+	writer   io.Writer
+	ran      bool
+	runID    string
+	edgeErr  error
+	watch    func(Event)
+	logfn    func(string, []byte)
 }
 
 // Subflow is a nested graph. It has the same step constructors as Flow.
@@ -78,11 +83,12 @@ type Subflow struct {
 
 // Task is one node in a Flow or Subflow.
 type Task struct {
-	flow  *Flow
-	adder gtfAdder
-	name  string
-	kind  kind
-	gtf   *gtf.Task
+	flow   *Flow
+	parent *Task
+	adder  gtfAdder
+	name   string
+	kind   kind
+	gtf    *gtf.Task
 
 	preds []*Task
 	succs []*Task
@@ -94,25 +100,33 @@ type Task struct {
 	elseNode *gtf.Task
 	fallback *gtf.Task
 
-	always  bool
-	retries int
+	always        bool
+	retries       int
+	skipIfPresent bool
+	finalized     bool
+	bad           error
 
 	container    *kit.Container
 	containerRun *ContainerRun
 	build        []kit.EngineBuildOption
 	composeApp   *kit.Compose
 	composeFn    func(context.Context, *kit.Compose, kit.Composer) error
+	upOpts       []kit.UpOption
 	taskFn       func(context.Context) error
 	condFn       func(context.Context) uint
 	ifFn         func(context.Context) bool
 
-	mu       sync.Mutex
-	children []*Task
-	id       string
-	exitCode int
-	err      error
-	skipped  bool
-	tainted  bool
+	mu         sync.Mutex
+	children   []*Task
+	id         string
+	exitCode   int
+	err        error
+	local      error
+	status     Status
+	doneReason string
+	skipped    bool
+	tainted    bool
+	suppress   bool
 }
 
 // Run is options for Flow.Run. Nil means defaults.
@@ -259,7 +273,7 @@ func (s *Subflow) If(name string, pred func(context.Context) bool) *Task {
 }
 
 func (sc scope) newTask(name string, k kind) *Task {
-	t := &Task{flow: sc.flow, adder: sc.adder, name: name, kind: k}
+	t := &Task{flow: sc.flow, parent: sc.parent, adder: sc.adder, name: name, kind: k}
 	sc.flow.mu.Lock()
 	sc.flow.tasks = append(sc.flow.tasks, t)
 	sc.flow.mu.Unlock()
@@ -275,11 +289,13 @@ func (sc scope) task(name string, fn func(context.Context) error) *Task {
 	t := sc.newTask(name, kindTask)
 	t.taskFn = fn
 	t.gtf = sc.adder.NewTask(name, func() {
-		t.observe(func() error {
-			if t.taskFn == nil {
-				return nil
-			}
-			return t.taskFn(t.flow.context())
+		t.guarded(func() {
+			t.observe(func() error {
+				if t.taskFn == nil {
+					return nil
+				}
+				return t.taskFn(t.flow.context())
+			})
 		})
 	})
 	return t
@@ -289,17 +305,31 @@ func (sc scope) subflow(name string, instantiate func(*Subflow) error) *Task {
 	t := sc.newTask(name, kindSubflow)
 	f := sc.flow
 	t.gtf = sc.adder.NewSubflow(name, func(sf *gtf.Subflow) {
-		t.observe(func() error {
-			if instantiate != nil {
-				if err := instantiate(&Subflow{flow: f, gtf: sf, task: t}); err != nil {
+		t.guarded(func() {
+			t.observe(func() error {
+				if instantiate != nil {
+					if err := instantiate(&Subflow{flow: f, gtf: sf, task: t}); err != nil {
+						return err
+					}
+				}
+				f.sealServices(t)
+				for _, c := range t.childList() {
+					c.addFallback()
+				}
+				// Stamp this subflow only. The parent graph may already be
+				// running, and Apply on one of its services races with Validate.
+				stampTasks(t.childList())
+				if err := t.localErr(); err != nil {
+					t.suppressChildren()
 					return err
 				}
-			}
-			for _, c := range t.childList() {
-				c.addFallback()
-			}
-			f.stamp()
-			return cycleTasks(t.childList())
+				if err := cycleTasks(t.childList()); err != nil {
+					err = &terminalError{msg: err.Error()}
+					t.suppressChildren()
+					return err
+				}
+				return nil
+			})
 		})
 	})
 	return t
@@ -310,6 +340,9 @@ func (sc scope) condition(name string, predict func(context.Context) uint) *Task
 	t.condFn = predict
 	t.gtf = sc.adder.NewCondition(name, func() uint {
 		choice := t.fallbackIndex()
+		if t.suppressed() {
+			return choice
+		}
 		t.observe(func() error {
 			if t.condFn == nil {
 				return nil
@@ -334,6 +367,9 @@ func (sc scope) ifStep(name string, pred func(context.Context) bool) *Task {
 	t.elseNode = sc.adder.NewTask(name+":else", func() {})
 	t.gtf = sc.adder.NewCondition(name, func() uint {
 		choice := uint(1)
+		if t.suppressed() {
+			return choice
+		}
 		t.observe(func() error {
 			if t.ifFn != nil && t.ifFn(t.flow.context()) {
 				choice = 0
@@ -501,6 +537,10 @@ func (t *Task) link(from *gtf.Task, tasks []*Task) *Task {
 		if o == nil {
 			continue
 		}
+		if t.flow != o.flow {
+			noteForeign(t, o)
+			continue
+		}
 		t.succs = append(t.succs, o)
 		o.preds = append(o.preds, t)
 		if o.gtf != nil {
@@ -511,6 +551,77 @@ func (t *Task) link(from *gtf.Task, tasks []*Task) *Task {
 		from.Precede(gtfTasks...)
 	}
 	return t
+}
+
+// noteForeign records a cross-flow edge without mutating either task.
+// pred is the predecessor and succ is the successor. Each flow mutex is
+// acquired and released on its own.
+func noteForeign(pred, succ *Task) {
+	err := &terminalError{msg: fmt.Sprintf("taskflow: edge crosses flows: %s/%s -> %s/%s", pred.flow.name, pred.name, succ.flow.name, succ.name)}
+	pred.flow.noteEdge(err)
+	succ.flow.noteEdge(err)
+	if inst := owningSubflow(pred); inst != nil {
+		inst.noteLocal(err)
+	}
+	if inst := owningSubflow(succ); inst != nil {
+		inst.noteLocal(err)
+	}
+}
+
+func owningSubflow(t *Task) *Task {
+	if t.parent != nil && t.parent.kind == kindSubflow {
+		return t.parent
+	}
+	return nil
+}
+
+func (f *Flow) noteEdge(err error) {
+	f.mu.Lock()
+	if f.edgeErr == nil {
+		f.edgeErr = err
+	}
+	f.mu.Unlock()
+}
+
+func (f *Flow) foreign() error {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	return f.edgeErr
+}
+
+func (t *Task) noteLocal(err error) {
+	t.mu.Lock()
+	if t.local == nil {
+		t.local = err
+	}
+	t.mu.Unlock()
+}
+
+func (t *Task) localErr() error {
+	t.mu.Lock()
+	defer t.mu.Unlock()
+	return t.local
+}
+
+func (t *Task) guarded(fn func()) {
+	if t.suppressed() {
+		return
+	}
+	fn()
+}
+
+func (t *Task) suppressed() bool {
+	t.mu.Lock()
+	defer t.mu.Unlock()
+	return t.suppress
+}
+
+func (t *Task) suppressChildren() {
+	for _, c := range t.childList() {
+		c.mu.Lock()
+		c.suppress = true
+		c.mu.Unlock()
+	}
 }
 
 // Priority sets scheduler queue order. Zero is ignored.
@@ -538,6 +649,43 @@ func (t *Task) Always() *Task {
 	}
 	t.always = true
 	return t
+}
+
+// SkipIfPresent makes a Build step inspect its tags before building.
+// Every tag present finishes the step as done with reason already_present
+// and does not build. A missing tag builds once. Any other inspect error
+// fails the step. Zero tags is a configuration error before any inspect.
+// On any other step it records a terminal error and the step body does not run.
+func (t *Task) SkipIfPresent() *Task {
+	if t == nil {
+		return nil
+	}
+	if t.kind != kindBuild {
+		t.noteConfig(&terminalError{msg: "skipIfPresent requires a build step"})
+		return t
+	}
+	t.skipIfPresent = true
+	return t
+}
+
+func (t *Task) noteConfig(err error) {
+	if t == nil || err == nil {
+		return
+	}
+	t.mu.Lock()
+	if t.bad == nil {
+		t.bad = err
+	}
+	t.mu.Unlock()
+}
+
+func (t *Task) configErr() error {
+	if t == nil {
+		return nil
+	}
+	t.mu.Lock()
+	defer t.mu.Unlock()
+	return t.bad
 }
 
 // Retry reruns a failing step up to n more times before it counts as failed.
@@ -593,11 +741,30 @@ func (t *Task) Err() error {
 	return t.err
 }
 
+// Status is the terminal outcome. The zero value means the step has not finished,
+// including while it is running or retrying.
+func (t *Task) Status() Status {
+	if t == nil {
+		return ""
+	}
+	t.mu.Lock()
+	defer t.mu.Unlock()
+	return t.status
+}
+
+func (t *Task) setStatus(s Status) {
+	t.mu.Lock()
+	t.status = s
+	t.mu.Unlock()
+}
+
 func (t *Task) begin() {
 	t.mu.Lock()
 	t.err = nil
 	t.skipped = false
 	t.tainted = false
+	t.status = ""
+	t.doneReason = ""
 	t.exitCode = 0
 	t.id = ""
 	t.mu.Unlock()
@@ -614,6 +781,7 @@ func (t *Task) resetResult() {
 func (t *Task) markSkipped() {
 	t.mu.Lock()
 	t.skipped = true
+	t.status = StatusSkip
 	t.mu.Unlock()
 }
 
@@ -688,12 +856,19 @@ func (t *Task) event(k EventKind) Event {
 }
 
 func (t *Task) observe(fn func() error) {
+	t.observeBody(fn, true)
+}
+
+// observeBody runs fn. honorCancel is false for a service finalizer, which
+// still tears the project down after the run context is canceled.
+func (t *Task) observeBody(fn func() error, honorCancel bool) {
 	started := time.Now()
 	finished := false
 	defer func() {
 		if r := recover(); r != nil {
 			t.setErr(fmt.Errorf("panic: %v", r))
 			if !finished {
+				t.setStatus(StatusError)
 				e := t.event(EventError)
 				e.Err = t.Err()
 				e.Duration = time.Since(started)
@@ -713,19 +888,23 @@ func (t *Task) observe(fn func() error) {
 			t.markTainted()
 		}
 	}
-	ctx := t.flow.context()
-	if err := ctx.Err(); err != nil {
-		t.setErr(err)
-		e := t.event(EventError)
-		e.Err = t.Err()
-		t.flow.emit(e)
+	if err := t.configErr(); err != nil {
+		t.failObserve(err, time.Since(started))
 		finished = true
 		return
+	}
+	ctx := t.flow.context()
+	if honorCancel {
+		if err := ctx.Err(); err != nil {
+			t.failObserve(err, 0)
+			finished = true
+			return
+		}
 	}
 	started = time.Now()
 	t.flow.emit(t.event(EventStart))
 	err := fn()
-	for attempt := 1; err != nil && attempt <= t.retries && ctx.Err() == nil; attempt++ {
+	for attempt := 1; err != nil && !isTerminal(err) && attempt <= t.retries && ctx.Err() == nil; attempt++ {
 		e := t.event(EventRetry)
 		e.Err = taskErr(t.name, err)
 		e.Attempt = attempt
@@ -737,6 +916,7 @@ func (t *Task) observe(fn func() error) {
 	}
 	if err != nil {
 		t.setErr(err)
+		t.setStatus(StatusError)
 		e := t.event(EventError)
 		e.Err = t.Err()
 		e.Duration = time.Since(started)
@@ -744,10 +924,55 @@ func (t *Task) observe(fn func() error) {
 		finished = true
 		return
 	}
+	t.setStatus(StatusDone)
 	e := t.event(EventDone)
+	t.mu.Lock()
+	e.Reason = t.doneReason
+	t.mu.Unlock()
 	e.Duration = time.Since(started)
 	t.flow.emit(e)
 	finished = true
+}
+
+func (t *Task) failObserve(err error, d time.Duration) {
+	t.setErr(err)
+	t.setStatus(StatusError)
+	e := t.event(EventError)
+	e.Err = t.Err()
+	e.Duration = d
+	t.flow.emit(e)
+}
+
+// sealServices adds one Down finalizer per Service in parent.
+// A nil parent seals the root flow. Each finalizer waits for every real task
+// in that scope and does not wait for another finalizer.
+func (f *Flow) sealServices(parent *Task) {
+	var real []*Task
+	var services []*Task
+	for _, t := range f.taskList() {
+		if t.parent != parent || t.kind == kindFinalizer {
+			continue
+		}
+		real = append(real, t)
+		if t.kind == kindService && !t.finalized {
+			services = append(services, t)
+		}
+	}
+	for _, svc := range services {
+		svc.finalized = true
+		svc.addDown(real)
+	}
+}
+
+func (svc *Task) addDown(real []*Task) {
+	sc := scope{flow: svc.flow, adder: svc.adder, parent: svc.parent}
+	down := sc.newTask(svc.name+":down", kindFinalizer)
+	down.always = true
+	down.composeApp = svc.composeApp
+	down.gtf = sc.adder.NewTask(down.name, func() {
+		down.guarded(func() { down.observeBody(down.runServiceDown, false) })
+	})
+	down.DependsOn(real...)
 }
 
 // Run executes the graph. Nil opt uses defaults. The returned error joins
@@ -756,12 +981,13 @@ func (f *Flow) Run(ctx context.Context, opt *Run) error {
 	if f == nil {
 		return errors.New("flow is nil")
 	}
-	if ctx == nil {
-		ctx = context.Background()
-	}
 	if opt == nil {
 		opt = &Run{}
 	}
+	if err := f.foreign(); err != nil {
+		return err
+	}
+	f.sealServices(nil)
 	if err := f.cycle(); err != nil {
 		return err
 	}
@@ -785,6 +1011,9 @@ func (f *Flow) Run(ctx context.Context, opt *Run) error {
 	f.logfn = opt.Log
 	f.mu.Unlock()
 
+	if err := f.createVolumes(ctx); err != nil {
+		return err
+	}
 	for _, t := range f.taskList() {
 		t.addFallback()
 	}
@@ -825,7 +1054,7 @@ func (f *Flow) Run(ctx context.Context, opt *Run) error {
 var runIDEntropy io.Reader = rand.Reader
 
 func newRunID() (string, error) {
-	var b [4]byte
+	var b [16]byte
 	if _, err := io.ReadFull(runIDEntropy, b[:]); err != nil {
 		return "", err
 	}

@@ -7,7 +7,7 @@ import "github.com/compose-spec/compose-go/v2/template"
 // Config wraps template.Config.
 //
 // Source: https://pkg.go.dev/github.com/compose-spec/compose-go/v2/template#Config
-// GitHub: https://github.com/compose-spec/compose-go/blob/v2.16.2/template/template.go
+// GitHub: https://github.com/compose-spec/compose-go/blob/v2.17.0/template/template.go
 // Kind: struct
 // References: regexp.Regexp
 // Usecase: wrap compose-go template machinery used while loading a Project.
@@ -19,7 +19,7 @@ type Config = template.Config
 // format
 //
 // Source: https://pkg.go.dev/github.com/compose-spec/compose-go/v2/template#InvalidTemplateError
-// GitHub: https://github.com/compose-spec/compose-go/blob/v2.16.2/template/template.go
+// GitHub: https://github.com/compose-spec/compose-go/blob/v2.17.0/template/template.go
 // Kind: struct
 // Usecase: wrap compose-go template machinery used while loading a Project.
 type InvalidTemplateError = template.InvalidTemplateError
@@ -32,7 +32,7 @@ type InvalidTemplateError = template.InvalidTemplateError
 // and the absence of a value.
 //
 // Source: https://pkg.go.dev/github.com/compose-spec/compose-go/v2/template#Mapping
-// GitHub: https://github.com/compose-spec/compose-go/blob/v2.16.2/template/template.go
+// GitHub: https://github.com/compose-spec/compose-go/blob/v2.17.0/template/template.go
 // Kind: func
 // Underlying: func(string) (string, bool)
 // Usecase: wrap compose-go template machinery used while loading a Project.
@@ -43,7 +43,7 @@ type Mapping = template.Mapping
 // # MissingRequiredError is returned when a variable template is missing
 //
 // Source: https://pkg.go.dev/github.com/compose-spec/compose-go/v2/template#MissingRequiredError
-// GitHub: https://github.com/compose-spec/compose-go/blob/v2.16.2/template/template.go
+// GitHub: https://github.com/compose-spec/compose-go/blob/v2.17.0/template/template.go
 // Kind: struct
 // Usecase: wrap compose-go template machinery used while loading a Project.
 type MissingRequiredError = template.MissingRequiredError
@@ -51,7 +51,7 @@ type MissingRequiredError = template.MissingRequiredError
 // Option wraps template.Option.
 //
 // Source: https://pkg.go.dev/github.com/compose-spec/compose-go/v2/template#Option
-// GitHub: https://github.com/compose-spec/compose-go/blob/v2.16.2/template/template.go
+// GitHub: https://github.com/compose-spec/compose-go/blob/v2.17.0/template/template.go
 // Kind: func
 // Underlying: func(*Config)
 // Usecase: wrap compose-go template machinery used while loading a Project.
@@ -63,7 +63,7 @@ type Option = template.Option
 // substring. Returns the value as a string and an error.
 //
 // Source: https://pkg.go.dev/github.com/compose-spec/compose-go/v2/template#ReplacementFunc
-// GitHub: https://github.com/compose-spec/compose-go/blob/v2.16.2/template/template.go
+// GitHub: https://github.com/compose-spec/compose-go/blob/v2.17.0/template/template.go
 // Kind: func
 // Underlying: func(string, Mapping, *Config) (string, error)
 // Usecase: wrap compose-go template machinery used while loading a Project.
@@ -76,7 +76,7 @@ type ReplacementFunc = template.ReplacementFunc
 // the substitution and an error.
 //
 // Source: https://pkg.go.dev/github.com/compose-spec/compose-go/v2/template#SubstituteFunc
-// GitHub: https://github.com/compose-spec/compose-go/blob/v2.16.2/template/template.go
+// GitHub: https://github.com/compose-spec/compose-go/blob/v2.17.0/template/template.go
 // Kind: func
 // Underlying: func(string, Mapping) (string, bool, error)
 // Usecase: wrap compose-go template machinery used while loading a Project.
@@ -85,7 +85,7 @@ type SubstituteFunc = template.SubstituteFunc
 // Variable wraps template.Variable.
 //
 // Source: https://pkg.go.dev/github.com/compose-spec/compose-go/v2/template#Variable
-// GitHub: https://github.com/compose-spec/compose-go/blob/v2.16.2/template/variables.go
+// GitHub: https://github.com/compose-spec/compose-go/blob/v2.17.0/template/variables.go
 // Kind: struct
 // Usecase: wrap compose-go template machinery used while loading a Project.
 type Variable = template.Variable

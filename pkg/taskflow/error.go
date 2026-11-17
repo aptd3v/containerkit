@@ -35,6 +35,16 @@ func (e *TaskError) Unwrap() error {
 	return e.Err
 }
 
+// terminalError is a validation failure. observe does not retry it.
+type terminalError struct{ msg string }
+
+func (e *terminalError) Error() string { return e.msg }
+
+func isTerminal(err error) bool {
+	var te *terminalError
+	return errors.As(err, &te)
+}
+
 func taskErr(name string, err error) error {
 	if err == nil {
 		return nil

@@ -8976,7 +8976,10 @@ func execKnownAction(ctx context.Context, cli *Client, compose *Compose, act pla
 			if err != nil {
 				return nil, err
 			}
-			return marshalLoose(out0)
+			if err := consumeContainerLogs(out0); err != nil {
+				return nil, err
+			}
+			return []byte(`{"ok":true}`), nil
 		}
 	case "ping":
 		{

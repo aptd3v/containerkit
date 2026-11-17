@@ -7,7 +7,7 @@ import "github.com/compose-spec/compose-go/v2/utils"
 // Set wraps utils.Set.
 //
 // Source: https://pkg.go.dev/github.com/compose-spec/compose-go/v2/utils#Set
-// GitHub: https://github.com/compose-spec/compose-go/blob/v2.16.2/utils/set.go
+// GitHub: https://github.com/compose-spec/compose-go/blob/v2.17.0/utils/set.go
 // Kind: map
 // Underlying: map[T]struct{}
 // Usecase: wrap compose-go utils machinery used while loading a Project.

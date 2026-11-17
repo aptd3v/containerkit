@@ -9,7 +9,7 @@ import "github.com/moby/moby/api/types/blkiodev"
 // ThrottleDevice is a structure that holds device:rate_per_second pair
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/api/types/blkiodev#ThrottleDevice
-// GitHub: https://github.com/moby/moby/blob/api/v1.56.1/api/types/blkiodev/blkio.go
+// GitHub: https://github.com/moby/moby/blob/api/v1.57.0/api/types/blkiodev/blkio.go
 // Kind: struct
 // Usecase: wrap the Engine API type ThrottleDevice from blkiodev.
 type ThrottleDevice = blkiodev.ThrottleDevice
@@ -19,7 +19,7 @@ type ThrottleDevice = blkiodev.ThrottleDevice
 // WeightDevice is a structure that holds device:weight pair
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/api/types/blkiodev#WeightDevice
-// GitHub: https://github.com/moby/moby/blob/api/v1.56.1/api/types/blkiodev/blkio.go
+// GitHub: https://github.com/moby/moby/blob/api/v1.57.0/api/types/blkiodev/blkio.go
 // Kind: struct
 // Usecase: wrap the Engine API type WeightDevice from blkiodev.
 type WeightDevice = blkiodev.WeightDevice

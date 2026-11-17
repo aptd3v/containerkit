@@ -516,6 +516,11 @@ func writeExecCall(buf *bytes.Buffer, v verb) {
 		vars = append(vars, "err")
 		fmt.Fprintf(buf, "\t\t\t%s := %s\n", strings.Join(vars, ", "), call)
 		buf.WriteString("\t\t\tif err != nil {\n\t\t\t\treturn nil, err\n\t\t\t}\n")
+		if n == 2 && v.results[0] == "ContainerLogsResult" {
+			buf.WriteString("\t\t\tif err := consumeContainerLogs(out0); err != nil {\n\t\t\t\treturn nil, err\n\t\t\t}\n")
+			buf.WriteString("\t\t\treturn []byte(`{\"ok\":true}`), nil\n")
+			return
+		}
 		if n == 2 {
 			buf.WriteString("\t\t\treturn marshalLoose(out0)\n")
 			return

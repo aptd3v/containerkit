@@ -9,7 +9,7 @@ import composetypes "github.com/compose-spec/compose-go/v2/types"
 // # BlkioConfig define blkio config
 //
 // Source: https://pkg.go.dev/github.com/compose-spec/compose-go/v2/types#BlkioConfig
-// GitHub: https://github.com/compose-spec/compose-go/blob/v2.16.2/types/types.go
+// GitHub: https://github.com/compose-spec/compose-go/blob/v2.17.0/types/types.go
 // Kind: struct
 // Usecase: wrap the Compose file object model type BlkioConfig.
 type BlkioConfig = composetypes.BlkioConfig
@@ -19,7 +19,7 @@ type BlkioConfig = composetypes.BlkioConfig
 // # BuildConfig is a type for build
 //
 // Source: https://pkg.go.dev/github.com/compose-spec/compose-go/v2/types#BuildConfig
-// GitHub: https://github.com/compose-spec/compose-go/blob/v2.16.2/types/build.go
+// GitHub: https://github.com/compose-spec/compose-go/blob/v2.17.0/types/build.go
 // Kind: struct
 // Usecase: wrap the Compose file object model type BuildConfig.
 type BuildConfig = composetypes.BuildConfig
@@ -29,7 +29,7 @@ type BuildConfig = composetypes.BuildConfig
 // # Config is a full compose file configuration and model
 //
 // Source: https://pkg.go.dev/github.com/compose-spec/compose-go/v2/types#Config
-// GitHub: https://github.com/compose-spec/compose-go/blob/v2.16.2/types/config.go
+// GitHub: https://github.com/compose-spec/compose-go/blob/v2.17.0/types/config.go
 // Kind: struct
 // Usecase: wrap the Compose file object model type Config.
 type Config = composetypes.Config
@@ -39,7 +39,7 @@ type Config = composetypes.Config
 // # ConfigDetails are the details about a group of ConfigFiles
 //
 // Source: https://pkg.go.dev/github.com/compose-spec/compose-go/v2/types#ConfigDetails
-// GitHub: https://github.com/compose-spec/compose-go/blob/v2.16.2/types/config.go
+// GitHub: https://github.com/compose-spec/compose-go/blob/v2.17.0/types/config.go
 // Kind: struct
 // Usecase: wrap the Compose file object model type ConfigDetails.
 type ConfigDetails = composetypes.ConfigDetails
@@ -49,7 +49,7 @@ type ConfigDetails = composetypes.ConfigDetails
 // # ConfigFile is a filename and the contents of the file as a Dict
 //
 // Source: https://pkg.go.dev/github.com/compose-spec/compose-go/v2/types#ConfigFile
-// GitHub: https://github.com/compose-spec/compose-go/blob/v2.16.2/types/config.go
+// GitHub: https://github.com/compose-spec/compose-go/blob/v2.17.0/types/config.go
 // Kind: struct
 // Usecase: wrap the Compose file object model type ConfigFile.
 type ConfigFile = composetypes.ConfigFile
@@ -59,7 +59,7 @@ type ConfigFile = composetypes.ConfigFile
 // ConfigObjConfig is the config for the swarm "Config" object
 //
 // Source: https://pkg.go.dev/github.com/compose-spec/compose-go/v2/types#ConfigObjConfig
-// GitHub: https://github.com/compose-spec/compose-go/blob/v2.16.2/types/types.go
+// GitHub: https://github.com/compose-spec/compose-go/blob/v2.17.0/types/types.go
 // Kind: named:FileObjectConfig
 // Underlying: FileObjectConfig
 // Usecase: wrap the Compose file object model type ConfigObjConfig.
@@ -70,7 +70,7 @@ type ConfigObjConfig = composetypes.ConfigObjConfig
 // # Configs is a map of ConfigObjConfig
 //
 // Source: https://pkg.go.dev/github.com/compose-spec/compose-go/v2/types#Configs
-// GitHub: https://github.com/compose-spec/compose-go/blob/v2.16.2/types/config.go
+// GitHub: https://github.com/compose-spec/compose-go/blob/v2.17.0/types/config.go
 // Kind: map
 // Underlying: map[string]ConfigObjConfig
 // Usecase: wrap the Compose file object model type Configs.
@@ -84,7 +84,7 @@ type Configs = composetypes.Configs
 // services, jobs, and run-to-completion init containers (pre_start hooks).
 //
 // Source: https://pkg.go.dev/github.com/compose-spec/compose-go/v2/types#ContainerSpec
-// GitHub: https://github.com/compose-spec/compose-go/blob/v2.16.2/types/types.go
+// GitHub: https://github.com/compose-spec/compose-go/blob/v2.17.0/types/types.go
 // Kind: struct
 // Usecase: wrap the Compose file object model type ContainerSpec.
 type ContainerSpec = composetypes.ContainerSpec
@@ -94,7 +94,7 @@ type ContainerSpec = composetypes.ContainerSpec
 // # CredentialSpecConfig for credential spec on Windows
 //
 // Source: https://pkg.go.dev/github.com/compose-spec/compose-go/v2/types#CredentialSpecConfig
-// GitHub: https://github.com/compose-spec/compose-go/blob/v2.16.2/types/types.go
+// GitHub: https://github.com/compose-spec/compose-go/blob/v2.17.0/types/types.go
 // Kind: struct
 // Usecase: wrap the Compose file object model type CredentialSpecConfig.
 type CredentialSpecConfig = composetypes.CredentialSpecConfig
@@ -102,7 +102,7 @@ type CredentialSpecConfig = composetypes.CredentialSpecConfig
 // DependencyOption wraps types.DependencyOption.
 //
 // Source: https://pkg.go.dev/github.com/compose-spec/compose-go/v2/types#DependencyOption
-// GitHub: https://github.com/compose-spec/compose-go/blob/v2.16.2/types/project.go
+// GitHub: https://github.com/compose-spec/compose-go/blob/v2.17.0/types/project.go
 // Kind: func
 // Underlying: func(options *withServicesOptions)
 // Usecase: wrap the Compose file object model type DependencyOption.
@@ -111,7 +111,7 @@ type DependencyOption = composetypes.DependencyOption
 // DependsOnConfig wraps types.DependsOnConfig.
 //
 // Source: https://pkg.go.dev/github.com/compose-spec/compose-go/v2/types#DependsOnConfig
-// GitHub: https://github.com/compose-spec/compose-go/blob/v2.16.2/types/types.go
+// GitHub: https://github.com/compose-spec/compose-go/blob/v2.17.0/types/types.go
 // Kind: map
 // Underlying: map[string]ServiceDependency
 // Usecase: wrap the Compose file object model type DependsOnConfig.
@@ -122,7 +122,7 @@ type DependsOnConfig = composetypes.DependsOnConfig
 // # DeployConfig the deployment configuration for a service
 //
 // Source: https://pkg.go.dev/github.com/compose-spec/compose-go/v2/types#DeployConfig
-// GitHub: https://github.com/compose-spec/compose-go/blob/v2.16.2/types/types.go
+// GitHub: https://github.com/compose-spec/compose-go/blob/v2.17.0/types/types.go
 // Kind: struct
 // Usecase: wrap the Compose file object model type DeployConfig.
 type DeployConfig = composetypes.DeployConfig
@@ -130,7 +130,7 @@ type DeployConfig = composetypes.DeployConfig
 // DevelopConfig wraps types.DevelopConfig.
 //
 // Source: https://pkg.go.dev/github.com/compose-spec/compose-go/v2/types#DevelopConfig
-// GitHub: https://github.com/compose-spec/compose-go/blob/v2.16.2/types/develop.go
+// GitHub: https://github.com/compose-spec/compose-go/blob/v2.17.0/types/develop.go
 // Kind: struct
 // Usecase: wrap the Compose file object model type DevelopConfig.
 type DevelopConfig = composetypes.DevelopConfig
@@ -138,7 +138,7 @@ type DevelopConfig = composetypes.DevelopConfig
 // DeviceCount wraps types.DeviceCount.
 //
 // Source: https://pkg.go.dev/github.com/compose-spec/compose-go/v2/types#DeviceCount
-// GitHub: https://github.com/compose-spec/compose-go/blob/v2.16.2/types/device.go
+// GitHub: https://github.com/compose-spec/compose-go/blob/v2.17.0/types/device.go
 // Kind: named:int64
 // Underlying: int64
 // Usecase: wrap the Compose file object model type DeviceCount.
@@ -147,7 +147,7 @@ type DeviceCount = composetypes.DeviceCount
 // DeviceMapping wraps types.DeviceMapping.
 //
 // Source: https://pkg.go.dev/github.com/compose-spec/compose-go/v2/types#DeviceMapping
-// GitHub: https://github.com/compose-spec/compose-go/blob/v2.16.2/types/types.go
+// GitHub: https://github.com/compose-spec/compose-go/blob/v2.17.0/types/types.go
 // Kind: struct
 // Usecase: wrap the Compose file object model type DeviceMapping.
 type DeviceMapping = composetypes.DeviceMapping
@@ -155,7 +155,7 @@ type DeviceMapping = composetypes.DeviceMapping
 // DeviceRequest wraps types.DeviceRequest.
 //
 // Source: https://pkg.go.dev/github.com/compose-spec/compose-go/v2/types#DeviceRequest
-// GitHub: https://github.com/compose-spec/compose-go/blob/v2.16.2/types/device.go
+// GitHub: https://github.com/compose-spec/compose-go/blob/v2.17.0/types/device.go
 // Kind: struct
 // Usecase: wrap the Compose file object model type DeviceRequest.
 type DeviceRequest = composetypes.DeviceRequest
@@ -168,7 +168,7 @@ type DeviceRequest = composetypes.DeviceRequest
 // Value is used to count the resource (SSD=5, HDD=3, ...)
 //
 // Source: https://pkg.go.dev/github.com/compose-spec/compose-go/v2/types#DiscreteGenericResource
-// GitHub: https://github.com/compose-spec/compose-go/blob/v2.16.2/types/types.go
+// GitHub: https://github.com/compose-spec/compose-go/blob/v2.17.0/types/types.go
 // Kind: struct
 // Usecase: wrap the Compose file object model type DiscreteGenericResource.
 type DiscreteGenericResource = composetypes.DiscreteGenericResource
@@ -178,7 +178,7 @@ type DiscreteGenericResource = composetypes.DiscreteGenericResource
 // # Duration is a thin wrapper around time.Duration with improved JSON marshalling
 //
 // Source: https://pkg.go.dev/github.com/compose-spec/compose-go/v2/types#Duration
-// GitHub: https://github.com/compose-spec/compose-go/blob/v2.16.2/types/duration.go
+// GitHub: https://github.com/compose-spec/compose-go/blob/v2.17.0/types/duration.go
 // Kind: named:time.Duration
 // Underlying: time.Duration
 // References: time.Duration
@@ -188,7 +188,7 @@ type Duration = composetypes.Duration
 // EnvFile wraps types.EnvFile.
 //
 // Source: https://pkg.go.dev/github.com/compose-spec/compose-go/v2/types#EnvFile
-// GitHub: https://github.com/compose-spec/compose-go/blob/v2.16.2/types/envfile.go
+// GitHub: https://github.com/compose-spec/compose-go/blob/v2.17.0/types/envfile.go
 // Kind: struct
 // Usecase: wrap the Compose file object model type EnvFile.
 type EnvFile = composetypes.EnvFile
@@ -196,7 +196,7 @@ type EnvFile = composetypes.EnvFile
 // ExtendsConfig wraps types.ExtendsConfig.
 //
 // Source: https://pkg.go.dev/github.com/compose-spec/compose-go/v2/types#ExtendsConfig
-// GitHub: https://github.com/compose-spec/compose-go/blob/v2.16.2/types/types.go
+// GitHub: https://github.com/compose-spec/compose-go/blob/v2.17.0/types/types.go
 // Kind: struct
 // Usecase: wrap the Compose file object model type ExtendsConfig.
 type ExtendsConfig = composetypes.ExtendsConfig
@@ -206,7 +206,7 @@ type ExtendsConfig = composetypes.ExtendsConfig
 // # Extensions is a map of custom extension
 //
 // Source: https://pkg.go.dev/github.com/compose-spec/compose-go/v2/types#Extensions
-// GitHub: https://github.com/compose-spec/compose-go/blob/v2.16.2/types/config.go
+// GitHub: https://github.com/compose-spec/compose-go/blob/v2.17.0/types/config.go
 // Kind: map
 // Underlying: map[string]any
 // Usecase: wrap the Compose file object model type Extensions.
@@ -218,7 +218,7 @@ type Extensions = composetypes.Extensions
 // not managed, and should already exist.
 //
 // Source: https://pkg.go.dev/github.com/compose-spec/compose-go/v2/types#External
-// GitHub: https://github.com/compose-spec/compose-go/blob/v2.16.2/types/types.go
+// GitHub: https://github.com/compose-spec/compose-go/blob/v2.17.0/types/types.go
 // Kind: named:bool
 // Underlying: bool
 // Usecase: wrap the Compose file object model type External.
@@ -227,7 +227,7 @@ type External = composetypes.External
 // FileMode wraps types.FileMode.
 //
 // Source: https://pkg.go.dev/github.com/compose-spec/compose-go/v2/types#FileMode
-// GitHub: https://github.com/compose-spec/compose-go/blob/v2.16.2/types/types.go
+// GitHub: https://github.com/compose-spec/compose-go/blob/v2.17.0/types/types.go
 // Kind: named:int64
 // Underlying: int64
 // Usecase: wrap the Compose file object model type FileMode.
@@ -238,7 +238,7 @@ type FileMode = composetypes.FileMode
 // # FileObjectConfig is a config type for a file used by a service
 //
 // Source: https://pkg.go.dev/github.com/compose-spec/compose-go/v2/types#FileObjectConfig
-// GitHub: https://github.com/compose-spec/compose-go/blob/v2.16.2/types/types.go
+// GitHub: https://github.com/compose-spec/compose-go/blob/v2.17.0/types/types.go
 // Kind: struct
 // Usecase: wrap the Compose file object model type FileObjectConfig.
 type FileObjectConfig = composetypes.FileObjectConfig
@@ -248,7 +248,7 @@ type FileObjectConfig = composetypes.FileObjectConfig
 // # FileReferenceConfig for a reference to a swarm file object
 //
 // Source: https://pkg.go.dev/github.com/compose-spec/compose-go/v2/types#FileReferenceConfig
-// GitHub: https://github.com/compose-spec/compose-go/blob/v2.16.2/types/types.go
+// GitHub: https://github.com/compose-spec/compose-go/blob/v2.17.0/types/types.go
 // Kind: struct
 // Usecase: wrap the Compose file object model type FileReferenceConfig.
 type FileReferenceConfig = composetypes.FileReferenceConfig
@@ -259,7 +259,7 @@ type FileReferenceConfig = composetypes.FileReferenceConfig
 // only be an integer (e.g: SSD=3) for a service
 //
 // Source: https://pkg.go.dev/github.com/compose-spec/compose-go/v2/types#GenericResource
-// GitHub: https://github.com/compose-spec/compose-go/blob/v2.16.2/types/types.go
+// GitHub: https://github.com/compose-spec/compose-go/blob/v2.17.0/types/types.go
 // Kind: struct
 // Usecase: wrap the Compose file object model type GenericResource.
 type GenericResource = composetypes.GenericResource
@@ -269,7 +269,7 @@ type GenericResource = composetypes.GenericResource
 // # HealthCheckConfig the healthcheck configuration for a service
 //
 // Source: https://pkg.go.dev/github.com/compose-spec/compose-go/v2/types#HealthCheckConfig
-// GitHub: https://github.com/compose-spec/compose-go/blob/v2.16.2/types/healthcheck.go
+// GitHub: https://github.com/compose-spec/compose-go/blob/v2.17.0/types/healthcheck.go
 // Kind: struct
 // Usecase: wrap the Compose file object model type HealthCheckConfig.
 type HealthCheckConfig = composetypes.HealthCheckConfig
@@ -279,7 +279,7 @@ type HealthCheckConfig = composetypes.HealthCheckConfig
 // # HealthCheckTest is the command run to test the health of a service
 //
 // Source: https://pkg.go.dev/github.com/compose-spec/compose-go/v2/types#HealthCheckTest
-// GitHub: https://github.com/compose-spec/compose-go/blob/v2.16.2/types/healthcheck.go
+// GitHub: https://github.com/compose-spec/compose-go/blob/v2.17.0/types/healthcheck.go
 // Kind: slice
 // Underlying: []string
 // Usecase: wrap the Compose file object model type HealthCheckTest.
@@ -290,7 +290,7 @@ type HealthCheckTest = composetypes.HealthCheckTest
 // # HostsList is a list of colon-separated host-ip mappings
 //
 // Source: https://pkg.go.dev/github.com/compose-spec/compose-go/v2/types#HostsList
-// GitHub: https://github.com/compose-spec/compose-go/blob/v2.16.2/types/hostList.go
+// GitHub: https://github.com/compose-spec/compose-go/blob/v2.17.0/types/hostList.go
 // Kind: map
 // Underlying: map[string][]string
 // Usecase: wrap the Compose file object model type HostsList.
@@ -301,7 +301,7 @@ type HostsList = composetypes.HostsList
 // # IPAMConfig for a network
 //
 // Source: https://pkg.go.dev/github.com/compose-spec/compose-go/v2/types#IPAMConfig
-// GitHub: https://github.com/compose-spec/compose-go/blob/v2.16.2/types/types.go
+// GitHub: https://github.com/compose-spec/compose-go/blob/v2.17.0/types/types.go
 // Kind: struct
 // Usecase: wrap the Compose file object model type IPAMConfig.
 type IPAMConfig = composetypes.IPAMConfig
@@ -311,7 +311,7 @@ type IPAMConfig = composetypes.IPAMConfig
 // # IPAMPool for a network
 //
 // Source: https://pkg.go.dev/github.com/compose-spec/compose-go/v2/types#IPAMPool
-// GitHub: https://github.com/compose-spec/compose-go/blob/v2.16.2/types/types.go
+// GitHub: https://github.com/compose-spec/compose-go/blob/v2.17.0/types/types.go
 // Kind: struct
 // Usecase: wrap the Compose file object model type IPAMPool.
 type IPAMPool = composetypes.IPAMPool
@@ -319,7 +319,7 @@ type IPAMPool = composetypes.IPAMPool
 // IncludeConfig wraps types.IncludeConfig.
 //
 // Source: https://pkg.go.dev/github.com/compose-spec/compose-go/v2/types#IncludeConfig
-// GitHub: https://github.com/compose-spec/compose-go/blob/v2.16.2/types/types.go
+// GitHub: https://github.com/compose-spec/compose-go/blob/v2.17.0/types/types.go
 // Kind: struct
 // Usecase: wrap the Compose file object model type IncludeConfig.
 type IncludeConfig = composetypes.IncludeConfig
@@ -329,7 +329,7 @@ type IncludeConfig = composetypes.IncludeConfig
 // # JobConfig is the configuration of one job
 //
 // Source: https://pkg.go.dev/github.com/compose-spec/compose-go/v2/types#JobConfig
-// GitHub: https://github.com/compose-spec/compose-go/blob/v2.16.2/types/jobs.go
+// GitHub: https://github.com/compose-spec/compose-go/blob/v2.17.0/types/jobs.go
 // Kind: struct
 // Usecase: wrap the Compose file object model type JobConfig.
 type JobConfig = composetypes.JobConfig
@@ -339,7 +339,7 @@ type JobConfig = composetypes.JobConfig
 // # Jobs is a mapping of job names to job configurations
 //
 // Source: https://pkg.go.dev/github.com/compose-spec/compose-go/v2/types#Jobs
-// GitHub: https://github.com/compose-spec/compose-go/blob/v2.16.2/types/jobs.go
+// GitHub: https://github.com/compose-spec/compose-go/blob/v2.17.0/types/jobs.go
 // Kind: map
 // Underlying: map[string]JobConfig
 // Usecase: wrap the Compose file object model type Jobs.
@@ -350,7 +350,7 @@ type Jobs = composetypes.Jobs
 // # Labels is a mapping type for labels
 //
 // Source: https://pkg.go.dev/github.com/compose-spec/compose-go/v2/types#Labels
-// GitHub: https://github.com/compose-spec/compose-go/blob/v2.16.2/types/labels.go
+// GitHub: https://github.com/compose-spec/compose-go/blob/v2.17.0/types/labels.go
 // Kind: map
 // Underlying: map[string]string
 // Usecase: wrap the Compose file object model type Labels.
@@ -361,7 +361,7 @@ type Labels = composetypes.Labels
 // # LoggingConfig the logging configuration for a service
 //
 // Source: https://pkg.go.dev/github.com/compose-spec/compose-go/v2/types#LoggingConfig
-// GitHub: https://github.com/compose-spec/compose-go/blob/v2.16.2/types/types.go
+// GitHub: https://github.com/compose-spec/compose-go/blob/v2.17.0/types/types.go
 // Kind: struct
 // Usecase: wrap the Compose file object model type LoggingConfig.
 type LoggingConfig = composetypes.LoggingConfig
@@ -374,7 +374,7 @@ type LoggingConfig = composetypes.LoggingConfig
 // mapped value is set to an empty string `""`.
 //
 // Source: https://pkg.go.dev/github.com/compose-spec/compose-go/v2/types#Mapping
-// GitHub: https://github.com/compose-spec/compose-go/blob/v2.16.2/types/mapping.go
+// GitHub: https://github.com/compose-spec/compose-go/blob/v2.17.0/types/mapping.go
 // Kind: map
 // Underlying: map[string]string
 // Usecase: wrap the Compose file object model type Mapping.
@@ -386,7 +386,7 @@ type Mapping = composetypes.Mapping
 // 'key: value' strings
 //
 // Source: https://pkg.go.dev/github.com/compose-spec/compose-go/v2/types#MappingWithColon
-// GitHub: https://github.com/compose-spec/compose-go/blob/v2.16.2/types/types.go
+// GitHub: https://github.com/compose-spec/compose-go/blob/v2.17.0/types/types.go
 // Kind: map
 // Underlying: map[string]string
 // Usecase: wrap the Compose file object model type MappingWithColon.
@@ -400,7 +400,7 @@ type MappingWithColon = composetypes.MappingWithColon
 // For the key without value (`key`), the mapped value is set to nil.
 //
 // Source: https://pkg.go.dev/github.com/compose-spec/compose-go/v2/types#MappingWithEquals
-// GitHub: https://github.com/compose-spec/compose-go/blob/v2.16.2/types/mapping.go
+// GitHub: https://github.com/compose-spec/compose-go/blob/v2.17.0/types/mapping.go
 // Kind: map
 // Underlying: map[string]*string
 // Usecase: wrap the Compose file object model type MappingWithEquals.
@@ -409,7 +409,7 @@ type MappingWithEquals = composetypes.MappingWithEquals
 // ModelConfig wraps types.ModelConfig.
 //
 // Source: https://pkg.go.dev/github.com/compose-spec/compose-go/v2/types#ModelConfig
-// GitHub: https://github.com/compose-spec/compose-go/blob/v2.16.2/types/models.go
+// GitHub: https://github.com/compose-spec/compose-go/blob/v2.17.0/types/models.go
 // Kind: struct
 // Usecase: wrap the Compose file object model type ModelConfig.
 type ModelConfig = composetypes.ModelConfig
@@ -417,7 +417,7 @@ type ModelConfig = composetypes.ModelConfig
 // Models wraps types.Models.
 //
 // Source: https://pkg.go.dev/github.com/compose-spec/compose-go/v2/types#Models
-// GitHub: https://github.com/compose-spec/compose-go/blob/v2.16.2/types/config.go
+// GitHub: https://github.com/compose-spec/compose-go/blob/v2.17.0/types/config.go
 // Kind: map
 // Underlying: map[string]ModelConfig
 // Usecase: wrap the Compose file object model type Models.
@@ -428,7 +428,7 @@ type Models = composetypes.Models
 // # MultiOptions allow option to be repeated
 //
 // Source: https://pkg.go.dev/github.com/compose-spec/compose-go/v2/types#MultiOptions
-// GitHub: https://github.com/compose-spec/compose-go/blob/v2.16.2/types/options.go
+// GitHub: https://github.com/compose-spec/compose-go/blob/v2.17.0/types/options.go
 // Kind: map
 // Underlying: map[string][]string
 // Usecase: wrap the Compose file object model type MultiOptions.
@@ -437,7 +437,7 @@ type MultiOptions = composetypes.MultiOptions
 // NanoCPUs wraps types.NanoCPUs.
 //
 // Source: https://pkg.go.dev/github.com/compose-spec/compose-go/v2/types#NanoCPUs
-// GitHub: https://github.com/compose-spec/compose-go/blob/v2.16.2/types/cpus.go
+// GitHub: https://github.com/compose-spec/compose-go/blob/v2.17.0/types/cpus.go
 // Kind: named:float32
 // Underlying: float32
 // Usecase: wrap the Compose file object model type NanoCPUs.
@@ -448,7 +448,7 @@ type NanoCPUs = composetypes.NanoCPUs
 // # NetworkConfig for a network
 //
 // Source: https://pkg.go.dev/github.com/compose-spec/compose-go/v2/types#NetworkConfig
-// GitHub: https://github.com/compose-spec/compose-go/blob/v2.16.2/types/types.go
+// GitHub: https://github.com/compose-spec/compose-go/blob/v2.17.0/types/types.go
 // Kind: struct
 // Usecase: wrap the Compose file object model type NetworkConfig.
 type NetworkConfig = composetypes.NetworkConfig
@@ -458,7 +458,7 @@ type NetworkConfig = composetypes.NetworkConfig
 // # Networks is a map of NetworkConfig
 //
 // Source: https://pkg.go.dev/github.com/compose-spec/compose-go/v2/types#Networks
-// GitHub: https://github.com/compose-spec/compose-go/blob/v2.16.2/types/config.go
+// GitHub: https://github.com/compose-spec/compose-go/blob/v2.17.0/types/config.go
 // Kind: map
 // Underlying: map[string]NetworkConfig
 // Usecase: wrap the Compose file object model type Networks.
@@ -469,7 +469,7 @@ type Networks = composetypes.Networks
 // OptOut is a boolean which default value is 'true'
 //
 // Source: https://pkg.go.dev/github.com/compose-spec/compose-go/v2/types#OptOut
-// GitHub: https://github.com/compose-spec/compose-go/blob/v2.16.2/types/types.go
+// GitHub: https://github.com/compose-spec/compose-go/blob/v2.17.0/types/types.go
 // Kind: named:bool
 // Underlying: bool
 // Usecase: wrap the Compose file object model type OptOut.
@@ -480,7 +480,7 @@ type OptOut = composetypes.OptOut
 // # Options is a mapping type for options we pass as-is to container runtime
 //
 // Source: https://pkg.go.dev/github.com/compose-spec/compose-go/v2/types#Options
-// GitHub: https://github.com/compose-spec/compose-go/blob/v2.16.2/types/options.go
+// GitHub: https://github.com/compose-spec/compose-go/blob/v2.17.0/types/options.go
 // Kind: map
 // Underlying: map[string]string
 // Usecase: wrap the Compose file object model type Options.
@@ -491,7 +491,7 @@ type Options = composetypes.Options
 // # Placement constraints for the service
 //
 // Source: https://pkg.go.dev/github.com/compose-spec/compose-go/v2/types#Placement
-// GitHub: https://github.com/compose-spec/compose-go/blob/v2.16.2/types/types.go
+// GitHub: https://github.com/compose-spec/compose-go/blob/v2.17.0/types/types.go
 // Kind: struct
 // Usecase: wrap the Compose file object model type Placement.
 type Placement = composetypes.Placement
@@ -501,7 +501,7 @@ type Placement = composetypes.Placement
 // # PlacementPreferences is the preferences for a service placement
 //
 // Source: https://pkg.go.dev/github.com/compose-spec/compose-go/v2/types#PlacementPreferences
-// GitHub: https://github.com/compose-spec/compose-go/blob/v2.16.2/types/types.go
+// GitHub: https://github.com/compose-spec/compose-go/blob/v2.17.0/types/types.go
 // Kind: struct
 // Usecase: wrap the Compose file object model type PlacementPreferences.
 type PlacementPreferences = composetypes.PlacementPreferences
@@ -516,7 +516,7 @@ type PlacementPreferences = composetypes.PlacementPreferences
 // normalization when undeclared).
 //
 // Source: https://pkg.go.dev/github.com/compose-spec/compose-go/v2/types#PreStartHook
-// GitHub: https://github.com/compose-spec/compose-go/blob/v2.16.2/types/hooks.go
+// GitHub: https://github.com/compose-spec/compose-go/blob/v2.17.0/types/hooks.go
 // Kind: struct
 // Usecase: wrap the Compose file object model type PreStartHook.
 type PreStartHook = composetypes.PreStartHook
@@ -528,7 +528,7 @@ type PreStartHook = composetypes.PreStartHook
 // Each public functions which mutate Project state now return a copy of the original Project with the expected changes.
 //
 // Source: https://pkg.go.dev/github.com/compose-spec/compose-go/v2/types#Project
-// GitHub: https://github.com/compose-spec/compose-go/blob/v2.16.2/types/project.go
+// GitHub: https://github.com/compose-spec/compose-go/blob/v2.17.0/types/project.go
 // Kind: struct
 // Usecase: wrap the Compose file object model type Project.
 type Project = composetypes.Project
@@ -538,7 +538,7 @@ type Project = composetypes.Project
 // # Resource is a resource to be limited or reserved
 //
 // Source: https://pkg.go.dev/github.com/compose-spec/compose-go/v2/types#Resource
-// GitHub: https://github.com/compose-spec/compose-go/blob/v2.16.2/types/types.go
+// GitHub: https://github.com/compose-spec/compose-go/blob/v2.17.0/types/types.go
 // Kind: struct
 // Usecase: wrap the Compose file object model type Resource.
 type Resource = composetypes.Resource
@@ -548,7 +548,7 @@ type Resource = composetypes.Resource
 // # Resources the resource limits and reservations
 //
 // Source: https://pkg.go.dev/github.com/compose-spec/compose-go/v2/types#Resources
-// GitHub: https://github.com/compose-spec/compose-go/blob/v2.16.2/types/types.go
+// GitHub: https://github.com/compose-spec/compose-go/blob/v2.17.0/types/types.go
 // Kind: struct
 // Usecase: wrap the Compose file object model type Resources.
 type Resources = composetypes.Resources
@@ -558,7 +558,7 @@ type Resources = composetypes.Resources
 // # RestartPolicy the service restart policy
 //
 // Source: https://pkg.go.dev/github.com/compose-spec/compose-go/v2/types#RestartPolicy
-// GitHub: https://github.com/compose-spec/compose-go/blob/v2.16.2/types/types.go
+// GitHub: https://github.com/compose-spec/compose-go/blob/v2.17.0/types/types.go
 // Kind: struct
 // Usecase: wrap the Compose file object model type RestartPolicy.
 type RestartPolicy = composetypes.RestartPolicy
@@ -568,7 +568,7 @@ type RestartPolicy = composetypes.RestartPolicy
 // # SSHConfig is a mapping type for SSH build config
 //
 // Source: https://pkg.go.dev/github.com/compose-spec/compose-go/v2/types#SSHConfig
-// GitHub: https://github.com/compose-spec/compose-go/blob/v2.16.2/types/ssh.go
+// GitHub: https://github.com/compose-spec/compose-go/blob/v2.17.0/types/ssh.go
 // Kind: slice
 // Underlying: []SSHKey
 // Usecase: wrap the Compose file object model type SSHConfig.
@@ -577,7 +577,7 @@ type SSHConfig = composetypes.SSHConfig
 // SSHKey wraps types.SSHKey.
 //
 // Source: https://pkg.go.dev/github.com/compose-spec/compose-go/v2/types#SSHKey
-// GitHub: https://github.com/compose-spec/compose-go/blob/v2.16.2/types/ssh.go
+// GitHub: https://github.com/compose-spec/compose-go/blob/v2.17.0/types/ssh.go
 // Kind: struct
 // Usecase: wrap the Compose file object model type SSHKey.
 type SSHKey = composetypes.SSHKey
@@ -589,7 +589,7 @@ type SSHKey = composetypes.SSHKey
 // with only Cron set.
 //
 // Source: https://pkg.go.dev/github.com/compose-spec/compose-go/v2/types#ScheduleConfig
-// GitHub: https://github.com/compose-spec/compose-go/blob/v2.16.2/types/jobs.go
+// GitHub: https://github.com/compose-spec/compose-go/blob/v2.17.0/types/jobs.go
 // Kind: struct
 // Usecase: wrap the Compose file object model type ScheduleConfig.
 type ScheduleConfig = composetypes.ScheduleConfig
@@ -599,7 +599,7 @@ type ScheduleConfig = composetypes.ScheduleConfig
 // # SecretConfig for a secret
 //
 // Source: https://pkg.go.dev/github.com/compose-spec/compose-go/v2/types#SecretConfig
-// GitHub: https://github.com/compose-spec/compose-go/blob/v2.16.2/types/types.go
+// GitHub: https://github.com/compose-spec/compose-go/blob/v2.17.0/types/types.go
 // Kind: named:FileObjectConfig
 // Underlying: FileObjectConfig
 // Usecase: wrap the Compose file object model type SecretConfig.
@@ -610,7 +610,7 @@ type SecretConfig = composetypes.SecretConfig
 // # Secrets is a map of SecretConfig
 //
 // Source: https://pkg.go.dev/github.com/compose-spec/compose-go/v2/types#Secrets
-// GitHub: https://github.com/compose-spec/compose-go/blob/v2.16.2/types/config.go
+// GitHub: https://github.com/compose-spec/compose-go/blob/v2.17.0/types/config.go
 // Kind: map
 // Underlying: map[string]SecretConfig
 // Usecase: wrap the Compose file object model type Secrets.
@@ -621,7 +621,7 @@ type Secrets = composetypes.Secrets
 // # ServiceConfig is the configuration of one service
 //
 // Source: https://pkg.go.dev/github.com/compose-spec/compose-go/v2/types#ServiceConfig
-// GitHub: https://github.com/compose-spec/compose-go/blob/v2.16.2/types/types.go
+// GitHub: https://github.com/compose-spec/compose-go/blob/v2.17.0/types/types.go
 // Kind: struct
 // Usecase: wrap the Compose file object model type ServiceConfig.
 type ServiceConfig = composetypes.ServiceConfig
@@ -631,7 +631,7 @@ type ServiceConfig = composetypes.ServiceConfig
 // # ServiceConfigObjConfig is the config obj configuration for a service
 //
 // Source: https://pkg.go.dev/github.com/compose-spec/compose-go/v2/types#ServiceConfigObjConfig
-// GitHub: https://github.com/compose-spec/compose-go/blob/v2.16.2/types/types.go
+// GitHub: https://github.com/compose-spec/compose-go/blob/v2.17.0/types/types.go
 // Kind: named:FileReferenceConfig
 // Underlying: FileReferenceConfig
 // Usecase: wrap the Compose file object model type ServiceConfigObjConfig.
@@ -640,7 +640,7 @@ type ServiceConfigObjConfig = composetypes.ServiceConfigObjConfig
 // ServiceDependency wraps types.ServiceDependency.
 //
 // Source: https://pkg.go.dev/github.com/compose-spec/compose-go/v2/types#ServiceDependency
-// GitHub: https://github.com/compose-spec/compose-go/blob/v2.16.2/types/types.go
+// GitHub: https://github.com/compose-spec/compose-go/blob/v2.17.0/types/types.go
 // Kind: struct
 // Usecase: wrap the Compose file object model type ServiceDependency.
 type ServiceDependency = composetypes.ServiceDependency
@@ -648,7 +648,7 @@ type ServiceDependency = composetypes.ServiceDependency
 // ServiceFunc wraps types.ServiceFunc.
 //
 // Source: https://pkg.go.dev/github.com/compose-spec/compose-go/v2/types#ServiceFunc
-// GitHub: https://github.com/compose-spec/compose-go/blob/v2.16.2/types/project.go
+// GitHub: https://github.com/compose-spec/compose-go/blob/v2.17.0/types/project.go
 // Kind: func
 // Underlying: func(name string, service *ServiceConfig) error
 // Usecase: wrap the Compose file object model type ServiceFunc.
@@ -660,7 +660,7 @@ type ServiceFunc = composetypes.ServiceFunc
 // event (post_start, pre_stop).
 //
 // Source: https://pkg.go.dev/github.com/compose-spec/compose-go/v2/types#ServiceHook
-// GitHub: https://github.com/compose-spec/compose-go/blob/v2.16.2/types/hooks.go
+// GitHub: https://github.com/compose-spec/compose-go/blob/v2.17.0/types/hooks.go
 // Kind: struct
 // Usecase: wrap the Compose file object model type ServiceHook.
 type ServiceHook = composetypes.ServiceHook
@@ -668,7 +668,7 @@ type ServiceHook = composetypes.ServiceHook
 // ServiceModelConfig wraps types.ServiceModelConfig.
 //
 // Source: https://pkg.go.dev/github.com/compose-spec/compose-go/v2/types#ServiceModelConfig
-// GitHub: https://github.com/compose-spec/compose-go/blob/v2.16.2/types/models.go
+// GitHub: https://github.com/compose-spec/compose-go/blob/v2.17.0/types/models.go
 // Kind: struct
 // Usecase: wrap the Compose file object model type ServiceModelConfig.
 type ServiceModelConfig = composetypes.ServiceModelConfig
@@ -678,7 +678,7 @@ type ServiceModelConfig = composetypes.ServiceModelConfig
 // # ServiceNetworkConfig is the network configuration for a service
 //
 // Source: https://pkg.go.dev/github.com/compose-spec/compose-go/v2/types#ServiceNetworkConfig
-// GitHub: https://github.com/compose-spec/compose-go/blob/v2.16.2/types/types.go
+// GitHub: https://github.com/compose-spec/compose-go/blob/v2.17.0/types/types.go
 // Kind: struct
 // Usecase: wrap the Compose file object model type ServiceNetworkConfig.
 type ServiceNetworkConfig = composetypes.ServiceNetworkConfig
@@ -688,7 +688,7 @@ type ServiceNetworkConfig = composetypes.ServiceNetworkConfig
 // # ServicePortConfig is the port configuration for a service
 //
 // Source: https://pkg.go.dev/github.com/compose-spec/compose-go/v2/types#ServicePortConfig
-// GitHub: https://github.com/compose-spec/compose-go/blob/v2.16.2/types/types.go
+// GitHub: https://github.com/compose-spec/compose-go/blob/v2.17.0/types/types.go
 // Kind: struct
 // Usecase: wrap the Compose file object model type ServicePortConfig.
 type ServicePortConfig = composetypes.ServicePortConfig
@@ -696,7 +696,7 @@ type ServicePortConfig = composetypes.ServicePortConfig
 // ServiceProviderConfig wraps types.ServiceProviderConfig.
 //
 // Source: https://pkg.go.dev/github.com/compose-spec/compose-go/v2/types#ServiceProviderConfig
-// GitHub: https://github.com/compose-spec/compose-go/blob/v2.16.2/types/types.go
+// GitHub: https://github.com/compose-spec/compose-go/blob/v2.17.0/types/types.go
 // Kind: struct
 // Usecase: wrap the Compose file object model type ServiceProviderConfig.
 type ServiceProviderConfig = composetypes.ServiceProviderConfig
@@ -706,7 +706,7 @@ type ServiceProviderConfig = composetypes.ServiceProviderConfig
 // # ServiceSecretConfig is the secret configuration for a service
 //
 // Source: https://pkg.go.dev/github.com/compose-spec/compose-go/v2/types#ServiceSecretConfig
-// GitHub: https://github.com/compose-spec/compose-go/blob/v2.16.2/types/types.go
+// GitHub: https://github.com/compose-spec/compose-go/blob/v2.17.0/types/types.go
 // Kind: named:FileReferenceConfig
 // Underlying: FileReferenceConfig
 // Usecase: wrap the Compose file object model type ServiceSecretConfig.
@@ -717,7 +717,7 @@ type ServiceSecretConfig = composetypes.ServiceSecretConfig
 // # ServiceVolumeBind are options for a service volume of type bind
 //
 // Source: https://pkg.go.dev/github.com/compose-spec/compose-go/v2/types#ServiceVolumeBind
-// GitHub: https://github.com/compose-spec/compose-go/blob/v2.16.2/types/types.go
+// GitHub: https://github.com/compose-spec/compose-go/blob/v2.17.0/types/types.go
 // Kind: struct
 // Usecase: wrap the Compose file object model type ServiceVolumeBind.
 type ServiceVolumeBind = composetypes.ServiceVolumeBind
@@ -727,7 +727,7 @@ type ServiceVolumeBind = composetypes.ServiceVolumeBind
 // # ServiceVolumeConfig are references to a volume used by a service
 //
 // Source: https://pkg.go.dev/github.com/compose-spec/compose-go/v2/types#ServiceVolumeConfig
-// GitHub: https://github.com/compose-spec/compose-go/blob/v2.16.2/types/types.go
+// GitHub: https://github.com/compose-spec/compose-go/blob/v2.17.0/types/types.go
 // Kind: struct
 // Usecase: wrap the Compose file object model type ServiceVolumeConfig.
 type ServiceVolumeConfig = composetypes.ServiceVolumeConfig
@@ -735,7 +735,7 @@ type ServiceVolumeConfig = composetypes.ServiceVolumeConfig
 // ServiceVolumeImage wraps types.ServiceVolumeImage.
 //
 // Source: https://pkg.go.dev/github.com/compose-spec/compose-go/v2/types#ServiceVolumeImage
-// GitHub: https://github.com/compose-spec/compose-go/blob/v2.16.2/types/types.go
+// GitHub: https://github.com/compose-spec/compose-go/blob/v2.17.0/types/types.go
 // Kind: struct
 // Usecase: wrap the Compose file object model type ServiceVolumeImage.
 type ServiceVolumeImage = composetypes.ServiceVolumeImage
@@ -745,7 +745,7 @@ type ServiceVolumeImage = composetypes.ServiceVolumeImage
 // # ServiceVolumeTmpfs are options for a service volume of type tmpfs
 //
 // Source: https://pkg.go.dev/github.com/compose-spec/compose-go/v2/types#ServiceVolumeTmpfs
-// GitHub: https://github.com/compose-spec/compose-go/blob/v2.16.2/types/types.go
+// GitHub: https://github.com/compose-spec/compose-go/blob/v2.17.0/types/types.go
 // Kind: struct
 // Usecase: wrap the Compose file object model type ServiceVolumeTmpfs.
 type ServiceVolumeTmpfs = composetypes.ServiceVolumeTmpfs
@@ -755,7 +755,7 @@ type ServiceVolumeTmpfs = composetypes.ServiceVolumeTmpfs
 // # ServiceVolumeVolume are options for a service volume of type volume
 //
 // Source: https://pkg.go.dev/github.com/compose-spec/compose-go/v2/types#ServiceVolumeVolume
-// GitHub: https://github.com/compose-spec/compose-go/blob/v2.16.2/types/types.go
+// GitHub: https://github.com/compose-spec/compose-go/blob/v2.17.0/types/types.go
 // Kind: struct
 // Usecase: wrap the Compose file object model type ServiceVolumeVolume.
 type ServiceVolumeVolume = composetypes.ServiceVolumeVolume
@@ -765,7 +765,7 @@ type ServiceVolumeVolume = composetypes.ServiceVolumeVolume
 // # Services is a map of ServiceConfig
 //
 // Source: https://pkg.go.dev/github.com/compose-spec/compose-go/v2/types#Services
-// GitHub: https://github.com/compose-spec/compose-go/blob/v2.16.2/types/services.go
+// GitHub: https://github.com/compose-spec/compose-go/blob/v2.17.0/types/services.go
 // Kind: map
 // Underlying: map[string]ServiceConfig
 // Usecase: wrap the Compose file object model type Services.
@@ -797,7 +797,7 @@ type Services = composetypes.Services
 // breaking change.
 //
 // Source: https://pkg.go.dev/github.com/compose-spec/compose-go/v2/types#ShellCommand
-// GitHub: https://github.com/compose-spec/compose-go/blob/v2.16.2/types/command.go
+// GitHub: https://github.com/compose-spec/compose-go/blob/v2.17.0/types/command.go
 // Kind: slice
 // Underlying: []string
 // Usecase: wrap the Compose file object model type ShellCommand.
@@ -808,7 +808,7 @@ type ShellCommand = composetypes.ShellCommand
 // # StringList is a type for fields that can be a string or list of strings
 //
 // Source: https://pkg.go.dev/github.com/compose-spec/compose-go/v2/types#StringList
-// GitHub: https://github.com/compose-spec/compose-go/blob/v2.16.2/types/stringOrList.go
+// GitHub: https://github.com/compose-spec/compose-go/blob/v2.17.0/types/stringOrList.go
 // Kind: slice
 // Underlying: []string
 // Usecase: wrap the Compose file object model type StringList.
@@ -819,7 +819,7 @@ type StringList = composetypes.StringList
 // # StringOrNumberList is a type for fields that can be a list of strings or numbers
 //
 // Source: https://pkg.go.dev/github.com/compose-spec/compose-go/v2/types#StringOrNumberList
-// GitHub: https://github.com/compose-spec/compose-go/blob/v2.16.2/types/stringOrList.go
+// GitHub: https://github.com/compose-spec/compose-go/blob/v2.17.0/types/stringOrList.go
 // Kind: slice
 // Underlying: []string
 // Usecase: wrap the Compose file object model type StringOrNumberList.
@@ -830,7 +830,7 @@ type StringOrNumberList = composetypes.StringOrNumberList
 // ThrottleDevice is a structure that holds device:rate_per_second pair
 //
 // Source: https://pkg.go.dev/github.com/compose-spec/compose-go/v2/types#ThrottleDevice
-// GitHub: https://github.com/compose-spec/compose-go/blob/v2.16.2/types/types.go
+// GitHub: https://github.com/compose-spec/compose-go/blob/v2.17.0/types/types.go
 // Kind: struct
 // Usecase: wrap the Compose file object model type ThrottleDevice.
 type ThrottleDevice = composetypes.ThrottleDevice
@@ -838,7 +838,7 @@ type ThrottleDevice = composetypes.ThrottleDevice
 // Trigger wraps types.Trigger.
 //
 // Source: https://pkg.go.dev/github.com/compose-spec/compose-go/v2/types#Trigger
-// GitHub: https://github.com/compose-spec/compose-go/blob/v2.16.2/types/develop.go
+// GitHub: https://github.com/compose-spec/compose-go/blob/v2.17.0/types/develop.go
 // Kind: struct
 // Usecase: wrap the Compose file object model type Trigger.
 type Trigger = composetypes.Trigger
@@ -851,7 +851,7 @@ type Trigger = composetypes.Trigger
 // an explicit true declares the job as manual-only intent.
 //
 // Source: https://pkg.go.dev/github.com/compose-spec/compose-go/v2/types#TriggerConfig
-// GitHub: https://github.com/compose-spec/compose-go/blob/v2.16.2/types/jobs.go
+// GitHub: https://github.com/compose-spec/compose-go/blob/v2.17.0/types/jobs.go
 // Kind: struct
 // Usecase: wrap the Compose file object model type TriggerConfig.
 type TriggerConfig = composetypes.TriggerConfig
@@ -861,7 +861,7 @@ type TriggerConfig = composetypes.TriggerConfig
 // # UlimitsConfig the ulimit configuration
 //
 // Source: https://pkg.go.dev/github.com/compose-spec/compose-go/v2/types#UlimitsConfig
-// GitHub: https://github.com/compose-spec/compose-go/blob/v2.16.2/types/types.go
+// GitHub: https://github.com/compose-spec/compose-go/blob/v2.17.0/types/types.go
 // Kind: struct
 // Usecase: wrap the Compose file object model type UlimitsConfig.
 type UlimitsConfig = composetypes.UlimitsConfig
@@ -871,7 +871,7 @@ type UlimitsConfig = composetypes.UlimitsConfig
 // # UnitBytes is the bytes type
 //
 // Source: https://pkg.go.dev/github.com/compose-spec/compose-go/v2/types#UnitBytes
-// GitHub: https://github.com/compose-spec/compose-go/blob/v2.16.2/types/bytes.go
+// GitHub: https://github.com/compose-spec/compose-go/blob/v2.17.0/types/bytes.go
 // Kind: named:int64
 // Underlying: int64
 // Usecase: wrap the Compose file object model type UnitBytes.
@@ -882,7 +882,7 @@ type UnitBytes = composetypes.UnitBytes
 // # UpdateConfig the service update configuration
 //
 // Source: https://pkg.go.dev/github.com/compose-spec/compose-go/v2/types#UpdateConfig
-// GitHub: https://github.com/compose-spec/compose-go/blob/v2.16.2/types/types.go
+// GitHub: https://github.com/compose-spec/compose-go/blob/v2.17.0/types/types.go
 // Kind: struct
 // Usecase: wrap the Compose file object model type UpdateConfig.
 type UpdateConfig = composetypes.UpdateConfig
@@ -892,7 +892,7 @@ type UpdateConfig = composetypes.UpdateConfig
 // # VolumeConfig for a volume
 //
 // Source: https://pkg.go.dev/github.com/compose-spec/compose-go/v2/types#VolumeConfig
-// GitHub: https://github.com/compose-spec/compose-go/blob/v2.16.2/types/types.go
+// GitHub: https://github.com/compose-spec/compose-go/blob/v2.17.0/types/types.go
 // Kind: struct
 // Usecase: wrap the Compose file object model type VolumeConfig.
 type VolumeConfig = composetypes.VolumeConfig
@@ -902,7 +902,7 @@ type VolumeConfig = composetypes.VolumeConfig
 // # Volumes is a map of VolumeConfig
 //
 // Source: https://pkg.go.dev/github.com/compose-spec/compose-go/v2/types#Volumes
-// GitHub: https://github.com/compose-spec/compose-go/blob/v2.16.2/types/config.go
+// GitHub: https://github.com/compose-spec/compose-go/blob/v2.17.0/types/config.go
 // Kind: map
 // Underlying: map[string]VolumeConfig
 // Usecase: wrap the Compose file object model type Volumes.
@@ -911,7 +911,7 @@ type Volumes = composetypes.Volumes
 // WatchAction wraps types.WatchAction.
 //
 // Source: https://pkg.go.dev/github.com/compose-spec/compose-go/v2/types#WatchAction
-// GitHub: https://github.com/compose-spec/compose-go/blob/v2.16.2/types/develop.go
+// GitHub: https://github.com/compose-spec/compose-go/blob/v2.17.0/types/develop.go
 // Kind: named:string
 // Underlying: string
 // Usecase: wrap the Compose file object model type WatchAction.
@@ -922,7 +922,7 @@ type WatchAction = composetypes.WatchAction
 // WeightDevice is a structure that holds device:weight pair
 //
 // Source: https://pkg.go.dev/github.com/compose-spec/compose-go/v2/types#WeightDevice
-// GitHub: https://github.com/compose-spec/compose-go/blob/v2.16.2/types/types.go
+// GitHub: https://github.com/compose-spec/compose-go/blob/v2.17.0/types/types.go
 // Kind: struct
 // Usecase: wrap the Compose file object model type WeightDevice.
 type WeightDevice = composetypes.WeightDevice
@@ -935,7 +935,7 @@ type WeightDevice = composetypes.WeightDevice
 // and interactivity.
 //
 // Source: https://pkg.go.dev/github.com/compose-spec/compose-go/v2/types#WorkloadSpec
-// GitHub: https://github.com/compose-spec/compose-go/blob/v2.16.2/types/types.go
+// GitHub: https://github.com/compose-spec/compose-go/blob/v2.17.0/types/types.go
 // Kind: struct
 // Usecase: wrap the Compose file object model type WorkloadSpec.
 type WorkloadSpec = composetypes.WorkloadSpec
