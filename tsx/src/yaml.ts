@@ -39,7 +39,15 @@ function isPlainObject(v: unknown): v is Record<string, unknown> {
 }
 
 export function toYAML(value: unknown): string {
-	return dump(value, 0).replace(/\n+$/, "") + "\n";
+	return trimTrailingNewlines(dump(value, 0)) + "\n";
+}
+
+function trimTrailingNewlines(s: string): string {
+	let end = s.length;
+	while (end > 0 && s.charCodeAt(end - 1) === 10) {
+		end--;
+	}
+	return s.slice(0, end);
 }
 
 function dump(value: unknown, indent: number): string {

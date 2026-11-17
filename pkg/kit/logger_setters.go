@@ -20,8 +20,8 @@ func (o ColorOpt) applyLogger(l *Logger) error {
 // LogOpt is the value returned by [Log].
 // It implements [ComposeBuildOption], [ComposeCreateOption], [ComposeRestartOption],
 // [ComposeStartOption], [ComposeStopOption], [ComposerClientOption], [DownOption],
-// [EngineBuildOption], [EngineImagePushOption], [EnginePullOption], [PullOption], [PushOption],
-// [UpOption], and [WatchOption].
+// [EngineBuildOption], [EngineImageLoadOption], [EngineImagePushOption], [EnginePullOption],
+// [LogsOption], [PullOption], [PushOption], [UpOption], and [WatchOption].
 type LogOpt struct{ l *Logger }
 
 // Log attaches a [Logger] to Engine and Compose runtime actions.
@@ -86,6 +86,12 @@ func (o LogOpt) applyEngineBuild(a *engineBuildAct) error {
 func (o LogOpt) applyEngineImagePushOption(a *engineImagePushAct) error {
 	return attachLog(&a.log, o.l)
 }
+func (o LogOpt) applyLogs(a *logsAct) error {
+	return attachLog(&a.log, o.l)
+}
+func (o LogOpt) applyEngineImageLoadOption(a *engineImageLoadAct) error {
+	return attachLog(&a.log, o.l)
+}
 func (o LogOpt) applyComposerClient(a *composerAct) error {
 	if o.l == nil {
 		return cfgErr("", "log", "Log", fmt.Errorf("%w: logger", errRequired))
@@ -139,6 +145,8 @@ var (
 	_ EnginePullOption      = LogOpt{}
 	_ EngineBuildOption     = LogOpt{}
 	_ EngineImagePushOption = LogOpt{}
+	_ EngineImageLoadOption = LogOpt{}
+	_ LogsOption            = LogOpt{}
 	_ ComposerClientOption  = LogOpt{}
 	_ ComposerClientOption  = OutputStream(nil)
 )

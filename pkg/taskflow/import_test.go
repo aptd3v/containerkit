@@ -1,9 +1,13 @@
 package taskflow
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"io"
+	"os"
+	"path/filepath"
+	"runtime"
 	"strings"
 	"testing"
 
@@ -130,6 +134,143 @@ func TestImportUnknownOp(t *testing.T) {
 	}
 	if err := f.Run(context.Background(), discardRun()); err == nil || !strings.Contains(err.Error(), "unknown op") {
 		t.Fatal(err)
+	}
+}
+
+func TestImportCycle(t *testing.T) {
+	doc := `{"steps":[{"name":"a","op":"containerRun","dependsOn":["b"]},{"name":"b","op":"containerRun","dependsOn":["a"]}]}`
+	_, err := Import([]byte(doc), nil)
+	if err == nil || !cycleNames(err, "a", "b") {
+		t.Fatal(err)
+	}
+}
+
+func TestImportFlowFixture(t *testing.T) {
+	_, file, _, ok := runtime.Caller(0)
+	if !ok {
+		t.Fatal("runtime.Caller")
+	}
+	data, err := os.ReadFile(filepath.Join(filepath.Dir(file), "..", "..", "tsx", "testdata", "flow.json"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	var plan struct {
+		Actions []any           `json:"actions"`
+		YAML    string          `json:"yaml"`
+		Flow    json.RawMessage `json:"flow"`
+	}
+	if err := json.Unmarshal(data, &plan); err != nil {
+		t.Fatal(err)
+	}
+	if len(plan.Actions) != 0 || plan.YAML != "" || len(bytes.TrimSpace(plan.Flow)) == 0 {
+		t.Fatalf("plan envelope actions=%d yaml=%q flow=%d", len(plan.Actions), plan.YAML, len(plan.Flow))
+	}
+	f, err := Import(data, nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if f.Name() != "ci" {
+		t.Fatalf("name = %q", f.Name())
+	}
+	if err := kit.ImportPlan(data).Validate(); err != nil {
+		t.Fatal(err)
+	}
+	body, err := flowBytes(data)
+	if err != nil {
+		t.Fatal(err)
+	}
+	assertFlowFixture(t, body)
+}
+
+func assertFlowFixture(t *testing.T, body flowBody) {
+	t.Helper()
+	want := []string{"build", "lint", "up", "port", "down", "test", "gate", "ship", "hold", "note", "inner", "scan", "ping"}
+	if body.Name != "ci" || len(body.Steps) != len(want) {
+		t.Fatalf("steps = %d name %q", len(body.Steps), body.Name)
+	}
+	byName := map[string]stepDoc{}
+	for i, st := range body.Steps {
+		if st.Name != want[i] {
+			t.Fatalf("steps[%d] = %q", i, st.Name)
+		}
+		byName[st.Name] = st
+	}
+	build := byName["build"]
+	if build.Op != "buildImage" || build.Priority != "high" || len(build.DependsOn) != 0 || build.Options["noCache"] != false || build.Options["tag"] != "app:ci" {
+		t.Fatalf("build = %+v", build)
+	}
+	env, ok := build.Options["env"].(map[string]any)
+	labels, labelsOK := build.Options["label"].([]any)
+	if !ok || env["value"] != "1" || !labelsOK || len(labels) != 1 {
+		t.Fatalf("build env/label = %#v %#v", build.Options["env"], build.Options["label"])
+	}
+	lint := byName["lint"]
+	if lint.Op != "containerRun" || lint.Priority != "normal" || lint.Always || lint.Retry == nil || *lint.Retry != 0 || len(lint.DependsOn) != 1 || lint.DependsOn[0] != "build" {
+		t.Fatalf("lint = %+v", lint)
+	}
+	up := byName["up"]
+	if up.Op != "composeUp" || !strings.Contains(up.YAML, "postgres:16") || up.Options["timeout"] != "30s" || up.Options["quiet"] != false {
+		t.Fatalf("up = %+v", up.Options)
+	}
+	services, ok := up.Options["services"].([]any)
+	if !ok || len(services) != 1 {
+		t.Fatalf("up services = %#v", up.Options["services"])
+	}
+	port := byName["port"]
+	if port.Op != "composePort" || port.Service != "db" || port.Port != 5432 || port.Options["protocol"] != "tcp" || port.Options["index"] != json.Number("0") {
+		t.Fatalf("port = %+v %#v", port, port.Options)
+	}
+	down := byName["down"]
+	if down.Op != "composeDown" || down.Options["services"] != "db" || down.Options["volumes"] != false || down.Options["timeout"] != json.Number("30000000000") {
+		t.Fatalf("down = %#v", down.Options)
+	}
+	testStep := byName["test"]
+	if testStep.Retry == nil || *testStep.Retry != 1 || testStep.Priority != "low" || len(testStep.DependsOn) != 2 {
+		t.Fatalf("test = %+v", testStep)
+	}
+	gate := byName["gate"]
+	if gate.Op != "if" || gate.When == nil || !*gate.When || string(bytes.TrimSpace(gate.Then)) != `["ship"]` || string(bytes.TrimSpace(gate.Else)) != `["hold"]` {
+		t.Fatalf("gate then=%s else=%s when=%v", gate.Then, gate.Else, gate.When)
+	}
+	ship := byName["ship"]
+	if ship.Service != "db" || ship.ID != "abc" || ship.Path != "compose.yaml" || ship.Ref != "app:ci" || ship.Repository != "app" || ship.Port != 80 {
+		t.Fatalf("ship = %+v", ship)
+	}
+	if byName["hold"].Options == nil || len(byName["hold"].Options) != 0 || byName["hold"].Ref != "alpine:latest" {
+		t.Fatalf("hold = %+v", byName["hold"])
+	}
+	note := byName["note"]
+	if note.When == nil || *note.When || len(note.Precede) != 1 || note.Precede[0] != "gate" || string(bytes.TrimSpace(note.Then)) != "null" {
+		t.Fatalf("note = %+v then=%s", note, note.Then)
+	}
+	_, nested, err := parseBranch(note.Else)
+	if err != nil || len(nested) != 1 || nested[0].Name != "fallback" || !nested[0].Always || nested[0].Priority != "low" || nested[0].Retry == nil || *nested[0].Retry != 2 {
+		t.Fatalf("note else = %+v %v", nested, err)
+	}
+	inner := byName["inner"]
+	if inner.Op != "subflow" || len(inner.Precede) != 1 || inner.Precede[0] != "test" || len(inner.Steps) != 1 {
+		t.Fatalf("inner = %+v", inner)
+	}
+	nestedIf := inner.Steps[0]
+	if nestedIf.Name != "nested" || nestedIf.Op != "if" || nestedIf.When == nil || !*nestedIf.When || nestedIf.Priority != "normal" || string(bytes.TrimSpace(nestedIf.Then)) != "[]" {
+		t.Fatalf("nested = %+v then=%s", nestedIf, nestedIf.Then)
+	}
+	_, skipped, err := parseBranch(nestedIf.Else)
+	if err != nil || len(skipped) != 1 || skipped[0].Op != "listImages" || skipped[0].Options["all"] != "false" {
+		t.Fatalf("skip = %+v %v", skipped, err)
+	}
+	filter, ok := skipped[0].Options["filter"].(map[string]any)
+	if !ok || filter["values"] != "app:ci" {
+		t.Fatalf("filter = %#v", skipped[0].Options["filter"])
+	}
+	scan := byName["scan"]
+	filters, ok := scan.Options["filter"].([]any)
+	if scan.Op != "listContainers" || !ok || len(filters) != 2 || scan.Options["limit"] != json.Number("10") || scan.Options["includeSize"] != false {
+		t.Fatalf("scan = %#v", scan.Options)
+	}
+	ping := byName["ping"]
+	if ping.Op != "ping" || ping.Options != nil || len(ping.DependsOn) != 3 {
+		t.Fatalf("ping = %+v", ping)
 	}
 }
 

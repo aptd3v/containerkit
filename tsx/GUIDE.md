@@ -17,13 +17,13 @@ The pages under [docs](docs/README.md) go further than this guide:
 ## Shape of a program
 
 ```tsx
-/** @jsxImportSource containerkit */
+/** @jsxImportSource @aptd3v/containerkit */
 import {
   Compose, Service, Publish, Restart,
   exportYAML,
   type DockerNode,
-} from "containerkit";
-import { cap, proto, restartPolicy } from "containerkit/vocab";
+} from "@aptd3v/containerkit";
+import { cap, proto, restartPolicy } from "@aptd3v/containerkit/vocab";
 
 export function stack(): DockerNode<Compose<{ name?: string }>> {
   return (
@@ -46,9 +46,9 @@ export const yaml = exportYAML(stack());
 A function with no parameters renders again when state changes. Return the tree. `root` applies it when the YAML changed.
 
 ```tsx
-import { Compose, Service } from "containerkit";
-import { useShutdown } from "containerkit/hooks";
-import { root } from "containerkit/live";
+import { Compose, Service } from "@aptd3v/containerkit";
+import { useShutdown } from "@aptd3v/containerkit/hooks";
+import { root } from "@aptd3v/containerkit/live";
 
 export default root({ fromEnv: true, onExit: "down", wait: true }, function App() {
   useShutdown({ removeOrphans: true });
@@ -75,7 +75,7 @@ A fragment must hold one `Compose`, `Service`, `Job`, or `Container`. Several ro
 `connect` once. Pass that `cli` into each command, then `run` the plan. The tree function stays synchronous and returns a `DockerNode`. Calls that talk to the daemon sit beside it.
 
 ```ts
-import { connect, run, listImages, pullImage, composeUp, composePs, composeStop } from "containerkit";
+import { connect, run, listImages, pullImage, composeUp, composePs, composeStop } from "@aptd3v/containerkit";
 
 const cli = connect({ fromEnv: true, timeout: "10s" });
 
@@ -132,7 +132,7 @@ Under `<Compose>`, `Network`, `Volume`, `Secret`, and `FileConfig` declare proje
 
 ## Dockerfile
 
-Import instruction components from `containerkit/dockerfile`. Those names (`Env`, `Volume`, `Command`) are the Dockerfile forms, not the Compose components.
+Import instruction components from `@aptd3v/containerkit/dockerfile`. Those names (`Env`, `Volume`, `Command`) are the Dockerfile forms, not the Compose components.
 
 `exportDockerfile(file)` returns Dockerfile text. Nest the file under `<Build>` and it is sent as `dockerfile_inline`. `buildDockerfile(cli, file, { image })` builds that text with `buildImage`.
 
@@ -159,7 +159,7 @@ A file can contain one `CMD`. A second `Command` or `CommandShell` throws. `CMD-
 
 ## Vocabulary
 
-Import a group from `containerkit/vocab`, or import `vocab` and use `vocab.cap.NET_ADMIN`. The strings below are the values those props expect.
+Import a group from `@aptd3v/containerkit/vocab`, or import `vocab` and use `vocab.cap.NET_ADMIN`. The strings below are the values those props expect.
 
 ### cap
 
@@ -353,7 +353,7 @@ await app.composeUp(tree, { detach: true });
 A test can replace the program `run` starts. Session methods are not redirected by `setInvoke`.
 
 ```ts
-import { binaryInvoke, setInvoke } from "containerkit";
+import { binaryInvoke, setInvoke } from "@aptd3v/containerkit";
 setInvoke(binaryInvoke("./dist/containerkit"));
 ```
 

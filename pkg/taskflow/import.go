@@ -33,30 +33,32 @@ func runImported(ctx context.Context, cli *kit.Client, raw json.RawMessage) ([]b
 }
 
 type flowBody struct {
-	Name  string    `json:"name"`
-	Steps []stepDoc `json:"steps"`
+	Name    string    `json:"name"`
+	Volumes []string  `json:"volumes"`
+	Steps   []stepDoc `json:"steps"`
 }
 
 type stepDoc struct {
-	Name       string          `json:"name"`
-	Op         string          `json:"op"`
-	YAML       string          `json:"yaml"`
-	Options    map[string]any  `json:"options"`
-	DependsOn  []string        `json:"dependsOn"`
-	Precede    []string        `json:"precede"`
-	Then       json.RawMessage `json:"then"`
-	Else       json.RawMessage `json:"else"`
-	When       *bool           `json:"when"`
-	Retry      *int            `json:"retry"`
-	Always     bool            `json:"always"`
-	Priority   string          `json:"priority"`
-	Steps      []stepDoc       `json:"steps"`
-	Service    string          `json:"service"`
-	ID         string          `json:"id"`
-	Path       string          `json:"path"`
-	Ref        string          `json:"ref"`
-	Repository string          `json:"repository"`
-	Port       uint16          `json:"port"`
+	Name          string          `json:"name"`
+	Op            string          `json:"op"`
+	YAML          string          `json:"yaml"`
+	Options       map[string]any  `json:"options"`
+	DependsOn     []string        `json:"dependsOn"`
+	Precede       []string        `json:"precede"`
+	Then          json.RawMessage `json:"then"`
+	Else          json.RawMessage `json:"else"`
+	When          *bool           `json:"when"`
+	Retry         *int            `json:"retry"`
+	SkipIfPresent bool            `json:"skipIfPresent,omitempty"`
+	Always        bool            `json:"always"`
+	Priority      string          `json:"priority"`
+	Steps         []stepDoc       `json:"steps"`
+	Service       string          `json:"service"`
+	ID            string          `json:"id"`
+	Path          string          `json:"path"`
+	Ref           string          `json:"ref"`
+	Repository    string          `json:"repository"`
+	Port          uint16          `json:"port"`
 }
 
 // Import builds a Flow from a flow document or from a plan document that
@@ -70,6 +72,9 @@ func Import(data []byte, cli *kit.Client) (*Flow, error) {
 		return nil, err
 	}
 	f := New(body.Name, cli)
+	if err := f.addDocumentVolumes(body.Volumes); err != nil {
+		return nil, err
+	}
 	if _, err := addSteps(f.scope(), body.Steps, nil); err != nil {
 		return nil, err
 	}
@@ -149,7 +154,63 @@ func validateSteps(steps []stepDoc) error {
 			return err
 		}
 	}
+	return stepCycles(steps)
+}
+
+func stepCycles(steps []stepDoc) error {
+	index := make(map[string]int, len(steps))
+	succ := make(map[string][]string, len(steps))
+	order := make([]string, 0, len(steps))
+	for i, st := range steps {
+		index[st.Name] = i
+		order = append(order, st.Name)
+		for _, name := range st.Precede {
+			succ[st.Name] = append(succ[st.Name], name)
+		}
+		for _, name := range st.DependsOn {
+			succ[name] = append(succ[name], st.Name)
+		}
+	}
+	color := make([]int, len(steps))
+	var path []string
+	var walk func(string) error
+	walk = func(name string) error {
+		i := index[name]
+		switch color[i] {
+		case 2:
+			return nil
+		case 1:
+			return fmt.Errorf("taskflow: cycle: %s", joinCycle(path, name))
+		}
+		color[i] = 1
+		path = append(path, name)
+		for _, next := range succ[name] {
+			if err := walk(next); err != nil {
+				return err
+			}
+		}
+		path = path[:len(path)-1]
+		color[i] = 2
+		return nil
+	}
+	for _, name := range order {
+		if err := walk(name); err != nil {
+			return err
+		}
+	}
 	return nil
+}
+
+func joinCycle(path []string, back string) string {
+	start := 0
+	for i, name := range path {
+		if name == back {
+			start = i
+			break
+		}
+	}
+	names := append(append([]string{}, path[start:]...), back)
+	return strings.Join(names, " -> ")
 }
 
 func knownEdges(step string, edges []string, names map[string]bool, kind string) error {
@@ -173,6 +234,9 @@ func validateBranch(raw json.RawMessage) error {
 }
 
 func prepare(st stepDoc) error {
+	if st.SkipIfPresent && st.Op != "buildImage" {
+		return fmt.Errorf("skipIfPresent requires buildImage")
+	}
 	switch st.Priority {
 	case "", "high", "normal", "low":
 	default:
@@ -192,6 +256,15 @@ func prepare(st stepDoc) error {
 		return nil
 	case "buildImage", "containerRun":
 		return nil
+	case "service":
+		if strings.TrimSpace(st.YAML) == "" {
+			return fmt.Errorf("yaml required for service")
+		}
+		if err := kit.ImportYAML([]byte(st.YAML)).Validate(); err != nil {
+			return err
+		}
+		_, err := kit.UpOptions(st.Options)
+		return err
 	default:
 		if strings.HasPrefix(st.Op, "compose") && strings.TrimSpace(st.YAML) == "" {
 			return fmt.Errorf("yaml required for %s", st.Op)
@@ -312,11 +385,20 @@ func makeStep(sc scope, st stepDoc) (*Task, error) {
 		}
 		return sc.build(st.Name, opts), nil
 	case "containerRun":
+		if err := rewriteVolumeOptions(st.Options, sc.flow.volumeNames()); err != nil {
+			return nil, err
+		}
 		ctr, err := kit.ContainerFromOptions(st.Options)
 		if err != nil {
 			return nil, err
 		}
 		return sc.container(st.Name, ctr, nil), nil
+	case "service":
+		opts, err := kit.UpOptions(st.Options)
+		if err != nil {
+			return nil, err
+		}
+		return sc.service(st.Name, kit.ImportYAML([]byte(st.YAML)), opts), nil
 	case "if":
 		when := false
 		if st.When != nil {
@@ -376,6 +458,9 @@ func actionFields(st stepDoc) map[string]any {
 func applyProps(t *Task, st stepDoc) {
 	if st.Retry != nil {
 		t.Retry(*st.Retry)
+	}
+	if st.SkipIfPresent {
+		t.SkipIfPresent()
 	}
 	if st.Always {
 		t.Always()

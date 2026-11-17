@@ -1,6 +1,6 @@
 {
   "name": "@aptd3v/containerkit-linux-arm64",
-  "version": "0.8.3",
+  "version": "0.8.4",
   "description": "containerkit command for Linux on arm64.",
   "license": "Apache-2.0",
   "author": "aptd3v",

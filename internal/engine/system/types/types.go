@@ -10,7 +10,7 @@ import "github.com/moby/moby/api/types/system"
 // in the version-string of external tools, such as containerd, or runC.
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/api/types/system#Commit
-// GitHub: https://github.com/moby/moby/blob/api/v1.56.1/api/types/system/info.go
+// GitHub: https://github.com/moby/moby/blob/api/v1.57.0/api/types/system/info.go
 // Kind: struct
 // Usecase: wrap the Engine API type Commit from system.
 type Commit = system.Commit
@@ -20,7 +20,7 @@ type Commit = system.Commit
 // ComponentVersion describes the version information for a specific component.
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/api/types/system#ComponentVersion
-// GitHub: https://github.com/moby/moby/blob/api/v1.56.1/api/types/system/version_response.go
+// GitHub: https://github.com/moby/moby/blob/api/v1.57.0/api/types/system/version_response.go
 // Kind: struct
 // Usecase: wrap the Engine API type ComponentVersion from system.
 type ComponentVersion = system.ComponentVersion
@@ -30,7 +30,7 @@ type ComponentVersion = system.ComponentVersion
 // ContainerdInfo holds information about the containerd instance used by the daemon.
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/api/types/system#ContainerdInfo
-// GitHub: https://github.com/moby/moby/blob/api/v1.56.1/api/types/system/info.go
+// GitHub: https://github.com/moby/moby/blob/api/v1.57.0/api/types/system/info.go
 // Kind: struct
 // Usecase: wrap the Engine API type ContainerdInfo from system.
 type ContainerdInfo = system.ContainerdInfo
@@ -48,7 +48,7 @@ type ContainerdInfo = system.ContainerdInfo
 // such as cri-containerd.
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/api/types/system#ContainerdNamespaces
-// GitHub: https://github.com/moby/moby/blob/api/v1.56.1/api/types/system/info.go
+// GitHub: https://github.com/moby/moby/blob/api/v1.57.0/api/types/system/info.go
 // Kind: struct
 // Usecase: wrap the Engine API type ContainerdNamespaces from system.
 type ContainerdNamespaces = system.ContainerdNamespaces
@@ -58,7 +58,7 @@ type ContainerdNamespaces = system.ContainerdNamespaces
 // DeviceInfo represents a discoverable device from a device driver.
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/api/types/system#DeviceInfo
-// GitHub: https://github.com/moby/moby/blob/api/v1.56.1/api/types/system/info.go
+// GitHub: https://github.com/moby/moby/blob/api/v1.57.0/api/types/system/info.go
 // Kind: struct
 // Usecase: wrap the Engine API type DeviceInfo from system.
 type DeviceInfo = system.DeviceInfo
@@ -69,7 +69,7 @@ type DeviceInfo = system.DeviceInfo
 // GET "/system/df"
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/api/types/system#DiskUsage
-// GitHub: https://github.com/moby/moby/blob/api/v1.56.1/api/types/system/disk_usage.go
+// GitHub: https://github.com/moby/moby/blob/api/v1.57.0/api/types/system/disk_usage.go
 // Kind: struct
 // References: github.com/moby/moby/api/types/build.DiskUsage, github.com/moby/moby/api/types/container.DiskUsage, github.com/moby/moby/api/types/image.DiskUsage, github.com/moby/moby/api/types/volume.DiskUsage
 // Usecase: wrap the Engine API type DiskUsage from system.
@@ -80,7 +80,7 @@ type DiskUsage = system.DiskUsage
 // DiskUsageObject represents an object type used for disk usage query filtering.
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/api/types/system#DiskUsageObject
-// GitHub: https://github.com/moby/moby/blob/api/v1.56.1/api/types/system/disk_usage.go
+// GitHub: https://github.com/moby/moby/blob/api/v1.57.0/api/types/system/disk_usage.go
 // Kind: named:string
 // Underlying: string
 // Usecase: wrap the Engine API type DiskUsageObject from system.
@@ -91,7 +91,7 @@ type DiskUsageObject = system.DiskUsageObject
 // FirewallInfo describes the firewall backend.
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/api/types/system#FirewallInfo
-// GitHub: https://github.com/moby/moby/blob/api/v1.56.1/api/types/system/info.go
+// GitHub: https://github.com/moby/moby/blob/api/v1.57.0/api/types/system/info.go
 // Kind: struct
 // Usecase: wrap the Engine API type FirewallInfo from system.
 type FirewallInfo = system.FirewallInfo
@@ -102,7 +102,7 @@ type FirewallInfo = system.FirewallInfo
 // GET "/info"
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/api/types/system#Info
-// GitHub: https://github.com/moby/moby/blob/api/v1.56.1/api/types/system/info.go
+// GitHub: https://github.com/moby/moby/blob/api/v1.57.0/api/types/system/info.go
 // Kind: struct
 // References: github.com/moby/moby/api/types/container.Isolation, github.com/moby/moby/api/types/registry.ServiceConfig, github.com/moby/moby/api/types/swarm.GenericResource, github.com/moby/moby/api/types/swarm.Info
 // Usecase: wrap the Engine API type Info from system.
@@ -113,7 +113,7 @@ type Info = system.Info
 // NRIInfo describes the NRI configuration.
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/api/types/system#NRIInfo
-// GitHub: https://github.com/moby/moby/blob/api/v1.56.1/api/types/system/info.go
+// GitHub: https://github.com/moby/moby/blob/api/v1.57.0/api/types/system/info.go
 // Kind: struct
 // Usecase: wrap the Engine API type NRIInfo from system.
 type NRIInfo = system.NRIInfo
@@ -123,7 +123,7 @@ type NRIInfo = system.NRIInfo
 // NetworkAddressPool is a temp struct used by [Info] struct.
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/api/types/system#NetworkAddressPool
-// GitHub: https://github.com/moby/moby/blob/api/v1.56.1/api/types/system/info.go
+// GitHub: https://github.com/moby/moby/blob/api/v1.57.0/api/types/system/info.go
 // Kind: struct
 // References: net/netip.Prefix
 // Usecase: wrap the Engine API type NetworkAddressPool from system.
@@ -135,7 +135,7 @@ type NetworkAddressPool = system.NetworkAddressPool
 // server is running on.
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/api/types/system#PlatformInfo
-// GitHub: https://github.com/moby/moby/blob/api/v1.56.1/api/types/system/version_response.go
+// GitHub: https://github.com/moby/moby/blob/api/v1.57.0/api/types/system/version_response.go
 // Kind: struct
 // Usecase: wrap the Engine API type PlatformInfo from system.
 type PlatformInfo = system.PlatformInfo
@@ -146,7 +146,7 @@ type PlatformInfo = system.PlatformInfo
 // registered with docker daemon. It is used by [Info] struct
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/api/types/system#PluginsInfo
-// GitHub: https://github.com/moby/moby/blob/api/v1.56.1/api/types/system/info.go
+// GitHub: https://github.com/moby/moby/blob/api/v1.57.0/api/types/system/info.go
 // Kind: struct
 // Usecase: wrap the Engine API type PluginsInfo from system.
 type PluginsInfo = system.PluginsInfo
@@ -156,7 +156,7 @@ type PluginsInfo = system.PluginsInfo
 // # Runtime describes an OCI runtime
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/api/types/system#Runtime
-// GitHub: https://github.com/moby/moby/blob/api/v1.56.1/api/types/system/runtime.go
+// GitHub: https://github.com/moby/moby/blob/api/v1.57.0/api/types/system/runtime.go
 // Kind: struct
 // Usecase: wrap the Engine API type Runtime from system.
 type Runtime = system.Runtime
@@ -166,7 +166,7 @@ type Runtime = system.Runtime
 // RuntimeWithStatus extends [Runtime] to hold [RuntimeStatus].
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/api/types/system#RuntimeWithStatus
-// GitHub: https://github.com/moby/moby/blob/api/v1.56.1/api/types/system/runtime.go
+// GitHub: https://github.com/moby/moby/blob/api/v1.57.0/api/types/system/runtime.go
 // Kind: struct
 // Usecase: wrap the Engine API type RuntimeWithStatus from system.
 type RuntimeWithStatus = system.RuntimeWithStatus
@@ -177,7 +177,7 @@ type RuntimeWithStatus = system.RuntimeWithStatus
 // GET "/version"
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/api/types/system#VersionResponse
-// GitHub: https://github.com/moby/moby/blob/api/v1.56.1/api/types/system/version_response.go
+// GitHub: https://github.com/moby/moby/blob/api/v1.57.0/api/types/system/version_response.go
 // Kind: struct
 // Usecase: wrap the Engine API type VersionResponse from system.
 type VersionResponse = system.VersionResponse

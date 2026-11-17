@@ -10,7 +10,7 @@ import (
 
 // Set by GoReleaser / tools/crossbuild ldflags.
 var (
-	version = "0.8.3"
+	version = "0.8.4"
 	commit  = "none"
 )
 

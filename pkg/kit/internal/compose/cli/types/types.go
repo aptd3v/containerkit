@@ -9,7 +9,7 @@ import "github.com/compose-spec/compose-go/v2/cli"
 // ProjectOptions provides common configuration for loading a project.
 //
 // Source: https://pkg.go.dev/github.com/compose-spec/compose-go/v2/cli#ProjectOptions
-// GitHub: https://github.com/compose-spec/compose-go/blob/v2.16.2/cli/options.go
+// GitHub: https://github.com/compose-spec/compose-go/blob/v2.17.0/cli/options.go
 // Kind: struct
 // References: github.com/compose-spec/compose-go/v2/loader.Listener, github.com/compose-spec/compose-go/v2/loader.Options, github.com/compose-spec/compose-go/v2/loader.ResourceLoader, github.com/compose-spec/compose-go/v2/types.Mapping
 // Usecase: wrap compose-go cli machinery used while loading a Project.
@@ -18,7 +18,7 @@ type ProjectOptions = cli.ProjectOptions
 // ProjectOptionsFn wraps cli.ProjectOptionsFn.
 //
 // Source: https://pkg.go.dev/github.com/compose-spec/compose-go/v2/cli#ProjectOptionsFn
-// GitHub: https://github.com/compose-spec/compose-go/blob/v2.16.2/cli/options.go
+// GitHub: https://github.com/compose-spec/compose-go/blob/v2.17.0/cli/options.go
 // Kind: func
 // Underlying: func(*ProjectOptions) error
 // Usecase: wrap compose-go cli machinery used while loading a Project.

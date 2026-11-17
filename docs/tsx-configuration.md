@@ -5,8 +5,8 @@ A TSX module is a document this package loads. `exportYAML` on a named `Compose`
 This is not a React app and not a browser Docker client. One file has one JSX import source, so `<div>` and `<Compose>` do not share a file.
 
 ```tsx
-/** @jsxImportSource containerkit */
-import { Compose, Env, Publish, Service, composeUp, connect, encode, type DockerNode } from "containerkit";
+/** @jsxImportSource @aptd3v/containerkit */
+import { Compose, Env, Publish, Service, composeUp, connect, encode, type DockerNode } from "@aptd3v/containerkit";
 
 export default function App(): DockerNode {
   return (
@@ -55,8 +55,8 @@ func upPlan(ctx context.Context, json []byte) error {
 }
 ```
 
-Leave a React app's `jsxImportSource` on `react`. A containerkit file uses `/** @jsxImportSource containerkit */`, or a folder tsconfig that extends `containerkit/tsconfig.jsx.json` and is excluded from the app config. `jsx: "react-jsx"` is the transform's name. The language server uses the `JSX` namespace from that file's import source.
+Leave a React app's `jsxImportSource` on `react`. A containerkit file uses `/** @jsxImportSource @aptd3v/containerkit */`, or a folder tsconfig that extends `@aptd3v/containerkit/tsconfig.jsx.json` and is excluded from the app config. `jsx: "react-jsx"` is the transform's name. The language server uses the `JSX` namespace from that file's import source.
 
-Components and option bags are generated from `pkg/kit` (`go run ./tools/gentsx`). Nested kit scopes are children. Scalars are props. `<Network>` and `<Volume>` under `<Compose>` are project resources. Under `<Service>` they are attachments. Dockerfile instructions are `containerkit/dockerfile`.
+Components and option bags are generated from `pkg/kit` (`go run ./tools/gentsx`). Nested kit scopes are children. Scalars are props. `<Network>` and `<Volume>` under `<Compose>` are project resources. Under `<Service>` they are attachments. Dockerfile instructions are `@aptd3v/containerkit/dockerfile`.
 
 `run()` spawns the [runner](runner-binary.md) when `CONTAINERKIT_BIN` or `PATH` has the binary. The programs you can run are under `tsx/examples`: [nginx](../tsx/examples/nginx/docker.tsx), WordPress, a MongoDB replica set, and an interactive shell. From `tsx/`, `npm run nginx` builds the binary and starts the nginx session.

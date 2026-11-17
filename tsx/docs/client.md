@@ -3,7 +3,7 @@
 A client is the answer to "which Docker?". `connect` stores that answer. It does not open a connection. The programs under `tsx/examples` pass the same answer as `root({ fromEnv: true }, App)`.
 
 ```ts
-import { connect } from "containerkit";
+import { connect } from "@aptd3v/containerkit";
 
 const cli = connect({ fromEnv: true, timeout: "10s" });
 ```
@@ -37,8 +37,8 @@ Three narrower switches read one piece and leave the rest alone:
 ## A specific daemon
 
 ```ts
-import { connect } from "containerkit";
-import { scheme } from "containerkit/vocab";
+import { connect } from "@aptd3v/containerkit";
+import { scheme } from "@aptd3v/containerkit/vocab";
 
 const cli = connect({
   host: "unix:///var/run/docker.sock",
@@ -116,8 +116,8 @@ const cli = connect({
 `root` stores the settings once. Every command in `App` is a method on `app`. `useSession()` is legal only while `App` is rendering, so this function is `App`, not a loose module.
 
 ```tsx
-import { Compose, Service } from "containerkit";
-import { root, useMemo, useSession } from "containerkit/live";
+import { Compose, Service } from "@aptd3v/containerkit";
+import { root, useMemo, useSession } from "@aptd3v/containerkit/live";
 
 export default root({ fromEnv: true }, function App() {
   const app = useSession();
@@ -134,8 +134,8 @@ export default root({ fromEnv: true }, function App() {
 `listImages`, `composePs`, and `composeStop` are methods on that same `app`. Call them from a function `App` calls, or from `useMemo` when the result has to survive the next render:
 
 ```ts
-import { Compose, Service } from "containerkit";
-import type { Session } from "containerkit/live";
+import { Compose, Service } from "@aptd3v/containerkit";
+import type { Session } from "@aptd3v/containerkit/live";
 
 function stack() {
   return Compose({

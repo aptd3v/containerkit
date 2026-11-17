@@ -1,0 +1,67 @@
+name: Upstream pins
+
+on:
+  schedule:
+    - cron: "0 15 * * 1"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  issues: write
+
+concurrency:
+  group: upstream-pins
+  cancel-in-progress: true
+
+jobs:
+  freshness:
+    name: Upstream pin freshness
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Set up Go
+        uses: actions/setup-go@v7
+        with:
+          go-version-file: go.mod
+
+      - name: Compare pins with the latest tags
+        id: fresh
+        run: |
+          set +e
+          python3 scripts/pins.py --freshness > "$RUNNER_TEMP/pins-report.md"
+          code=$?
+          echo "code=$code" >> "$GITHUB_OUTPUT"
+          cat "$RUNNER_TEMP/pins-report.md"
+          if [ "$code" -gt 1 ]; then
+            exit "$code"
+          fi
+
+      - name: Open or update the issue
+        if: steps.fresh.outputs.code == '1'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          tail -n +2 "$RUNNER_TEMP/pins-report.md" > "$RUNNER_TEMP/pins-body.md"
+          number=$(gh issue list --state open --limit 50 --json number,title \
+            --jq '[.[] | select(.title=="Upstream module pins are behind") | .number][0] // empty')
+          if [ -n "$number" ]; then
+            gh issue edit "$number" --body-file "$RUNNER_TEMP/pins-body.md"
+          else
+            gh issue create --title "Upstream module pins are behind" --body-file "$RUNNER_TEMP/pins-body.md"
+          fi
+
+      - name: Close the issue when the pins are current
+        if: steps.fresh.outputs.code == '0'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          number=$(gh issue list --state open --limit 50 --json number,title \
+            --jq '[.[] | select(.title=="Upstream module pins are behind") | .number][0] // empty')
+          if [ -n "$number" ]; then
+            gh issue close "$number" --comment "The four module pins match the latest tags."
+          fi
+
+      - name: Fail when a pin is behind
+        if: steps.fresh.outputs.code == '1'
+        run: exit 1

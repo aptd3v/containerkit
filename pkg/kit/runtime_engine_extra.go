@@ -57,17 +57,9 @@ func BuildImage(ctx context.Context, api Engine, opts ...EngineBuildOption) erro
 	if err := engineAPI(api, "BuildImage"); err != nil {
 		return err
 	}
-	var act engineBuildAct
-	var errs []error
-	for i, opt := range opts {
-		if opt == nil {
-			errs = addErr(errs, cfgErr("engine", fmt.Sprintf("build.option[%d]", i), "option", errNilOption))
-			continue
-		}
-		errs = addErr(errs, opt.applyEngineBuild(&act))
-	}
-	if err := join(errs...); err != nil {
-		return wrapReceiver("engine", err)
+	act, err := buildAct(opts)
+	if err != nil {
+		return err
 	}
 	adoptLog(ctx, &act.log)
 	id := "image"
@@ -91,6 +83,32 @@ func BuildImage(ctx context.Context, api Engine, opts ...EngineBuildOption) erro
 	}
 	finishPhase(act.log, KindBuild, "built", id)
 	return nil
+}
+
+// BuildTags returns the image tags BuildImage would apply, in option order.
+// Image and Tag both contribute. An option error is returned before any tag list.
+func BuildTags(opts ...EngineBuildOption) ([]string, error) {
+	act, err := buildAct(opts)
+	if err != nil {
+		return nil, err
+	}
+	return append([]string(nil), act.tags...), nil
+}
+
+func buildAct(opts []EngineBuildOption) (engineBuildAct, error) {
+	var act engineBuildAct
+	var errs []error
+	for i, opt := range opts {
+		if opt == nil {
+			errs = addErr(errs, cfgErr("engine", fmt.Sprintf("build.option[%d]", i), "option", errNilOption))
+			continue
+		}
+		errs = addErr(errs, opt.applyEngineBuild(&act))
+	}
+	if err := join(errs...); err != nil {
+		return engineBuildAct{}, wrapReceiver("engine", err)
+	}
+	return act, nil
 }
 
 // CreateNetwork creates an Engine network.

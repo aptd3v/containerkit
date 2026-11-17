@@ -75,3 +75,4 @@ astronomy-shop.compose.yaml
 # Python scripts
 scripts/__pycache__/
 
+.todo.md

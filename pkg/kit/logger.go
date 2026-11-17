@@ -2,6 +2,7 @@ package kit
 
 import (
 	"context"
+	"encoding/json"
 	"io"
 	"os"
 	"strings"
@@ -107,7 +108,7 @@ func (l *Logger) resolve() {
 	switch l.mode {
 	case "tty":
 		l.tty = true
-	case "plain", "quiet":
+	case "plain", "quiet", "json":
 		l.tty = false
 	default:
 		l.tty = isTTY(l.out)
@@ -116,6 +117,19 @@ func (l *Logger) resolve() {
 	if l.mode == "quiet" {
 		l.quiet = true
 	}
+}
+
+// writeJSON writes one session event record and a newline.
+// The object is the same map [eventFrame] sends on the session pipe.
+func (l *Logger) writeJSON(e LogEvent) {
+	b, err := json.Marshal(eventFrame(e))
+	if err != nil {
+		return
+	}
+	b = append(b, '\n')
+	l.mu.Lock()
+	_, _ = l.out.Write(b)
+	l.mu.Unlock()
 }
 
 func (l *Logger) colorOn() bool {
@@ -163,6 +177,10 @@ func (l *Logger) Emit(e LogEvent) {
 		if l.sink != nil {
 			l.sink(e)
 		}
+		return
+	}
+	if l.mode == "json" {
+		l.writeJSON(e)
 		return
 	}
 	l.mu.Lock()

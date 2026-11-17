@@ -279,11 +279,15 @@ func (c *Container) Logs(ctx context.Context, api Engine, id string, opts ...Log
 	if err := join(errs...); err != nil {
 		return nil, wrapReceiver("container", err)
 	}
+	adoptLog(ctx, &act.log)
 	res, err := api.ContainerLogs(ctx, id, act.engineSDK())
 	if err != nil {
 		return nil, cfgErr("container", id, "Logs", err)
 	}
-	return res, nil
+	if act.log == nil || res == nil {
+		return res, nil
+	}
+	return newLoggingLogs(res, act.log, id), nil
 }
 
 // Wait waits for an Engine container to reach a condition.

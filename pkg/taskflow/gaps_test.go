@@ -90,7 +90,7 @@ func TestCoverageGaps(t *testing.T) {
 		t.Fatal("readWait cancel")
 	}
 
-	if _, err := List(nil, newClient(&scriptedEngine{}, nil), "ci"); err != nil {
+	if _, err := List(ctx, newClient(&scriptedEngine{}, nil), "ci"); err != nil {
 		t.Fatal(err)
 	}
 	var none *Task
