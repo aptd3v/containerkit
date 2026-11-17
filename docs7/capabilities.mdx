@@ -1,0 +1,24 @@
+---
+title: "Capabilities"
+---
+
+[CapAdd](https://pkg.go.dev/github.com/aptd3v/containerkit/pkg/kit#CapAdd) and [CapDrop](https://pkg.go.dev/github.com/aptd3v/containerkit/pkg/kit#CapDrop) take a [Capability](https://pkg.go.dev/github.com/aptd3v/containerkit/pkg/kit#Capability). `ALL` is re-exported. The rest of the kernel list lives in `pkg/cap`, under the names Docker accepts (`NET_BIND_SERVICE`, not `CAP_NET_BIND_SERVICE`).
+
+```go
+import (
+    . "github.com/aptd3v/containerkit/pkg/kit"
+    "github.com/aptd3v/containerkit/pkg/cap"
+)
+
+svc := NewService(
+    Name("api"),
+    Image("alpine:latest"),
+    CapAdd(cap.NET_BIND_SERVICE),
+    CapDrop(ALL),
+    Privileged(false),
+    ReadOnly(true),
+    Tty(false),
+)
+```
+
+[Privileged](https://pkg.go.dev/github.com/aptd3v/containerkit/pkg/kit#Privileged) on the service is the container flag. Inside [Build](/build-and-dockerfile) it is `build.privileged`. [ReadOnly](/mount-a-volume) here is the root filesystem. [Tty](https://pkg.go.dev/github.com/aptd3v/containerkit/pkg/kit#Tty) allocates a TTY. [Interactive](https://pkg.go.dev/github.com/aptd3v/containerkit/pkg/kit#Interactive) keeps stdin open.

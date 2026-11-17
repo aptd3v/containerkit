@@ -1,0 +1,27 @@
+---
+title: "Resources and deploy"
+---
+
+[Memory](https://pkg.go.dev/github.com/aptd3v/containerkit/pkg/kit#Memory) on a service is `mem_limit`. The same setter inside [Deploy](https://pkg.go.dev/github.com/aptd3v/containerkit/pkg/kit#Deploy) is `deploy.resources.limits.memory`. The value is bytes. `512 &lt;&lt; 20` is 512 MiB.
+
+```go
+import . "github.com/aptd3v/containerkit/pkg/kit"
+
+svc := NewService(
+    Name("api"),
+    Image("alpine:latest"),
+    Memory(512 &lt;&lt; 20),
+    Deploy(
+        Mode(Replicated),
+        Replicas(3),
+        Memory(1 &lt;&lt; 30),
+    ),
+    Profile("prod"),
+)
+```
+
+[Replicas](https://pkg.go.dev/github.com/aptd3v/containerkit/pkg/kit#Replicas) on the service is compose `scale`. Inside `Deploy` it is the Swarm replica count. [Mode](https://pkg.go.dev/github.com/aptd3v/containerkit/pkg/kit#Mode) here is `Replicated` or `Global`. `svcmode.ReplicatedJob` and `svcmode.GlobalJob` are the Swarm job modes. Inside [Publish](/publish-a-port) the same setter is `PortIngress` or `PortHost`.
+
+[Profile](https://pkg.go.dev/github.com/aptd3v/containerkit/pkg/kit#Profile) on a service hides it until that profile is selected. On [ImportYAML](/import-and-export) or [Client.Load](/bring-a-compose-file-up) it is the profile to keep. After a profiled import, the loader has already dropped the other services, and the profile tags are cleared so a later `Up` does not hide them again.
+
+[ShmSize](https://pkg.go.dev/github.com/aptd3v/containerkit/pkg/kit#ShmSize) is `/dev/shm`. [StopSignal](/environment-and-command) takes a signal name. The kit re-exports `SIGTERM` and `SIGKILL`. The rest are in `pkg/signal`.

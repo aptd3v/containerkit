@@ -1,0 +1,95 @@
+{
+  "$schema": "https://mintlify.com/docs.json",
+  "theme": "mint",
+  "name": "containerkit",
+  "colors": {
+    "primary": "#0B5FFF",
+    "light": "#0B5FFF",
+    "dark": "#3D8BFF"
+  },
+  "navigation": {
+    "tabs": [
+      {
+        "tab": "Go",
+        "groups": [
+          {
+            "group": "Get started",
+            "pages": [
+              "index",
+              "contributing"
+            ]
+          },
+          {
+            "group": "Define",
+            "pages": [
+              "define-a-service",
+              "environment-and-command",
+              "publish-a-port",
+              "mount-a-volume",
+              "networks",
+              "secrets-and-configs",
+              "healthcheck",
+              "restart-and-depends",
+              "build-and-dockerfile",
+              "resources-and-deploy",
+              "capabilities",
+              "jobs",
+              "conditional-stacks",
+              "same-word-different-scope"
+            ]
+          },
+          {
+            "group": "Run",
+            "pages": [
+              "bring-a-compose-file-up",
+              "run-a-container",
+              "import-and-export",
+              "logging",
+              "errors",
+              "taskflow"
+            ]
+          },
+          {
+            "group": "The binary",
+            "pages": [
+              "runner-binary",
+              "tsx-configuration"
+            ]
+          }
+        ]
+      },
+      {
+        "tab": "TypeScript",
+        "groups": [
+          {
+            "group": "Get started",
+            "pages": [
+              "tsx-overview"
+            ]
+          },
+          {
+            "group": "Guides",
+            "pages": [
+              "tsx-trees",
+              "tsx-live",
+              "tsx-client",
+              "tsx-commands",
+              "tsx-dockerfile"
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "navbar": {
+    "primary": {
+      "type": "github",
+      "href": "https://github.com/aptd3v/containerkit"
+    }
+  },
+  "footer": {
+    "socials": {
+      "github": "https://github.com/aptd3v/containerkit"
+    }
+  }
+}

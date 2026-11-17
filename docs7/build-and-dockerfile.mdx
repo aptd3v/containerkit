@@ -1,0 +1,38 @@
+---
+title: "Build and Dockerfile"
+---
+
+[NewDockerfile](https://pkg.go.dev/github.com/aptd3v/containerkit/pkg/kit#NewDockerfile) builds the file in code. Pass that value to [Build](https://pkg.go.dev/github.com/aptd3v/containerkit/pkg/kit#Build). An inline file uses `.` as the context when [Source](https://pkg.go.dev/github.com/aptd3v/containerkit/pkg/kit#Source) is omitted.
+
+```go
+import . "github.com/aptd3v/containerkit/pkg/kit"
+
+df := NewDockerfile().
+    From("alpine", "latest").
+    Run("apk add --no-cache curl").
+    Command("sleep", "infinity")
+
+svc := NewService(
+    Name("api"),
+    Build(df),
+)
+```
+
+A directory on disk uses `Source` and [DockerfilePath](https://pkg.go.dev/github.com/aptd3v/containerkit/pkg/kit#DockerfilePath). [Env](/environment-and-command) inside `Build` is a build-arg. [Pull](https://pkg.go.dev/github.com/aptd3v/containerkit/pkg/kit#Pull) inside `Build` pulls the base image during the build. [PullPolicy](https://pkg.go.dev/github.com/aptd3v/containerkit/pkg/kit#PullPolicy) on the service is `PullAlways`, `PullMissing`, `PullNever`, `PullBuild`, or [PullEvery](https://pkg.go.dev/github.com/aptd3v/containerkit/pkg/kit#PullEvery).
+
+```go
+import . "github.com/aptd3v/containerkit/pkg/kit"
+
+svc := NewService(
+    Name("api"),
+    Build(
+        Source("."),
+        DockerfilePath("Dockerfile"),
+        Env("VERSION", "1"),
+        Pull(true),
+    ),
+    PullPolicy(PullMissing),
+)
+```
+
+[ParseDockerfile](https://pkg.go.dev/github.com/aptd3v/containerkit/pkg/kit#ParseDockerfile) wraps text you already have. [ReadDockerfile](https://pkg.go.dev/github.com/aptd3v/containerkit/pkg/kit#ReadDockerfile) reads a path. Both report problems from `Validate`. Building that image on the daemon is [BuildImage](/run-a-container).

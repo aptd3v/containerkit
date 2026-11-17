@@ -1,0 +1,38 @@
+---
+title: "A service"
+---
+
+[NewContainer](https://pkg.go.dev/github.com/aptd3v/containerkit/pkg/kit#NewContainer), [NewService](https://pkg.go.dev/github.com/aptd3v/containerkit/pkg/kit#NewService), and [NewCompose](https://pkg.go.dev/github.com/aptd3v/containerkit/pkg/kit#NewCompose) take the same setters. A `*Container` is a `ServiceOption`. [FromContainer](https://pkg.go.dev/github.com/aptd3v/containerkit/pkg/kit#FromContainer) is that copy under its own name. Passing the container itself does the same thing.
+
+```go
+import . "github.com/aptd3v/containerkit/pkg/kit"
+
+worker := NewContainer(
+    Name("worker"),
+    Image("alpine:latest"),
+    Command("sleep", "infinity"),
+)
+
+api := NewService(worker)
+compose := NewCompose("app").WithService(api)
+if err := compose.Validate(); err != nil {
+    return err
+}
+```
+
+`NewService` also takes the setters directly:
+
+```go
+import . "github.com/aptd3v/containerkit/pkg/kit"
+
+svc := NewService(
+    Name("api"),
+    Image("nginx:latest"),
+)
+```
+
+[Container.AsService](https://pkg.go.dev/github.com/aptd3v/containerkit/pkg/kit#Container.AsService) returns the service. Extra service options apply after the copy.
+
+`AutoRemove`, `PublishAll`, `ContainerIDFile`, `Shell`, `OnBuild`, `MaskedPath`, and `ReadonlyPath` exist only on the Engine create call. They stay on the container. `Validate` on the service names each one as an unsupported mapping.
+
+Constructors always return a value and keep configuration errors on it. `Validate` reads those errors before a daemon call. `Up`, `Create`, `ExportYAML`, and `Write` validate on their own.
