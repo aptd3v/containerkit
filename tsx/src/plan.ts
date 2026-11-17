@@ -29,6 +29,7 @@ export type PlanDocument = {
 	flow?: {
 		name: string;
 		steps: FlowStep[];
+		volumes?: string[];
 	};
 	/** Progress for `containerkit exec`. Empty is the same as `auto` on that command. */
 	progress?: RunProgress;

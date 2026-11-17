@@ -13,28 +13,42 @@ import (
 	cerrdefs "github.com/containerd/errdefs"
 	composeapi "github.com/docker/compose/v5/pkg/api"
 	"github.com/moby/moby/api/types/container"
+	volumetypes "github.com/moby/moby/api/types/volume"
 	clienttypes "github.com/moby/moby/client"
 )
 
 type scriptedEngine struct {
 	engineStub
-	createErr error
-	startErr  error
-	removeErr error
-	logsErr   error
-	logs      clienttypes.ContainerLogsResult
-	wait      clienttypes.ContainerWaitResult
-	list      clienttypes.ContainerListResult
-	listErr   error
-	buildBody io.ReadCloser
-	buildErr  error
-	tagErr    error
-	created   clienttypes.ContainerCreateOptions
-	id        string
-	seq       int
-	removed   []string
-	lists     int
-	live      []scriptedContainer
+	createErr        error
+	startErr         error
+	removeErr        error
+	logsErr          error
+	logs             clienttypes.ContainerLogsResult
+	wait             clienttypes.ContainerWaitResult
+	list             clienttypes.ContainerListResult
+	listErr          error
+	buildBody        io.ReadCloser
+	buildErr         error
+	builds           int
+	built            clienttypes.ImageBuildOptions
+	inspects         []string
+	images           map[string]error
+	tags             int
+	tagErr           error
+	created          clienttypes.ContainerCreateOptions
+	id               string
+	seq              int
+	removed          []string
+	lists            int
+	live             []scriptedContainer
+	events           []string
+	volumes          map[string]map[string]string
+	volCreates       []clienttypes.VolumeCreateOptions
+	volInspects      []string
+	volRemoves       []string
+	volumeCreateErr  error
+	volumeInspectErr error
+	volumeRemoveErr  error
 }
 
 type scriptedContainer struct {
@@ -68,6 +82,7 @@ func (s *scriptedEngine) ContainerStart(context.Context, string, clienttypes.Con
 
 func (s *scriptedEngine) ContainerRemove(_ context.Context, id string, _ clienttypes.ContainerRemoveOptions) (clienttypes.ContainerRemoveResult, error) {
 	s.removed = append(s.removed, id)
+	s.events = append(s.events, "container:"+id)
 	if s.removeErr != nil {
 		return clienttypes.ContainerRemoveResult{}, s.removeErr
 	}
@@ -79,6 +94,48 @@ func (s *scriptedEngine) ContainerRemove(_ context.Context, id string, _ clientt
 	}
 	s.live = kept
 	return clienttypes.ContainerRemoveResult{}, nil
+}
+
+func (s *scriptedEngine) rememberVolume(name string, labels map[string]string) {
+	if s.volumes == nil {
+		s.volumes = map[string]map[string]string{}
+	}
+	s.volumes[name] = labels
+}
+
+func (s *scriptedEngine) VolumeCreate(_ context.Context, options clienttypes.VolumeCreateOptions) (clienttypes.VolumeCreateResult, error) {
+	s.volCreates = append(s.volCreates, options)
+	if s.volumeCreateErr != nil {
+		return clienttypes.VolumeCreateResult{}, s.volumeCreateErr
+	}
+	copied := map[string]string{}
+	for k, v := range options.Labels {
+		copied[k] = v
+	}
+	s.rememberVolume(options.Name, copied)
+	return clienttypes.VolumeCreateResult{}, nil
+}
+
+func (s *scriptedEngine) VolumeInspect(_ context.Context, id string, _ clienttypes.VolumeInspectOptions) (clienttypes.VolumeInspectResult, error) {
+	s.volInspects = append(s.volInspects, id)
+	if s.volumeInspectErr != nil {
+		return clienttypes.VolumeInspectResult{}, s.volumeInspectErr
+	}
+	labels, ok := s.volumes[id]
+	if !ok {
+		return clienttypes.VolumeInspectResult{}, cerrdefs.ErrNotFound
+	}
+	return clienttypes.VolumeInspectResult{Volume: volumetypes.Volume{Name: id, Labels: labels}}, nil
+}
+
+func (s *scriptedEngine) VolumeRemove(_ context.Context, id string, _ clienttypes.VolumeRemoveOptions) (clienttypes.VolumeRemoveResult, error) {
+	s.volRemoves = append(s.volRemoves, id)
+	s.events = append(s.events, "volume:"+id)
+	if s.volumeRemoveErr != nil {
+		return clienttypes.VolumeRemoveResult{}, s.volumeRemoveErr
+	}
+	delete(s.volumes, id)
+	return clienttypes.VolumeRemoveResult{}, nil
 }
 
 func (s *scriptedEngine) ContainerLogs(context.Context, string, clienttypes.ContainerLogsOptions) (clienttypes.ContainerLogsResult, error) {
@@ -121,14 +178,29 @@ func labelMatch(labels map[string]string, filters clienttypes.Filters) bool {
 	return true
 }
 
-func (s *scriptedEngine) ImageBuild(context.Context, io.Reader, clienttypes.ImageBuildOptions) (clienttypes.ImageBuildResult, error) {
+func (s *scriptedEngine) ImageBuild(_ context.Context, _ io.Reader, options clienttypes.ImageBuildOptions) (clienttypes.ImageBuildResult, error) {
+	s.builds++
+	s.built = options
 	if s.buildErr != nil {
 		return clienttypes.ImageBuildResult{}, s.buildErr
 	}
 	return clienttypes.ImageBuildResult{Body: s.buildBody}, nil
 }
 
+func (s *scriptedEngine) ImageInspect(_ context.Context, image string, _ ...clienttypes.ImageInspectOption) (clienttypes.ImageInspectResult, error) {
+	s.inspects = append(s.inspects, image)
+	if s.images == nil {
+		return clienttypes.ImageInspectResult{}, nil
+	}
+	err, ok := s.images[image]
+	if !ok {
+		return clienttypes.ImageInspectResult{}, cerrdefs.ErrNotFound
+	}
+	return clienttypes.ImageInspectResult{}, err
+}
+
 func (s *scriptedEngine) ImageTag(context.Context, clienttypes.ImageTagOptions) (clienttypes.ImageTagResult, error) {
+	s.tags++
 	return clienttypes.ImageTagResult{}, s.tagErr
 }
 
@@ -155,10 +227,17 @@ func newClient(eng *scriptedEngine, comp kit.Composer) *kit.Client {
 }
 
 type fakeComposer struct {
-	op    string
-	code  int
-	err   error
-	downs int
+	op           string
+	code         int
+	err          error
+	downErr      error
+	downs        int
+	ups          int
+	upOpts       composeapi.UpOptions
+	downOpts     []composeapi.DownOptions
+	downCtx      context.Context
+	downLive     bool
+	downDeadline bool
 }
 
 func (f *fakeComposer) note(op string) error {
@@ -187,11 +266,20 @@ func (f *fakeComposer) Restart(context.Context, string, composeapi.RestartOption
 func (f *fakeComposer) Stop(context.Context, string, composeapi.StopOptions) error {
 	return f.note("stop")
 }
-func (f *fakeComposer) Up(context.Context, *composetypes.Project, composeapi.UpOptions) error {
+func (f *fakeComposer) Up(_ context.Context, _ *composetypes.Project, opts composeapi.UpOptions) error {
+	f.ups++
+	f.upOpts = opts
 	return f.note("up")
 }
-func (f *fakeComposer) Down(context.Context, string, composeapi.DownOptions) error {
+func (f *fakeComposer) Down(ctx context.Context, _ string, opts composeapi.DownOptions) error {
 	f.downs++
+	f.downOpts = append(f.downOpts, opts)
+	f.downCtx = ctx
+	f.downLive = ctx.Err() == nil
+	_, f.downDeadline = ctx.Deadline()
+	if f.downErr != nil {
+		return f.downErr
+	}
 	return f.note("down")
 }
 func (f *fakeComposer) Logs(context.Context, string, composeapi.LogConsumer, composeapi.LogOptions) error {

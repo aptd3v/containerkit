@@ -20,13 +20,13 @@ func TestNilReceivers(t *testing.T) {
 	if f.Name() != "" || f.Task("a", nil) != nil || f.Subflow("a", nil) != nil || f.Condition("a", nil) != nil || f.If("a", nil) != nil {
 		t.Fatal("nil flow constructors")
 	}
-	if f.Container("a", nil, nil) != nil || f.Build("a") != nil || f.Compose("a", nil, nil) != nil {
+	if f.Container("a", nil, nil) != nil || f.Build("a") != nil || f.Compose("a", nil, nil) != nil || f.Service("a", nil) != nil || f.Volume("data") != nil {
 		t.Fatal("nil flow steps")
 	}
 	if task.Precede(nil) != nil || task.DependsOn(nil) != nil || task.Then(nil) != nil || task.Else(nil) != nil {
 		t.Fatal("nil task edges")
 	}
-	if task.Priority(PriorityHigh) != nil || task.Always() != nil || task.Retry(1) != nil {
+	if task.Priority(PriorityHigh) != nil || task.Always() != nil || task.Retry(1) != nil || task.SkipIfPresent() != nil {
 		t.Fatal("nil task props")
 	}
 	if task.Name() != "" || task.ID() != "" || task.ExitCode() != 0 || task.Err() != nil || task.Status() != "" {
@@ -35,8 +35,11 @@ func TestNilReceivers(t *testing.T) {
 	if sf.Task("a", nil) != nil || sf.Subflow("a", nil) != nil || sf.Condition("a", nil) != nil || sf.If("a", nil) != nil {
 		t.Fatal("nil subflow")
 	}
-	if sf.Container("a", nil, nil) != nil || sf.Build("a") != nil || sf.Compose("a", nil, nil) != nil {
+	if sf.Container("a", nil, nil) != nil || sf.Build("a") != nil || sf.Compose("a", nil, nil) != nil || sf.Service("a", nil) != nil {
 		t.Fatal("nil subflow steps")
+	}
+	if (*Volume)(nil).Name() != "" || task.configErr() != nil {
+		t.Fatal("nil volume")
 	}
 	if err := f.Run(context.Background(), nil); err == nil {
 		t.Fatal("nil run")

@@ -422,4 +422,11 @@ func TestDecodeRejectsBadTimeout(t *testing.T) {
 	if err == nil {
 		t.Fatal("expected error")
 	}
+	opts, err := UpOptions(map[string]any{"detach": true, "wait": true})
+	if err != nil || len(opts) != 2 {
+		t.Fatalf("UpOptions %v %v", opts, err)
+	}
+	if _, err := UpOptions("nope"); err == nil {
+		t.Fatal("expected error")
+	}
 }

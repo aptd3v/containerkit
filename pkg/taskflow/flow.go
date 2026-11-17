@@ -33,6 +33,8 @@ const (
 	kindContainer
 	kindBuild
 	kindCompose
+	kindService
+	kindFinalizer
 	kindSubflow
 	kindCondition
 	kindIf
@@ -57,17 +59,19 @@ type Flow struct {
 	cli  *kit.Client
 	tf   *gtf.TaskFlow
 
-	mu      sync.Mutex
-	tasks   []*Task
-	created []string
-	compose []*kit.Compose
-	ctx     context.Context
-	writer  io.Writer
-	ran     bool
-	runID   string
-	edgeErr error
-	watch   func(Event)
-	logfn   func(string, []byte)
+	mu       sync.Mutex
+	tasks    []*Task
+	created  []string
+	compose  []*kit.Compose
+	volumes  []*Volume
+	volNames map[string]string
+	ctx      context.Context
+	writer   io.Writer
+	ran      bool
+	runID    string
+	edgeErr  error
+	watch    func(Event)
+	logfn    func(string, []byte)
 }
 
 // Subflow is a nested graph. It has the same step constructors as Flow.
@@ -96,28 +100,33 @@ type Task struct {
 	elseNode *gtf.Task
 	fallback *gtf.Task
 
-	always  bool
-	retries int
+	always        bool
+	retries       int
+	skipIfPresent bool
+	finalized     bool
+	bad           error
 
 	container    *kit.Container
 	containerRun *ContainerRun
 	build        []kit.EngineBuildOption
 	composeApp   *kit.Compose
 	composeFn    func(context.Context, *kit.Compose, kit.Composer) error
+	upOpts       []kit.UpOption
 	taskFn       func(context.Context) error
 	condFn       func(context.Context) uint
 	ifFn         func(context.Context) bool
 
-	mu       sync.Mutex
-	children []*Task
-	id       string
-	exitCode int
-	err      error
-	local    error
-	status   Status
-	skipped  bool
-	tainted  bool
-	suppress bool
+	mu         sync.Mutex
+	children   []*Task
+	id         string
+	exitCode   int
+	err        error
+	local      error
+	status     Status
+	doneReason string
+	skipped    bool
+	tainted    bool
+	suppress   bool
 }
 
 // Run is options for Flow.Run. Nil means defaults.
@@ -303,6 +312,7 @@ func (sc scope) subflow(name string, instantiate func(*Subflow) error) *Task {
 						return err
 					}
 				}
+				f.sealServices(t)
 				for _, c := range t.childList() {
 					c.addFallback()
 				}
@@ -639,6 +649,43 @@ func (t *Task) Always() *Task {
 	return t
 }
 
+// SkipIfPresent makes a Build step inspect its tags before building.
+// Every tag present finishes the step as done with reason already_present
+// and does not build. A missing tag builds once. Any other inspect error
+// fails the step. Zero tags is a configuration error before any inspect.
+// On any other step it records a terminal error and the step body does not run.
+func (t *Task) SkipIfPresent() *Task {
+	if t == nil {
+		return nil
+	}
+	if t.kind != kindBuild {
+		t.noteConfig(&terminalError{msg: "skipIfPresent requires a build step"})
+		return t
+	}
+	t.skipIfPresent = true
+	return t
+}
+
+func (t *Task) noteConfig(err error) {
+	if t == nil || err == nil {
+		return
+	}
+	t.mu.Lock()
+	if t.bad == nil {
+		t.bad = err
+	}
+	t.mu.Unlock()
+}
+
+func (t *Task) configErr() error {
+	if t == nil {
+		return nil
+	}
+	t.mu.Lock()
+	defer t.mu.Unlock()
+	return t.bad
+}
+
 // Retry reruns a failing step up to n more times before it counts as failed.
 // Each rerun emits EventRetry. Panics and a canceled context are not retried.
 func (t *Task) Retry(n int) *Task {
@@ -715,6 +762,7 @@ func (t *Task) begin() {
 	t.skipped = false
 	t.tainted = false
 	t.status = ""
+	t.doneReason = ""
 	t.exitCode = 0
 	t.id = ""
 	t.mu.Unlock()
@@ -806,6 +854,12 @@ func (t *Task) event(k EventKind) Event {
 }
 
 func (t *Task) observe(fn func() error) {
+	t.observeBody(fn, true)
+}
+
+// observeBody runs fn. honorCancel is false for a service finalizer, which
+// still tears the project down after the run context is canceled.
+func (t *Task) observeBody(fn func() error, honorCancel bool) {
 	started := time.Now()
 	finished := false
 	defer func() {
@@ -832,15 +886,18 @@ func (t *Task) observe(fn func() error) {
 			t.markTainted()
 		}
 	}
-	ctx := t.flow.context()
-	if err := ctx.Err(); err != nil {
-		t.setErr(err)
-		t.setStatus(StatusError)
-		e := t.event(EventError)
-		e.Err = t.Err()
-		t.flow.emit(e)
+	if err := t.configErr(); err != nil {
+		t.failObserve(err, time.Since(started))
 		finished = true
 		return
+	}
+	ctx := t.flow.context()
+	if honorCancel {
+		if err := ctx.Err(); err != nil {
+			t.failObserve(err, 0)
+			finished = true
+			return
+		}
 	}
 	started = time.Now()
 	t.flow.emit(t.event(EventStart))
@@ -867,9 +924,53 @@ func (t *Task) observe(fn func() error) {
 	}
 	t.setStatus(StatusDone)
 	e := t.event(EventDone)
+	t.mu.Lock()
+	e.Reason = t.doneReason
+	t.mu.Unlock()
 	e.Duration = time.Since(started)
 	t.flow.emit(e)
 	finished = true
+}
+
+func (t *Task) failObserve(err error, d time.Duration) {
+	t.setErr(err)
+	t.setStatus(StatusError)
+	e := t.event(EventError)
+	e.Err = t.Err()
+	e.Duration = d
+	t.flow.emit(e)
+}
+
+// sealServices adds one Down finalizer per Service in parent.
+// A nil parent seals the root flow. Each finalizer waits for every real task
+// in that scope and does not wait for another finalizer.
+func (f *Flow) sealServices(parent *Task) {
+	var real []*Task
+	var services []*Task
+	for _, t := range f.taskList() {
+		if t.parent != parent || t.kind == kindFinalizer {
+			continue
+		}
+		real = append(real, t)
+		if t.kind == kindService && !t.finalized {
+			services = append(services, t)
+		}
+	}
+	for _, svc := range services {
+		svc.finalized = true
+		svc.addDown(real)
+	}
+}
+
+func (svc *Task) addDown(real []*Task) {
+	sc := scope{flow: svc.flow, adder: svc.adder, parent: svc.parent}
+	down := sc.newTask(svc.name+":down", kindFinalizer)
+	down.always = true
+	down.composeApp = svc.composeApp
+	down.gtf = sc.adder.NewTask(down.name, func() {
+		down.guarded(func() { down.observeBody(down.runServiceDown, false) })
+	})
+	down.DependsOn(real...)
 }
 
 // Run executes the graph. Nil opt uses defaults. The returned error joins
@@ -884,6 +985,7 @@ func (f *Flow) Run(ctx context.Context, opt *Run) error {
 	if err := f.foreign(); err != nil {
 		return err
 	}
+	f.sealServices(nil)
 	if err := f.cycle(); err != nil {
 		return err
 	}
@@ -907,6 +1009,9 @@ func (f *Flow) Run(ctx context.Context, opt *Run) error {
 	f.logfn = opt.Log
 	f.mu.Unlock()
 
+	if err := f.createVolumes(ctx); err != nil {
+		return err
+	}
 	for _, t := range f.taskList() {
 		t.addFallback()
 	}

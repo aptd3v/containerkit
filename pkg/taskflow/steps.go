@@ -5,10 +5,15 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"time"
 
 	"github.com/aptd3v/containerkit/pkg/kit"
 	containertypes "github.com/moby/moby/api/types/container"
 )
+
+// serviceDownTimeout bounds Service teardown. The run context is not used:
+// a canceled run still gets one Down.
+const serviceDownTimeout = 30 * time.Second
 
 // Container adds a one-shot container step: create, start, and wait for exit.
 // A non-zero exit fails the step. A name that already exists is a create
@@ -66,6 +71,26 @@ func (s *Subflow) Compose(name string, app *kit.Compose, cmd any) *Task {
 	return sc.compose(name, app, cmd)
 }
 
+// Service brings a Compose project up and leaves it up until every other task
+// in this flow has finished. Caller options are applied first. Detach and Wait
+// are then forced on. Turning either off is Compose, not Service.
+func (f *Flow) Service(name string, app *kit.Compose, opts ...kit.UpOption) *Task {
+	if f == nil {
+		return nil
+	}
+	return f.scope().service(name, app, opts)
+}
+
+// Service brings a Compose project up for the life of this subflow.
+// The project is down before the parent flow continues. See Flow.Service.
+func (s *Subflow) Service(name string, app *kit.Compose, opts ...kit.UpOption) *Task {
+	sc, ok := s.scope()
+	if !ok {
+		return nil
+	}
+	return sc.service(name, app, opts)
+}
+
 func (sc scope) container(name string, ctr *kit.Container, opt *ContainerRun) *Task {
 	t := sc.newTask(name, kindContainer)
 	t.container = ctr
@@ -108,6 +133,47 @@ func (sc scope) compose(name string, app *kit.Compose, cmd any) *Task {
 		})
 	})
 	return t
+}
+
+func (sc scope) service(name string, app *kit.Compose, opts []kit.UpOption) *Task {
+	sc.flow.trackCompose(app)
+	t := sc.newTask(name, kindService)
+	t.composeApp = app
+	t.upOpts = append([]kit.UpOption{}, opts...)
+	t.gtf = sc.adder.NewTask(name, func() {
+		t.guarded(func() { t.observe(t.runService) })
+	})
+	return t
+}
+
+func (t *Task) runService() error {
+	if t.composeApp == nil {
+		return errors.New("compose is nil")
+	}
+	api := t.flow.composer()
+	if api == nil {
+		return ErrNoClient
+	}
+	opts := append([]kit.UpOption{}, t.upOpts...)
+	opts = append(opts, kit.Detach(true), kit.Wait(true))
+	return t.composeApp.Up(t.flow.context(), api, opts...)
+}
+
+func (t *Task) runServiceDown() error {
+	if t.composeApp == nil {
+		return &terminalError{msg: "compose is nil"}
+	}
+	api := t.flow.composer()
+	if api == nil {
+		return ErrNoClient
+	}
+	ctx, cancel := context.WithTimeout(context.Background(), serviceDownTimeout)
+	defer cancel()
+	err := t.composeApp.Down(ctx, api)
+	if err != nil && !kit.IsNotFound(err) {
+		return err
+	}
+	return nil
 }
 
 func rejectJobPolicy(auto bool, policy string) error {
@@ -185,9 +251,51 @@ func (t *Task) runBuild() error {
 	w := stepWriter(f, t.name, nil)
 	logger := kit.NewLogger(kit.OutputStream(w), kit.Color(false), kit.Progress("plain"))
 	opts := append([]kit.EngineBuildOption{}, t.build...)
+	if t.skipIfPresent {
+		hit, err := imagePresent(ctx, api, opts)
+		if err != nil {
+			return err
+		}
+		if hit {
+			t.mu.Lock()
+			t.doneReason = ReasonAlreadyPresent
+			t.mu.Unlock()
+			return nil
+		}
+	}
 	opts = append(opts, kit.Log(logger))
-	err := kit.BuildImage(ctx, api, opts...)
-	return err
+	return kit.BuildImage(ctx, api, opts...)
+}
+
+// imagePresent reports whether every build tag is already in the engine.
+// It inspects every tag. A missing tag does not hide an inspect error on another.
+func imagePresent(ctx context.Context, api kit.Engine, opts []kit.EngineBuildOption) (bool, error) {
+	tags, err := kit.BuildTags(opts...)
+	if err != nil {
+		return false, &terminalError{msg: err.Error()}
+	}
+	if len(tags) == 0 {
+		return false, &terminalError{msg: "skip if present: no tag"}
+	}
+	missing := false
+	var hard error
+	for _, tag := range tags {
+		_, err := kit.InspectImage(ctx, api, tag)
+		if err == nil {
+			continue
+		}
+		if kit.IsNotFound(err) {
+			missing = true
+			continue
+		}
+		if hard == nil {
+			hard = err
+		}
+	}
+	if hard != nil {
+		return false, hard
+	}
+	return !missing, nil
 }
 
 // stepWriter is where a step's output goes: w, else Run.Writer, with a tee

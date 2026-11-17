@@ -74,7 +74,7 @@ func (t *Task) stampContainer() error {
 }
 
 func (t *Task) stampCompose() {
-	if t == nil || t.kind != kindCompose || t.composeApp == nil {
+	if t == nil || (t.kind != kindCompose && t.kind != kindService) || t.composeApp == nil {
 		return
 	}
 	for _, svc := range t.composeApp.Services() {
@@ -222,6 +222,9 @@ func (f *Flow) Remove(ctx context.Context) error {
 		if err := removeContainer(ctx, api, ctr.ID); err != nil {
 			errs = append(errs, err)
 		}
+	}
+	if err := f.removeVolumes(ctx, api, runID); err != nil {
+		errs = append(errs, err)
 	}
 	return errors.Join(errs...)
 }

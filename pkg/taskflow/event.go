@@ -19,6 +19,9 @@ const (
 	StatusError Status = "error"
 )
 
+// ReasonAlreadyPresent is Event.Reason when SkipIfPresent finds every tag.
+const ReasonAlreadyPresent = "already_present"
+
 // EventKind is a step lifecycle signal sent to Run.Watch.
 type EventKind string
 
@@ -40,7 +43,10 @@ type Event struct {
 	// Err is set for EventError and EventRetry.
 	Err error
 	// Attempt is the 1-based attempt that just failed. Set for EventRetry.
-	Attempt  int
+	Attempt int
+	// Reason explains a done step that did not do the usual work.
+	// ReasonAlreadyPresent means SkipIfPresent found every tag.
+	Reason   string
 	Duration time.Duration
 }
 
