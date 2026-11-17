@@ -7,7 +7,7 @@ import "github.com/moby/moby/api/types/image"
 // AttestationProperties wraps image.AttestationProperties.
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/api/types/image#AttestationProperties
-// GitHub: https://github.com/moby/moby/blob/api/v1.56.1/api/types/image/manifest.go
+// GitHub: https://github.com/moby/moby/blob/api/v1.57.0/api/types/image/manifest.go
 // Kind: struct
 // Usecase: wrap the Engine API type AttestationProperties from image.
 type AttestationProperties = image.AttestationProperties
@@ -17,7 +17,7 @@ type AttestationProperties = image.AttestationProperties
 // AttestationStatement is a single in-toto statement attached to an image.
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/api/types/image#AttestationStatement
-// GitHub: https://github.com/moby/moby/blob/api/v1.56.1/api/types/image/attestation.go
+// GitHub: https://github.com/moby/moby/blob/api/v1.57.0/api/types/image/attestation.go
 // Kind: struct
 // References: encoding/json.RawMessage, github.com/opencontainers/image-spec/specs-go/v1.Descriptor
 // Usecase: wrap the Engine API type AttestationStatement from image.
@@ -28,7 +28,7 @@ type AttestationStatement = image.AttestationStatement
 // BuildIdentity contains build reference information if image was created via build.
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/api/types/image#BuildIdentity
-// GitHub: https://github.com/moby/moby/blob/api/v1.56.1/api/types/image/build_identity.go
+// GitHub: https://github.com/moby/moby/blob/api/v1.57.0/api/types/image/build_identity.go
 // Kind: struct
 // References: time.Time
 // Usecase: wrap the Engine API type BuildIdentity from image.
@@ -41,7 +41,7 @@ type BuildIdentity = image.BuildIdentity
 // swagger:model DeleteResponse
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/api/types/image#DeleteResponse
-// GitHub: https://github.com/moby/moby/blob/api/v1.56.1/api/types/image/delete_response.go
+// GitHub: https://github.com/moby/moby/blob/api/v1.57.0/api/types/image/delete_response.go
 // Kind: struct
 // Usecase: wrap the Engine API type DeleteResponse from image.
 type DeleteResponse = image.DeleteResponse
@@ -53,7 +53,7 @@ type DeleteResponse = image.DeleteResponse
 // swagger:model DiskUsage
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/api/types/image#DiskUsage
-// GitHub: https://github.com/moby/moby/blob/api/v1.56.1/api/types/image/disk_usage.go
+// GitHub: https://github.com/moby/moby/blob/api/v1.57.0/api/types/image/disk_usage.go
 // Kind: struct
 // Usecase: wrap the Engine API type DiskUsage from image.
 type DiskUsage = image.DiskUsage
@@ -67,7 +67,7 @@ type DiskUsage = image.DiskUsage
 // swagger:model HistoryResponseItem
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/api/types/image#HistoryResponseItem
-// GitHub: https://github.com/moby/moby/blob/api/v1.56.1/api/types/image/history_response_item.go
+// GitHub: https://github.com/moby/moby/blob/api/v1.57.0/api/types/image/history_response_item.go
 // Kind: struct
 // Usecase: wrap the Engine API type HistoryResponseItem from image.
 type HistoryResponseItem = image.HistoryResponseItem
@@ -79,7 +79,7 @@ type HistoryResponseItem = image.HistoryResponseItem
 // by tagging an image to a different name.
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/api/types/image#Identity
-// GitHub: https://github.com/moby/moby/blob/api/v1.56.1/api/types/image/identity.go
+// GitHub: https://github.com/moby/moby/blob/api/v1.57.0/api/types/image/identity.go
 // Kind: struct
 // Usecase: wrap the Engine API type Identity from image.
 type Identity = image.Identity
@@ -87,7 +87,7 @@ type Identity = image.Identity
 // ImageProperties wraps image.ImageProperties.
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/api/types/image#ImageProperties
-// GitHub: https://github.com/moby/moby/blob/api/v1.56.1/api/types/image/manifest.go
+// GitHub: https://github.com/moby/moby/blob/api/v1.57.0/api/types/image/manifest.go
 // Kind: struct
 // References: github.com/opencontainers/image-spec/specs-go/v1.Platform
 // Usecase: wrap the Engine API type ImageProperties from image.
@@ -99,7 +99,7 @@ type ImageProperties = image.ImageProperties
 // GET "/images/{name:.*}/json"
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/api/types/image#InspectResponse
-// GitHub: https://github.com/moby/moby/blob/api/v1.56.1/api/types/image/image_inspect.go
+// GitHub: https://github.com/moby/moby/blob/api/v1.57.0/api/types/image/image_inspect.go
 // Kind: struct
 // References: github.com/moby/docker-image-spec/specs-go/v1.DockerOCIImageConfig, github.com/moby/moby/api/types/storage.DriverData, github.com/opencontainers/image-spec/specs-go/v1.Descriptor
 // Usecase: wrap the Engine API type InspectResponse from image.
@@ -110,7 +110,7 @@ type InspectResponse = image.InspectResponse
 // KnownSignerIdentity is an identifier for a special signer identity that is known to the implementation.
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/api/types/image#KnownSignerIdentity
-// GitHub: https://github.com/moby/moby/blob/api/v1.56.1/api/types/image/image_inspect.go
+// GitHub: https://github.com/moby/moby/blob/api/v1.57.0/api/types/image/image_inspect.go
 // Kind: named:string
 // Underlying: string
 // Usecase: wrap the Engine API type KnownSignerIdentity from image.
@@ -119,7 +119,7 @@ type KnownSignerIdentity = image.KnownSignerIdentity
 // ManifestKind wraps image.ManifestKind.
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/api/types/image#ManifestKind
-// GitHub: https://github.com/moby/moby/blob/api/v1.56.1/api/types/image/manifest.go
+// GitHub: https://github.com/moby/moby/blob/api/v1.57.0/api/types/image/manifest.go
 // Kind: named:string
 // Underlying: string
 // Usecase: wrap the Engine API type ManifestKind from image.
@@ -128,7 +128,7 @@ type ManifestKind = image.ManifestKind
 // ManifestSummary wraps image.ManifestSummary.
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/api/types/image#ManifestSummary
-// GitHub: https://github.com/moby/moby/blob/api/v1.56.1/api/types/image/manifest.go
+// GitHub: https://github.com/moby/moby/blob/api/v1.57.0/api/types/image/manifest.go
 // Kind: struct
 // References: github.com/opencontainers/image-spec/specs-go/v1.Descriptor
 // Usecase: wrap the Engine API type ManifestSummary from image.
@@ -139,7 +139,7 @@ type ManifestSummary = image.ManifestSummary
 // Metadata contains engine-local data about the image.
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/api/types/image#Metadata
-// GitHub: https://github.com/moby/moby/blob/api/v1.56.1/api/types/image/image.go
+// GitHub: https://github.com/moby/moby/blob/api/v1.57.0/api/types/image/image.go
 // Kind: struct
 // References: time.Time
 // Usecase: wrap the Engine API type Metadata from image.
@@ -151,7 +151,7 @@ type Metadata = image.Metadata
 // POST "/images/prune"
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/api/types/image#PruneReport
-// GitHub: https://github.com/moby/moby/blob/api/v1.56.1/api/types/image/image.go
+// GitHub: https://github.com/moby/moby/blob/api/v1.57.0/api/types/image/image.go
 // Kind: struct
 // Usecase: wrap the Engine API type PruneReport from image.
 type PruneReport = image.PruneReport
@@ -162,7 +162,7 @@ type PruneReport = image.PruneReport
 // If image was pulled via mirror, this contains the original repository location.
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/api/types/image#PullIdentity
-// GitHub: https://github.com/moby/moby/blob/api/v1.56.1/api/types/image/pull_identity.go
+// GitHub: https://github.com/moby/moby/blob/api/v1.57.0/api/types/image/pull_identity.go
 // Kind: struct
 // Usecase: wrap the Engine API type PullIdentity from image.
 type PullIdentity = image.PullIdentity
@@ -172,7 +172,7 @@ type PullIdentity = image.PullIdentity
 // RootFS returns Image's RootFS description including the layer IDs.
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/api/types/image#RootFS
-// GitHub: https://github.com/moby/moby/blob/api/v1.56.1/api/types/image/image_inspect.go
+// GitHub: https://github.com/moby/moby/blob/api/v1.57.0/api/types/image/image_inspect.go
 // Kind: struct
 // Usecase: wrap the Engine API type RootFS from image.
 type RootFS = image.RootFS
@@ -182,7 +182,7 @@ type RootFS = image.RootFS
 // SignatureIdentity contains the properties of verified signatures for the image.
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/api/types/image#SignatureIdentity
-// GitHub: https://github.com/moby/moby/blob/api/v1.56.1/api/types/image/signature_identity.go
+// GitHub: https://github.com/moby/moby/blob/api/v1.57.0/api/types/image/signature_identity.go
 // Kind: struct
 // Usecase: wrap the Engine API type SignatureIdentity from image.
 type SignatureIdentity = image.SignatureIdentity
@@ -192,7 +192,7 @@ type SignatureIdentity = image.SignatureIdentity
 // SignatureTimestamp contains information about a verified signed timestamp for an image signature.
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/api/types/image#SignatureTimestamp
-// GitHub: https://github.com/moby/moby/blob/api/v1.56.1/api/types/image/signature_timestamp.go
+// GitHub: https://github.com/moby/moby/blob/api/v1.57.0/api/types/image/signature_timestamp.go
 // Kind: struct
 // References: time.Time
 // Usecase: wrap the Engine API type SignatureTimestamp from image.
@@ -203,7 +203,7 @@ type SignatureTimestamp = image.SignatureTimestamp
 // SignatureTimestampType is the type of timestamp used in the signature.
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/api/types/image#SignatureTimestampType
-// GitHub: https://github.com/moby/moby/blob/api/v1.56.1/api/types/image/image_inspect.go
+// GitHub: https://github.com/moby/moby/blob/api/v1.57.0/api/types/image/image_inspect.go
 // Kind: named:string
 // Underlying: string
 // Usecase: wrap the Engine API type SignatureTimestampType from image.
@@ -214,7 +214,7 @@ type SignatureTimestampType = image.SignatureTimestampType
 // SignatureType is the type of signature format.
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/api/types/image#SignatureType
-// GitHub: https://github.com/moby/moby/blob/api/v1.56.1/api/types/image/image_inspect.go
+// GitHub: https://github.com/moby/moby/blob/api/v1.57.0/api/types/image/image_inspect.go
 // Kind: named:string
 // Underlying: string
 // Usecase: wrap the Engine API type SignatureType from image.
@@ -226,7 +226,7 @@ type SignatureType = image.SignatureType
 // This is [certificate.Summary] with deprecated fields removed and keys in Moby uppercase style.
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/api/types/image#SignerIdentity
-// GitHub: https://github.com/moby/moby/blob/api/v1.56.1/api/types/image/signer_identity.go
+// GitHub: https://github.com/moby/moby/blob/api/v1.57.0/api/types/image/signer_identity.go
 // Kind: struct
 // Usecase: wrap the Engine API type SignerIdentity from image.
 //
@@ -236,7 +236,7 @@ type SignerIdentity = image.SignerIdentity
 // Summary wraps image.Summary.
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/api/types/image#Summary
-// GitHub: https://github.com/moby/moby/blob/api/v1.56.1/api/types/image/summary.go
+// GitHub: https://github.com/moby/moby/blob/api/v1.57.0/api/types/image/summary.go
 // Kind: struct
 // References: github.com/opencontainers/image-spec/specs-go/v1.Descriptor
 // Usecase: wrap the Engine API type Summary from image.

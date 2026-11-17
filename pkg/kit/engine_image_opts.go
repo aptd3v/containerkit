@@ -37,6 +37,7 @@ type EngineImageLoadOption interface {
 type engineImageLoadAct struct {
 	quiet     bool
 	platforms []ocispec.Platform
+	log       *Logger
 }
 
 // EngineImageSaveOption configures [SaveImages].
@@ -189,7 +190,9 @@ func HistoryImage(ctx context.Context, api Engine, ref string, opts ...EngineIma
 	return out, nil
 }
 
-// LoadImage wraps the corresponding Engine client method.
+// LoadImage loads an image from a tar stream.
+// With a logger, from Log or the context, the progress body is read to the end
+// and the returned reader is at EOF. Without a logger, the reader is that body.
 func LoadImage(ctx context.Context, api Engine, input io.Reader, opts ...EngineImageLoadOption) (ImageLoadResult, error) {
 	if err := engineAPI(api, "LoadImage"); err != nil {
 		return nil, err
@@ -210,11 +213,25 @@ func LoadImage(ctx context.Context, api Engine, input io.Reader, opts ...EngineI
 	if len(act.platforms) > 0 {
 		sdk = append(sdk, engineclient.ImageLoadWithPlatforms(act.platforms...))
 	}
+	adoptLog(ctx, &act.log)
+	const id = "load"
+	if act.log != nil {
+		emitPhase(act.log, KindEngine, "loading", id, StatusWorking, "")
+	}
 	out, err := api.ImageLoad(ctx, input, sdk...)
 	if err != nil {
-		return nil, cfgErr("engine", "loadimage", "LoadImage", err)
+		failPhase(act.log, KindEngine, "loading", id, err)
+		return nil, cfgErr("engine", id, "LoadImage", err)
 	}
-	return out, nil
+	if act.log == nil {
+		return out, nil
+	}
+	if err := act.log.drainJSON(ctx, out, KindEngine, id); err != nil {
+		failPhase(act.log, KindEngine, "loading", id, err)
+		return nil, cfgErr("engine", id, "LoadImage", err)
+	}
+	finishPhase(act.log, KindEngine, "loaded", id)
+	return io.NopCloser(bytes.NewReader(nil)), nil
 }
 
 // SaveImages wraps the corresponding Engine client method.

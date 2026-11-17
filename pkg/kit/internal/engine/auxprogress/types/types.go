@@ -9,7 +9,7 @@ import "github.com/moby/moby/api/types/auxprogress"
 // ContentMissing is a note that is sent when push fails because the content is missing.
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/api/types/auxprogress#ContentMissing
-// GitHub: https://github.com/moby/moby/blob/api/v1.56.1/api/types/auxprogress/push.go
+// GitHub: https://github.com/moby/moby/blob/api/v1.57.0/api/types/auxprogress/push.go
 // Kind: struct
 // References: github.com/opencontainers/image-spec/specs-go/v1.Descriptor
 // Usecase: wrap the Engine API type ContentMissing from auxprogress.
@@ -22,7 +22,7 @@ type ContentMissing = auxprogress.ContentMissing
 // index, but the whole index couldn't be pushed.
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/api/types/auxprogress#ManifestPushedInsteadOfIndex
-// GitHub: https://github.com/moby/moby/blob/api/v1.56.1/api/types/auxprogress/push.go
+// GitHub: https://github.com/moby/moby/blob/api/v1.57.0/api/types/auxprogress/push.go
 // Kind: struct
 // References: github.com/opencontainers/image-spec/specs-go/v1.Descriptor
 // Usecase: wrap the Engine API type ManifestPushedInsteadOfIndex from auxprogress.

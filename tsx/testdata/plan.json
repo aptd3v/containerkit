@@ -1,17 +1,150 @@
 {
   "connect": {
     "fromEnv": true,
+    "host": "unix:///var/run/docker.sock",
+    "hostFromEnv": false,
+    "scheme": "unix",
+    "apiVersion": "1.44",
+    "apiVersionFromEnv": false,
+    "negotiateAPIVersion": true,
     "timeout": "10s",
-    "userAgent": "containerkit-tsx-test"
+    "maxConcurrency": 4,
+    "dryRun": false,
+    "tlsFromEnv": false,
+    "userAgent": "containerkit-tsx-test",
+    "tls": {
+      "ca": "/ca.pem",
+      "cert": "/cert.pem",
+      "key": "/key.pem"
+    },
+    "httpHeader": [
+      { "name": "X-Request-Id", "value": "edge" },
+      { "name": "X-Empty", "value": "" }
+    ]
   },
-  "yaml": "name: app\nservices:\n  api:\n    image: alpine:latest\n    environment:\n      APP: \"1\"\n",
+  "yaml": "name: app\nservices:\n  api:\n    image: alpine:latest\n    command:\n      - httpd\n      - -f\n      - -p\n      - \"80\"\n      - -h\n      - /www\n    user: \"65534:65534\"\n    working_dir: /www\n    restart: unless-stopped\n    healthcheck:\n      test:\n        - CMD\n        - \"true\"\n      interval: 5s\n      timeout: 3s\n      retries: 3\n      start_period: 2s\n    deploy:\n      replicas: 1\n    ports:\n      - target: 80\n        published: \"8080\"\n        protocol: tcp\n    environment:\n      APP: \"1\"\n      EMPTY: \"\"\n    labels:\n      kit.edge: \"yes\"\n    logging:\n      driver: json-file\n      options:\n        max-size: 1m\n    volumes:\n      - type: volume\n        source: data\n        target: /data\n        read_only: true\n    networks:\n      front: {}\nnetworks:\n  front:\n    driver: bridge\nvolumes:\n  data: {}\n",
   "actions": [
+    {
+      "op": "pullImage",
+      "ref": "alpine:latest",
+      "options": {
+        "all": true,
+        "platform": "linux/arm64"
+      }
+    },
+    {
+      "op": "listImages",
+      "options": {
+        "all": "false",
+        "filter": {
+          "term": "reference",
+          "values": "alpine*"
+        }
+      }
+    },
+    {
+      "op": "listContainers",
+      "options": {
+        "all": true,
+        "includeSize": false,
+        "limit": 10,
+        "since": "abc",
+        "filter": [
+          { "term": "status", "values": ["running", "paused"] },
+          { "term": "label", "values": "kit.edge=yes" }
+        ]
+      }
+    },
+    {
+      "op": "inspectImage",
+      "ref": "alpine:latest",
+      "options": {
+        "manifests": false,
+        "imagePlatform": {
+          "architecture": "arm64",
+          "os": "linux",
+          "os.version": "12",
+          "os.features": ["win32k"],
+          "variant": "v8"
+        }
+      }
+    },
+    {
+      "op": "inspect",
+      "id": "abc",
+      "options": {
+        "includeSize": false
+      }
+    },
+    {
+      "op": "load",
+      "path": "compose.yaml",
+      "options": {
+        "file": "compose.yaml",
+        "name": "app",
+        "profile": "edge",
+        "offline": false,
+        "services": ["api"],
+        "envFile": {
+          "path": ".env",
+          "format": "env",
+          "required": false
+        }
+      }
+    },
+    {
+      "op": "composePs",
+      "options": {
+        "all": true,
+        "services": "api"
+      }
+    },
+    {
+      "op": "composePort",
+      "service": "api",
+      "port": 80,
+      "options": {
+        "protocol": "tcp",
+        "index": "0"
+      }
+    },
+    {
+      "op": "composeKill",
+      "options": {
+        "all": false,
+        "stopSignal": "SIGTERM",
+        "services": ["api"]
+      }
+    },
     {
       "op": "composeUp",
       "options": {
         "detach": true,
-        "timeout": "30s"
+        "timeout": "30s",
+        "quiet": false,
+        "wait": true,
+        "removeOrphans": true,
+        "pull": false,
+        "progress": "plain",
+        "memory": 536870912,
+        "services": ["api"]
       }
+    },
+    {
+      "op": "composeDown",
+      "options": {
+        "removeOrphans": true,
+        "volumes": false,
+        "services": "api",
+        "timeout": 30000000000
+      }
+    },
+    {
+      "op": "ping"
+    },
+    {
+      "op": "composeVolumeList",
+      "options": {}
     }
   ]
 }

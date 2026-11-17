@@ -12,7 +12,7 @@ import "github.com/moby/moby/api/types/common"
 // swagger:model ErrorResponse
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/api/types/common#ErrorResponse
-// GitHub: https://github.com/moby/moby/blob/api/v1.56.1/api/types/common/error_response.go
+// GitHub: https://github.com/moby/moby/blob/api/v1.57.0/api/types/common/error_response.go
 // Kind: struct
 // Usecase: wrap the Engine API type ErrorResponse from common.
 type ErrorResponse = common.ErrorResponse
@@ -24,7 +24,7 @@ type ErrorResponse = common.ErrorResponse
 // swagger:model IDResponse
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/api/types/common#IDResponse
-// GitHub: https://github.com/moby/moby/blob/api/v1.56.1/api/types/common/id_response.go
+// GitHub: https://github.com/moby/moby/blob/api/v1.57.0/api/types/common/id_response.go
 // Kind: struct
 // Usecase: wrap the Engine API type IDResponse from common.
 type IDResponse = common.IDResponse

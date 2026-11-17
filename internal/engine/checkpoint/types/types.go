@@ -9,7 +9,7 @@ import "github.com/moby/moby/api/types/checkpoint"
 // CreateRequest holds parameters to create a checkpoint from a container.
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/api/types/checkpoint#CreateRequest
-// GitHub: https://github.com/moby/moby/blob/api/v1.56.1/api/types/checkpoint/create_request.go
+// GitHub: https://github.com/moby/moby/blob/api/v1.57.0/api/types/checkpoint/create_request.go
 // Kind: struct
 // Usecase: wrap the Engine API type CreateRequest from checkpoint.
 type CreateRequest = checkpoint.CreateRequest
@@ -19,7 +19,7 @@ type CreateRequest = checkpoint.CreateRequest
 // Summary represents the details of a checkpoint when listing endpoints.
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/api/types/checkpoint#Summary
-// GitHub: https://github.com/moby/moby/blob/api/v1.56.1/api/types/checkpoint/list.go
+// GitHub: https://github.com/moby/moby/blob/api/v1.57.0/api/types/checkpoint/list.go
 // Kind: struct
 // Usecase: wrap the Engine API type Summary from checkpoint.
 type Summary = checkpoint.Summary

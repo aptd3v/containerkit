@@ -9,7 +9,7 @@ import "github.com/compose-spec/compose-go/v2/dotenv"
 // # LookupFn represents a lookup function to resolve variables from
 //
 // Source: https://pkg.go.dev/github.com/compose-spec/compose-go/v2/dotenv#LookupFn
-// GitHub: https://github.com/compose-spec/compose-go/blob/v2.16.2/dotenv/godotenv.go
+// GitHub: https://github.com/compose-spec/compose-go/blob/v2.17.0/dotenv/godotenv.go
 // Kind: func
 // Underlying: func(string) (string, bool)
 // Usecase: wrap compose-go dotenv machinery used while loading a Project.
@@ -18,7 +18,7 @@ type LookupFn = dotenv.LookupFn
 // Parser wraps dotenv.Parser.
 //
 // Source: https://pkg.go.dev/github.com/compose-spec/compose-go/v2/dotenv#Parser
-// GitHub: https://github.com/compose-spec/compose-go/blob/v2.16.2/dotenv/format.go
+// GitHub: https://github.com/compose-spec/compose-go/blob/v2.17.0/dotenv/format.go
 // Kind: func
 // Underlying: func(r io.Reader, filename string, vars map[string]string, lookup func(key string) (string, bool)) error
 // References: io.Reader
