@@ -52,6 +52,15 @@ func (f *Flow) stamp() {
 	}
 }
 
+// stampTasks writes flow labels onto these tasks and the tasks nested under them.
+func stampTasks(tasks []*Task) {
+	for _, t := range tasks {
+		_ = t.stampContainer()
+		t.stampCompose()
+		stampTasks(t.childList())
+	}
+}
+
 func (t *Task) stampContainer() error {
 	if t == nil || t.kind != kindContainer || t.container == nil || t.alreadyCreated() {
 		return nil

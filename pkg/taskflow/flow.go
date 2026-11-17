@@ -316,7 +316,9 @@ func (sc scope) subflow(name string, instantiate func(*Subflow) error) *Task {
 				for _, c := range t.childList() {
 					c.addFallback()
 				}
-				f.stamp()
+				// Stamp this subflow only. The parent graph may already be
+				// running, and Apply on one of its services races with Validate.
+				stampTasks(t.childList())
 				if err := t.localErr(); err != nil {
 					t.suppressChildren()
 					return err
