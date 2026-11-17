@@ -25,7 +25,7 @@ npm audit --package-lock-only --include=dev --audit-level=high
 
 `high` and `critical` fail **Advisory**. `--include=dev` keeps dev dependencies in the audit on a production-configured runner. Dependabot opens the update pull requests. It is not this gate. The Advisory job runs `govulncheck` with the Go version in `go.mod`. A newer local toolchain can report standard-library findings that job does not.
 
-The Engine job pins Docker Engine server `29.9.3`, prints `docker version`, and runs `scripts/ci/engine.sh`. That printed server version is the compatibility claim. A second Engine version is out of scope. `tsx/docs/client.md` may still pin `apiVersion` or negotiate. On Ubuntu the job installs that server with `scripts/ci/pin-engine.sh` when the daemon is not already `29.9.3`.
+The Engine job pins Docker Engine server `29.9.3`, prints `docker version`, and runs `scripts/ci/engine.sh`. That printed server version is the compatibility claim. A second Engine version is out of scope. `tsx/docs/client.md` may still pin `apiVersion` or negotiate. The job runs on Ubuntu 24.04 and installs that server with `scripts/ci/pin-engine.sh` when the daemon is not already `29.9.3`.
 
 ```bash
 go run ./tools/crossbuild

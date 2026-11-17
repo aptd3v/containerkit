@@ -50,10 +50,12 @@ if ! apt-cache madison docker-ce | grep -q "5:${ENGINE_VERSION}-"; then
 	sudo apt-get update
 fi
 
-pkg="$(apt-cache madison docker-ce | awk -v v="5:${ENGINE_VERSION}-" '$3 ~ v { print $3; exit }')"
+# apt-cache can exit 100. Keep the listing and match it in a second step.
+madison="$(apt-cache madison docker-ce || true)"
+pkg="$(printf '%s\n' "$madison" | awk -v v="5:${ENGINE_VERSION}-" '$3 ~ v { print $3; exit }')"
 if [[ -z "$pkg" ]]; then
 	echo "docker-ce ${ENGINE_VERSION} is not in the apt repo for ${codename}" >&2
-	apt-cache madison docker-ce | head >&2 || true
+	printf '%s\n' "$madison" | head >&2 || true
 	exit 1
 fi
 
