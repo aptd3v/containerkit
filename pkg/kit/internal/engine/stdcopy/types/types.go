@@ -10,7 +10,7 @@ import "github.com/moby/moby/api/pkg/stdcopy"
 // a writer can multiplex to.
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/api/pkg/stdcopy#StdType
-// GitHub: https://github.com/moby/moby/blob/api/v1.56.1/api/pkg/stdcopy/stdcopy.go
+// GitHub: https://github.com/moby/moby/blob/api/v1.57.0/api/pkg/stdcopy/stdcopy.go
 // Kind: named:byte
 // Underlying: byte
 // Usecase: wrap StdType when exposing this Docker SDK surface.

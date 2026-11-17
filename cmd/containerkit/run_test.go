@@ -49,6 +49,15 @@ func TestRunValidatePlanJSON(t *testing.T) {
 	}
 }
 
+func TestRunValidateFlowJSON(t *testing.T) {
+	t.Parallel()
+	var out, errw bytes.Buffer
+	code := run(context.Background(), []string{"validate", testdata(t, "flow.json")}, bytes.NewReader(nil), &out, &errw)
+	if code != 0 {
+		t.Fatalf("code = %d, err = %s", code, errw.String())
+	}
+}
+
 func TestRunValidateYAML(t *testing.T) {
 	t.Parallel()
 	var out, errw bytes.Buffer

@@ -10,7 +10,7 @@ import "github.com/moby/moby/api/types/container"
 // Not used on Windows.
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/api/types/container#BlkioStatEntry
-// GitHub: https://github.com/moby/moby/blob/api/v1.56.1/api/types/container/stats.go
+// GitHub: https://github.com/moby/moby/blob/api/v1.57.0/api/types/container/stats.go
 // Kind: struct
 // Usecase: wrap the Engine API type BlkioStatEntry from container.
 type BlkioStatEntry = container.BlkioStatEntry
@@ -23,7 +23,7 @@ type BlkioStatEntry = container.BlkioStatEntry
 // little sense attempting to morph into a combined structure.
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/api/types/container#BlkioStats
-// GitHub: https://github.com/moby/moby/blob/api/v1.56.1/api/types/container/stats.go
+// GitHub: https://github.com/moby/moby/blob/api/v1.57.0/api/types/container/stats.go
 // Kind: struct
 // Usecase: wrap the Engine API type BlkioStats from container.
 type BlkioStats = container.BlkioStats
@@ -33,7 +33,7 @@ type BlkioStats = container.BlkioStats
 // # CPUStats aggregates and wraps all CPU related info of container
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/api/types/container#CPUStats
-// GitHub: https://github.com/moby/moby/blob/api/v1.56.1/api/types/container/stats.go
+// GitHub: https://github.com/moby/moby/blob/api/v1.57.0/api/types/container/stats.go
 // Kind: struct
 // Usecase: wrap the Engine API type CPUStats from container.
 type CPUStats = container.CPUStats
@@ -43,7 +43,7 @@ type CPUStats = container.CPUStats
 // CPUUsage stores All CPU stats aggregated since container inception.
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/api/types/container#CPUUsage
-// GitHub: https://github.com/moby/moby/blob/api/v1.56.1/api/types/container/stats.go
+// GitHub: https://github.com/moby/moby/blob/api/v1.57.0/api/types/container/stats.go
 // Kind: struct
 // Usecase: wrap the Engine API type CPUUsage from container.
 type CPUUsage = container.CPUUsage
@@ -53,7 +53,7 @@ type CPUUsage = container.CPUUsage
 // CgroupSpec represents the cgroup to use for the container.
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/api/types/container#CgroupSpec
-// GitHub: https://github.com/moby/moby/blob/api/v1.56.1/api/types/container/hostconfig.go
+// GitHub: https://github.com/moby/moby/blob/api/v1.57.0/api/types/container/hostconfig.go
 // Kind: named:string
 // Underlying: string
 // Usecase: wrap the Engine API type CgroupSpec from container.
@@ -64,7 +64,7 @@ type CgroupSpec = container.CgroupSpec
 // # CgroupnsMode represents the cgroup namespace mode of the container
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/api/types/container#CgroupnsMode
-// GitHub: https://github.com/moby/moby/blob/api/v1.56.1/api/types/container/hostconfig.go
+// GitHub: https://github.com/moby/moby/blob/api/v1.57.0/api/types/container/hostconfig.go
 // Kind: named:string
 // Underlying: string
 // Usecase: wrap the Engine API type CgroupnsMode from container.
@@ -83,7 +83,7 @@ type CgroupnsMode = container.CgroupnsMode
 // swagger:model ChangeType
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/api/types/container#ChangeType
-// GitHub: https://github.com/moby/moby/blob/api/v1.56.1/api/types/container/change_type.go
+// GitHub: https://github.com/moby/moby/blob/api/v1.57.0/api/types/container/change_type.go
 // Kind: named:uint8
 // Underlying: uint8
 // Usecase: wrap the Engine API type ChangeType from container.
@@ -95,7 +95,7 @@ type ChangeType = container.ChangeType
 // image that was produced.
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/api/types/container#CommitResponse
-// GitHub: https://github.com/moby/moby/blob/api/v1.56.1/api/types/container/commit.go
+// GitHub: https://github.com/moby/moby/blob/api/v1.57.0/api/types/container/commit.go
 // Kind: named:common.IDResponse
 // Underlying: common.IDResponse
 // References: github.com/moby/moby/api/types/common.IDResponse
@@ -112,7 +112,7 @@ type CommitResponse = container.CommitResponse
 // predictable hashes from the old `v1Compatibility` configuration.
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/api/types/container#Config
-// GitHub: https://github.com/moby/moby/blob/api/v1.56.1/api/types/container/config.go
+// GitHub: https://github.com/moby/moby/blob/api/v1.57.0/api/types/container/config.go
 // Kind: struct
 // References: github.com/moby/moby/api/types/network.PortSet
 // Usecase: wrap the Engine API type Config from container.
@@ -123,7 +123,7 @@ type Config = container.Config
 // ContainerState is a string representation of the container's current state.
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/api/types/container#ContainerState
-// GitHub: https://github.com/moby/moby/blob/api/v1.56.1/api/types/container/state.go
+// GitHub: https://github.com/moby/moby/blob/api/v1.57.0/api/types/container/state.go
 // Kind: named:string
 // Underlying: string
 // Usecase: wrap the Engine API type ContainerState from container.
@@ -137,7 +137,7 @@ type ContainerState = container.ContainerState
 // [network.NetworkingConfig].
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/api/types/container#CreateRequest
-// GitHub: https://github.com/moby/moby/blob/api/v1.56.1/api/types/container/create_request.go
+// GitHub: https://github.com/moby/moby/blob/api/v1.57.0/api/types/container/create_request.go
 // Kind: struct
 // References: github.com/moby/moby/api/types/network.NetworkingConfig
 // Usecase: wrap the Engine API type CreateRequest from container.
@@ -152,7 +152,7 @@ type CreateRequest = container.CreateRequest
 // swagger:model CreateResponse
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/api/types/container#CreateResponse
-// GitHub: https://github.com/moby/moby/blob/api/v1.56.1/api/types/container/create_response.go
+// GitHub: https://github.com/moby/moby/blob/api/v1.57.0/api/types/container/create_response.go
 // Kind: struct
 // Usecase: wrap the Engine API type CreateResponse from container.
 type CreateResponse = container.CreateResponse
@@ -162,7 +162,7 @@ type CreateResponse = container.CreateResponse
 // DeviceMapping represents the device mapping between the host and the container.
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/api/types/container#DeviceMapping
-// GitHub: https://github.com/moby/moby/blob/api/v1.56.1/api/types/container/hostconfig.go
+// GitHub: https://github.com/moby/moby/blob/api/v1.57.0/api/types/container/hostconfig.go
 // Kind: struct
 // Usecase: wrap the Engine API type DeviceMapping from container.
 type DeviceMapping = container.DeviceMapping
@@ -173,7 +173,7 @@ type DeviceMapping = container.DeviceMapping
 // Used by GPU device drivers.
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/api/types/container#DeviceRequest
-// GitHub: https://github.com/moby/moby/blob/api/v1.56.1/api/types/container/hostconfig.go
+// GitHub: https://github.com/moby/moby/blob/api/v1.57.0/api/types/container/hostconfig.go
 // Kind: struct
 // Usecase: wrap the Engine API type DeviceRequest from container.
 type DeviceRequest = container.DeviceRequest
@@ -185,7 +185,7 @@ type DeviceRequest = container.DeviceRequest
 // swagger:model DiskUsage
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/api/types/container#DiskUsage
-// GitHub: https://github.com/moby/moby/blob/api/v1.56.1/api/types/container/disk_usage.go
+// GitHub: https://github.com/moby/moby/blob/api/v1.57.0/api/types/container/disk_usage.go
 // Kind: struct
 // Usecase: wrap the Engine API type DiskUsage from container.
 type DiskUsage = container.DiskUsage
@@ -196,7 +196,7 @@ type DiskUsage = container.DiskUsage
 // for the exec feature of docker.
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/api/types/container#ExecCreateRequest
-// GitHub: https://github.com/moby/moby/blob/api/v1.56.1/api/types/container/exec_create_request.go
+// GitHub: https://github.com/moby/moby/blob/api/v1.57.0/api/types/container/exec_create_request.go
 // Kind: struct
 // Usecase: wrap the Engine API type ExecCreateRequest from container.
 type ExecCreateRequest = container.ExecCreateRequest
@@ -209,7 +209,7 @@ type ExecCreateRequest = container.ExecCreateRequest
 // TODO(thaJeztah): make this a distinct type.
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/api/types/container#ExecCreateResponse
-// GitHub: https://github.com/moby/moby/blob/api/v1.56.1/api/types/container/exec.go
+// GitHub: https://github.com/moby/moby/blob/api/v1.57.0/api/types/container/exec.go
 // Kind: named:common.IDResponse
 // Underlying: common.IDResponse
 // References: github.com/moby/moby/api/types/common.IDResponse
@@ -222,7 +222,7 @@ type ExecCreateResponse = container.ExecCreateResponse
 // endpoint and holds information about and exec.
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/api/types/container#ExecInspectResponse
-// GitHub: https://github.com/moby/moby/blob/api/v1.56.1/api/types/container/exec.go
+// GitHub: https://github.com/moby/moby/blob/api/v1.57.0/api/types/container/exec.go
 // Kind: struct
 // Usecase: wrap the Engine API type ExecInspectResponse from container.
 type ExecInspectResponse = container.ExecInspectResponse
@@ -233,7 +233,7 @@ type ExecInspectResponse = container.ExecInspectResponse
 // running on the host.
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/api/types/container#ExecProcessConfig
-// GitHub: https://github.com/moby/moby/blob/api/v1.56.1/api/types/container/exec.go
+// GitHub: https://github.com/moby/moby/blob/api/v1.57.0/api/types/container/exec.go
 // Kind: struct
 // Usecase: wrap the Engine API type ExecProcessConfig from container.
 type ExecProcessConfig = container.ExecProcessConfig
@@ -244,7 +244,7 @@ type ExecProcessConfig = container.ExecProcessConfig
 // Config fields is part of ExecConfig in runconfig package
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/api/types/container#ExecStartRequest
-// GitHub: https://github.com/moby/moby/blob/api/v1.56.1/api/types/container/exec_start_request.go
+// GitHub: https://github.com/moby/moby/blob/api/v1.57.0/api/types/container/exec_start_request.go
 // Kind: struct
 // Usecase: wrap the Engine API type ExecStartRequest from container.
 type ExecStartRequest = container.ExecStartRequest
@@ -256,7 +256,7 @@ type ExecStartRequest = container.ExecStartRequest
 // swagger:model FilesystemChange
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/api/types/container#FilesystemChange
-// GitHub: https://github.com/moby/moby/blob/api/v1.56.1/api/types/container/filesystem_change.go
+// GitHub: https://github.com/moby/moby/blob/api/v1.57.0/api/types/container/filesystem_change.go
 // Kind: struct
 // Usecase: wrap the Engine API type FilesystemChange from container.
 type FilesystemChange = container.FilesystemChange
@@ -266,7 +266,7 @@ type FilesystemChange = container.FilesystemChange
 // # Health stores information about the container's healthcheck results
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/api/types/container#Health
-// GitHub: https://github.com/moby/moby/blob/api/v1.56.1/api/types/container/health.go
+// GitHub: https://github.com/moby/moby/blob/api/v1.57.0/api/types/container/health.go
 // Kind: struct
 // Usecase: wrap the Engine API type Health from container.
 type Health = container.Health
@@ -276,7 +276,7 @@ type Health = container.Health
 // HealthConfig holds configuration settings for the HEALTHCHECK feature.
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/api/types/container#HealthConfig
-// GitHub: https://github.com/moby/moby/blob/api/v1.56.1/api/types/container/config.go
+// GitHub: https://github.com/moby/moby/blob/api/v1.57.0/api/types/container/config.go
 // Kind: named:dockerspec.HealthcheckConfig
 // Underlying: dockerspec.HealthcheckConfig
 // References: github.com/moby/docker-image-spec/specs-go/v1.HealthcheckConfig
@@ -288,7 +288,7 @@ type HealthConfig = container.HealthConfig
 // HealthStatus is a string representation of the container's health.
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/api/types/container#HealthStatus
-// GitHub: https://github.com/moby/moby/blob/api/v1.56.1/api/types/container/health.go
+// GitHub: https://github.com/moby/moby/blob/api/v1.57.0/api/types/container/health.go
 // Kind: named:string
 // Underlying: string
 // Usecase: wrap the Engine API type HealthStatus from container.
@@ -299,7 +299,7 @@ type HealthStatus = container.HealthStatus
 // HealthSummary stores a summary of the container's healthcheck results.
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/api/types/container#HealthSummary
-// GitHub: https://github.com/moby/moby/blob/api/v1.56.1/api/types/container/health.go
+// GitHub: https://github.com/moby/moby/blob/api/v1.57.0/api/types/container/health.go
 // Kind: struct
 // Usecase: wrap the Engine API type HealthSummary from container.
 type HealthSummary = container.HealthSummary
@@ -309,7 +309,7 @@ type HealthSummary = container.HealthSummary
 // # HealthcheckResult stores information about a single run of a healthcheck probe
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/api/types/container#HealthcheckResult
-// GitHub: https://github.com/moby/moby/blob/api/v1.56.1/api/types/container/health.go
+// GitHub: https://github.com/moby/moby/blob/api/v1.57.0/api/types/container/health.go
 // Kind: struct
 // References: time.Time
 // Usecase: wrap the Engine API type HealthcheckResult from container.
@@ -322,7 +322,7 @@ type HealthcheckResult = container.HealthcheckResult
 // Portable information *should* appear in Config.
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/api/types/container#HostConfig
-// GitHub: https://github.com/moby/moby/blob/api/v1.56.1/api/types/container/hostconfig.go
+// GitHub: https://github.com/moby/moby/blob/api/v1.57.0/api/types/container/hostconfig.go
 // Kind: struct
 // References: github.com/moby/moby/api/types/mount.Mount, github.com/moby/moby/api/types/network.PortMap, net/netip.Addr
 // Usecase: wrap the Engine API type HostConfig from container.
@@ -334,7 +334,7 @@ type HostConfig = container.HostConfig
 // endpoint.
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/api/types/container#InspectResponse
-// GitHub: https://github.com/moby/moby/blob/api/v1.56.1/api/types/container/container.go
+// GitHub: https://github.com/moby/moby/blob/api/v1.57.0/api/types/container/container.go
 // Kind: struct
 // References: github.com/moby/moby/api/types/storage.DriverData, github.com/moby/moby/api/types/storage.Storage, github.com/opencontainers/image-spec/specs-go/v1.Descriptor
 // Usecase: wrap the Engine API type InspectResponse from container.
@@ -345,7 +345,7 @@ type InspectResponse = container.InspectResponse
 // IpcMode represents the container ipc stack.
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/api/types/container#IpcMode
-// GitHub: https://github.com/moby/moby/blob/api/v1.56.1/api/types/container/hostconfig.go
+// GitHub: https://github.com/moby/moby/blob/api/v1.57.0/api/types/container/hostconfig.go
 // Kind: named:string
 // Underlying: string
 // Usecase: wrap the Engine API type IpcMode from container.
@@ -357,7 +357,7 @@ type IpcMode = container.IpcMode
 // values are platform specific
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/api/types/container#Isolation
-// GitHub: https://github.com/moby/moby/blob/api/v1.56.1/api/types/container/hostconfig.go
+// GitHub: https://github.com/moby/moby/blob/api/v1.57.0/api/types/container/hostconfig.go
 // Kind: named:string
 // Underlying: string
 // Usecase: wrap the Engine API type Isolation from container.
@@ -368,7 +368,7 @@ type Isolation = container.Isolation
 // LogConfig represents the logging configuration of the container.
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/api/types/container#LogConfig
-// GitHub: https://github.com/moby/moby/blob/api/v1.56.1/api/types/container/hostconfig.go
+// GitHub: https://github.com/moby/moby/blob/api/v1.57.0/api/types/container/hostconfig.go
 // Kind: struct
 // Usecase: wrap the Engine API type LogConfig from container.
 type LogConfig = container.LogConfig
@@ -379,7 +379,7 @@ type LogConfig = container.LogConfig
 // These modes affect how logs are handled when log messages start piling up.
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/api/types/container#LogMode
-// GitHub: https://github.com/moby/moby/blob/api/v1.56.1/api/types/container/hostconfig.go
+// GitHub: https://github.com/moby/moby/blob/api/v1.57.0/api/types/container/hostconfig.go
 // Kind: named:string
 // Underlying: string
 // Usecase: wrap the Engine API type LogMode from container.
@@ -391,7 +391,7 @@ type LogMode = container.LogMode
 // Windows returns stats for commit and private working set only.
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/api/types/container#MemoryStats
-// GitHub: https://github.com/moby/moby/blob/api/v1.56.1/api/types/container/stats.go
+// GitHub: https://github.com/moby/moby/blob/api/v1.57.0/api/types/container/stats.go
 // Kind: struct
 // Usecase: wrap the Engine API type MemoryStats from container.
 type MemoryStats = container.MemoryStats
@@ -402,7 +402,7 @@ type MemoryStats = container.MemoryStats
 // This is used for reporting the mountpoints in use by a container.
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/api/types/container#MountPoint
-// GitHub: https://github.com/moby/moby/blob/api/v1.56.1/api/types/container/container.go
+// GitHub: https://github.com/moby/moby/blob/api/v1.57.0/api/types/container/container.go
 // Kind: struct
 // References: github.com/moby/moby/api/types/mount.Propagation, github.com/moby/moby/api/types/mount.Type
 // Usecase: wrap the Engine API type MountPoint from container.
@@ -413,7 +413,7 @@ type MountPoint = container.MountPoint
 // NetworkMode represents the container network stack.
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/api/types/container#NetworkMode
-// GitHub: https://github.com/moby/moby/blob/api/v1.56.1/api/types/container/hostconfig.go
+// GitHub: https://github.com/moby/moby/blob/api/v1.57.0/api/types/container/hostconfig.go
 // Kind: named:string
 // Underlying: string
 // Usecase: wrap the Engine API type NetworkMode from container.
@@ -424,7 +424,7 @@ type NetworkMode = container.NetworkMode
 // # NetworkSettings exposes the network settings in the api
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/api/types/container#NetworkSettings
-// GitHub: https://github.com/moby/moby/blob/api/v1.56.1/api/types/container/network_settings.go
+// GitHub: https://github.com/moby/moby/blob/api/v1.57.0/api/types/container/network_settings.go
 // Kind: struct
 // References: github.com/moby/moby/api/types/network.EndpointSettings, github.com/moby/moby/api/types/network.PortMap
 // Usecase: wrap the Engine API type NetworkSettings from container.
@@ -436,7 +436,7 @@ type NetworkSettings = container.NetworkSettings
 // in /containers/json
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/api/types/container#NetworkSettingsSummary
-// GitHub: https://github.com/moby/moby/blob/api/v1.56.1/api/types/container/network_settings.go
+// GitHub: https://github.com/moby/moby/blob/api/v1.57.0/api/types/container/network_settings.go
 // Kind: struct
 // References: github.com/moby/moby/api/types/network.EndpointSettings
 // Usecase: wrap the Engine API type NetworkSettingsSummary from container.
@@ -447,7 +447,7 @@ type NetworkSettingsSummary = container.NetworkSettingsSummary
 // # NetworkStats aggregates the network stats of one container
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/api/types/container#NetworkStats
-// GitHub: https://github.com/moby/moby/blob/api/v1.56.1/api/types/container/stats.go
+// GitHub: https://github.com/moby/moby/blob/api/v1.57.0/api/types/container/stats.go
 // Kind: struct
 // Usecase: wrap the Engine API type NetworkStats from container.
 type NetworkStats = container.NetworkStats
@@ -459,7 +459,7 @@ type NetworkStats = container.NetworkStats
 // "Name" is the file or directory name.
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/api/types/container#PathStat
-// GitHub: https://github.com/moby/moby/blob/api/v1.56.1/api/types/container/container.go
+// GitHub: https://github.com/moby/moby/blob/api/v1.57.0/api/types/container/container.go
 // Kind: struct
 // References: os.FileMode, time.Time
 // Usecase: wrap the Engine API type PathStat from container.
@@ -470,7 +470,7 @@ type PathStat = container.PathStat
 // PidMode represents the pid namespace of the container.
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/api/types/container#PidMode
-// GitHub: https://github.com/moby/moby/blob/api/v1.56.1/api/types/container/hostconfig.go
+// GitHub: https://github.com/moby/moby/blob/api/v1.57.0/api/types/container/hostconfig.go
 // Kind: named:string
 // Underlying: string
 // Usecase: wrap the Engine API type PidMode from container.
@@ -481,7 +481,7 @@ type PidMode = container.PidMode
 // # PidsStats contains the stats of a container's pids
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/api/types/container#PidsStats
-// GitHub: https://github.com/moby/moby/blob/api/v1.56.1/api/types/container/stats.go
+// GitHub: https://github.com/moby/moby/blob/api/v1.57.0/api/types/container/stats.go
 // Kind: struct
 // Usecase: wrap the Engine API type PidsStats from container.
 type PidsStats = container.PidsStats
@@ -495,7 +495,7 @@ type PidsStats = container.PidsStats
 // swagger:model PortSummary
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/api/types/container#PortSummary
-// GitHub: https://github.com/moby/moby/blob/api/v1.56.1/api/types/container/port_summary.go
+// GitHub: https://github.com/moby/moby/blob/api/v1.57.0/api/types/container/port_summary.go
 // Kind: struct
 // References: net/netip.Addr
 // Usecase: wrap the Engine API type PortSummary from container.
@@ -507,7 +507,7 @@ type PortSummary = container.PortSummary
 // POST "/containers/prune"
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/api/types/container#PruneReport
-// GitHub: https://github.com/moby/moby/blob/api/v1.56.1/api/types/container/container.go
+// GitHub: https://github.com/moby/moby/blob/api/v1.57.0/api/types/container/container.go
 // Kind: struct
 // Usecase: wrap the Engine API type PruneReport from container.
 type PruneReport = container.PruneReport
@@ -517,7 +517,7 @@ type PruneReport = container.PruneReport
 // Resources contains container's resources (cgroups config, ulimits...)
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/api/types/container#Resources
-// GitHub: https://github.com/moby/moby/blob/api/v1.56.1/api/types/container/hostconfig.go
+// GitHub: https://github.com/moby/moby/blob/api/v1.57.0/api/types/container/hostconfig.go
 // Kind: struct
 // References: github.com/moby/moby/api/types/blkiodev.ThrottleDevice, github.com/moby/moby/api/types/blkiodev.WeightDevice
 // Usecase: wrap the Engine API type Resources from container.
@@ -528,7 +528,7 @@ type Resources = container.Resources
 // RestartPolicy represents the restart policies of the container.
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/api/types/container#RestartPolicy
-// GitHub: https://github.com/moby/moby/blob/api/v1.56.1/api/types/container/hostconfig.go
+// GitHub: https://github.com/moby/moby/blob/api/v1.57.0/api/types/container/hostconfig.go
 // Kind: struct
 // Usecase: wrap the Engine API type RestartPolicy from container.
 type RestartPolicy = container.RestartPolicy
@@ -536,7 +536,7 @@ type RestartPolicy = container.RestartPolicy
 // RestartPolicyMode wraps container.RestartPolicyMode.
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/api/types/container#RestartPolicyMode
-// GitHub: https://github.com/moby/moby/blob/api/v1.56.1/api/types/container/hostconfig.go
+// GitHub: https://github.com/moby/moby/blob/api/v1.57.0/api/types/container/hostconfig.go
 // Kind: named:string
 // Underlying: string
 // Usecase: wrap the Engine API type RestartPolicyMode from container.
@@ -548,7 +548,7 @@ type RestartPolicyMode = container.RestartPolicyMode
 // it's part of ContainerJSONBase and returned by "inspect" command
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/api/types/container#State
-// GitHub: https://github.com/moby/moby/blob/api/v1.56.1/api/types/container/container.go
+// GitHub: https://github.com/moby/moby/blob/api/v1.57.0/api/types/container/container.go
 // Kind: struct
 // Usecase: wrap the Engine API type State from container.
 type State = container.State
@@ -558,7 +558,7 @@ type State = container.State
 // StatsResponse aggregates all types of stats of one container.
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/api/types/container#StatsResponse
-// GitHub: https://github.com/moby/moby/blob/api/v1.56.1/api/types/container/stats.go
+// GitHub: https://github.com/moby/moby/blob/api/v1.57.0/api/types/container/stats.go
 // Kind: struct
 // References: time.Time
 // Usecase: wrap the Engine API type StatsResponse from container.
@@ -569,7 +569,7 @@ type StatsResponse = container.StatsResponse
 // StorageStats is the disk I/O stats for read/write on Windows.
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/api/types/container#StorageStats
-// GitHub: https://github.com/moby/moby/blob/api/v1.56.1/api/types/container/stats.go
+// GitHub: https://github.com/moby/moby/blob/api/v1.57.0/api/types/container/stats.go
 // Kind: struct
 // Usecase: wrap the Engine API type StorageStats from container.
 type StorageStats = container.StorageStats
@@ -580,7 +580,7 @@ type StorageStats = container.StorageStats
 // GET "/containers/json"
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/api/types/container#Summary
-// GitHub: https://github.com/moby/moby/blob/api/v1.56.1/api/types/container/container.go
+// GitHub: https://github.com/moby/moby/blob/api/v1.57.0/api/types/container/container.go
 // Kind: struct
 // References: github.com/opencontainers/image-spec/specs-go/v1.Descriptor
 // Usecase: wrap the Engine API type Summary from container.
@@ -592,7 +592,7 @@ type Summary = container.Summary
 // Not used on Windows.
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/api/types/container#ThrottlingData
-// GitHub: https://github.com/moby/moby/blob/api/v1.56.1/api/types/container/stats.go
+// GitHub: https://github.com/moby/moby/blob/api/v1.57.0/api/types/container/stats.go
 // Kind: struct
 // Usecase: wrap the Engine API type ThrottlingData from container.
 type ThrottlingData = container.ThrottlingData
@@ -606,7 +606,7 @@ type ThrottlingData = container.ThrottlingData
 // swagger:model TopResponse
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/api/types/container#TopResponse
-// GitHub: https://github.com/moby/moby/blob/api/v1.56.1/api/types/container/top_response.go
+// GitHub: https://github.com/moby/moby/blob/api/v1.57.0/api/types/container/top_response.go
 // Kind: struct
 // Usecase: wrap the Engine API type TopResponse from container.
 type TopResponse = container.TopResponse
@@ -616,7 +616,7 @@ type TopResponse = container.TopResponse
 // UTSMode represents the UTS namespace of the container.
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/api/types/container#UTSMode
-// GitHub: https://github.com/moby/moby/blob/api/v1.56.1/api/types/container/hostconfig.go
+// GitHub: https://github.com/moby/moby/blob/api/v1.57.0/api/types/container/hostconfig.go
 // Kind: named:string
 // Underlying: string
 // Usecase: wrap the Engine API type UTSMode from container.
@@ -630,7 +630,7 @@ type UTSMode = container.UTSMode
 // Users are recommended to use this alias instead of using [units.Ulimit] directly.
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/api/types/container#Ulimit
-// GitHub: https://github.com/moby/moby/blob/api/v1.56.1/api/types/container/hostconfig.go
+// GitHub: https://github.com/moby/moby/blob/api/v1.57.0/api/types/container/hostconfig.go
 // Kind: named:units.Ulimit
 // Underlying: units.Ulimit
 // Usecase: wrap the Engine API type Ulimit from container.
@@ -642,7 +642,7 @@ type Ulimit = container.Ulimit
 // Those attributes can be updated at runtime.
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/api/types/container#UpdateConfig
-// GitHub: https://github.com/moby/moby/blob/api/v1.56.1/api/types/container/hostconfig.go
+// GitHub: https://github.com/moby/moby/blob/api/v1.57.0/api/types/container/hostconfig.go
 // Kind: struct
 // Usecase: wrap the Engine API type UpdateConfig from container.
 type UpdateConfig = container.UpdateConfig
@@ -656,7 +656,7 @@ type UpdateConfig = container.UpdateConfig
 // swagger:model UpdateResponse
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/api/types/container#UpdateResponse
-// GitHub: https://github.com/moby/moby/blob/api/v1.56.1/api/types/container/update_response.go
+// GitHub: https://github.com/moby/moby/blob/api/v1.57.0/api/types/container/update_response.go
 // Kind: struct
 // Usecase: wrap the Engine API type UpdateResponse from container.
 type UpdateResponse = container.UpdateResponse
@@ -666,7 +666,7 @@ type UpdateResponse = container.UpdateResponse
 // UsernsMode represents userns mode in the container.
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/api/types/container#UsernsMode
-// GitHub: https://github.com/moby/moby/blob/api/v1.56.1/api/types/container/hostconfig.go
+// GitHub: https://github.com/moby/moby/blob/api/v1.57.0/api/types/container/hostconfig.go
 // Kind: named:string
 // Underlying: string
 // Usecase: wrap the Engine API type UsernsMode from container.
@@ -678,7 +678,7 @@ type UsernsMode = container.UsernsMode
 // to wait.
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/api/types/container#WaitCondition
-// GitHub: https://github.com/moby/moby/blob/api/v1.56.1/api/types/container/waitcondition.go
+// GitHub: https://github.com/moby/moby/blob/api/v1.57.0/api/types/container/waitcondition.go
 // Kind: named:string
 // Underlying: string
 // Usecase: wrap the Engine API type WaitCondition from container.
@@ -691,7 +691,7 @@ type WaitCondition = container.WaitCondition
 // swagger:model WaitExitError
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/api/types/container#WaitExitError
-// GitHub: https://github.com/moby/moby/blob/api/v1.56.1/api/types/container/wait_exit_error.go
+// GitHub: https://github.com/moby/moby/blob/api/v1.57.0/api/types/container/wait_exit_error.go
 // Kind: struct
 // Usecase: wrap the Engine API type WaitExitError from container.
 type WaitExitError = container.WaitExitError
@@ -705,7 +705,7 @@ type WaitExitError = container.WaitExitError
 // swagger:model WaitResponse
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/api/types/container#WaitResponse
-// GitHub: https://github.com/moby/moby/blob/api/v1.56.1/api/types/container/wait_response.go
+// GitHub: https://github.com/moby/moby/blob/api/v1.57.0/api/types/container/wait_response.go
 // Kind: struct
 // Usecase: wrap the Engine API type WaitResponse from container.
 type WaitResponse = container.WaitResponse

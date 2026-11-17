@@ -14,7 +14,7 @@ The same names are also functions. `pullImage(cli, ref)` returns a description a
 
 Compose methods start with `compose`. Methods for one container, image, network, or the host keep a short name: `start`, `pullImage`, `createNetwork`.
 
-`timeout` is a number of seconds or a duration string such as `"30s"`. Where a method takes `services`, pass one service name or a list of names. A value such as `proto.TCP`, `netDriver.Bridge`, or `oci.V1_1` comes from `containerkit/vocab`. [GUIDE.md](../GUIDE.md) lists each group. [Trees](trees.md) shows `proto` and `cap` on a component.
+`timeout` is a number of seconds or a duration string such as `"30s"`. Where a method takes `services`, pass one service name or a list of names. A value such as `proto.TCP`, `netDriver.Bridge`, or `oci.V1_1` comes from `@aptd3v/containerkit/vocab`. [GUIDE.md](../GUIDE.md) lists each group. [Trees](trees.md) shows `proto` and `cap` on a component.
 
 ## Where each argument goes
 
@@ -39,7 +39,7 @@ Options stay on the command. They are not written back onto the tree. `detach` d
 These commands take the tree, the same `Compose` (or service, job, or container) you would return from `App`.
 
 ```ts
-import { cascade, progress, proto } from "containerkit/vocab";
+import { cascade, progress, proto } from "@aptd3v/containerkit/vocab";
 
 await app.composeUp(tree, {
   detach: true,
@@ -80,10 +80,10 @@ await app.composeDown(tree, { volumes: true, removeOrphans: true, timeout: "20s"
 
 `app.run` creates and starts one container. It does not take a tree. The options are `image`, `command`, `env`, `publish`, `volume`, `restart`, and the other container fields. It returns `{ ID, Warnings }`. `app.containerRun` takes the same options and returns the same shape. The session does not keep that container running across renders unless you remember the call with `useMemo`.
 
-`run` imported from `"containerkit"` is a different function. It sends one plan and returns. It is not `app.run`.
+`run` imported from `"@aptd3v/containerkit"` is a different function. It sends one plan and returns. It is not `app.run`.
 
 ```ts
-import { cap, proto, restartPolicy } from "containerkit/vocab";
+import { cap, proto, restartPolicy } from "@aptd3v/containerkit/vocab";
 
 const created = await app.run({
   image: "alpine:latest",
@@ -97,12 +97,12 @@ const created = await app.run({
 
 `app.terminal(id)` attaches this process's stdin and stdout to a shell in that container and blocks until the shell exits. The default command is `/bin/sh`. Pass `{ command: ["bash"] }` to choose another. When stdin is a terminal, the session is raw and the exec is resized with the window. [terminal.tsx](../examples/terminal/terminal.tsx) starts an Alpine container with `app.run`, then calls `app.terminal`.
 
-`app.flow({ name, steps })` runs the document `Flow` from `containerkit/taskflow` would build. You do not pass a client. The session already has one. Step events arrive on `app.on("log")` and `app.on("status")`.
+`app.flow({ name, steps })` runs the document `Flow` from `@aptd3v/containerkit/taskflow` would build. You do not pass a client. The session already has one. Step events arrive on `app.on("log")` and `app.on("status")`.
 
 A container you already have is addressed by id:
 
 ```ts
-import { signal, waitFor } from "containerkit/vocab";
+import { signal, waitFor } from "@aptd3v/containerkit/vocab";
 
 const id = "container-id";
 
@@ -114,7 +114,7 @@ await app.kill(id, { stopSignal: signal.SIGKILL });
 await app.remove(id, { force: true, volumes: true });
 ```
 
-`start` also takes `checkpoint`. `stop` and `restart` take `timeout` and `stopSignal`. `logs` takes `follow`, `tail`, `since`, `until`, `timestamps`, `details`, `attachStdout`, and `attachStderr`. `wait` takes `waitFor`: `waitFor.NotRunning`, `waitFor.NextExit`, or `waitFor.Removed`.
+`start` also takes `checkpoint`. `stop` and `restart` take `timeout` and `stopSignal`. `logs` takes `follow`, `tail`, `since`, `until`, `timestamps`, `details`, `attachStdout`, and `attachStderr`. The call reads the stream to the end and resolves to nothing. The lines arrive as session log events. `follow: true` stays open until the context ends. `wait` takes `waitFor`: `waitFor.NotRunning`, `waitFor.NextExit`, or `waitFor.Removed`.
 
 `await app.listContainers({ all: true, limit: 20, since: id, filter: { term: "status", values: ["running"] } })` lists containers. A filter is `{ term, values }`. `values` is a string or a list. Pass one filter or an array of them.
 
@@ -123,7 +123,7 @@ await app.remove(id, { force: true, volumes: true });
 ## Images
 
 ```ts
-import { Command, Dockerfile, From } from "containerkit/dockerfile";
+import { Command, Dockerfile, From } from "@aptd3v/containerkit/dockerfile";
 
 await app.pullImage("alpine:latest", { platform: "linux/arm64", all: false });
 await app.listImages({ all: true, filter: { term: "reference", values: ["alpine*"] } });
@@ -155,7 +155,7 @@ await app.removeImage("app:dev");
 
 `composePs` returns the container rows, or `null` when there are none. `State` is `running`, `exited`, and the other container states. `composeList` returns the stack rows. `composeImages` returns a map of service name to image. `composeVolumeList` returns the project volumes, or `null`. `composeExec` and `composeRun` return the exit code. `composeWait` returns a number. `composePort` returns `[host, port]`. `composeViz` returns the graph. `load` returns `{ name }`. `create` returns `{ ID, Warnings }`. `createExec` and `createNetwork` return `{ ID }`. `createVolume` returns `{ Volume }`. `listNetworks` returns `{ Items }`. `inspectNetwork` returns `{ Network, Raw }`. `listEngineVolumes` returns `{ Items, Warnings }`. `ping` returns `APIVersion`, `OSType`, `Experimental`, `BuilderVersion`, and `SwarmStatus`. `topContainer` returns `{ Titles, Processes }`. `statPath` returns `{ Stat }` with `name`, `size`, `mode`, `mtime`, and `linkTarget`.
 
-`await app.pullImage(...)` finishes when the pull finishes. A successful pull, push, build, or `composeBuild` is `{ ok: true }`, and the TypeScript type stays `unknown`. `logs`, `attachContainer`, `statsContainer`, `copyFrom`, and `saveImages` stay untyped too: they return a stream or a hijacked connection.
+`await app.pullImage(...)` finishes when the pull finishes. A successful pull, push, build, `composeBuild`, or `logs` is `{ ok: true }`. `logs` is `Promise<void>`: the call reads the stream to the end, and the lines are session events. `attachContainer`, `statsContainer`, `copyFrom`, and `saveImages` stay untyped: they return a stream or a hijacked connection.
 
 `login` returns `{ Auth }` with `Status` and, when the registry issued one, `IdentityToken`. `diskUsage` returns `Containers`, `Images`, `BuildCache`, and `Volumes`, each with counts, sizes, and `Items` (null unless the call was verbose). `removeImage` returns `{ Items }` of deleted and untagged images. `listConfigs`, `listSecrets`, `listPlugins`, `listNodes`, `listSwarmServices`, `listTasks`, and `listCheckpoints` return `{ Items }`. `inspectConfig`, `inspectSecret`, `inspectPlugin`, `inspectNode`, `inspectSwarmService`, and `inspectTask` return the object plus `Raw`. `inspectSwarm` returns `{ Swarm }` with `JoinTokens`. A nil list is `null`.
 
@@ -168,7 +168,7 @@ await app.removeImage("app:dev");
 A `<Network>` or `<Volume>` in the tree is part of the Compose project. These commands create the same kinds of objects directly on the daemon, without a project file.
 
 ```ts
-import { netDriver } from "containerkit/vocab";
+import { netDriver } from "@aptd3v/containerkit/vocab";
 
 await app.createNetwork("front", {
   driver: netDriver.Bridge,
@@ -191,7 +191,7 @@ await app.pruneVolumes({ all: true });
 ## The host, Swarm, and plugins
 
 ```ts
-import { avail, df, role } from "containerkit/vocab";
+import { avail, df, role } from "@aptd3v/containerkit/vocab";
 
 await app.ping({ negotiateAPIVersion: true });
 await app.login({ serverAddress: "ghcr.io", username: "acme" });
@@ -218,19 +218,21 @@ Swarm services, tasks, configs, and secrets follow the same shape. An id, when t
 
 ## One command, then exit
 
-`run`, imported from `"containerkit"`, sends one description and returns the result, without a live session. A test or a short script can use it. A program that stays up uses `await app.pullImage(...)` and the other session methods. That imported `run` is not `app.run`. `app.run` creates and starts a container.
+`run`, imported from `"@aptd3v/containerkit"`, sends one description and returns the result, without a live session. A test or a short script can use it. A program that stays up uses `await app.pullImage(...)` and the other session methods. That imported `run` is not `app.run`. `app.run` creates and starts a container.
 
 ```ts
-import { connect, pullImage, run } from "containerkit";
+import { connect, pullImage, run } from "@aptd3v/containerkit";
 
 const cli = connect({ fromEnv: true });
 await run(pullImage(cli, "alpine:latest"));
 ```
 
+Progress from that run goes to stderr. The default is `auto`. `run(doc, { progress: "plain" })` prints one line per event. `progress: "off"` prints none. `progress: "json"` writes one event record per line. Pass `onEvent` to receive those records. The JSON lines are then not also printed. A line that is not an event is still written, including the runner's failure text. The result JSON stays the return value.
+
 `setInvoke` replaces what `run` does, which is how a test avoids starting the `containerkit` program. Session methods are not redirected by `setInvoke`.
 
 ```ts
-import { connect, pullImage, run, setInvoke } from "containerkit";
+import { connect, pullImage, run, setInvoke } from "@aptd3v/containerkit";
 
 const cli = connect({ fromEnv: true });
 setInvoke(async (_op, description) => description);

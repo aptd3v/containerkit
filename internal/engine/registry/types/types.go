@@ -9,7 +9,7 @@ import "github.com/moby/moby/api/types/registry"
 // AuthConfig contains authorization information for connecting to a Registry.
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/api/types/registry#AuthConfig
-// GitHub: https://github.com/moby/moby/blob/api/v1.56.1/api/types/registry/authconfig.go
+// GitHub: https://github.com/moby/moby/blob/api/v1.57.0/api/types/registry/authconfig.go
 // Kind: struct
 // Usecase: wrap the Engine API type AuthConfig from registry.
 type AuthConfig = registry.AuthConfig
@@ -21,7 +21,7 @@ type AuthConfig = registry.AuthConfig
 // swagger:model AuthResponse
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/api/types/registry#AuthResponse
-// GitHub: https://github.com/moby/moby/blob/api/v1.56.1/api/types/registry/auth_response.go
+// GitHub: https://github.com/moby/moby/blob/api/v1.57.0/api/types/registry/auth_response.go
 // Kind: struct
 // Usecase: wrap the Engine API type AuthResponse from registry.
 type AuthResponse = registry.AuthResponse
@@ -32,7 +32,7 @@ type AuthResponse = registry.AuthResponse
 // registry to retrieve image metadata
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/api/types/registry#DistributionInspect
-// GitHub: https://github.com/moby/moby/blob/api/v1.56.1/api/types/registry/registry.go
+// GitHub: https://github.com/moby/moby/blob/api/v1.57.0/api/types/registry/registry.go
 // Kind: struct
 // References: github.com/opencontainers/image-spec/specs-go/v1.Descriptor, github.com/opencontainers/image-spec/specs-go/v1.Platform
 // Usecase: wrap the Engine API type DistributionInspect from registry.
@@ -71,7 +71,7 @@ type DistributionInspect = registry.DistributionInspect
 //	}
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/api/types/registry#IndexInfo
-// GitHub: https://github.com/moby/moby/blob/api/v1.56.1/api/types/registry/registry.go
+// GitHub: https://github.com/moby/moby/blob/api/v1.57.0/api/types/registry/registry.go
 // Kind: struct
 // Usecase: wrap the Engine API type IndexInfo from registry.
 type IndexInfo = registry.IndexInfo
@@ -88,7 +88,7 @@ type IndexInfo = registry.IndexInfo
 // It must return an error if the privilege request fails.
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/api/types/registry#RequestAuthConfig
-// GitHub: https://github.com/moby/moby/blob/api/v1.56.1/api/types/registry/authconfig.go
+// GitHub: https://github.com/moby/moby/blob/api/v1.57.0/api/types/registry/authconfig.go
 // Kind: func
 // Underlying: func(context.Context) (string, error)
 // References: context.Context
@@ -102,7 +102,7 @@ type RequestAuthConfig = registry.RequestAuthConfig
 // # SearchResult describes a search result returned from a registry
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/api/types/registry#SearchResult
-// GitHub: https://github.com/moby/moby/blob/api/v1.56.1/api/types/registry/search.go
+// GitHub: https://github.com/moby/moby/blob/api/v1.57.0/api/types/registry/search.go
 // Kind: struct
 // Usecase: wrap the Engine API type SearchResult from registry.
 type SearchResult = registry.SearchResult
@@ -112,7 +112,7 @@ type SearchResult = registry.SearchResult
 // # SearchResults lists a collection search results returned from a registry
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/api/types/registry#SearchResults
-// GitHub: https://github.com/moby/moby/blob/api/v1.56.1/api/types/registry/search.go
+// GitHub: https://github.com/moby/moby/blob/api/v1.57.0/api/types/registry/search.go
 // Kind: struct
 // Usecase: wrap the Engine API type SearchResults from registry.
 type SearchResults = registry.SearchResults
@@ -122,7 +122,7 @@ type SearchResults = registry.SearchResults
 // ServiceConfig stores daemon registry services configuration.
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/api/types/registry#ServiceConfig
-// GitHub: https://github.com/moby/moby/blob/api/v1.56.1/api/types/registry/registry.go
+// GitHub: https://github.com/moby/moby/blob/api/v1.57.0/api/types/registry/registry.go
 // Kind: struct
 // References: net/netip.Prefix
 // Usecase: wrap the Engine API type ServiceConfig from registry.

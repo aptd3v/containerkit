@@ -3,7 +3,7 @@
 A Compose file is a tree. The project is the root. Services sit inside it. Ports, environment variables, and volume mounts sit inside a service. In containerkit that tree is TypeScript, written with components.
 
 ```tsx
-import { Compose, Service, Publish, exportYAML } from "containerkit";
+import { Compose, Service, Publish, exportYAML } from "@aptd3v/containerkit";
 
 const stack = (
   <Compose name="app">
@@ -29,7 +29,7 @@ A value you can return as the whole project is a `DockerNode`. That is a `Compos
 A simple setting is a prop. A nested scope is a child. `Env` and `Label` use `name` because JSX already uses `key`.
 
 ```tsx
-import { cap, proto } from "containerkit/vocab";
+import { cap, proto } from "@aptd3v/containerkit/vocab";
 
 const databaseURL = "postgres://app@db:5432/app";
 
@@ -47,7 +47,7 @@ const databaseURL = "postgres://app@db:5432/app";
 
 Shell and exec forms, heredocs, inline file content, and named options such as `Annotation`, `Sysctl`, and `DriverOpt` stay on their props.
 
-`cap.NET_ADMIN` and `proto.TCP` come from `containerkit/vocab`. They are the legal words for a setting, so a typo is a type error. You can also pass the string the setting expects, such as `"NET_ADMIN"` or `"tcp"`.
+`cap.NET_ADMIN` and `proto.TCP` come from `@aptd3v/containerkit/vocab`. They are the legal words for a setting, so a typo is a type error. You can also pass the string the setting expects, such as `"NET_ADMIN"` or `"tcp"`.
 
 `false`, `null`, and `undefined` children are dropped. `{prod && <Deploy replicas={2} />}` omits the deploy block when `prod` is false. An array from `.map()` becomes one child per item.
 
@@ -66,7 +66,7 @@ function API(props: { tag: string }) {
 Calling the component as a function builds the same node. This is useful in a `.ts` file, where there is no JSX:
 
 ```ts
-import { Compose, Service } from "containerkit";
+import { Compose, Service } from "@aptd3v/containerkit";
 
 const stack = Compose({
   name: "app",
@@ -79,7 +79,7 @@ const stack = Compose({
 `<Network>`, `<Volume>`, `<Secret>`, and `<FileConfig>` declare a project resource when they sit under `<Compose>`. The same tags attach that resource to one service when they sit under `<Service>`.
 
 ```tsx
-import { netDriver } from "containerkit/vocab";
+import { netDriver } from "@aptd3v/containerkit/vocab";
 
 <Compose name="app">
   <Network name="front" driver={netDriver.Bridge} subnet="10.1.0.0/16" gateway="10.1.0.1" enableIPv6={false} />
@@ -100,7 +100,7 @@ The first `<Network>` creates a network named `front` for the project, with a su
 Most functions do not need a return annotation. Add one when you want TypeScript to reject the wrong component.
 
 ```ts
-import { Compose, Service, type DockerNode } from "containerkit";
+import { Compose, Service, type DockerNode } from "@aptd3v/containerkit";
 
 export function stack(): DockerNode<Compose<{ name?: string }>> {
   return (
@@ -123,12 +123,12 @@ function api(): DockerNode<Service<{ name?: string; image?: string }>> {
 
 On that annotation, `props.image` is `string | undefined`. A prop you left out of the `{ ... }`, such as `command`, is rejected on `props` even though `<Service command={...}>` is legal at the tag. With no type argument, `DockerNode` means any of the four roots.
 
-JSX checks each attribute. `<Compose image="alpine" />` is a type error because `image` is not a Compose prop. `<div />` is a type error in a containerkit file because these components are not HTML. A React file and a containerkit file stay separate. The package README shows the `tsconfig` for that split. Once the containerkit folder extends `containerkit/tsconfig.jsx.json`, you do not put a JSX comment at the top of each file. An optional ESLint config, `containerkit/eslint`, marks an illegal inline tag. The package README shows how a project turns it on. Building the tree still throws when the tag is hidden from the linter.
+JSX checks each attribute. `<Compose image="alpine" />` is a type error because `image` is not a Compose prop. `<div />` is a type error in a containerkit file because these components are not HTML. A React file and a containerkit file stay separate. The package README shows the `tsconfig` for that split. Once the containerkit folder extends `@aptd3v/containerkit/tsconfig.jsx.json`, you do not put a JSX comment at the top of each file. An optional ESLint config, `@aptd3v/containerkit/eslint`, marks an illegal inline tag. The package README shows how a project turns it on. Building the tree still throws when the tag is hidden from the linter.
 
 ## Printing the file
 
 ```ts
-import { render } from "containerkit";
+import { render } from "@aptd3v/containerkit";
 
 const yaml = render(stack());
 ```

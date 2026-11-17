@@ -9,7 +9,7 @@ import "github.com/moby/moby/api/types/events"
 // Action is used for event-actions.
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/api/types/events#Action
-// GitHub: https://github.com/moby/moby/blob/api/v1.56.1/api/types/events/events.go
+// GitHub: https://github.com/moby/moby/blob/api/v1.57.0/api/types/events/events.go
 // Kind: named:string
 // Underlying: string
 // Usecase: wrap the Engine API type Action from events.
@@ -24,7 +24,7 @@ type Action = events.Action
 // can generate these attributes from other properties.
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/api/types/events#Actor
-// GitHub: https://github.com/moby/moby/blob/api/v1.56.1/api/types/events/events.go
+// GitHub: https://github.com/moby/moby/blob/api/v1.57.0/api/types/events/events.go
 // Kind: struct
 // Usecase: wrap the Engine API type Actor from events.
 type Actor = events.Actor
@@ -34,7 +34,7 @@ type Actor = events.Actor
 // # Message represents the information an event contains
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/api/types/events#Message
-// GitHub: https://github.com/moby/moby/blob/api/v1.56.1/api/types/events/events.go
+// GitHub: https://github.com/moby/moby/blob/api/v1.57.0/api/types/events/events.go
 // Kind: struct
 // Usecase: wrap the Engine API type Message from events.
 type Message = events.Message
@@ -44,7 +44,7 @@ type Message = events.Message
 // Type is used for event-types.
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/api/types/events#Type
-// GitHub: https://github.com/moby/moby/blob/api/v1.56.1/api/types/events/events.go
+// GitHub: https://github.com/moby/moby/blob/api/v1.57.0/api/types/events/events.go
 // Kind: named:string
 // Underlying: string
 // Usecase: wrap the Engine API type Type from events.

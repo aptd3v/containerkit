@@ -16,7 +16,7 @@ import "github.com/compose-spec/compose-go/v2/tree"
 // structure when descending can still reach a declared node.
 //
 // Source: https://pkg.go.dev/github.com/compose-spec/compose-go/v2/tree#Matcher
-// GitHub: https://github.com/compose-spec/compose-go/blob/v2.16.2/tree/matcher.go
+// GitHub: https://github.com/compose-spec/compose-go/blob/v2.17.0/tree/matcher.go
 // Kind: struct
 // Usecase: wrap compose-go tree machinery used while loading a Project.
 type Matcher = tree.Matcher
@@ -27,7 +27,7 @@ type Matcher = tree.Matcher
 // section in a path will match any key in the mapping structure.
 //
 // Source: https://pkg.go.dev/github.com/compose-spec/compose-go/v2/tree#Path
-// GitHub: https://github.com/compose-spec/compose-go/blob/v2.16.2/tree/path.go
+// GitHub: https://github.com/compose-spec/compose-go/blob/v2.17.0/tree/path.go
 // Kind: named:string
 // Underlying: string
 // Usecase: wrap compose-go tree machinery used while loading a Project.

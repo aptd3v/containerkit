@@ -7,7 +7,7 @@ import "github.com/compose-spec/compose-go/v2/loader"
 // Listener wraps loader.Listener.
 //
 // Source: https://pkg.go.dev/github.com/compose-spec/compose-go/v2/loader#Listener
-// GitHub: https://github.com/compose-spec/compose-go/blob/v2.16.2/loader/loader.go
+// GitHub: https://github.com/compose-spec/compose-go/blob/v2.17.0/loader/loader.go
 // Kind: func
 // Underlying: func(event string, metadata map[string]any)
 // Usecase: wrap compose-go loader machinery used while loading a Project.
@@ -16,7 +16,7 @@ type Listener = loader.Listener
 // NoopPostProcessor wraps loader.NoopPostProcessor.
 //
 // Source: https://pkg.go.dev/github.com/compose-spec/compose-go/v2/loader#NoopPostProcessor
-// GitHub: https://github.com/compose-spec/compose-go/blob/v2.16.2/loader/loader.go
+// GitHub: https://github.com/compose-spec/compose-go/blob/v2.17.0/loader/loader.go
 // Kind: struct
 // Usecase: wrap compose-go loader machinery used while loading a Project.
 type NoopPostProcessor = loader.NoopPostProcessor
@@ -26,7 +26,7 @@ type NoopPostProcessor = loader.NoopPostProcessor
 // # Options supported by Load
 //
 // Source: https://pkg.go.dev/github.com/compose-spec/compose-go/v2/loader#Options
-// GitHub: https://github.com/compose-spec/compose-go/blob/v2.16.2/loader/loader.go
+// GitHub: https://github.com/compose-spec/compose-go/blob/v2.17.0/loader/loader.go
 // Kind: struct
 // References: github.com/compose-spec/compose-go/v2/interpolation.Options
 // Usecase: wrap compose-go loader machinery used while loading a Project.
@@ -38,7 +38,7 @@ type Options = loader.Options
 // that hardly can be implemented using go-yaml and mapstructure
 //
 // Source: https://pkg.go.dev/github.com/compose-spec/compose-go/v2/loader#PostProcessor
-// GitHub: https://github.com/compose-spec/compose-go/blob/v2.16.2/loader/loader.go
+// GitHub: https://github.com/compose-spec/compose-go/blob/v2.17.0/loader/loader.go
 // Kind: interface
 // Usecase: wrap compose-go loader machinery used while loading a Project.
 type PostProcessor = loader.PostProcessor
@@ -46,7 +46,7 @@ type PostProcessor = loader.PostProcessor
 // ResetProcessor wraps loader.ResetProcessor.
 //
 // Source: https://pkg.go.dev/github.com/compose-spec/compose-go/v2/loader#ResetProcessor
-// GitHub: https://github.com/compose-spec/compose-go/blob/v2.16.2/loader/reset.go
+// GitHub: https://github.com/compose-spec/compose-go/blob/v2.17.0/loader/reset.go
 // Kind: struct
 // References: github.com/compose-spec/compose-go/v2/tree.Path, go.yaml.in/yaml/v4.Node
 // Usecase: wrap compose-go loader machinery used while loading a Project.
@@ -57,7 +57,7 @@ type ResetProcessor = loader.ResetProcessor
 // # ResourceLoader is a plugable remote resource resolver
 //
 // Source: https://pkg.go.dev/github.com/compose-spec/compose-go/v2/loader#ResourceLoader
-// GitHub: https://github.com/compose-spec/compose-go/blob/v2.16.2/loader/loader.go
+// GitHub: https://github.com/compose-spec/compose-go/blob/v2.17.0/loader/loader.go
 // Kind: interface
 // References: context.Context
 // Usecase: wrap compose-go loader machinery used while loading a Project.
@@ -69,7 +69,7 @@ type ResourceLoader = loader.ResourceLoader
 // UnsupportedAttributePattern matching the loaded compose model.
 //
 // Source: https://pkg.go.dev/github.com/compose-spec/compose-go/v2/loader#UnsupportedAttribute
-// GitHub: https://github.com/compose-spec/compose-go/blob/v2.16.2/loader/unsupported_attributes.go
+// GitHub: https://github.com/compose-spec/compose-go/blob/v2.17.0/loader/unsupported_attributes.go
 // Kind: struct
 // References: github.com/compose-spec/compose-go/v2/tree.Path
 // Usecase: wrap compose-go loader machinery used while loading a Project.
@@ -83,7 +83,7 @@ type UnsupportedAttribute = loader.UnsupportedAttribute
 // the caller.
 //
 // Source: https://pkg.go.dev/github.com/compose-spec/compose-go/v2/loader#UnsupportedAttributePattern
-// GitHub: https://github.com/compose-spec/compose-go/blob/v2.16.2/loader/unsupported_attributes.go
+// GitHub: https://github.com/compose-spec/compose-go/blob/v2.17.0/loader/unsupported_attributes.go
 // Kind: struct
 // References: github.com/compose-spec/compose-go/v2/tree.Path
 // Usecase: wrap compose-go loader machinery used while loading a Project.
@@ -107,7 +107,7 @@ type UnsupportedAttributePattern = loader.UnsupportedAttributePattern
 //     rule set.
 //
 // Source: https://pkg.go.dev/github.com/compose-spec/compose-go/v2/loader#UnsupportedAttributesCheck
-// GitHub: https://github.com/compose-spec/compose-go/blob/v2.16.2/loader/unsupported_attributes.go
+// GitHub: https://github.com/compose-spec/compose-go/blob/v2.17.0/loader/unsupported_attributes.go
 // Kind: struct
 // References: github.com/compose-spec/compose-go/v2/tree.Path
 // Usecase: wrap compose-go loader machinery used while loading a Project.
@@ -123,7 +123,9 @@ Unexported named types in github.com/compose-spec/compose-go/v2/loader (not alia
   extendsRef (struct) extendsRef identifies an extends.file base within an extends cache scope.
   extensionAlias (struct) extensionAlias declares that the specification attribute `to` was used as the x-* extension `from` before being adopted.
   includeCacheKey (struct) includeCacheKey (struct)
+  includer (struct) includer imports the resources of the files listed by the `include` section of a model into this very model
   localResourceLoader (struct) localResourceLoader (struct)
   nodeCache (struct) nodeCache stores a resolved node and the relative sub-paths within its subtree that carried !reset/!override tags, so cache hits at different call sites can replay them.
   serviceRef (struct) serviceRef identifies a reference to a service.
+  yamlFileLoader (struct) yamlFileLoader merges the YAML document(s) of a single config file into the model loaded so far.
 */

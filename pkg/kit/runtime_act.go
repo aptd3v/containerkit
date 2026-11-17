@@ -121,7 +121,7 @@ func (a downAct) sdk() composeapi.DownOptions {
 	return composeapi.DownOptions{
 		RemoveOrphans: a.removeOrphan,
 		Timeout:       a.timeout,
-		Images:        a.images,
+		Images:        composeapi.ImagePruneMode(a.images),
 		Volumes:       a.volumes,
 		Services:      append([]string(nil), a.services...),
 	}
@@ -238,6 +238,7 @@ type logsAct struct {
 	stdout     field[bool]
 	stderr     field[bool]
 	details    bool
+	log        *Logger
 }
 
 func (a logsAct) composeSDK(proj *composetypes.Project) composeapi.LogOptions {

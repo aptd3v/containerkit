@@ -9,7 +9,7 @@ import "github.com/moby/moby/api/types/mount"
 // BindOptions defines options specific to mounts of type "bind".
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/api/types/mount#BindOptions
-// GitHub: https://github.com/moby/moby/blob/api/v1.56.1/api/types/mount/mount.go
+// GitHub: https://github.com/moby/moby/blob/api/v1.57.0/api/types/mount/mount.go
 // Kind: struct
 // Usecase: wrap the Engine API type BindOptions from mount.
 type BindOptions = mount.BindOptions
@@ -19,7 +19,7 @@ type BindOptions = mount.BindOptions
 // ClusterOptions specifies options for a Cluster volume.
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/api/types/mount#ClusterOptions
-// GitHub: https://github.com/moby/moby/blob/api/v1.56.1/api/types/mount/mount.go
+// GitHub: https://github.com/moby/moby/blob/api/v1.57.0/api/types/mount/mount.go
 // Kind: struct
 // Usecase: wrap the Engine API type ClusterOptions from mount.
 type ClusterOptions = mount.ClusterOptions
@@ -29,7 +29,7 @@ type ClusterOptions = mount.ClusterOptions
 // Consistency represents the consistency requirements of a mount.
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/api/types/mount#Consistency
-// GitHub: https://github.com/moby/moby/blob/api/v1.56.1/api/types/mount/mount.go
+// GitHub: https://github.com/moby/moby/blob/api/v1.57.0/api/types/mount/mount.go
 // Kind: named:string
 // Underlying: string
 // Usecase: wrap the Engine API type Consistency from mount.
@@ -40,7 +40,7 @@ type Consistency = mount.Consistency
 // Driver represents a volume driver.
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/api/types/mount#Driver
-// GitHub: https://github.com/moby/moby/blob/api/v1.56.1/api/types/mount/mount.go
+// GitHub: https://github.com/moby/moby/blob/api/v1.57.0/api/types/mount/mount.go
 // Kind: struct
 // Usecase: wrap the Engine API type Driver from mount.
 type Driver = mount.Driver
@@ -48,7 +48,7 @@ type Driver = mount.Driver
 // ImageOptions wraps mount.ImageOptions.
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/api/types/mount#ImageOptions
-// GitHub: https://github.com/moby/moby/blob/api/v1.56.1/api/types/mount/mount.go
+// GitHub: https://github.com/moby/moby/blob/api/v1.57.0/api/types/mount/mount.go
 // Kind: struct
 // Usecase: wrap the Engine API type ImageOptions from mount.
 type ImageOptions = mount.ImageOptions
@@ -58,7 +58,7 @@ type ImageOptions = mount.ImageOptions
 // Mount represents a mount (volume).
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/api/types/mount#Mount
-// GitHub: https://github.com/moby/moby/blob/api/v1.56.1/api/types/mount/mount.go
+// GitHub: https://github.com/moby/moby/blob/api/v1.57.0/api/types/mount/mount.go
 // Kind: struct
 // Usecase: wrap the Engine API type Mount from mount.
 type Mount = mount.Mount
@@ -68,7 +68,7 @@ type Mount = mount.Mount
 // Propagation represents the propagation of a mount.
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/api/types/mount#Propagation
-// GitHub: https://github.com/moby/moby/blob/api/v1.56.1/api/types/mount/mount.go
+// GitHub: https://github.com/moby/moby/blob/api/v1.57.0/api/types/mount/mount.go
 // Kind: named:string
 // Underlying: string
 // Usecase: wrap the Engine API type Propagation from mount.
@@ -79,7 +79,7 @@ type Propagation = mount.Propagation
 // TmpfsOptions defines options specific to mounts of type "tmpfs".
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/api/types/mount#TmpfsOptions
-// GitHub: https://github.com/moby/moby/blob/api/v1.56.1/api/types/mount/mount.go
+// GitHub: https://github.com/moby/moby/blob/api/v1.57.0/api/types/mount/mount.go
 // Kind: struct
 // References: os.FileMode
 // Usecase: wrap the Engine API type TmpfsOptions from mount.
@@ -90,7 +90,7 @@ type TmpfsOptions = mount.TmpfsOptions
 // Type represents the type of a mount.
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/api/types/mount#Type
-// GitHub: https://github.com/moby/moby/blob/api/v1.56.1/api/types/mount/mount.go
+// GitHub: https://github.com/moby/moby/blob/api/v1.57.0/api/types/mount/mount.go
 // Kind: named:string
 // Underlying: string
 // Usecase: wrap the Engine API type Type from mount.
@@ -101,7 +101,7 @@ type Type = mount.Type
 // VolumeOptions represents the options for a mount of type volume.
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/api/types/mount#VolumeOptions
-// GitHub: https://github.com/moby/moby/blob/api/v1.56.1/api/types/mount/mount.go
+// GitHub: https://github.com/moby/moby/blob/api/v1.57.0/api/types/mount/mount.go
 // Kind: struct
 // Usecase: wrap the Engine API type VolumeOptions from mount.
 type VolumeOptions = mount.VolumeOptions

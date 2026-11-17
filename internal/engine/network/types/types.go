@@ -12,7 +12,7 @@ import "github.com/moby/moby/api/types/network"
 // swagger:model ConfigReference
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/api/types/network#ConfigReference
-// GitHub: https://github.com/moby/moby/blob/api/v1.56.1/api/types/network/config_reference.go
+// GitHub: https://github.com/moby/moby/blob/api/v1.57.0/api/types/network/config_reference.go
 // Kind: struct
 // Usecase: wrap the Engine API type ConfigReference from network.
 type ConfigReference = network.ConfigReference
@@ -24,7 +24,7 @@ type ConfigReference = network.ConfigReference
 // swagger:model ConnectRequest
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/api/types/network#ConnectRequest
-// GitHub: https://github.com/moby/moby/blob/api/v1.56.1/api/types/network/connect_request.go
+// GitHub: https://github.com/moby/moby/blob/api/v1.57.0/api/types/network/connect_request.go
 // Kind: struct
 // Usecase: wrap the Engine API type ConnectRequest from network.
 type ConnectRequest = network.ConnectRequest
@@ -34,7 +34,7 @@ type ConnectRequest = network.ConnectRequest
 // CreateRequest is the request message sent to the server for network create call.
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/api/types/network#CreateRequest
-// GitHub: https://github.com/moby/moby/blob/api/v1.56.1/api/types/network/network_types.go
+// GitHub: https://github.com/moby/moby/blob/api/v1.57.0/api/types/network/network_types.go
 // Kind: struct
 // Usecase: wrap the Engine API type CreateRequest from network.
 type CreateRequest = network.CreateRequest
@@ -48,7 +48,7 @@ type CreateRequest = network.CreateRequest
 // swagger:model CreateResponse
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/api/types/network#CreateResponse
-// GitHub: https://github.com/moby/moby/blob/api/v1.56.1/api/types/network/create_response.go
+// GitHub: https://github.com/moby/moby/blob/api/v1.57.0/api/types/network/create_response.go
 // Kind: struct
 // Usecase: wrap the Engine API type CreateResponse from network.
 type CreateResponse = network.CreateResponse
@@ -60,7 +60,7 @@ type CreateResponse = network.CreateResponse
 // swagger:model DisconnectRequest
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/api/types/network#DisconnectRequest
-// GitHub: https://github.com/moby/moby/blob/api/v1.56.1/api/types/network/disconnect_request.go
+// GitHub: https://github.com/moby/moby/blob/api/v1.57.0/api/types/network/disconnect_request.go
 // Kind: struct
 // Usecase: wrap the Engine API type DisconnectRequest from network.
 type DisconnectRequest = network.DisconnectRequest
@@ -70,7 +70,7 @@ type DisconnectRequest = network.DisconnectRequest
 // # EndpointIPAMConfig represents IPAM configurations for the endpoint
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/api/types/network#EndpointIPAMConfig
-// GitHub: https://github.com/moby/moby/blob/api/v1.56.1/api/types/network/endpoint.go
+// GitHub: https://github.com/moby/moby/blob/api/v1.57.0/api/types/network/endpoint.go
 // Kind: struct
 // References: net/netip.Addr
 // Usecase: wrap the Engine API type EndpointIPAMConfig from network.
@@ -83,7 +83,7 @@ type EndpointIPAMConfig = network.EndpointIPAMConfig
 // swagger:model EndpointResource
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/api/types/network#EndpointResource
-// GitHub: https://github.com/moby/moby/blob/api/v1.56.1/api/types/network/endpoint_resource.go
+// GitHub: https://github.com/moby/moby/blob/api/v1.57.0/api/types/network/endpoint_resource.go
 // Kind: struct
 // References: net/netip.Prefix
 // Usecase: wrap the Engine API type EndpointResource from network.
@@ -94,7 +94,7 @@ type EndpointResource = network.EndpointResource
 // # EndpointSettings stores the network endpoint details
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/api/types/network#EndpointSettings
-// GitHub: https://github.com/moby/moby/blob/api/v1.56.1/api/types/network/endpoint.go
+// GitHub: https://github.com/moby/moby/blob/api/v1.57.0/api/types/network/endpoint.go
 // Kind: struct
 // References: net/netip.Addr
 // Usecase: wrap the Engine API type EndpointSettings from network.
@@ -107,7 +107,7 @@ type EndpointSettings = network.EndpointSettings
 // in the absence of go.dev/issue/29678.
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/api/types/network#HardwareAddr
-// GitHub: https://github.com/moby/moby/blob/api/v1.56.1/api/types/network/hwaddr.go
+// GitHub: https://github.com/moby/moby/blob/api/v1.57.0/api/types/network/hwaddr.go
 // Kind: named:net.HardwareAddr
 // Underlying: net.HardwareAddr
 // References: net.HardwareAddr
@@ -119,7 +119,7 @@ type HardwareAddr = network.HardwareAddr
 // # IPAM represents IP Address Management
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/api/types/network#IPAM
-// GitHub: https://github.com/moby/moby/blob/api/v1.56.1/api/types/network/ipam.go
+// GitHub: https://github.com/moby/moby/blob/api/v1.57.0/api/types/network/ipam.go
 // Kind: struct
 // Usecase: wrap the Engine API type IPAM from network.
 type IPAM = network.IPAM
@@ -129,7 +129,7 @@ type IPAM = network.IPAM
 // # IPAMConfig represents IPAM configurations
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/api/types/network#IPAMConfig
-// GitHub: https://github.com/moby/moby/blob/api/v1.56.1/api/types/network/ipam.go
+// GitHub: https://github.com/moby/moby/blob/api/v1.57.0/api/types/network/ipam.go
 // Kind: struct
 // References: net/netip.Addr, net/netip.Prefix
 // Usecase: wrap the Engine API type IPAMConfig from network.
@@ -142,7 +142,7 @@ type IPAMConfig = network.IPAMConfig
 // swagger:model IPAMStatus
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/api/types/network#IPAMStatus
-// GitHub: https://github.com/moby/moby/blob/api/v1.56.1/api/types/network/ipam_status.go
+// GitHub: https://github.com/moby/moby/blob/api/v1.57.0/api/types/network/ipam_status.go
 // Kind: struct
 // Usecase: wrap the Engine API type IPAMStatus from network.
 type IPAMStatus = network.IPAMStatus
@@ -152,7 +152,7 @@ type IPAMStatus = network.IPAMStatus
 // IPProtocol represents a network protocol for a port.
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/api/types/network#IPProtocol
-// GitHub: https://github.com/moby/moby/blob/api/v1.56.1/api/types/network/port.go
+// GitHub: https://github.com/moby/moby/blob/api/v1.57.0/api/types/network/port.go
 // Kind: named:string
 // Underlying: string
 // Usecase: wrap the Engine API type IPProtocol from network.
@@ -165,7 +165,7 @@ type IPProtocol = network.IPProtocol
 // swagger:model Inspect
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/api/types/network#Inspect
-// GitHub: https://github.com/moby/moby/blob/api/v1.56.1/api/types/network/inspect.go
+// GitHub: https://github.com/moby/moby/blob/api/v1.57.0/api/types/network/inspect.go
 // Kind: struct
 // Usecase: wrap the Engine API type Inspect from network.
 type Inspect = network.Inspect
@@ -177,7 +177,7 @@ type Inspect = network.Inspect
 // swagger:model Network
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/api/types/network#Network
-// GitHub: https://github.com/moby/moby/blob/api/v1.56.1/api/types/network/network.go
+// GitHub: https://github.com/moby/moby/blob/api/v1.57.0/api/types/network/network.go
 // Kind: struct
 // References: time.Time
 // Usecase: wrap the Engine API type Network from network.
@@ -189,7 +189,7 @@ type Network = network.Network
 // Carries the networking configs specified in the `docker run` and `docker network connect` commands
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/api/types/network#NetworkingConfig
-// GitHub: https://github.com/moby/moby/blob/api/v1.56.1/api/types/network/network_types.go
+// GitHub: https://github.com/moby/moby/blob/api/v1.57.0/api/types/network/network_types.go
 // Kind: struct
 // Usecase: wrap the Engine API type NetworkingConfig from network.
 type NetworkingConfig = network.NetworkingConfig
@@ -201,7 +201,7 @@ type NetworkingConfig = network.NetworkingConfig
 // swagger:model PeerInfo
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/api/types/network#PeerInfo
-// GitHub: https://github.com/moby/moby/blob/api/v1.56.1/api/types/network/peer_info.go
+// GitHub: https://github.com/moby/moby/blob/api/v1.57.0/api/types/network/peer_info.go
 // Kind: struct
 // References: net/netip.Addr
 // Usecase: wrap the Engine API type PeerInfo from network.
@@ -214,7 +214,7 @@ type PeerInfo = network.PeerInfo
 // The zero port value, i.e. Port{}, is invalid; use [ParsePort] to create a valid Port value.
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/api/types/network#Port
-// GitHub: https://github.com/moby/moby/blob/api/v1.56.1/api/types/network/port.go
+// GitHub: https://github.com/moby/moby/blob/api/v1.57.0/api/types/network/port.go
 // Kind: struct
 // References: unique.Handle
 // Usecase: wrap the Engine API type Port from network.
@@ -225,7 +225,7 @@ type Port = network.Port
 // PortBinding represents a binding between a Host IP address and a Host Port.
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/api/types/network#PortBinding
-// GitHub: https://github.com/moby/moby/blob/api/v1.56.1/api/types/network/port.go
+// GitHub: https://github.com/moby/moby/blob/api/v1.57.0/api/types/network/port.go
 // Kind: struct
 // References: net/netip.Addr
 // Usecase: wrap the Engine API type PortBinding from network.
@@ -236,7 +236,7 @@ type PortBinding = network.PortBinding
 // PortMap is a collection of [PortBinding] indexed by [Port].
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/api/types/network#PortMap
-// GitHub: https://github.com/moby/moby/blob/api/v1.56.1/api/types/network/port.go
+// GitHub: https://github.com/moby/moby/blob/api/v1.57.0/api/types/network/port.go
 // Kind: map
 // Underlying: map[Port][]PortBinding
 // Usecase: wrap the Engine API type PortMap from network.
@@ -249,7 +249,7 @@ type PortMap = network.PortMap
 // The zero port range value, i.e. PortRange{}, is invalid; use [ParsePortRange] to create a valid PortRange value.
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/api/types/network#PortRange
-// GitHub: https://github.com/moby/moby/blob/api/v1.56.1/api/types/network/port.go
+// GitHub: https://github.com/moby/moby/blob/api/v1.57.0/api/types/network/port.go
 // Kind: struct
 // References: unique.Handle
 // Usecase: wrap the Engine API type PortRange from network.
@@ -260,7 +260,7 @@ type PortRange = network.PortRange
 // PortSet is a collection of structs indexed by [Port].
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/api/types/network#PortSet
-// GitHub: https://github.com/moby/moby/blob/api/v1.56.1/api/types/network/port.go
+// GitHub: https://github.com/moby/moby/blob/api/v1.57.0/api/types/network/port.go
 // Kind: map
 // Underlying: map[Port]struct{}
 // Usecase: wrap the Engine API type PortSet from network.
@@ -272,7 +272,7 @@ type PortSet = network.PortSet
 // POST "/networks/prune"
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/api/types/network#PruneReport
-// GitHub: https://github.com/moby/moby/blob/api/v1.56.1/api/types/network/network_types.go
+// GitHub: https://github.com/moby/moby/blob/api/v1.57.0/api/types/network/network_types.go
 // Kind: struct
 // Usecase: wrap the Engine API type PruneReport from network.
 type PruneReport = network.PruneReport
@@ -284,7 +284,7 @@ type PruneReport = network.PruneReport
 // swagger:model ServiceInfo
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/api/types/network#ServiceInfo
-// GitHub: https://github.com/moby/moby/blob/api/v1.56.1/api/types/network/service_info.go
+// GitHub: https://github.com/moby/moby/blob/api/v1.57.0/api/types/network/service_info.go
 // Kind: struct
 // References: net/netip.Addr
 // Usecase: wrap the Engine API type ServiceInfo from network.
@@ -297,7 +297,7 @@ type ServiceInfo = network.ServiceInfo
 // swagger:model Status
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/api/types/network#Status
-// GitHub: https://github.com/moby/moby/blob/api/v1.56.1/api/types/network/status.go
+// GitHub: https://github.com/moby/moby/blob/api/v1.57.0/api/types/network/status.go
 // Kind: struct
 // Usecase: wrap the Engine API type Status from network.
 type Status = network.Status
@@ -309,7 +309,7 @@ type Status = network.Status
 // swagger:model SubnetStatus
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/api/types/network#SubnetStatus
-// GitHub: https://github.com/moby/moby/blob/api/v1.56.1/api/types/network/subnet_status.go
+// GitHub: https://github.com/moby/moby/blob/api/v1.57.0/api/types/network/subnet_status.go
 // Kind: struct
 // Usecase: wrap the Engine API type SubnetStatus from network.
 type SubnetStatus = network.SubnetStatus
@@ -317,7 +317,7 @@ type SubnetStatus = network.SubnetStatus
 // SubnetStatuses wraps network.SubnetStatuses.
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/api/types/network#SubnetStatuses
-// GitHub: https://github.com/moby/moby/blob/api/v1.56.1/api/types/network/ipam.go
+// GitHub: https://github.com/moby/moby/blob/api/v1.57.0/api/types/network/ipam.go
 // Kind: map
 // Underlying: map[netip.Prefix]SubnetStatus
 // References: net/netip.Prefix
@@ -331,7 +331,7 @@ type SubnetStatuses = network.SubnetStatuses
 // swagger:model Summary
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/api/types/network#Summary
-// GitHub: https://github.com/moby/moby/blob/api/v1.56.1/api/types/network/summary.go
+// GitHub: https://github.com/moby/moby/blob/api/v1.57.0/api/types/network/summary.go
 // Kind: struct
 // Usecase: wrap the Engine API type Summary from network.
 type Summary = network.Summary
@@ -343,7 +343,7 @@ type Summary = network.Summary
 // swagger:model Task
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/api/types/network#Task
-// GitHub: https://github.com/moby/moby/blob/api/v1.56.1/api/types/network/task.go
+// GitHub: https://github.com/moby/moby/blob/api/v1.57.0/api/types/network/task.go
 // Kind: struct
 // References: net/netip.Addr
 // Usecase: wrap the Engine API type Task from network.

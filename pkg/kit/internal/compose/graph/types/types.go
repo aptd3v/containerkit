@@ -9,7 +9,7 @@ import "github.com/compose-spec/compose-go/v2/graph"
 // # CollectorFn executes on each graph vertex based on visit order and return associated value
 //
 // Source: https://pkg.go.dev/github.com/compose-spec/compose-go/v2/graph#CollectorFn
-// GitHub: https://github.com/compose-spec/compose-go/blob/v2.16.2/graph/traversal.go
+// GitHub: https://github.com/compose-spec/compose-go/blob/v2.17.0/graph/traversal.go
 // Kind: func
 // Underlying: func(context.Context, string, S) (T, error)
 // References: context.Context
@@ -19,7 +19,7 @@ type CollectorFn[S any, T any] = graph.CollectorFn[S, T]
 // Options wraps graph.Options.
 //
 // Source: https://pkg.go.dev/github.com/compose-spec/compose-go/v2/graph#Options
-// GitHub: https://github.com/compose-spec/compose-go/blob/v2.16.2/graph/traversal.go
+// GitHub: https://github.com/compose-spec/compose-go/blob/v2.17.0/graph/traversal.go
 // Kind: struct
 // Usecase: wrap compose-go graph machinery used while loading a Project.
 type Options = graph.Options
@@ -29,7 +29,7 @@ type Options = graph.Options
 // # VisitorFn executes on each graph nodes based on visit order
 //
 // Source: https://pkg.go.dev/github.com/compose-spec/compose-go/v2/graph#VisitorFn
-// GitHub: https://github.com/compose-spec/compose-go/blob/v2.16.2/graph/traversal.go
+// GitHub: https://github.com/compose-spec/compose-go/blob/v2.17.0/graph/traversal.go
 // Kind: func
 // Underlying: func(context.Context, string, S) error
 // References: context.Context

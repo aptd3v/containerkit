@@ -11,7 +11,7 @@ import "github.com/moby/moby/client/pkg/jsonmessage"
 // stops and the error is returned to the caller.
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/client/pkg/jsonmessage#DisplayOpt
-// GitHub: https://github.com/moby/moby/blob/client/v0.6.2/client/pkg/jsonmessage/jsonmessage.go
+// GitHub: https://github.com/moby/moby/blob/client/v0.6.3/client/pkg/jsonmessage/jsonmessage.go
 // Kind: func
 // Underlying: func(*displayOpts) error
 // Usecase: wrap Engine client helper type DisplayOpt.
@@ -20,7 +20,7 @@ type DisplayOpt = jsonmessage.DisplayOpt
 // JSONMessagesStream wraps jsonmessage.JSONMessagesStream.
 //
 // Source: https://pkg.go.dev/github.com/moby/moby/client/pkg/jsonmessage#JSONMessagesStream
-// GitHub: https://github.com/moby/moby/blob/client/v0.6.2/client/pkg/jsonmessage/jsonmessage.go
+// GitHub: https://github.com/moby/moby/blob/client/v0.6.3/client/pkg/jsonmessage/jsonmessage.go
 // Kind: generic
 // Underlying: iter.Seq2[jsonstream.Message, error]
 // References: github.com/moby/moby/api/types/jsonstream.Message, iter.Seq2
