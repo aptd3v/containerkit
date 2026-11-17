@@ -1,5 +1,17 @@
 # Changelog
 
+## 0.8.4
+
+A taskflow run keeps its containers, edges, and volumes together. Pull, compose, and container logs are one event.
+
+- A cycle, a shared container name, and a failed apply are errors. A subflow cycle is checked only among the tasks that subflow created. `Run`, `List`, and `Remove` no longer replace a nil context with `context.Background`.
+- `SkipIfPresent` on a build inspects every tag. All present finishes done with reason `already_present` and does not build. A missing tag builds once. `SkipIfPresent` on any other step fails that step once.
+- `Service` stays up until every other task in the declaring flow or subflow has finished, then downs once without a volume wipe. A canceled run still downs. Two services in one scope tear down without waiting on each other.
+- `Volume` allocates a physical name when it is called. `Run` creates that volume labeled with the flow and the run. `Remove` deletes it only after this run's containers are gone, and only when the run label matches.
+- `@aptd3v/containerkit/taskflow` `Flow` accepts `volumes`. `volumeSource` emits the mount source Import rewrites. `Service` emits `op: "service"`. `ComposeStep` uses the op to select the options type and the required fields.
+- `Progress` `json` writes one JSON object per log or status event. `quiet` drops `working` events. `NewFrameLogger` delivers the same event to a callback.
+- Pins verified 2026-11-16: `github.com/moby/moby/api` v1.57.0, `github.com/moby/moby/client` v0.6.3, `github.com/compose-spec/compose-go/v2` v2.17.0, `github.com/docker/compose/v5` v5.7.1. Go is 1.26.11.
+
 ## 0.8.3
 
 The tag workflow publishes with GitHub's OIDC token.

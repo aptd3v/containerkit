@@ -89,7 +89,7 @@ Go, from `go.mod` (1.26.11 or newer):
 go get github.com/aptd3v/containerkit
 ```
 
-[CHANGELOG.md](CHANGELOG.md) is what 0.8.3 contains.
+[CHANGELOG.md](CHANGELOG.md) is what 0.8.4 contains.
 
 Read the kit in order from [docs/README.md](docs/README.md): define a service, then run it.
 
