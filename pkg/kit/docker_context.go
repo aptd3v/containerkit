@@ -8,7 +8,9 @@ import (
 	"os"
 	"path"
 	"path/filepath"
-	"strings"
+
+	"github.com/moby/patternmatcher"
+	"github.com/moby/patternmatcher/ignorefile"
 )
 
 // Archive returns a tar build context for [BuildImage].
@@ -45,10 +47,13 @@ func packBuildContext(dockerfile []byte, src string) (io.Reader, error) {
 	if !info.IsDir() {
 		return nil, fmt.Errorf("source %s is not a directory", src)
 	}
-	rules, err := readDockerignore(src)
+	ignore, err := readDockerignore(src)
 	if err != nil {
 		return nil, err
 	}
+	// Match results per visited directory, so children reuse their parent's
+	// results the same way the Docker CLI walks a context.
+	dirMatches := map[string]patternmatcher.MatchInfo{}
 
 	var buf bytes.Buffer
 	tw := tar.NewWriter(&buf)
@@ -78,12 +83,22 @@ func packBuildContext(dockerfile []byte, src string) (io.Reader, error) {
 		if rel == "Dockerfile" {
 			return nil
 		}
-		excluded, err := rules.excluded(rel, info.IsDir())
-		if err != nil {
-			return err
-		}
-		if excluded {
-			return nil
+		if ignore != nil {
+			excluded, match, err := ignore.MatchesUsingParentResults(rel, dirMatches[path.Dir(rel)])
+			if err != nil {
+				return fmt.Errorf(".dockerignore: %w", err)
+			}
+			if info.IsDir() {
+				dirMatches[rel] = match
+			}
+			if excluded {
+				// Without "!" patterns nothing below an excluded directory can
+				// come back, so skip it. Otherwise keep walking for re-includes.
+				if info.IsDir() && !ignore.Exclusions() {
+					return filepath.SkipDir
+				}
+				return nil
+			}
 		}
 		return addContextEntry(tw, filePath, rel, info)
 	})
@@ -144,143 +159,28 @@ func writeTarBytes(tw *tar.Writer, name string, mode os.FileMode, data []byte) e
 	return err
 }
 
-type ignorePattern struct {
-	pattern  string
-	negate   bool
-	dirOnly  bool
-	anchored bool
-}
-
-type ignoreRules struct {
-	patterns []ignorePattern
-}
-
-func readDockerignore(dir string) (ignoreRules, error) {
-	raw, err := os.ReadFile(filepath.Join(dir, ".dockerignore"))
+// readDockerignore loads contextDir/.dockerignore with Docker's own parser and
+// matcher, so patterns are anchored at the context root and only ** spans
+// directories. It returns nil when there is no .dockerignore.
+func readDockerignore(dir string) (*patternmatcher.PatternMatcher, error) {
+	f, err := os.Open(filepath.Join(dir, ".dockerignore"))
 	if err != nil {
 		if os.IsNotExist(err) {
-			return ignoreRules{}, nil
+			return nil, nil
 		}
-		return ignoreRules{}, fmt.Errorf("read .dockerignore: %w", err)
+		return nil, fmt.Errorf("read .dockerignore: %w", err)
 	}
-	var rules ignoreRules
-	for _, line := range strings.Split(string(raw), "\n") {
-		pattern, ok := parseIgnoreLine(line)
-		if !ok {
-			continue
-		}
-		rules.patterns = append(rules.patterns, pattern)
+	defer f.Close()
+	patterns, err := ignorefile.ReadAll(f)
+	if err != nil {
+		return nil, fmt.Errorf("read .dockerignore: %w", err)
 	}
-	return rules, nil
-}
-
-func parseIgnoreLine(line string) (ignorePattern, bool) {
-	line = strings.TrimSpace(line)
-	if line == "" || strings.HasPrefix(line, "#") {
-		return ignorePattern{}, false
+	if len(patterns) == 0 {
+		return nil, nil
 	}
-	p := ignorePattern{}
-	if strings.HasPrefix(line, "!") {
-		p.negate = true
-		line = strings.TrimSpace(strings.TrimPrefix(line, "!"))
-		if line == "" {
-			return ignorePattern{}, false
-		}
+	pm, err := patternmatcher.New(patterns)
+	if err != nil {
+		return nil, fmt.Errorf(".dockerignore: %w", err)
 	}
-	if strings.HasSuffix(line, "/") {
-		p.dirOnly = true
-		line = strings.TrimSuffix(line, "/")
-	}
-	line = strings.TrimPrefix(line, "/")
-	if line == "" {
-		return ignorePattern{}, false
-	}
-	p.pattern = line
-	p.anchored = strings.Contains(line, "/")
-	return p, true
-}
-
-func (r ignoreRules) excluded(rel string, isDir bool) (bool, error) {
-	rel = strings.TrimPrefix(filepath.ToSlash(rel), "/")
-	excluded := false
-	for _, pattern := range r.patterns {
-		matched, err := pattern.matches(rel, isDir)
-		if err != nil {
-			return false, err
-		}
-		if matched {
-			excluded = !pattern.negate
-		}
-	}
-	return excluded, nil
-}
-
-func (p ignorePattern) matches(rel string, isDir bool) (bool, error) {
-	candidates := []string{rel}
-	if !p.anchored {
-		parts := strings.Split(rel, "/")
-		for i := 1; i < len(parts); i++ {
-			candidates = append(candidates, strings.Join(parts[i:], "/"))
-		}
-	}
-	for _, candidate := range candidates {
-		if !p.dirOnly {
-			returnMatch, err := globMatch(p.pattern, candidate)
-			if err != nil || returnMatch {
-				return returnMatch, err
-			}
-			continue
-		}
-		segs := strings.Split(candidate, "/")
-		for i := 1; i <= len(segs); i++ {
-			prefix := strings.Join(segs[:i], "/")
-			ok, err := globMatch(p.pattern, prefix)
-			if err != nil {
-				return false, err
-			}
-			if !ok {
-				continue
-			}
-			if i == len(segs) && !isDir {
-				continue
-			}
-			return true, nil
-		}
-	}
-	return false, nil
-}
-
-func globMatch(pattern, name string) (bool, error) {
-	return matchSeg(strings.Split(pattern, "/"), strings.Split(name, "/"), pattern)
-}
-
-func matchSeg(pat, name []string, original string) (bool, error) {
-	for {
-		if len(pat) == 0 {
-			return len(name) == 0, nil
-		}
-		if pat[0] == "**" {
-			ok, err := matchSeg(pat[1:], name, original)
-			if err != nil || ok {
-				return ok, err
-			}
-			if len(name) == 0 {
-				return false, nil
-			}
-			name = name[1:]
-			continue
-		}
-		if len(name) == 0 {
-			return false, nil
-		}
-		ok, err := path.Match(pat[0], name[0])
-		if err != nil {
-			return false, fmt.Errorf("dockerignore pattern %q: %w", original, err)
-		}
-		if !ok {
-			return false, nil
-		}
-		pat = pat[1:]
-		name = name[1:]
-	}
+	return pm, nil
 }
