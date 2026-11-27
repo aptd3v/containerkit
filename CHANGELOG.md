@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 0.8.5
 
 A directory build context honors `.dockerignore` the way `docker build` does.
 
