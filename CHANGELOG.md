@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.8.5
+
+A directory build context honors `.dockerignore` the way `docker build` does.
+
+- Patterns are anchored at the context root. Only `**` matches across directories. `apps/` excludes the top-level `apps` and not `a/b/apps`. `*.md` excludes `README.md` and not `docs/guide.md`. This is a behavior change: a slash-free pattern no longer matches at any depth. Write `**/name` for that.
+- A pattern without a trailing `/`, such as `/src` or `**/node_modules`, excludes the directory's contents.
+- `!` patterns re-include files under an excluded directory, as in `apps/` then `!apps/desktop/**`.
+- `.dockerignore` is read and matched by `github.com/moby/patternmatcher`, the matcher the Docker CLI uses. It applies to `Source(dir)` with a Dockerfile and to `(*Dockerfile).Archive`.
+
 ## 0.8.4
 
 A taskflow run keeps its containers, edges, and volumes together. Pull, compose, and container logs are one event.
